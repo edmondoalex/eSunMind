@@ -96,7 +96,7 @@ const lon = ref(null)
 const timeIndex = ref(10)
 const hours = Array.from({ length: 19 }, (_, i) => i + 3)
 const cfg = ref({
-  pathRadiusM: 78,
+  pathRadiusM: 102,
   sectorRadiusM: 110,
   sunRadiusM: 95,
   mapZoom: 18,
