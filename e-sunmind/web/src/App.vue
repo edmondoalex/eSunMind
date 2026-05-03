@@ -145,14 +145,27 @@ function baseDateAtHour(hour) {
   return d
 }
 
+function altitudeToRadius(altDeg) {
+  // Sky-dome projection: horizon on outer ring, zenith at center.
+  const a = Math.max(-6, Math.min(90, Number(altDeg)))
+  const normalized = 1 - Math.sin((Math.max(0, a) * Math.PI) / 180)
+  return cfg.value.sectorRadiusM * normalized
+}
+
 function buildSunPathPoints() {
   const points = []
-  for (let h = 3; h <= 21; h++) {
-    const dt = baseDateAtHour(h)
+  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
+  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
+  const dt = new Date(sunrise)
+  while (dt <= sunset) {
     const p = SunCalc.getPosition(dt, lat.value, lon.value)
     const az = suncalcAzToCompassDeg(p.azimuth)
     const altDeg = toDeg(p.altitude)
-    if (altDeg > -2) points.push(destinationPoint(lat.value, lon.value, az, cfg.value.pathRadiusM))
+    if (altDeg > -6) {
+      const r = altitudeToRadius(altDeg)
+      points.push(destinationPoint(lat.value, lon.value, az, r))
+    }
+    dt.setMinutes(dt.getMinutes() + 10)
   }
   return points
 }
@@ -164,12 +177,18 @@ function buildSectorPolygon() {
   const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
   const azStart = suncalcAzToCompassDeg(srPos.azimuth)
   const azEnd = suncalcAzToCompassDeg(ssPos.azimuth)
-  const pts = [[lat.value, lon.value]]
-  const step = 4
-  const wrapEnd = azEnd < azStart ? azEnd + 360 : azEnd
-  for (let a = azStart; a <= wrapEnd; a += step) {
-    const real = a >= 360 ? a - 360 : a
-    pts.push(destinationPoint(lat.value, lon.value, real, cfg.value.sectorRadiusM))
+  const pts = []
+  const curve = buildSunPathPoints()
+  pts.push([lat.value, lon.value])
+  for (const p of curve) pts.push(p)
+  if (curve.length === 0) {
+    // Fallback if path is not available.
+    const step = 4
+    const wrapEnd = azEnd < azStart ? azEnd + 360 : azEnd
+    for (let a = azStart; a <= wrapEnd; a += step) {
+      const real = a >= 360 ? a - 360 : a
+      pts.push(destinationPoint(lat.value, lon.value, real, cfg.value.sectorRadiusM))
+    }
   }
   pts.push([lat.value, lon.value])
   return pts
@@ -189,7 +208,8 @@ function drawSolarOverlay() {
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
 
-  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.sunRadiusM)
+  const sunR = altitudeToRadius(alt)
+  const sunPt = destinationPoint(lat.value, lon.value, az, sunR)
   sunLine = L.polyline([[lat.value, lon.value], sunPt], { color: '#ff8f1f', weight: 4, opacity: 0.95 }).addTo(map)
   sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#ffcc00', fillColor: '#ffcc00', fillOpacity: 1, weight: 2 }).addTo(map)
 }
