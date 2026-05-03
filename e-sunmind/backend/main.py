@@ -2,6 +2,7 @@ import asyncio
 import json
 import time
 from datetime import datetime
+from math import cos, pi
 from pathlib import Path
 from typing import Any
 
@@ -11,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from geopy.geocoders import Nominatim
-from suncalc import get_moon_illumination, get_moon_position, get_moon_times, get_position, get_times
+from suncalc import get_moon_position, get_moon_times, get_position, get_times
 
 APP_VERSION = "0.2.0"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
@@ -25,6 +26,17 @@ def _dt_to_iso(value):
     if value is None:
         return None
     return value.isoformat()
+
+
+def _moon_illumination(now_utc: datetime) -> dict[str, float]:
+    # Approximation independent from suncalc package internals.
+    # Synodic month ~29.53058867 days, known new moon reference.
+    ref_new_moon = datetime(2000, 1, 6, 18, 14, tzinfo=pytz.utc)
+    days = (now_utc - ref_new_moon).total_seconds() / 86400.0
+    synodic = 29.53058867
+    phase = (days % synodic) / synodic
+    fraction = 0.5 * (1.0 - cos(2.0 * pi * phase))
+    return {"fraction": float(fraction), "phase": float(phase)}
 
 
 def _load_options() -> dict[str, Any]:
@@ -88,7 +100,7 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
     sun_times = {k: _dt_to_iso(v.astimezone(tz)) for k, v in get_times(now_utc, longitude, latitude).items()}
     sun_position = get_position(now_utc, longitude, latitude)
     moon_position = get_moon_position(now_utc, longitude, latitude)
-    moon_illumination = get_moon_illumination(now_utc)
+    moon_illumination = _moon_illumination(now_utc)
     moon_times_raw = get_moon_times(now_utc, longitude, latitude)
     moon_times = {}
     for key, value in moon_times_raw.items():
