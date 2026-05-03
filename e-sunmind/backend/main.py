@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.20"
+APP_VERSION = "0.2.21"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -397,6 +397,11 @@ async def index():
 @app.get("/logo.png")
 async def logo():
     return FileResponse("/app/static/logo.png")
+
+
+@app.get("/favicon.png")
+async def favicon():
+    return FileResponse("/app/static/favicon.png")
 
 
 @app.get("/api/status")
