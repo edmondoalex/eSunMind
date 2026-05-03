@@ -1,7 +1,10 @@
 <template>
   <div class="wrap">
     <header class="topbar">
-      <div class="brand">e-SunMind</div>
+      <div class="brand">
+        <img src="/logo.png" alt="e-SunMind logo" class="brand-logo" />
+        <span>e-SunMind</span>
+      </div>
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">User UI</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -218,7 +221,8 @@ onBeforeUnmount(() => { if (map) { map.remove(); map = null } })
 body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-serif;background:var(--bg);color:var(--text)}
 .wrap{min-height:100vh;display:flex;flex-direction:column}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(10,15,22,.9)}
-.brand{font-weight:700}
+.brand{font-weight:700;display:flex;align-items:center;gap:8px}
+.brand-logo{width:28px;height:28px;object-fit:contain;border-radius:6px}
 .actions{display:flex;gap:8px;align-items:center}
 .btn{background:linear-gradient(135deg, var(--accent), #6cf1c9);border:none;color:#062524;padding:6px 12px;border-radius:999px;font-weight:700;cursor:pointer}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
