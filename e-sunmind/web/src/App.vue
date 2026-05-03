@@ -25,6 +25,10 @@
         </div>
         <input type="range" :min="0" :max="hours.length - 1" step="1" v-model.number="timeIndex" @input="drawSolarOverlay" />
         <div class="time-meta">Orario simulato: <strong>{{ selectedTimeLabel }}</strong></div>
+        <div class="toggles">
+          <label><input type="checkbox" v-model="showLiveLine" @change="drawSolarOverlay" /> Linea LIVE (reale)</label>
+          <label><input type="checkbox" v-model="showSimLine" @change="drawSolarOverlay" /> Linea SIMULATA</label>
+        </div>
       </div>
 
       <div class="map-wrap">
@@ -33,8 +37,8 @@
 
       <div class="panel">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
-        <div class="kpi">Sun Altitude LIVE: {{ fmt(data?.sun_position?.altitude_deg) }} deg</div>
-        <div class="kpi">Sun Azimuth LIVE: {{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div>
+        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }} deg</div>
+        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div>
         <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }} deg</div>
         <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }} deg</div>
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
@@ -102,6 +106,8 @@ let pathLine = null
 let horizonCircle = null
 let sunLine = null
 let sunMarker = null
+let sunLineLive = null
+let sunMarkerLive = null
 let sunriseRay = null
 let sunsetRay = null
 let compassMarkers = []
@@ -109,6 +115,8 @@ let compassMarkers = []
 const selectedHour = computed(() => hours[timeIndex.value] ?? 12)
 const selectedTimeLabel = computed(() => `${String(selectedHour.value).padStart(2, '0')}:00`)
 const currentSun = ref({ altitudeDeg: null, azimuthDeg: null })
+const showLiveLine = ref(true)
+const showSimLine = ref(true)
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const forecastConfigText = computed(() => {
@@ -175,7 +183,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunriseRay, sunsetRay].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   compassMarkers = []
 
@@ -216,13 +224,31 @@ function drawSolarOverlay() {
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
-  sunLine = L.polyline([[lat.value, lon.value], sunPt], {
-    color: '#d86a2a',
-    weight: 2.8,
-    opacity: 0.9,
-    lineCap: 'round',
-  }).addTo(map)
-  sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#f6cf43', fillColor: '#f6cf43', fillOpacity: 1, weight: 2 }).addTo(map)
+
+  if (showSimLine.value) {
+    sunLine = L.polyline([[lat.value, lon.value], sunPt], {
+      color: '#d86a2a',
+      weight: 2.8,
+      opacity: 0.9,
+      lineCap: 'round',
+    }).addTo(map)
+    sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#f6cf43', fillColor: '#f6cf43', fillOpacity: 1, weight: 2 }).addTo(map)
+  }
+
+  if (showLiveLine.value) {
+    const liveAz = Number(data.value?.sun_position?.azimuth_compass_deg)
+    if (Number.isFinite(liveAz)) {
+      const livePt = destinationPoint(lat.value, lon.value, liveAz, cfg.value.pathRadiusM)
+      sunLineLive = L.polyline([[lat.value, lon.value], livePt], {
+        color: '#2dd4bf',
+        weight: 2.6,
+        opacity: 0.95,
+        dashArray: '8,6',
+        lineCap: 'round',
+      }).addTo(map)
+      sunMarkerLive = L.circleMarker(livePt, { radius: 6, color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: 1, weight: 2 }).addTo(map)
+    }
+  }
 
   const card = [
     { t: 'N', b: 0 },
@@ -321,6 +347,8 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 input[type='range']{width:100%}
 .time-meta{font-size:12px;color:#dfe8f6;margin-top:4px}
+.toggles{display:flex;gap:14px;margin-top:6px;font-size:12px;color:#dfe8f6}
+.toggles label{display:flex;align-items:center;gap:6px}
 .map-wrap{height:68vh;min-height:420px}
 #solar-map{width:100%;height:100%}
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
