@@ -27,7 +27,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.4"
+APP_VERSION = "0.2.5"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/web", StaticFiles(directory="/app/web"), name="web")
 
@@ -56,6 +56,12 @@ def _rad_to_deg(value):
     if value is None:
         return None
     return float(value) * 180.0 / pi
+
+
+def _suncalc_azimuth_to_compass_deg(azimuth_rad):
+    if azimuth_rad is None:
+        return None
+    return (float(azimuth_rad) * 180.0 / pi + 180.0) % 360.0
 
 
 def _load_options() -> dict[str, Any]:
@@ -120,6 +126,7 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
     sun_position_raw = get_position(now_utc, longitude, latitude)
     sun_position = {
         "azimuth_deg": _rad_to_deg(sun_position_raw.get("azimuth")),
+        "azimuth_compass_deg": _suncalc_azimuth_to_compass_deg(sun_position_raw.get("azimuth")),
         "altitude_deg": _rad_to_deg(sun_position_raw.get("altitude")),
         "azimuth_rad": sun_position_raw.get("azimuth"),
         "altitude_rad": sun_position_raw.get("altitude"),
