@@ -236,13 +236,14 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
   position:fixed;
   inset:0;
   z-index:9999;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow:hidden;
   background:radial-gradient(circle at center, rgba(255,233,140,.22), rgba(7,10,15,.98) 60%);
 }
 .splash-logo{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%, -50%);
   width:min(72vw,420px);
   max-width:420px;
   min-width:180px;
@@ -278,6 +279,11 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}
 
 @media (max-width: 768px){
+  .splash-logo{
+    width:min(78vw,320px);
+    min-width:160px;
+    max-width:320px;
+  }
   .topbar{
     flex-wrap:wrap;
     gap:8px;
