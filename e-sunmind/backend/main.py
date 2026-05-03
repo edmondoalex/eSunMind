@@ -30,13 +30,14 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.10"
+APP_VERSION = "0.2.11"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
+FORECAST_MIN_INTERVAL_SECONDS = 3600
 
 
 def _dt_to_iso(value):
@@ -133,6 +134,15 @@ def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float
         return {"ok": False, "url": url, "error": str(exc)}
     except Exception as exc:
         return {"ok": False, "url": url, "error": str(exc)}
+
+
+def _read_forecast_cache() -> dict[str, Any] | None:
+    if not FORECAST_FILE.exists():
+        return None
+    try:
+        return json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -278,10 +288,23 @@ async def _worker() -> None:
         cfg = _load_options()
         data = _compute_data(cfg)
         coords = data.get("coordinates", {})
-        forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+        forecast = None
+        fs_cfg = cfg.get("forecast_solar", {}) or {}
+        if fs_cfg.get("enabled"):
+            now_ts = time.time()
+            cache = _read_forecast_cache()
+            last_ts = float((cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
+            if (cache is not None) and (now_ts - last_ts < FORECAST_MIN_INTERVAL_SECONDS):
+                forecast = cache
+                forecast["_cache_hit"] = True
+            else:
+                forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                if isinstance(forecast, dict):
+                    forecast["_fetched_at_ts"] = now_ts
+                    forecast["_cache_hit"] = False
         data["forecast_solar"] = forecast
         DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        if forecast is not None:
+        if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
             FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
 
         mqtt_cfg = cfg.get("mqtt", {})
