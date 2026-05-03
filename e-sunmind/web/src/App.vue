@@ -33,9 +33,12 @@
 
       <div class="panel">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
-        <div class="kpi">Sun Altitude: {{ fmt(currentSun.altitudeDeg) }} deg</div>
-        <div class="kpi">Sun Azimuth: {{ fmt(currentSun.azimuthDeg) }} deg</div>
+        <div class="kpi">Sun Altitude LIVE: {{ fmt(data?.sun_position?.altitude_deg) }} deg</div>
+        <div class="kpi">Sun Azimuth LIVE: {{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div>
+        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }} deg</div>
+        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }} deg</div>
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
+        <div class="kpi">Ora simulata: {{ selectedTimeLabel }}</div>
       </div>
     </template>
 
@@ -219,6 +222,9 @@ async function loadData() {
 }
 
 onMounted(() => {
+  const h = new Date().getHours()
+  const idx = hours.findIndex((x) => x === h)
+  if (idx >= 0) timeIndex.value = idx
   loadData()
   setTimeout(() => {
     showSplash.value = false
