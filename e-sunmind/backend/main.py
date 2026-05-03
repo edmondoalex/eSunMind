@@ -8,6 +8,9 @@ from typing import Any
 
 import paho.mqtt.client as mqtt
 import pytz
+from astral import Observer
+from astral.moon import azimuth as moon_azimuth_deg
+from astral.moon import elevation as moon_altitude_deg
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -24,7 +27,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.2"
+APP_VERSION = "0.2.3"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/web", StaticFiles(directory="/app/web"), name="web")
 
@@ -47,6 +50,12 @@ def _moon_illumination(now_utc: datetime) -> dict[str, float]:
     phase = (days % synodic) / synodic
     fraction = 0.5 * (1.0 - cos(2.0 * pi * phase))
     return {"fraction": float(fraction), "phase": float(phase)}
+
+
+def _rad_to_deg(value):
+    if value is None:
+        return None
+    return float(value) * 180.0 / pi
 
 
 def _load_options() -> dict[str, Any]:
@@ -108,11 +117,32 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
     now_utc = now.astimezone(pytz.utc)
 
     sun_times = {k: _dt_to_iso(v.astimezone(tz)) for k, v in get_times(now_utc, longitude, latitude).items()}
-    sun_position = get_position(now_utc, longitude, latitude)
+    sun_position_raw = get_position(now_utc, longitude, latitude)
+    sun_position = {
+        "azimuth_deg": _rad_to_deg(sun_position_raw.get("azimuth")),
+        "altitude_deg": _rad_to_deg(sun_position_raw.get("altitude")),
+        "azimuth_rad": sun_position_raw.get("azimuth"),
+        "altitude_rad": sun_position_raw.get("altitude"),
+    }
     if _get_moon_position is not None:
-        moon_position = _get_moon_position(now_utc, longitude, latitude)
+        moon_position_raw = _get_moon_position(now_utc, longitude, latitude)
+        moon_position = {
+            "azimuth_deg": _rad_to_deg(moon_position_raw.get("azimuth")),
+            "altitude_deg": _rad_to_deg(moon_position_raw.get("altitude")),
+            "azimuth_rad": moon_position_raw.get("azimuth"),
+            "altitude_rad": moon_position_raw.get("altitude"),
+        }
     else:
-        moon_position = {"altitude": None, "azimuth": None}
+        try:
+            obs = Observer(latitude=latitude, longitude=longitude)
+            moon_position = {
+                "azimuth_deg": float(moon_azimuth_deg(obs, now)),
+                "altitude_deg": float(moon_altitude_deg(obs, now)),
+                "azimuth_rad": None,
+                "altitude_rad": None,
+            }
+        except Exception:
+            moon_position = {"azimuth_deg": None, "altitude_deg": None, "azimuth_rad": None, "altitude_rad": None}
     moon_illumination = _moon_illumination(now_utc)
     moon_times = {}
     if _get_moon_times is not None:
@@ -172,10 +202,10 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
     mp = data.get("moon_position", {})
     mi = data.get("moon_illumination", {})
     mapping = {
-        "sun_altitude": sp.get("altitude"),
-        "sun_azimuth": sp.get("azimuth"),
-        "moon_altitude": mp.get("altitude"),
-        "moon_azimuth": mp.get("azimuth"),
+        "sun_altitude": sp.get("altitude_deg"),
+        "sun_azimuth": sp.get("azimuth_deg"),
+        "moon_altitude": mp.get("altitude_deg"),
+        "moon_azimuth": mp.get("azimuth_deg"),
         "moon_fraction": (float(mi.get("fraction", 0.0)) * 100.0),
     }
     client.publish(f"{base}/availability", "online", retain=True)

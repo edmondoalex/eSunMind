@@ -43,10 +43,10 @@
       }
       const c = d.coordinates || {};
       document.getElementById("meta").textContent = `${d.timestamp_local} | ${d.timezone} | lat ${c.latitude}, lon ${c.longitude}`;
-      document.getElementById("sun_alt").textContent = (d.sun_position?.altitude ?? 0).toFixed(4);
-      document.getElementById("sun_az").textContent = (d.sun_position?.azimuth ?? 0).toFixed(4);
-      document.getElementById("moon_alt").textContent = (d.moon_position?.altitude ?? 0).toFixed(4);
-      document.getElementById("moon_az").textContent = (d.moon_position?.azimuth ?? 0).toFixed(4);
+      document.getElementById("sun_alt").textContent = (d.sun_position?.altitude_deg ?? 0).toFixed(2) + "°";
+      document.getElementById("sun_az").textContent = (d.sun_position?.azimuth_deg ?? 0).toFixed(2) + "°";
+      document.getElementById("moon_alt").textContent = (d.moon_position?.altitude_deg ?? 0).toFixed(2) + "°";
+      document.getElementById("moon_az").textContent = (d.moon_position?.azimuth_deg ?? 0).toFixed(2) + "°";
       document.getElementById("moon_frac").textContent = ((d.moon_illumination?.fraction ?? 0) * 100).toFixed(2) + "%";
       document.getElementById("json").textContent = JSON.stringify(d, null, 2);
     }
