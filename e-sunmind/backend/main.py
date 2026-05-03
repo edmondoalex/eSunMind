@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from geopy.geocoders import Nominatim
 from suncalc import get_moon_position, get_moon_times, get_position, get_times
 
-APP_VERSION = "0.2.0"
+APP_VERSION = "0.2.1"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/web", StaticFiles(directory="/app/web"), name="web")
 
