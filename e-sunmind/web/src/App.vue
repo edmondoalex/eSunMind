@@ -23,7 +23,7 @@
         <div class="time-labels">
           <span v-for="(h, i) in hours" :key="`h-${i}`">{{ `${String(h).padStart(2,'0')}:00` }}</span>
         </div>
-        <input type="range" :min="0" :max="hours.length - 1" step="1" v-model.number="timeIndex" @input="drawSolarOverlay" />
+        <input type="range" :min="0" :max="timeSteps.length - 1" step="1" v-model.number="timeIndex" @input="drawSolarOverlay" />
         <div class="time-meta">Orario simulato: <strong>{{ selectedTimeLabel }}</strong></div>
         <div class="toggles">
           <label><input type="checkbox" v-model="showLiveLine" @change="drawSolarOverlay" /> Linea LIVE (reale)</label>
@@ -95,6 +95,10 @@ const lat = ref(null)
 const lon = ref(null)
 const timeIndex = ref(10)
 const hours = Array.from({ length: 19 }, (_, i) => i + 3)
+const timeSteps = Array.from({ length: ((21 - 3) * 4) + 1 }, (_, i) => {
+  const total = (3 * 60) + (i * 15)
+  return { h: Math.floor(total / 60), m: total % 60 }
+})
 const cfg = ref({
   pathRadiusM: 102,
   sectorRadiusM: 110,
@@ -116,8 +120,8 @@ let axisNS = null
 let axisWE = null
 let compassMarkers = []
 
-const selectedHour = computed(() => hours[timeIndex.value] ?? 12)
-const selectedTimeLabel = computed(() => `${String(selectedHour.value).padStart(2, '0')}:00`)
+const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
+const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
 const currentSun = ref({ altitudeDeg: null, azimuthDeg: null })
 const showLiveLine = ref(true)
 const showSimLine = ref(true)
@@ -155,10 +159,10 @@ function destinationPoint(latDeg, lonDeg, bearingDeg, distanceM) {
   return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]
 }
 
-function baseDateAtHour(hour) {
+function baseDateAtHour(hour, minute = 0) {
   const base = data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()
   const d = new Date(base)
-  d.setHours(hour, 0, 0, 0)
+  d.setHours(hour, minute, 0, 0)
   return d
 }
 
@@ -234,7 +238,7 @@ function drawSolarOverlay() {
     lineJoin: 'round',
   }).addTo(map)
 
-  const dt = baseDateAtHour(selectedHour.value)
+  const dt = baseDateAtHour(selectedTime.value.h, selectedTime.value.m)
   const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
   const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
   const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
@@ -326,8 +330,12 @@ async function loadData() {
 }
 
 onMounted(() => {
-  const h = new Date().getHours()
-  const idx = hours.findIndex((x) => x === h)
+  const now = new Date()
+  const total = (now.getHours() * 60) + now.getMinutes()
+  const base = 3 * 60
+  const clamped = Math.max(base, Math.min(21 * 60, total))
+  const rounded = Math.round((clamped - base) / 15)
+  const idx = rounded
   if (idx >= 0) timeIndex.value = idx
   loadData()
   setTimeout(() => {
