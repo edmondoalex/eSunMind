@@ -239,12 +239,16 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
   display:flex;
   align-items:center;
   justify-content:center;
-  background:rgba(7,10,15,.96);
+  background:
+    radial-gradient(circle at center, rgba(255,233,140,.22), rgba(7,10,15,.82) 60%),
+    rgba(7,10,15,.65);
+  backdrop-filter: blur(2px);
 }
 .splash-logo{
   width:min(70vw,300px);
   display:block;
   height:auto;
+  filter:drop-shadow(0 0 28px rgba(255,214,82,.45));
 }
 .splash-fade-enter-active,.splash-fade-leave-active{transition:opacity .6s ease}
 .splash-fade-enter-from,.splash-fade-leave-to{opacity:0}
