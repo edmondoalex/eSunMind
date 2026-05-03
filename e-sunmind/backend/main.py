@@ -27,9 +27,9 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.6"
+APP_VERSION = "0.2.7"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
-app.mount("/web", StaticFiles(directory="/app/web"), name="web")
+app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
@@ -259,7 +259,12 @@ async def _startup():
 
 @app.get("/")
 async def index():
-    return FileResponse("/app/web/index.html")
+    return FileResponse("/app/static/index.html")
+
+
+@app.get("/logo.png")
+async def logo():
+    return FileResponse("/app/static/logo.png")
 
 
 @app.get("/api/status")

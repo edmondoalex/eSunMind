@@ -3,9 +3,15 @@ FROM ${BUILD_FROM}
 
 ENV LANG C.UTF-8
 
+RUN apk add --no-cache nodejs npm
+
 WORKDIR /app
-COPY backend /app/backend
 COPY web /app/web
+RUN cd /app/web && npm install && npm run build
+
+RUN mkdir -p /app/static && cp -r /app/web/dist/* /app/static/
+
+COPY backend /app/backend
 COPY config.yaml /app/config.yaml
 
 RUN pip install --no-cache-dir fastapi uvicorn[standard] suncalc pytz geopy paho-mqtt astral
