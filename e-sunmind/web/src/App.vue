@@ -236,14 +236,14 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
   position:fixed;
   inset:0;
   z-index:9999;
+  display:grid;
+  place-items:center;
   overflow:hidden;
   background:radial-gradient(circle at center, rgba(255,233,140,.22), rgba(7,10,15,.98) 60%);
 }
 .splash-logo{
-  position:absolute;
-  left:50%;
-  top:50%;
-  transform:translate(-50%, -50%);
+  position:relative;
+  transform:translateY(-6vh);
   width:min(72vw,420px);
   max-width:420px;
   min-width:180px;
@@ -280,9 +280,10 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 
 @media (max-width: 768px){
   .splash-logo{
-    width:min(78vw,320px);
+    width:min(72vw,300px);
     min-width:160px;
-    max-width:320px;
+    max-width:300px;
+    transform:translateY(-8vh);
   }
   .topbar{
     flex-wrap:wrap;
