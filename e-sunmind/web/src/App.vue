@@ -165,15 +165,9 @@ function buildSunPathPoints() {
   const azEndRaw = suncalcAzToCompassDeg(ssPos.azimuth)
   const azEnd = azEndRaw < azStart ? azEndRaw + 360 : azEndRaw
   const step = 2
+  const r = cfg.value.pathRadiusM
   for (let a = azStart; a <= azEnd; a += step) {
     const real = a >= 360 ? a - 360 : a
-    // Real-time-like sky projection for each sample angle.
-    const probe = new Date(sunrise)
-    const ratio = (a - azStart) / Math.max(1e-6, (azEnd - azStart))
-    probe.setTime(sunrise.getTime() + ratio * (sunset.getTime() - sunrise.getTime()))
-    const p = SunCalc.getPosition(probe, lat.value, lon.value)
-    const altDeg = toDeg(p.altitude)
-    const r = altitudeToRadius(altDeg)
     points.push(destinationPoint(lat.value, lon.value, real, r))
   }
   return points
@@ -217,9 +211,9 @@ function drawSolarOverlay() {
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
 
-  const sunPt = destinationPoint(lat.value, lon.value, az, altitudeToRadius(alt))
-  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM)
-  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
+  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.pathRadiusM)
+  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.pathRadiusM)
+  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
   sunLine = L.polyline([[lat.value, lon.value], sunPt], {
