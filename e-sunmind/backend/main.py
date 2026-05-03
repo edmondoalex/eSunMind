@@ -30,14 +30,23 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.11"
+APP_VERSION = "0.2.12"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
+STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
+WORKER_STATE: dict[str, Any] = {
+    "last_loop_ts": 0.0,
+    "last_ok_ts": 0.0,
+    "last_error": None,
+    "forecast_last_fetch_ts": 0.0,
+    "forecast_last_error": None,
+    "forecast_backoff_until_ts": 0.0,
+}
 
 
 def _dt_to_iso(value):
@@ -107,6 +116,10 @@ def _load_options() -> dict[str, Any]:
         defaults["mqtt"].update(payload["mqtt"])
     if isinstance(payload.get("forecast_solar"), dict):
         defaults["forecast_solar"].update(payload["forecast_solar"])
+    defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
+    defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
+    defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
+    defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     return defaults
 
 
@@ -143,6 +156,24 @@ def _read_forecast_cache() -> dict[str, Any] | None:
         return json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
     except Exception:
         return None
+
+
+def _save_state() -> None:
+    try:
+        STATE_FILE.write_text(json.dumps(WORKER_STATE, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def _load_state() -> None:
+    if not STATE_FILE.exists():
+        return
+    try:
+        raw = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        if isinstance(raw, dict):
+            WORKER_STATE.update(raw)
+    except Exception:
+        pass
 
 
 def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -285,27 +316,49 @@ async def _worker() -> None:
     mqtt_client: mqtt.Client | None = None
     mqtt_ready = False
     while True:
+        WORKER_STATE["last_loop_ts"] = time.time()
         cfg = _load_options()
-        data = _compute_data(cfg)
-        coords = data.get("coordinates", {})
-        forecast = None
-        fs_cfg = cfg.get("forecast_solar", {}) or {}
-        if fs_cfg.get("enabled"):
-            now_ts = time.time()
-            cache = _read_forecast_cache()
-            last_ts = float((cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
-            if (cache is not None) and (now_ts - last_ts < FORECAST_MIN_INTERVAL_SECONDS):
-                forecast = cache
-                forecast["_cache_hit"] = True
-            else:
-                forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
-                if isinstance(forecast, dict):
-                    forecast["_fetched_at_ts"] = now_ts
-                    forecast["_cache_hit"] = False
-        data["forecast_solar"] = forecast
-        DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-        if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
-            FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
+        try:
+            data = _compute_data(cfg)
+            coords = data.get("coordinates", {})
+            forecast = None
+            fs_cfg = cfg.get("forecast_solar", {}) or {}
+            if fs_cfg.get("enabled"):
+                now_ts = time.time()
+                cache = _read_forecast_cache()
+                last_ts = float((cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
+                persistent_last_ts = float(WORKER_STATE.get("forecast_last_fetch_ts", 0.0) or 0.0)
+                last_effective_ts = max(last_ts, persistent_last_ts)
+                backoff_until = float(WORKER_STATE.get("forecast_backoff_until_ts", 0.0) or 0.0)
+                if now_ts < backoff_until and cache is not None:
+                    forecast = dict(cache)
+                    forecast["_cache_hit"] = True
+                    forecast["_backoff_active"] = True
+                elif (cache is not None) and (now_ts - last_effective_ts < FORECAST_MIN_INTERVAL_SECONDS):
+                    forecast = dict(cache)
+                    forecast["_cache_hit"] = True
+                else:
+                    forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                    if isinstance(forecast, dict):
+                        forecast["_fetched_at_ts"] = now_ts
+                        forecast["_cache_hit"] = False
+                        WORKER_STATE["forecast_last_fetch_ts"] = now_ts
+                        if forecast.get("ok"):
+                            WORKER_STATE["forecast_last_error"] = None
+                            WORKER_STATE["forecast_backoff_until_ts"] = 0.0
+                        else:
+                            WORKER_STATE["forecast_last_error"] = str(forecast.get("error"))
+                            WORKER_STATE["forecast_backoff_until_ts"] = now_ts + FORECAST_MIN_INTERVAL_SECONDS
+            data["forecast_solar"] = forecast
+            DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+            if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
+                FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
+            WORKER_STATE["last_ok_ts"] = time.time()
+            WORKER_STATE["last_error"] = None
+        except Exception as exc:
+            WORKER_STATE["last_error"] = str(exc)
+        finally:
+            _save_state()
 
         mqtt_cfg = cfg.get("mqtt", {})
         if mqtt_cfg.get("enabled"):
@@ -332,6 +385,7 @@ async def _worker() -> None:
 
 @app.on_event("startup")
 async def _startup():
+    _load_state()
     asyncio.create_task(_worker())
 
 
@@ -347,7 +401,7 @@ async def logo():
 
 @app.get("/api/status")
 async def status():
-    return JSONResponse({"ok": True, "version": APP_VERSION})
+    return JSONResponse({"ok": True, "version": APP_VERSION, "state": WORKER_STATE})
 
 
 @app.get("/api/data")
@@ -364,4 +418,23 @@ async def solar_forecast():
         return JSONResponse({"ok": False, "error": "forecast_not_ready"})
     payload = json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
     return JSONResponse(payload)
+
+
+@app.get("/api/health")
+async def health():
+    now_ts = time.time()
+    stale_seconds = int(now_ts - float(WORKER_STATE.get("last_ok_ts", 0.0) or 0.0))
+    return JSONResponse(
+        {
+            "ok": WORKER_STATE.get("last_error") is None,
+            "version": APP_VERSION,
+            "stale_seconds": stale_seconds,
+            "worker_state": WORKER_STATE,
+            "files": {
+                "data_exists": DATA_FILE.exists(),
+                "forecast_exists": FORECAST_FILE.exists(),
+                "state_exists": STATE_FILE.exists(),
+            },
+        }
+    )
 
