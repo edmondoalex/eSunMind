@@ -1,10 +1,13 @@
-import asyncio
+﻿import asyncio
 import json
 import time
 from datetime import datetime
 from math import cos, pi
 from pathlib import Path
 from typing import Any
+from urllib.error import URLError
+from urllib.parse import quote
+from urllib.request import urlopen
 
 import paho.mqtt.client as mqtt
 import pytz
@@ -27,12 +30,13 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.7"
+APP_VERSION = "0.2.9"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
+FORECAST_FILE = Path("/data/forecast_solar.json")
 
 
 def _dt_to_iso(value):
@@ -81,6 +85,13 @@ def _load_options() -> dict[str, Any]:
             "discovery_prefix": "homeassistant",
             "client_id": "e-sunmind-addon",
         },
+        "forecast_solar": {
+            "enabled": False,
+            "api_key": "",
+            "declination": 30,
+            "azimuth": 0,
+            "kwp": 6.0,
+        },
     }
     if not OPTIONS_FILE.exists():
         return defaults
@@ -93,7 +104,32 @@ def _load_options() -> dict[str, Any]:
             defaults[key] = payload[key]
     if isinstance(payload.get("mqtt"), dict):
         defaults["mqtt"].update(payload["mqtt"])
+    if isinstance(payload.get("forecast_solar"), dict):
+        defaults["forecast_solar"].update(payload["forecast_solar"])
     return defaults
+
+
+def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
+    fs = cfg.get("forecast_solar", {})
+    if not fs or not fs.get("enabled"):
+        return None
+
+    api_key = str(fs.get("api_key") or "").strip()
+    key_seg = quote(api_key) if api_key else ""
+    decl = int(fs.get("declination", 30))
+    azim = int(fs.get("azimuth", 0))
+    kwp = float(fs.get("kwp", 6.0))
+
+    # Public API works without key: keep the empty segment in URL.
+    url = f"https://api.forecast.solar/{key_seg}/estimate/{latitude}/{longitude}/{decl}/{azim}/{kwp}"
+    try:
+        with urlopen(url, timeout=20) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        return {"ok": True, "url": url, "payload": payload}
+    except URLError as exc:
+        return {"ok": False, "url": url, "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "url": url, "error": str(exc)}
 
 
 def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -181,11 +217,13 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
         "sw_version": APP_VERSION,
     }
     sensors = [
-        ("sun_altitude", "Sun Altitude", "°", None),
-        ("sun_azimuth", "Sun Azimuth", "°", None),
-        ("moon_altitude", "Moon Altitude", "°", None),
-        ("moon_azimuth", "Moon Azimuth", "°", None),
+        ("sun_altitude", "Sun Altitude", "deg", None),
+        ("sun_azimuth", "Sun Azimuth", "deg", None),
+        ("moon_altitude", "Moon Altitude", "deg", None),
+        ("moon_azimuth", "Moon Azimuth", "deg", None),
         ("moon_fraction", "Moon Illumination", "%", None),
+        ("pv_today_wh", "PV Forecast Today", "Wh", None),
+        ("pv_tomorrow_wh", "PV Forecast Tomorrow", "Wh", None),
     ]
     for key, name, unit, dclass in sensors:
         topic = f"{prefix}/sensor/sunmind/{key}/config"
@@ -215,6 +253,15 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
         "moon_azimuth": mp.get("azimuth_deg"),
         "moon_fraction": (float(mi.get("fraction", 0.0)) * 100.0),
     }
+    fs = data.get("forecast_solar", {}) or {}
+    day = ((fs.get("payload") or {}).get("result") or {}).get("watt_hours_day") or {}
+    if isinstance(day, dict) and day:
+        keys = sorted(day.keys())
+        if len(keys) >= 1:
+            mapping["pv_today_wh"] = day.get(keys[0])
+        if len(keys) >= 2:
+            mapping["pv_tomorrow_wh"] = day.get(keys[1])
+
     client.publish(f"{base}/availability", "online", retain=True)
     for key, value in mapping.items():
         if value is not None:
@@ -227,7 +274,12 @@ async def _worker() -> None:
     while True:
         cfg = _load_options()
         data = _compute_data(cfg)
+        coords = data.get("coordinates", {})
+        forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+        data["forecast_solar"] = forecast
         DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        if forecast is not None:
+            FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
 
         mqtt_cfg = cfg.get("mqtt", {})
         if mqtt_cfg.get("enabled"):
@@ -278,3 +330,12 @@ async def data():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     return JSONResponse(payload)
+
+
+@app.get("/api/solar_forecast")
+async def solar_forecast():
+    if not FORECAST_FILE.exists():
+        return JSONResponse({"ok": False, "error": "forecast_not_ready"})
+    payload = json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
+    return JSONResponse(payload)
+

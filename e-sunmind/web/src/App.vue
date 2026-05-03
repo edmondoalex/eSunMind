@@ -1,4 +1,4 @@
-<template>
+ï»¿<template>
   <div class="wrap">
     <header class="top">
       <div class="brand">e-SunMind</div>
@@ -19,10 +19,10 @@
       <section class="card inner">
         <h2>Dati Sole/Luna</h2>
         <div class="grid">
-          <div class="kpi"><div class="k">Sun Altitude</div><div class="v">{{ fmt(data?.sun_position?.altitude_deg) }}°</div></div>
-          <div class="kpi"><div class="k">Sun Azimuth</div><div class="v">{{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div></div>
-          <div class="kpi"><div class="k">Moon Altitude</div><div class="v">{{ fmt(data?.moon_position?.altitude_deg) }}°</div></div>
-          <div class="kpi"><div class="k">Moon Azimuth</div><div class="v">{{ fmt(data?.moon_position?.azimuth_deg) }}°</div></div>
+          <div class="kpi"><div class="k">Sun Altitude</div><div class="v">{{ fmt(data?.sun_position?.altitude_deg) }} deg</div></div>
+          <div class="kpi"><div class="k">Sun Azimuth</div><div class="v">{{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div></div>
+          <div class="kpi"><div class="k">Moon Altitude</div><div class="v">{{ fmt(data?.moon_position?.altitude_deg) }} deg</div></div>
+          <div class="kpi"><div class="k">Moon Azimuth</div><div class="v">{{ fmt(data?.moon_position?.azimuth_deg) }} deg</div></div>
           <div class="kpi"><div class="k">Moon Illumination</div><div class="v">{{ fmt((data?.moon_illumination?.fraction ?? 0) * 100) }}%</div></div>
         </div>
       </section>
