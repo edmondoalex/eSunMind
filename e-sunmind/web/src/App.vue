@@ -28,6 +28,8 @@
         <div class="toggles">
           <label><input type="checkbox" v-model="showLiveLine" @change="drawSolarOverlay" /> Linea LIVE (reale)</label>
           <label><input type="checkbox" v-model="showSimLine" @change="drawSolarOverlay" /> Linea SIMULATA</label>
+          <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
+          <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
         </div>
       </div>
 
@@ -110,6 +112,8 @@ let sunLineLive = null
 let sunMarkerLive = null
 let sunriseRay = null
 let sunsetRay = null
+let axisNS = null
+let axisWE = null
 let compassMarkers = []
 
 const selectedHour = computed(() => hours[timeIndex.value] ?? 12)
@@ -117,6 +121,8 @@ const selectedTimeLabel = computed(() => `${String(selectedHour.value).padStart(
 const currentSun = ref({ altitudeDeg: null, azimuthDeg: null })
 const showLiveLine = ref(true)
 const showSimLine = ref(true)
+const showAxisNS = ref(true)
+const showAxisWE = ref(true)
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const forecastConfigText = computed(() => {
@@ -183,7 +189,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, axisNS, axisWE].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   compassMarkers = []
 
@@ -197,6 +203,27 @@ function drawSolarOverlay() {
     opacity: 0.78,
     fillOpacity: 0,
   }).addTo(map)
+
+  if (showAxisNS.value) {
+    const nPt = destinationPoint(lat.value, lon.value, 0, cfg.value.sectorRadiusM)
+    const sPt = destinationPoint(lat.value, lon.value, 180, cfg.value.sectorRadiusM)
+    axisNS = L.polyline([nPt, sPt], {
+      color: '#8ea1b5',
+      weight: 1.6,
+      opacity: 0.75,
+      dashArray: '6,6',
+    }).addTo(map)
+  }
+  if (showAxisWE.value) {
+    const ePt = destinationPoint(lat.value, lon.value, 90, cfg.value.sectorRadiusM)
+    const wPt = destinationPoint(lat.value, lon.value, 270, cfg.value.sectorRadiusM)
+    axisWE = L.polyline([wPt, ePt], {
+      color: '#8ea1b5',
+      weight: 1.6,
+      opacity: 0.75,
+      dashArray: '6,6',
+    }).addTo(map)
+  }
 
   // Real daily path (projected by azimuth+altitude)
   pathLine = L.polyline(buildSunPathPoints(), {
@@ -219,7 +246,7 @@ function drawSolarOverlay() {
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
 
-  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.pathRadiusM)
+  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.sectorRadiusM)
   const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.pathRadiusM)
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
@@ -236,9 +263,9 @@ function drawSolarOverlay() {
   }
 
   if (showLiveLine.value) {
-    const liveAz = Number(data.value?.sun_position?.azimuth_compass_deg)
-    if (Number.isFinite(liveAz)) {
-      const livePt = destinationPoint(lat.value, lon.value, liveAz, cfg.value.pathRadiusM)
+      const liveAz = Number(data.value?.sun_position?.azimuth_compass_deg)
+      if (Number.isFinite(liveAz)) {
+      const livePt = destinationPoint(lat.value, lon.value, liveAz, cfg.value.sectorRadiusM)
       sunLineLive = L.polyline([[lat.value, lon.value], livePt], {
         color: '#2dd4bf',
         weight: 2.6,
