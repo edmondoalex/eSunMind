@@ -99,9 +99,10 @@ const cfg = ref({
 let map = null
 let centerMarker = null
 let pathLine = null
-let sectorPoly = null
+let horizonCircle = null
 let sunLine = null
 let sunMarker = null
+let compassMarkers = []
 
 const selectedHour = computed(() => hours[timeIndex.value] ?? 12)
 const selectedTimeLabel = computed(() => `${String(selectedHour.value).padStart(2, '0')}:00`)
@@ -170,37 +171,31 @@ function buildSunPathPoints() {
   return points
 }
 
-function buildSectorPolygon() {
-  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
-  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
-  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
-  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
-  const azStart = suncalcAzToCompassDeg(srPos.azimuth)
-  const azEnd = suncalcAzToCompassDeg(ssPos.azimuth)
-  const pts = []
-  const curve = buildSunPathPoints()
-  pts.push([lat.value, lon.value])
-  for (const p of curve) pts.push(p)
-  if (curve.length === 0) {
-    // Fallback if path is not available.
-    const step = 4
-    const wrapEnd = azEnd < azStart ? azEnd + 360 : azEnd
-    for (let a = azStart; a <= wrapEnd; a += step) {
-      const real = a >= 360 ? a - 360 : a
-      pts.push(destinationPoint(lat.value, lon.value, real, cfg.value.sectorRadiusM))
-    }
-  }
-  pts.push([lat.value, lon.value])
-  return pts
-}
-
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, sectorPoly, sunLine, sunMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  for (const m of compassMarkers) map.removeLayer(m)
+  compassMarkers = []
 
-  centerMarker = L.circleMarker([lat.value, lon.value], { radius: 6, color: '#ff6a00', fillColor: '#ffd24a', fillOpacity: 1, weight: 2 }).addTo(map)
-  pathLine = L.polyline(buildSunPathPoints(), { color: '#f7c948', weight: 3, opacity: 0.9 }).addTo(map)
-  sectorPoly = L.polygon(buildSectorPolygon(), { color: '#f5c518', fillColor: '#f5c518', fillOpacity: 0.12, weight: 2 }).addTo(map)
+  centerMarker = L.circleMarker([lat.value, lon.value], { radius: 4, color: '#ffd24a', fillColor: '#ffd24a', fillOpacity: 1, weight: 1 }).addTo(map)
+
+  // Horizon ring (SunCalc-like base circle)
+  horizonCircle = L.circle([lat.value, lon.value], {
+    radius: cfg.value.sectorRadiusM,
+    color: '#7f8a95',
+    weight: 1.2,
+    opacity: 0.78,
+    fillOpacity: 0,
+  }).addTo(map)
+
+  // Real daily path (projected by azimuth+altitude)
+  pathLine = L.polyline(buildSunPathPoints(), {
+    color: '#f2c235',
+    weight: 3.2,
+    opacity: 0.95,
+    lineCap: 'round',
+    lineJoin: 'round',
+  }).addTo(map)
 
   const dt = baseDateAtHour(selectedHour.value)
   const pos = SunCalc.getPosition(dt, lat.value, lon.value)
@@ -210,8 +205,33 @@ function drawSolarOverlay() {
 
   const sunR = altitudeToRadius(alt)
   const sunPt = destinationPoint(lat.value, lon.value, az, sunR)
-  sunLine = L.polyline([[lat.value, lon.value], sunPt], { color: '#ff8f1f', weight: 4, opacity: 0.95 }).addTo(map)
-  sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#ffcc00', fillColor: '#ffcc00', fillOpacity: 1, weight: 2 }).addTo(map)
+  sunLine = L.polyline([[lat.value, lon.value], sunPt], {
+    color: '#d86a2a',
+    weight: 2.8,
+    opacity: 0.9,
+    lineCap: 'round',
+  }).addTo(map)
+  sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#f6cf43', fillColor: '#f6cf43', fillOpacity: 1, weight: 2 }).addTo(map)
+
+  const card = [
+    { t: 'N', b: 0 },
+    { t: 'E', b: 90 },
+    { t: 'S', b: 180 },
+    { t: 'W', b: 270 },
+  ]
+  for (const c of card) {
+    const pt = destinationPoint(lat.value, lon.value, c.b, cfg.value.sectorRadiusM + 6)
+    const mk = L.marker(pt, {
+      icon: L.divIcon({
+        className: 'cardinal',
+        html: `<span>${c.t}</span>`,
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+      }),
+      interactive: false,
+    }).addTo(map)
+    compassMarkers.push(mk)
+  }
 }
 
 function applyMapView() {
@@ -303,6 +323,17 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .small{font-size:12px}
 .note{font-size:12px;color:var(--muted)}
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}
+.cardinal{
+  color:#d8e1eb;
+  font-size:11px;
+  font-weight:700;
+  text-shadow:0 1px 2px rgba(0,0,0,.8);
+}
+.cardinal span{
+  display:inline-block;
+  width:18px;
+  text-align:center;
+}
 
 @media (max-width: 768px){
   .topbar{
