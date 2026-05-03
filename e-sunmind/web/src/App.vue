@@ -263,7 +263,15 @@ function drawSolarOverlay() {
       opacity: 0.9,
       lineCap: 'round',
     }).addTo(map)
-    sunMarker = L.circleMarker(sunPt, { radius: 8, color: '#f6cf43', fillColor: '#f6cf43', fillOpacity: 1, weight: 2 }).addTo(map)
+    sunMarker = L.marker(sunPt, {
+      icon: L.divIcon({
+        className: 'sun-icon-wrap',
+        html: '<span class="sun-icon"></span>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      }),
+      interactive: false,
+    }).addTo(map)
   }
 
   if (showLiveLine.value) {
@@ -407,6 +415,21 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   display:inline-block;
   width:18px;
   text-align:center;
+}
+.sun-icon-wrap{
+  background:transparent;
+  border:none;
+}
+.sun-icon{
+  display:block;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #fff6b5 0%, #f7d63c 38%, #f3b315 100%);
+  border:2px solid rgba(255, 220, 90, 0.95);
+  box-shadow:
+    0 0 0 3px rgba(255, 214, 67, 0.22),
+    0 0 14px rgba(255, 192, 48, 0.7);
 }
 
 @media (max-width: 768px){
