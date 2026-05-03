@@ -90,7 +90,7 @@ const lon = ref(null)
 const timeIndex = ref(10)
 const hours = Array.from({ length: 19 }, (_, i) => i + 3)
 const cfg = ref({
-  pathRadiusM: 80,
+  pathRadiusM: 78,
   sectorRadiusM: 110,
   sunRadiusM: 95,
   mapZoom: 18,
@@ -102,6 +102,8 @@ let pathLine = null
 let horizonCircle = null
 let sunLine = null
 let sunMarker = null
+let sunriseRay = null
+let sunsetRay = null
 let compassMarkers = []
 
 const selectedHour = computed(() => hours[timeIndex.value] ?? 12)
@@ -157,23 +159,23 @@ function buildSunPathPoints() {
   const points = []
   const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
   const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
-  const dt = new Date(sunrise)
-  while (dt <= sunset) {
-    const p = SunCalc.getPosition(dt, lat.value, lon.value)
-    const az = suncalcAzToCompassDeg(p.azimuth)
-    const altDeg = toDeg(p.altitude)
-    if (altDeg > -6) {
-      const r = altitudeToRadius(altDeg)
-      points.push(destinationPoint(lat.value, lon.value, az, r))
-    }
-    dt.setMinutes(dt.getMinutes() + 10)
+  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
+  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
+  const azStart = suncalcAzToCompassDeg(srPos.azimuth)
+  const azEndRaw = suncalcAzToCompassDeg(ssPos.azimuth)
+  const azEnd = azEndRaw < azStart ? azEndRaw + 360 : azEndRaw
+  const step = 2
+  const r = cfg.value.pathRadiusM
+  for (let a = azStart; a <= azEnd; a += step) {
+    const real = a >= 360 ? a - 360 : a
+    points.push(destinationPoint(lat.value, lon.value, real, r))
   }
   return points
 }
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunriseRay, sunsetRay].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   compassMarkers = []
 
@@ -198,13 +200,22 @@ function drawSolarOverlay() {
   }).addTo(map)
 
   const dt = baseDateAtHour(selectedHour.value)
+  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
+  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
+  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
+  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
+  const srAz = suncalcAzToCompassDeg(srPos.azimuth)
+  const ssAz = suncalcAzToCompassDeg(ssPos.azimuth)
   const pos = SunCalc.getPosition(dt, lat.value, lon.value)
   const az = suncalcAzToCompassDeg(pos.azimuth)
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
 
-  const sunR = altitudeToRadius(alt)
-  const sunPt = destinationPoint(lat.value, lon.value, az, sunR)
+  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.pathRadiusM)
+  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.pathRadiusM)
+  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
+  sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#d86a2a', weight: 2.4, opacity: 0.85 }).addTo(map)
+  sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#f2c235', weight: 2.4, opacity: 0.85 }).addTo(map)
   sunLine = L.polyline([[lat.value, lon.value], sunPt], {
     color: '#d86a2a',
     weight: 2.8,
