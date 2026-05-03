@@ -27,7 +27,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.5"
+APP_VERSION = "0.2.6"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/web", StaticFiles(directory="/app/web"), name="web")
 
@@ -73,13 +73,13 @@ def _load_options() -> dict[str, Any]:
         "location_query": "",
         "mqtt": {
             "enabled": False,
-            "host": "core-mosquitto",
+            "host": "192.168.3.13",
             "port": 1883,
             "username": "",
             "password": "",
-            "base_topic": "sunmind",
+            "base_topic": "e-sunmind",
             "discovery_prefix": "homeassistant",
-            "client_id": "sunmind-addon",
+            "client_id": "e-sunmind-addon",
         },
     }
     if not OPTIONS_FILE.exists():
