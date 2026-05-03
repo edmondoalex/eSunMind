@@ -1,0 +1,51 @@
+name: e-SunMind
+slug: e_sunmind
+description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
+version: "0.2.0"
+arch: [amd64, aarch64, armhf, armv7, i386]
+init: false
+startup: services
+boot: auto
+host_network: true
+homeassistant_api: true
+hassio_api: true
+panel_icon: mdi:white-balance-sunny
+panel_title: e-SunMind
+ingress: true
+ingress_port: 1977
+ports:
+  1977/tcp: 1977
+ports_description:
+  1977/tcp: "Web UI (ingress/proxy)"
+options:
+  log_level: info
+  latitude: 44.6973
+  longitude: 7.8683
+  timezone: "Europe/Rome"
+  interval_minutes: 15
+  location_query: ""
+  mqtt:
+    enabled: false
+    host: "core-mosquitto"
+    port: 1883
+    username: ""
+    password: ""
+    base_topic: "sunmind"
+    discovery_prefix: "homeassistant"
+    client_id: "sunmind-addon"
+schema:
+  log_level: list(trace|debug|info|warning|error)
+  latitude: float
+  longitude: float
+  timezone: str
+  interval_minutes: int(1,1440)
+  location_query: str?
+  mqtt:
+    enabled: bool
+    host: str
+    port: port
+    username: str?
+    password: password?
+    base_topic: str
+    discovery_prefix: str
+    client_id: str

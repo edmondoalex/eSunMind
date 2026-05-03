@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>e-SunMind</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #0b1726; color: #f3f7ff; }
+    .wrap { max-width: 920px; margin: 0 auto; padding: 20px; }
+    .card { background: #14263c; border: 1px solid #264261; border-radius: 10px; padding: 14px; margin-top: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .k { color: #9fc3ea; font-size: 13px; }
+    .v { font-size: 18px; font-weight: 700; margin-top: 4px; }
+    h1 { margin: 0 0 8px; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>e-SunMind</h1>
+    <div class="card">
+      <div id="meta">Caricamento dati...</div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="k">Sun Altitude</div><div class="v" id="sun_alt">-</div></div>
+      <div class="card"><div class="k">Sun Azimuth</div><div class="v" id="sun_az">-</div></div>
+      <div class="card"><div class="k">Moon Altitude</div><div class="v" id="moon_alt">-</div></div>
+      <div class="card"><div class="k">Moon Azimuth</div><div class="v" id="moon_az">-</div></div>
+      <div class="card"><div class="k">Moon Illumination</div><div class="v" id="moon_frac">-</div></div>
+    </div>
+    <div class="card">
+      <div class="k">Dati completi</div>
+      <pre id="json"></pre>
+    </div>
+  </div>
+  <script>
+    async function loadData() {
+      const r = await fetch("./api/data");
+      const d = await r.json();
+      if (!d || d.error) {
+        document.getElementById("meta").textContent = "Dati non pronti";
+        return;
+      }
+      const c = d.coordinates || {};
+      document.getElementById("meta").textContent = `${d.timestamp_local} | ${d.timezone} | lat ${c.latitude}, lon ${c.longitude}`;
+      document.getElementById("sun_alt").textContent = (d.sun_position?.altitude ?? 0).toFixed(4);
+      document.getElementById("sun_az").textContent = (d.sun_position?.azimuth ?? 0).toFixed(4);
+      document.getElementById("moon_alt").textContent = (d.moon_position?.altitude ?? 0).toFixed(4);
+      document.getElementById("moon_az").textContent = (d.moon_position?.azimuth ?? 0).toFixed(4);
+      document.getElementById("moon_frac").textContent = ((d.moon_illumination?.fraction ?? 0) * 100).toFixed(2) + "%";
+      document.getElementById("json").textContent = JSON.stringify(d, null, 2);
+    }
+    loadData();
+    setInterval(loadData, 10000);
+  </script>
+</body>
+</html>
