@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.9"
+APP_VERSION = "0.2.10"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -120,8 +120,11 @@ def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float
     azim = int(fs.get("azimuth", 0))
     kwp = float(fs.get("kwp", 6.0))
 
-    # Public API works without key: keep the empty segment in URL.
-    url = f"https://api.forecast.solar/{key_seg}/estimate/{latitude}/{longitude}/{decl}/{azim}/{kwp}"
+    # Public API works without key: omit key segment completely.
+    if key_seg:
+        url = f"https://api.forecast.solar/{key_seg}/estimate/{latitude}/{longitude}/{decl}/{azim}/{kwp}"
+    else:
+        url = f"https://api.forecast.solar/estimate/{latitude}/{longitude}/{decl}/{azim}/{kwp}"
     try:
         with urlopen(url, timeout=20) as resp:
             payload = json.loads(resp.read().decode("utf-8"))
