@@ -12,9 +12,19 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from geopy.geocoders import Nominatim
-from suncalc import get_moon_position, get_moon_times, get_position, get_times
+from suncalc import get_position, get_times
 
-APP_VERSION = "0.2.1"
+try:
+    from suncalc import get_moon_position as _get_moon_position  # type: ignore
+except Exception:
+    _get_moon_position = None
+
+try:
+    from suncalc import get_moon_times as _get_moon_times  # type: ignore
+except Exception:
+    _get_moon_times = None
+
+APP_VERSION = "0.2.2"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/web", StaticFiles(directory="/app/web"), name="web")
 
@@ -99,12 +109,16 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
 
     sun_times = {k: _dt_to_iso(v.astimezone(tz)) for k, v in get_times(now_utc, longitude, latitude).items()}
     sun_position = get_position(now_utc, longitude, latitude)
-    moon_position = get_moon_position(now_utc, longitude, latitude)
+    if _get_moon_position is not None:
+        moon_position = _get_moon_position(now_utc, longitude, latitude)
+    else:
+        moon_position = {"altitude": None, "azimuth": None}
     moon_illumination = _moon_illumination(now_utc)
-    moon_times_raw = get_moon_times(now_utc, longitude, latitude)
     moon_times = {}
-    for key, value in moon_times_raw.items():
-        moon_times[key] = _dt_to_iso(value.astimezone(tz)) if hasattr(value, "astimezone") else value
+    if _get_moon_times is not None:
+        moon_times_raw = _get_moon_times(now_utc, longitude, latitude)
+        for key, value in moon_times_raw.items():
+            moon_times[key] = _dt_to_iso(value.astimezone(tz)) if hasattr(value, "astimezone") else value
 
     return {
         "timestamp_local": now.isoformat(),
