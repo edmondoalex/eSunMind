@@ -243,7 +243,7 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 }
 .splash-logo{
   position:relative;
-  transform:translateY(-6vh);
+  transform:none;
   width:min(72vw,420px);
   max-width:420px;
   min-width:180px;
@@ -283,7 +283,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     width:min(72vw,300px);
     min-width:160px;
     max-width:300px;
-    transform:translateY(-8vh);
+    transform:none;
   }
   .topbar{
     flex-wrap:wrap;
