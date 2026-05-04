@@ -1,7 +1,7 @@
 ﻿name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.2.42"
+version: "0.2.43"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services

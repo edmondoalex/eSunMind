@@ -30,6 +30,14 @@
           <label><input type="checkbox" v-model="showSimLine" @change="drawSolarOverlay" /> Linea SIMULATA</label>
           <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
           <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
+          <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
+        </div>
+        <div class="pv-az-controls" v-if="showPvAzLine">
+          <label>Azimut FV:
+            <input type="range" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @input="drawSolarOverlay" />
+          </label>
+          <input class="pv-az-input" type="number" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @change="drawSolarOverlay" />
+          <span class="pv-az-value">{{ pvAzimuthDeg }} deg</span>
         </div>
       </div>
 
@@ -227,6 +235,8 @@ let sunriseRay = null
 let sunsetRay = null
 let axisNS = null
 let axisWE = null
+let pvAzLine = null
+let pvAzMarker = null
 let compassMarkers = []
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
@@ -236,6 +246,8 @@ const showLiveLine = ref(true)
 const showSimLine = ref(true)
 const showAxisNS = ref(true)
 const showAxisWE = ref(true)
+const showPvAzLine = ref(false)
+const pvAzimuthDeg = ref(0)
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
 
@@ -461,7 +473,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, axisNS, axisWE].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   compassMarkers = []
 
@@ -494,6 +506,26 @@ function drawSolarOverlay() {
       weight: 1.6,
       opacity: 0.75,
       dashArray: '6,6',
+    }).addTo(map)
+  }
+
+  if (showPvAzLine.value) {
+    const bearing = (Number(pvAzimuthDeg.value) + 180 + 360) % 360
+    const pvPt = destinationPoint(lat.value, lon.value, bearing, cfg.value.sectorRadiusM)
+    pvAzLine = L.polyline([[lat.value, lon.value], pvPt], {
+      color: '#ff6a00',
+      weight: 4,
+      opacity: 0.95,
+      lineCap: 'round',
+    }).addTo(map)
+    pvAzMarker = L.marker(pvPt, {
+      icon: L.divIcon({
+        className: 'fv-icon-wrap',
+        html: '<span class="fv-icon">FV</span>',
+        iconSize: [28, 20],
+        iconAnchor: [14, 10],
+      }),
+      interactive: false,
     }).addTo(map)
   }
 
@@ -617,6 +649,7 @@ async function loadData() {
         azimuth: Number(fso.azimuth ?? 0),
         kwp: Number(fso.kwp ?? 6.0),
       }
+      if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
     } catch (_) {
       // no-op
     }
@@ -709,6 +742,23 @@ input[type='range']{width:100%}
 .time-meta{font-size:12px;color:#dfe8f6;margin-top:4px}
 .toggles{display:flex;gap:14px;margin-top:6px;font-size:12px;color:#dfe8f6}
 .toggles label{display:flex;align-items:center;gap:6px}
+.pv-az-controls{display:flex;align-items:center;gap:10px;margin-top:8px;font-size:12px;color:#dfe8f6}
+.pv-az-controls label{display:flex;align-items:center;gap:8px;min-width:280px}
+.pv-az-controls input[type='range']{width:220px}
+.pv-az-input{width:84px;padding:6px 8px;border-radius:8px;border:1px solid var(--border);background:#0f1621;color:var(--text)}
+.pv-az-value{min-width:70px;color:#ffd7a8}
+.fv-icon-wrap{background:transparent;border:none}
+.fv-icon{
+  display:inline-block;
+  padding:2px 6px;
+  border-radius:8px;
+  font-size:10px;
+  font-weight:700;
+  color:#092018;
+  background:linear-gradient(180deg,#7bf7d5,#2dd4bf);
+  border:1px solid rgba(175,255,240,.8);
+  box-shadow:0 0 8px rgba(45,212,191,.45);
+}
 .map-wrap{height:68vh;min-height:420px}
 #solar-map{width:100%;height:100%}
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
