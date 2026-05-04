@@ -16,5 +16,5 @@ COPY config.yaml /app/config.yaml
 
 RUN pip install --no-cache-dir fastapi uvicorn[standard] suncalc pytz geopy paho-mqtt astral
 
-EXPOSE 1977
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "1977"]
+EXPOSE 1980
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "1980"]
