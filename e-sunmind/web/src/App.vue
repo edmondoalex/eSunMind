@@ -31,6 +31,7 @@
           <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
           <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
           <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
+          <label><input type="checkbox" v-model="weatherAnimEnabled" /> Animazione meteo</label>
         </div>
         <div class="pv-az-controls" v-if="showPvAzLine">
           <label>Azimut FV:
@@ -43,6 +44,12 @@
 
       <div class="map-wrap">
         <div id="solar-map"></div>
+        <canvas
+          v-show="weatherAnimEnabled"
+          ref="weatherCanvasEl"
+          class="weather-overlay-canvas"
+          aria-hidden="true"
+        ></canvas>
       </div>
 
       <div class="panel">
@@ -336,6 +343,12 @@ let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
 let compassMarkers = []
+const weatherAnimEnabled = ref(true)
+const weatherCanvasEl = ref(null)
+let weatherRafId = 0
+let weatherLastTs = 0
+let weatherClouds = []
+let weatherRain = []
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -384,6 +397,26 @@ const weatherWindDirDeg = computed(() => weatherNorm.value?.wind_from_direction_
 const weatherCloudPct = computed(() => weatherNorm.value?.cloud_area_fraction_pct)
 const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_mm)
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
+const weatherWindVec = computed(() => {
+  const dir = Number(weatherWindDirDeg.value)
+  const speed = Number(weatherWindMs.value)
+  const s = Number.isFinite(speed) ? Math.max(0, Math.min(16, speed)) : 2
+  const a = Number.isFinite(dir) ? (dir * Math.PI) / 180 : 180 * (Math.PI / 180)
+  return {
+    vx: Math.sin(a) * s * 0.5,
+    vy: Math.cos(a) * s * 0.5,
+  }
+})
+const weatherCloudIntensity = computed(() => {
+  const c = Number(weatherCloudPct.value)
+  if (!Number.isFinite(c)) return 0.35
+  return Math.max(0.08, Math.min(0.85, c / 100))
+})
+const weatherRainIntensity = computed(() => {
+  const r = Number(weatherNext1hMm.value)
+  if (!Number.isFinite(r) || r <= 0) return 0
+  return Math.max(0.08, Math.min(1, r / 3))
+})
 const weatherSeries = computed(() => {
   const ts = data.value?.weather?.payload?.properties?.timeseries
   if (!Array.isArray(ts)) return []
@@ -634,6 +667,116 @@ function onWeatherChartMove(evt) {
 }
 function onWeatherChartLeave() {
   weatherHoverPoint.value = null
+}
+
+function resizeWeatherCanvas() {
+  const cv = weatherCanvasEl.value
+  if (!cv) return
+  const rect = cv.getBoundingClientRect()
+  const ratio = window.devicePixelRatio || 1
+  const w = Math.max(1, Math.floor(rect.width * ratio))
+  const h = Math.max(1, Math.floor(rect.height * ratio))
+  if (cv.width !== w || cv.height !== h) {
+    cv.width = w
+    cv.height = h
+  }
+}
+
+function seedWeatherParticles() {
+  const cv = weatherCanvasEl.value
+  if (!cv) return
+  const w = cv.width
+  const h = cv.height
+  weatherClouds = Array.from({ length: 18 }, () => ({
+    x: Math.random() * w,
+    y: (Math.random() * h * 0.45) + 10,
+    r: 28 + Math.random() * 64,
+    a: 0.06 + Math.random() * 0.14,
+  }))
+  weatherRain = Array.from({ length: 160 }, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    l: 8 + Math.random() * 14,
+    v: 120 + Math.random() * 180,
+    a: 0.10 + Math.random() * 0.25,
+  }))
+}
+
+function drawWeatherOverlayFrame(ts) {
+  const cv = weatherCanvasEl.value
+  if (!cv || !weatherAnimEnabled.value || tab.value !== 'user') return
+  if (!weatherLastTs) weatherLastTs = ts
+  const dt = Math.max(0.001, Math.min(0.05, (ts - weatherLastTs) / 1000))
+  weatherLastTs = ts
+
+  const ctx = cv.getContext('2d')
+  if (!ctx) return
+  const w = cv.width
+  const h = cv.height
+  ctx.clearRect(0, 0, w, h)
+
+  const wind = weatherWindVec.value
+  const cloudI = weatherCloudIntensity.value
+  const rainI = weatherRainIntensity.value
+
+  if (!weatherClouds.length || !weatherRain.length) seedWeatherParticles()
+
+  for (const c of weatherClouds) {
+    c.x += wind.vx * dt * 18
+    c.y += wind.vy * dt * 3
+    if (c.x > w + c.r) c.x = -c.r
+    if (c.x < -c.r) c.x = w + c.r
+    if (c.y > h * 0.55) c.y = 5
+    if (c.y < 5) c.y = h * 0.45
+    const grad = ctx.createRadialGradient(c.x, c.y, c.r * 0.15, c.x, c.y, c.r)
+    grad.addColorStop(0, `rgba(185,215,230,${(c.a * cloudI * 1.8).toFixed(3)})`)
+    grad.addColorStop(1, 'rgba(185,215,230,0)')
+    ctx.fillStyle = grad
+    ctx.beginPath()
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2)
+    ctx.fill()
+  }
+
+  if (rainI > 0.02) {
+    const sx = wind.vx * 14
+    const sy = 220 + Math.abs(wind.vy * 10)
+    for (const p of weatherRain) {
+      p.x += sx * dt + wind.vx * dt * 20
+      p.y += (p.v + sy) * dt
+      if (p.y > h + 20) {
+        p.y = -10
+        p.x = Math.random() * w
+      }
+      if (p.x > w + 20) p.x = -10
+      if (p.x < -20) p.x = w + 10
+      ctx.strokeStyle = `rgba(120,228,255,${(p.a * rainI).toFixed(3)})`
+      ctx.lineWidth = 1.1
+      ctx.beginPath()
+      ctx.moveTo(p.x, p.y)
+      ctx.lineTo(p.x + sx * 0.08, p.y + p.l)
+      ctx.stroke()
+    }
+  }
+
+  weatherRafId = requestAnimationFrame(drawWeatherOverlayFrame)
+}
+
+function startWeatherAnimation() {
+  if (weatherRafId) cancelAnimationFrame(weatherRafId)
+  weatherLastTs = 0
+  resizeWeatherCanvas()
+  seedWeatherParticles()
+  weatherRafId = requestAnimationFrame(drawWeatherOverlayFrame)
+}
+
+function stopWeatherAnimation() {
+  if (weatherRafId) {
+    cancelAnimationFrame(weatherRafId)
+    weatherRafId = 0
+  }
+  const cv = weatherCanvasEl.value
+  const ctx = cv?.getContext('2d')
+  if (ctx && cv) ctx.clearRect(0, 0, cv.width, cv.height)
 }
 function onChartMove(evt) {
   const series = fvTodaySeries.value
@@ -932,18 +1075,33 @@ onMounted(() => {
   const idx = rounded
   if (idx >= 0) timeIndex.value = idx
   loadData()
+  window.addEventListener('resize', resizeWeatherCanvas)
+  startWeatherAnimation()
   setTimeout(() => {
     showSplash.value = false
   }, 3000)
 })
-onBeforeUnmount(() => { if (map) { map.remove(); map = null } })
+onBeforeUnmount(() => {
+  if (map) { map.remove(); map = null }
+  stopWeatherAnimation()
+  window.removeEventListener('resize', resizeWeatherCanvas)
+})
 
 watch(tab, async (val) => {
   if (val === 'user' && map) {
     await nextTick()
     map.invalidateSize()
     drawSolarOverlay()
+    resizeWeatherCanvas()
+    if (weatherAnimEnabled.value) startWeatherAnimation()
+  } else {
+    stopWeatherAnimation()
   }
+})
+
+watch(weatherAnimEnabled, (enabled) => {
+  if (enabled && tab.value === 'user') startWeatherAnimation()
+  else stopWeatherAnimation()
 })
 </script>
 
@@ -1005,6 +1163,16 @@ input[type='range']{width:100%}
 }
 .map-wrap{height:68vh;min-height:420px}
 #solar-map{width:100%;height:100%}
+.map-wrap{position:relative}
+.weather-overlay-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+  z-index:450;
+  mix-blend-mode:screen;
+}
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
 .tech-main{padding:14px;display:grid;gap:12px}
