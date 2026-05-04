@@ -169,6 +169,48 @@
       </div>
 
       <div class="panel" v-show="userExpanded">
+        <div class="kpi chart-kpi">
+          <strong>Qualita aria - Grafico 24h</strong>
+          <svg
+            class="airq-chart"
+            viewBox="0 0 900 250"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Grafico qualità aria 24 ore"
+            @mousemove="onAirqChartMove"
+            @mouseleave="onAirqChartLeave"
+          >
+            <line x1="50" y1="190" x2="870" y2="190" class="chart-axis" />
+            <line x1="50" y1="24" x2="50" y2="190" class="chart-axis" />
+            <line x1="870" y1="24" x2="870" y2="190" class="chart-axis" />
+            <line v-for="t in airqTicks" :key="`aqt-${t}`" x1="50" :y1="airqY(t)" x2="870" :y2="airqY(t)" class="chart-grid" />
+            <line v-for="(_, i) in airqSeries" v-if="i % 3 === 0" :key="`aqx-${i}`" :x1="airqX(i)" y1="24" :x2="airqX(i)" y2="190" class="chart-grid-v" />
+
+            <polyline :points="airqEuPoints" class="airq-eu-line" />
+            <polyline :points="airqPm25Points" class="airq-pm25-line" />
+            <polyline :points="airqPm10Points" class="airq-pm10-line" />
+
+            <line v-if="airqHover" :x1="airqHover.x" :x2="airqHover.x" y1="24" y2="190" class="chart-hover-line" />
+            <g v-if="airqHover" :transform="`translate(${airqTipX},${airqTipY})`">
+              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="220" height="66" />
+              <text x="8" y="15" class="chart-tip-t1">{{ airqHover.time }}</text>
+              <text x="8" y="31" class="chart-tip-t2">AQI EU: {{ fmt0(airqHover.eu) }}</text>
+              <text x="8" y="47" class="chart-tip-t2">PM2.5: {{ fmt(airqHover.pm25) }} | PM10: {{ fmt(airqHover.pm10) }}</text>
+              <text x="8" y="61" class="chart-tip-t2">AQI US: {{ fmt0(airqHover.us) }}</text>
+            </g>
+
+            <text v-for="t in airqTicks" :key="`aql-${t}`" x="42" :y="airqY(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
+            <text v-for="(p, i) in airqSeries" v-if="i % 3 === 0 || i === airqSeries.length - 1" :key="`aqxl-${i}`" :x="airqX(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
+            <text x="18" y="20" class="axis-title">indice</text>
+            <text x="872" y="224" class="axis-title-x">Ora</text>
+          </svg>
+          <div class="chart-meta">
+            Giallo: AQI EU | Azzurro: PM2.5 | Arancio: PM10
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" v-show="userExpanded">
         <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
         <div class="kpi"><strong>FV Oggi:</strong> {{ fmt0(fvTodayWh) }} Wh</div>
         <div class="kpi"><strong>FV Domani:</strong> {{ fmt0(fvTomorrowWh) }} Wh</div>
@@ -385,6 +427,11 @@
         </section>
 
         <section class="card" v-show="techExpanded">
+          <h3>Risposta completa Meteo Open-Meteo (raw)</h3>
+          <pre class="json">{{ weatherOpenMeteoRawText }}</pre>
+        </section>
+
+        <section class="card" v-show="techExpanded">
           <h3>Risposta completa Air Quality (raw)</h3>
           <pre class="json">{{ airqRawText }}</pre>
         </section>
@@ -514,6 +561,11 @@ const weatherRawText = computed(() => {
   if (!raw) return 'Nessun payload weather disponibile.'
   return JSON.stringify(raw, null, 2)
 })
+const weatherOpenMeteoRawText = computed(() => {
+  const raw = data.value?.weather_open_meteo
+  if (!raw) return 'Nessun payload weather_open_meteo disponibile.'
+  return JSON.stringify(raw, null, 2)
+})
 const airqRawText = computed(() => {
   const raw = data.value?.air_quality
   if (!raw) return 'Nessun payload air_quality disponibile.'
@@ -529,6 +581,55 @@ const airqNo2 = computed(() => airqNorm.value?.nitrogen_dioxide)
 const airqO3 = computed(() => airqNorm.value?.ozone)
 const airqCo = computed(() => airqNorm.value?.carbon_monoxide)
 const airqSo2 = computed(() => airqNorm.value?.sulphur_dioxide)
+const airqSeries = computed(() => {
+  const h = data.value?.air_quality?.payload?.hourly
+  if (!h || !Array.isArray(h.time)) return []
+  const times = h.time
+  const eu = h.european_aqi || []
+  const us = h.us_aqi || []
+  const pm25 = h.pm2_5 || []
+  const pm10 = h.pm10 || []
+  const rows = []
+  for (let i = 0; i < Math.min(24, times.length); i += 1) {
+    const t = String(times[i] || '')
+    rows.push({
+      time: t,
+      hhmm: t.length >= 16 ? t.slice(11, 16) : '--:--',
+      eu: Number(eu[i]),
+      us: Number(us[i]),
+      pm25: Number(pm25[i]),
+      pm10: Number(pm10[i]),
+    })
+  }
+  return rows
+})
+const airqMax = computed(() => {
+  if (!airqSeries.value.length) return 100
+  const vals = []
+  for (const r of airqSeries.value) {
+    for (const v of [r.eu, r.pm25, r.pm10]) {
+      if (Number.isFinite(v)) vals.push(v)
+    }
+  }
+  return vals.length ? Math.max(20, ...vals) : 100
+})
+const airqTicks = computed(() => {
+  const m = airqMax.value
+  return [0, m * 0.25, m * 0.5, m * 0.75, m]
+})
+const airqEuPoints = computed(() => airqSeries.value.map((p, i) => `${airqX(i).toFixed(1)},${airqY(p.eu).toFixed(1)}`).join(' '))
+const airqPm25Points = computed(() => airqSeries.value.map((p, i) => `${airqX(i).toFixed(1)},${airqY(p.pm25).toFixed(1)}`).join(' '))
+const airqPm10Points = computed(() => airqSeries.value.map((p, i) => `${airqX(i).toFixed(1)},${airqY(p.pm10).toFixed(1)}`).join(' '))
+const airqHover = ref(null)
+const airqTipX = computed(() => {
+  if (!airqHover.value) return 0
+  return airqHover.value.x > 690 ? airqHover.value.x - 228 : airqHover.value.x + 8
+})
+const airqTipY = computed(() => {
+  if (!airqHover.value) return 0
+  const y = airqHover.value.y - 74
+  return y < 24 ? 24 : y
+})
 const weatherNorm = computed(() => data.value?.weather?.normalized || null)
 const weatherProvider = computed(() => data.value?.weather?.provider || null)
 const weatherTime = computed(() => weatherNorm.value?.time || null)
@@ -881,6 +982,32 @@ function yFromW(w) {
 function fmtHourTick(minute) {
   const h = Math.floor(Number(minute) / 60)
   return `${String(h).padStart(2, '0')}:00`
+}
+function airqX(i) {
+  const n = Math.max(1, airqSeries.value.length - 1)
+  return 50 + (Number(i) / n) * 820
+}
+function airqY(v) {
+  const m = Math.max(1, airqMax.value)
+  const vv = Number(v)
+  const val = Number.isFinite(vv) ? vv : 0
+  return 190 - (val / m) * 166
+}
+function onAirqChartMove(evt) {
+  const s = airqSeries.value
+  if (!s.length) {
+    airqHover.value = null
+    return
+  }
+  const rect = evt.currentTarget.getBoundingClientRect()
+  const relX = evt.clientX - rect.left
+  const x = (relX / rect.width) * 900
+  const idx = Math.max(0, Math.min(s.length - 1, Math.round(((x - 50) / 820) * (s.length - 1))))
+  const p = s[idx]
+  airqHover.value = { ...p, x: airqX(idx), y: airqY(p.eu) }
+}
+function onAirqChartLeave() {
+  airqHover.value = null
 }
 function weatherXFromIdx(idx) {
   const n = Math.max(1, weatherSeries.value.length - 1)
@@ -1599,6 +1726,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-kpi{grid-column:1 / -1}
 .fv-chart{width:100%;height:250px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
 .weather-chart{width:100%;height:270px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
+.airq-chart{width:100%;height:270px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
 .chart-axis{stroke:#607086;stroke-width:1}
 .chart-grid{stroke:#2d3b4d;stroke-width:.8;opacity:.55}
 .chart-grid-v{stroke:#243244;stroke-width:.8;opacity:.4}
@@ -1613,6 +1741,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .weather-pressure-line{fill:none;stroke:#a78bfa;stroke-width:1.8;stroke-dasharray:2,4;opacity:.9}
 .weather-pressure-dot{fill:#ddd6fe;stroke:#a78bfa;stroke-width:.8}
 .weather-rain-bar{fill:rgba(45,212,191,.46);stroke:rgba(125,242,228,.65);stroke-width:.8}
+.airq-eu-line{fill:none;stroke:#f2c235;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.airq-pm25-line{fill:none;stroke:#4ad2ff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
+.airq-pm10-line{fill:none;stroke:#ff9f43;stroke-width:2;stroke-dasharray:6,4;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
 .axis-label-y-right-rain{text-anchor:start;fill:#7df2e4}
 .axis-label-y-right-wind{text-anchor:start;fill:#8cecff}
 .axis-title-wind{fill:#8cecff}

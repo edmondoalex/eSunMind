@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.78"
+APP_VERSION = "0.2.79"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -40,6 +40,7 @@ OPTIONS_FILE = Path("/data/options.json")
 LOCAL_OPTIONS_FILE = Path("/data/local_options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
 WEATHER_FILE = Path("/data/weather_met.json")
+WEATHER_OPEN_METEO_FILE = Path("/data/weather_open_meteo.json")
 AIR_QUALITY_FILE = Path("/data/air_quality_openmeteo.json")
 STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
@@ -422,6 +423,15 @@ def _read_weather_cache() -> dict[str, Any] | None:
         return None
 
 
+def _read_weather_open_meteo_cache() -> dict[str, Any] | None:
+    if not WEATHER_OPEN_METEO_FILE.exists():
+        return None
+    try:
+        return json.loads(WEATHER_OPEN_METEO_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
 def _read_air_quality_cache() -> dict[str, Any] | None:
     if not AIR_QUALITY_FILE.exists():
         return None
@@ -624,6 +634,7 @@ async def _worker() -> None:
                             WORKER_STATE["forecast_backoff_until_ts"] = now_ts + FORECAST_MIN_INTERVAL_SECONDS
 
             weather = None
+            weather_open_meteo = None
             w_cfg = cfg.get("weather", {}) or {}
             if w_cfg.get("enabled", True):
                 now_ts = time.time()
@@ -638,6 +649,21 @@ async def _worker() -> None:
                         weather["_fetched_at_ts"] = now_ts
                         weather["_cache_hit"] = False
                         WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+
+                # Always keep a dedicated Open-Meteo raw payload for technical comparison.
+                wom_cache = _read_weather_open_meteo_cache()
+                wom_last_ts = float((wom_cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
+                if (wom_cache is not None) and (now_ts - wom_last_ts < WEATHER_MIN_INTERVAL_SECONDS):
+                    weather_open_meteo = dict(wom_cache)
+                    weather_open_meteo["_cache_hit"] = True
+                else:
+                    weather_open_meteo = _fetch_weather_open_meteo(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                    if isinstance(weather_open_meteo, dict):
+                        weather_open_meteo["_fetched_at_ts"] = now_ts
+                        weather_open_meteo["_cache_hit"] = False
+                        WEATHER_OPEN_METEO_FILE.write_text(
+                            json.dumps(weather_open_meteo, ensure_ascii=False, indent=2), encoding="utf-8"
+                        )
             airq = None
             aq_cfg = cfg.get("air_quality", {}) or {}
             if aq_cfg.get("enabled", True):
@@ -658,6 +684,7 @@ async def _worker() -> None:
             data["pv_live"] = pv_live
             data["external_temp_live"] = temp_live
             data["weather"] = weather
+            data["weather_open_meteo"] = weather_open_meteo
             data["air_quality"] = airq
             data["forecast_solar"] = forecast
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -883,6 +910,7 @@ async def options_set_base(payload: dict):
                 FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
 
         weather = None
+        weather_open_meteo = None
         if cfg.get("weather", {}).get("enabled", True):
             weather = _fetch_weather(cfg, float(coords["latitude"]), float(coords["longitude"]))
             if isinstance(weather, dict):
@@ -890,6 +918,15 @@ async def options_set_base(payload: dict):
                 weather["_cache_hit"] = False
                 now_data["weather"] = weather
                 WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            weather_open_meteo = _fetch_weather_open_meteo(cfg, float(coords["latitude"]), float(coords["longitude"]))
+            if isinstance(weather_open_meteo, dict):
+                weather_open_meteo["_fetched_at_ts"] = time.time()
+                weather_open_meteo["_cache_hit"] = False
+                now_data["weather_open_meteo"] = weather_open_meteo
+                WEATHER_OPEN_METEO_FILE.write_text(
+                    json.dumps(weather_open_meteo, ensure_ascii=False, indent=2), encoding="utf-8"
+                )
 
         now_data["pv_live"] = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
         now_data["external_temp_live"] = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
