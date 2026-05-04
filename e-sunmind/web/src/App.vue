@@ -46,6 +46,28 @@
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
         <div class="kpi">Ora simulata: {{ selectedTimeLabel }}</div>
       </div>
+
+      <div class="panel">
+        <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
+        <div class="kpi"><strong>FV Oggi:</strong> {{ fmt0(fvTodayWh) }} Wh</div>
+        <div class="kpi"><strong>FV Domani:</strong> {{ fmt0(fvTomorrowWh) }} Wh</div>
+        <div class="kpi"><strong>FV Attuale:</strong> {{ fmt0(fvCurrentW) }} W</div>
+        <div class="kpi"><strong>FV Picco oggi:</strong> {{ fmt0(fvPeakTodayW) }} W</div>
+        <div class="kpi"><strong>Ultimo fetch:</strong> {{ forecastFetchedAtText }}</div>
+      </div>
+
+      <div class="panel">
+        <div class="kpi chart-kpi">
+          <strong>Grafico FV Oggi (W)</strong>
+          <svg class="fv-chart" viewBox="0 0 700 180" preserveAspectRatio="none" role="img" aria-label="Curva produzione FV giornaliera">
+            <line x1="40" y1="150" x2="680" y2="150" class="chart-axis" />
+            <line x1="40" y1="20" x2="40" y2="150" class="chart-axis" />
+            <polyline :points="fvChartPoints" class="chart-line" />
+            <line :x1="fvNowX" :x2="fvNowX" y1="20" y2="150" class="chart-now" />
+          </svg>
+          <div class="chart-meta">0:00 → 23:59 | picco: {{ fmt0(fvPeakTodayW) }} W</div>
+        </div>
+      </div>
     </template>
 
     <template v-else>
@@ -142,9 +164,85 @@ const forecastConfigText = computed(() => {
   }, null, 2)
 })
 
+const forecastResult = computed(() => data.value?.forecast_solar?.payload?.result || null)
+const forecastOk = computed(() => Boolean(data.value?.forecast_solar?.ok))
+const fvTodayWh = computed(() => {
+  const d = forecastResult.value?.watt_hours_day
+  if (!d || typeof d !== 'object') return null
+  const keys = Object.keys(d).sort()
+  return keys.length ? Number(d[keys[0]]) : null
+})
+const fvTomorrowWh = computed(() => {
+  const d = forecastResult.value?.watt_hours_day
+  if (!d || typeof d !== 'object') return null
+  const keys = Object.keys(d).sort()
+  return keys.length > 1 ? Number(d[keys[1]]) : null
+})
+const fvCurrentW = computed(() => {
+  const w = forecastResult.value?.watts
+  if (!w || typeof w !== 'object') return null
+  const now = new Date()
+  const mk = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:00:00`
+  if (mk in w) return Number(w[mk])
+  const keys = Object.keys(w).sort()
+  return keys.length ? Number(w[keys[0]]) : null
+})
+const fvPeakTodayW = computed(() => {
+  const w = forecastResult.value?.watts
+  if (!w || typeof w !== 'object') return null
+  const now = new Date()
+  const dayPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const vals = Object.entries(w)
+    .filter(([k]) => String(k).startsWith(dayPrefix))
+    .map(([, v]) => Number(v))
+    .filter((v) => Number.isFinite(v))
+  if (!vals.length) return null
+  return Math.max(...vals)
+})
+const fvTodaySeries = computed(() => {
+  const w = forecastResult.value?.watts
+  if (!w || typeof w !== 'object') return []
+  const now = new Date()
+  const dayPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const series = Object.entries(w)
+    .filter(([k]) => String(k).startsWith(dayPrefix))
+    .map(([k, v]) => {
+      const hh = Number(String(k).slice(11, 13))
+      const mm = Number(String(k).slice(14, 16))
+      return { minute: (hh * 60) + mm, w: Number(v) }
+    })
+    .filter((x) => Number.isFinite(x.minute) && Number.isFinite(x.w))
+    .sort((a, b) => a.minute - b.minute)
+  return series
+})
+const fvChartPoints = computed(() => {
+  const s = fvTodaySeries.value
+  if (!s.length) return ''
+  const maxW = Math.max(1, ...s.map((x) => x.w))
+  return s.map((p) => {
+    const x = 40 + (p.minute / 1440) * 640
+    const y = 150 - (p.w / maxW) * 130
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  }).join(' ')
+})
+const fvNowX = computed(() => {
+  const now = new Date()
+  const minute = (now.getHours() * 60) + now.getMinutes()
+  return 40 + (minute / 1440) * 640
+})
+const forecastFetchedAtText = computed(() => {
+  const ts = Number(data.value?.forecast_solar?._fetched_at_ts)
+  if (!Number.isFinite(ts) || ts <= 0) return '-'
+  return new Date(ts * 1000).toLocaleString()
+})
+
 function fmt(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
   return Number(v).toFixed(2)
+}
+function fmt0(v) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
+  return Math.round(Number(v)).toString()
 }
 function toDeg(rad) { return (rad * 180) / Math.PI }
 function suncalcAzToCompassDeg(azimuthRad) { return (toDeg(azimuthRad) + 180 + 360) % 360 }
@@ -405,6 +503,12 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .small{font-size:12px}
 .note{font-size:12px;color:var(--muted)}
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}
+.chart-kpi{grid-column:1 / -1}
+.fv-chart{width:100%;height:220px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
+.chart-axis{stroke:#607086;stroke-width:1}
+.chart-line{fill:none;stroke:#f2c235;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-now{stroke:#2dd4bf;stroke-width:1.5;stroke-dasharray:6,5}
+.chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
 .cardinal{
   color:#d8e1eb;
   font-size:11px;
