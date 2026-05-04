@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.82"
+APP_VERSION = "0.2.83"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -349,17 +349,21 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
 
     state_raw = payload.get("state")
     attrs = payload.get("attributes") or {}
-    watts = None
+    numeric_value = None
     try:
-        watts = float(state_raw)
+        numeric_value = float(state_raw)
     except Exception:
-        watts = None
+        try:
+            numeric_value = float(str(state_raw).replace(",", "."))
+        except Exception:
+            numeric_value = None
     return {
         "ok": True,
         "entity_id": entity,
         "state": state_raw,
+        "value": numeric_value,
         "unit": attrs.get("unit_of_measurement"),
-        "watts": watts,
+        "watts": numeric_value,
         "friendly_name": attrs.get("friendly_name"),
         "last_updated": payload.get("last_updated"),
     }
