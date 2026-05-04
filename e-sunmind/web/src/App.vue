@@ -404,6 +404,7 @@ let weatherRafId = 0
 let weatherLastTs = 0
 let weatherClouds = []
 let weatherRain = []
+let blockTogglesInited = false
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -909,11 +910,11 @@ function drawWeatherOverlayFrame(ts) {
   }
 
   // Wind streaks, subtle and directional.
-  const windStrength = Math.min(1, Math.hypot(wind.vx, wind.vy) / 6)
+  const windStrength = Math.min(1, Math.hypot(wind.vx, wind.vy) / 5)
   if (windStrength > 0.04) {
-    ctx.strokeStyle = `rgba(90,220,255,${(0.05 + windStrength * 0.1).toFixed(3)})`
-    ctx.lineWidth = 0.8
-    for (let i = 0; i < 24; i += 1) {
+    ctx.strokeStyle = `rgba(70,210,255,${(0.12 + windStrength * 0.22).toFixed(3)})`
+    ctx.lineWidth = 1.2
+    for (let i = 0; i < 42; i += 1) {
       const bx = ((ts * 0.025 + i * 47) % (w + 40)) - 20
       const by = (i * 23) % (h * 0.75)
       const lx = wind.vx * 2.3
@@ -944,6 +945,26 @@ function stopWeatherAnimation() {
   const cv = weatherCanvasEl.value
   const ctx = cv?.getContext('2d')
   if (ctx && cv) ctx.clearRect(0, 0, cv.width, cv.height)
+}
+
+function initBlockToggles() {
+  if (blockTogglesInited) return
+  const roots = document.querySelectorAll('.panel, .card')
+  roots.forEach((el) => {
+    if (!(el instanceof HTMLElement)) return
+    if (el.querySelector(':scope > .block-toggle-inline')) return
+    el.classList.add('collapsible-block')
+    const t = document.createElement('div')
+    t.className = 'block-toggle-inline'
+    t.textContent = 'Riduci'
+    t.title = 'Click per ridurre/allargare'
+    t.addEventListener('click', () => {
+      const collapsed = el.classList.toggle('is-collapsed')
+      t.textContent = collapsed ? 'Allarga' : 'Riduci'
+    })
+    el.prepend(t)
+  })
+  blockTogglesInited = true
 }
 function onChartMove(evt) {
   const series = fvTodaySeries.value
@@ -1277,6 +1298,7 @@ onMounted(() => {
   loadData()
   window.addEventListener('resize', resizeWeatherCanvas)
   startWeatherAnimation()
+  initBlockToggles()
   setTimeout(() => {
     showSplash.value = false
   }, 3000)
@@ -1290,6 +1312,7 @@ onBeforeUnmount(() => {
 watch(tab, async (val) => {
   if (val === 'user' && map) {
     await nextTick()
+    initBlockToggles()
     map.invalidateSize()
     drawSolarOverlay()
     resizeWeatherCanvas()
@@ -1339,7 +1362,28 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn.ghost.active{border-color:var(--accent);color:#cffff5}
 .timeline{padding:8px 12px;background:#232830;border-bottom:1px solid #3b4048}
-.view-tools{padding:8px 12px;background:#1b2028;border-bottom:1px solid #2f3640}
+.view-tools{display:none}
+.collapsible-block{
+  position:relative;
+}
+.block-toggle-inline{
+  position:absolute;
+  top:6px;
+  left:8px;
+  z-index:2;
+  font-size:11px;
+  font-weight:700;
+  color:#9fe6ff;
+  cursor:pointer;
+  user-select:none;
+  padding:2px 6px;
+  border:1px solid rgba(160,220,255,.35);
+  border-radius:7px;
+  background:rgba(8,16,26,.55);
+}
+.collapsible-block.is-collapsed > :not(.block-toggle-inline){
+  display:none !important;
+}
 .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 input[type='range']{width:100%}
 .time-meta{font-size:12px;color:#dfe8f6;margin-top:4px}
