@@ -110,16 +110,16 @@
 
       <div class="panel">
         <div class="kpi chart-kpi">
-          <strong>Fotovoltaico - Totale previsto per giorno</strong>
+          <strong>Fotovoltaico - Potenza prevista ora per ora</strong>
           <div class="day-bars">
-            <div v-for="d in fvDayRows" :key="d.date" class="day-bar-item">
+            <div v-for="d in fvHourBars" :key="`h-${d.time}`" class="day-bar-item">
               <div class="day-bar-wrap">
-                <div class="day-bar" :style="{ height: `${d.pct}%` }" :title="`${d.dayName} ${d.dateLabel}: ${fmt0(d.wh)} Wh`"></div>
+                <div class="day-bar" :style="{ height: `${d.pct}%` }" :title="`${d.time}: ${fmt0(d.w)} W`"></div>
               </div>
-              <div class="day-bar-label">{{ d.dayShort }}</div>
+              <div class="day-bar-label">{{ d.showLabel ? d.time : '' }}</div>
             </div>
           </div>
-          <div class="chart-meta">Asse Y: energia giornaliera (Wh) normalizzata al massimo del periodo.</div>
+          <div class="chart-meta">Asse Y: potenza oraria (W) normalizzata al picco del giorno selezionato.</div>
         </div>
       </div>
 
@@ -373,6 +373,21 @@ const fvDayRows = computed(() => {
       dayShort,
       dateLabel,
       pct: Math.max(4, (x.wh / maxWh) * 100),
+    }
+  })
+})
+const fvHourBars = computed(() => {
+  const s = fvTodaySeries.value
+  if (!s.length) return []
+  const maxW = Math.max(...s.map((x) => x.w), 1)
+  return s.map((x, idx) => {
+    const hh = Math.floor(x.minute / 60)
+    const mm = x.minute % 60
+    return {
+      w: x.w,
+      pct: Math.max(3, (x.w / maxW) * 100),
+      time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+      showLabel: idx % 2 === 0,
     }
   })
 })
