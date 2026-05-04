@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.80"
+APP_VERSION = "0.2.81"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -53,6 +53,8 @@ WORKER_STATE: dict[str, Any] = {
     "forecast_last_fetch_ts": 0.0,
     "forecast_last_error": None,
     "forecast_backoff_until_ts": 0.0,
+    "mqtt_connected": False,
+    "mqtt_last_error": None,
 }
 
 
@@ -544,22 +546,44 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
         "sw_version": APP_VERSION,
     }
     sensors = [
-        ("sun_altitude", "Sun Altitude", "deg", None),
-        ("sun_azimuth", "Sun Azimuth", "deg", None),
-        ("moon_altitude", "Moon Altitude", "deg", None),
-        ("moon_azimuth", "Moon Azimuth", "deg", None),
-        ("moon_fraction", "Moon Illumination", "%", None),
-        ("pv_today_wh", "PV Forecast Today", "Wh", None),
-        ("pv_tomorrow_wh", "PV Forecast Tomorrow", "Wh", None),
+        ("sun_altitude", "Sun Altitude", "°", None, "measurement"),
+        ("sun_azimuth", "Sun Azimuth", "°", None, "measurement"),
+        ("sun_azimuth_compass", "Sun Azimuth Compass", "°", None, "measurement"),
+        ("moon_altitude", "Moon Altitude", "°", None, "measurement"),
+        ("moon_azimuth", "Moon Azimuth", "°", None, "measurement"),
+        ("moon_fraction", "Moon Illumination", "%", None, "measurement"),
+        ("moon_phase", "Moon Phase", None, None, "measurement"),
+        ("pv_today_wh", "PV Forecast Today", "Wh", "energy", "total"),
+        ("pv_tomorrow_wh", "PV Forecast Tomorrow", "Wh", "energy", "total"),
+        ("pv_now_w", "PV Forecast Current", "W", "power", "measurement"),
+        ("pv_live_w", "PV Real Power", "W", "power", "measurement"),
+        ("pv_live_ratio", "PV Real/Forecast Ratio", None, None, "measurement"),
+        ("external_temp_c", "External Temperature Real", "°C", "temperature", "measurement"),
+        ("weather_temp_c", "Weather Temperature", "°C", "temperature", "measurement"),
+        ("weather_humidity_pct", "Weather Humidity", "%", "humidity", "measurement"),
+        ("weather_pressure_hpa", "Weather Pressure", "hPa", "atmospheric_pressure", "measurement"),
+        ("weather_cloud_pct", "Weather Cloud Cover", "%", None, "measurement"),
+        ("weather_wind_ms", "Weather Wind Speed", "m/s", "wind_speed", "measurement"),
+        ("weather_wind_dir_deg", "Weather Wind Direction", "°", None, "measurement"),
+        ("weather_precip_1h_mm", "Weather Rain Next 1h", "mm", "precipitation", "measurement"),
+        ("weather_uv_index", "Weather UV Index", None, None, "measurement"),
+        ("airq_eu_aqi", "Air Quality EU AQI", None, "aqi", "measurement"),
+        ("airq_us_aqi", "Air Quality US AQI", None, "aqi", "measurement"),
+        ("airq_pm25", "Air Quality PM2.5", "µg/m³", "pm25", "measurement"),
+        ("airq_pm10", "Air Quality PM10", "µg/m³", "pm10", "measurement"),
+        ("airq_no2", "Air Quality NO2", "µg/m³", "nitrogen_dioxide", "measurement"),
+        ("airq_o3", "Air Quality O3", "µg/m³", "ozone", "measurement"),
     ]
-    for key, name, unit, dclass in sensors:
+    for key, name, unit, dclass, state_class in sensors:
         topic = f"{prefix}/sensor/sunmind/{key}/config"
         payload = {
             "name": name,
+            "object_id": f"sunmind_{key}",
             "unique_id": f"sunmind_{key}",
             "state_topic": f"{base}/state/{key}",
             "availability_topic": f"{base}/availability",
             "device": device,
+            "state_class": state_class,
         }
         if unit:
             payload["unit_of_measurement"] = unit
@@ -567,32 +591,89 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
             payload["device_class"] = dclass
         client.publish(topic, json.dumps(payload), retain=True)
 
+    # Diagnostic payloads for other addons/components.
+    diag_sensor = {
+        "name": "e-SunMind Runtime JSON",
+        "object_id": "sunmind_runtime_json",
+        "unique_id": "sunmind_runtime_json",
+        "state_topic": f"{base}/state/runtime_json",
+        "availability_topic": f"{base}/availability",
+        "icon": "mdi:code-json",
+        "entity_category": "diagnostic",
+        "device": device,
+    }
+    client.publish(
+        f"{prefix}/sensor/sunmind/runtime_json/config",
+        json.dumps(diag_sensor),
+        retain=True,
+    )
+
 
 def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str, Any]) -> None:
     base = str(cfg["mqtt"]["base_topic"]).strip() or "sunmind"
     sp = data.get("sun_position", {})
     mp = data.get("moon_position", {})
     mi = data.get("moon_illumination", {})
+    weather = (data.get("weather") or {}).get("normalized") or {}
+    airq = (data.get("air_quality") or {}).get("normalized") or {}
+    pv_live = data.get("pv_live") or {}
+    temp_live = data.get("external_temp_live") or {}
     mapping = {
         "sun_altitude": sp.get("altitude_deg"),
         "sun_azimuth": sp.get("azimuth_deg"),
+        "sun_azimuth_compass": sp.get("azimuth_compass_deg"),
         "moon_altitude": mp.get("altitude_deg"),
         "moon_azimuth": mp.get("azimuth_deg"),
         "moon_fraction": (float(mi.get("fraction", 0.0)) * 100.0),
+        "moon_phase": mi.get("phase"),
+        "external_temp_c": temp_live.get("value"),
+        "weather_temp_c": weather.get("air_temperature_c"),
+        "weather_humidity_pct": weather.get("relative_humidity_pct"),
+        "weather_pressure_hpa": weather.get("air_pressure_hpa"),
+        "weather_cloud_pct": weather.get("cloud_area_fraction_pct"),
+        "weather_wind_ms": weather.get("wind_speed_ms"),
+        "weather_wind_dir_deg": weather.get("wind_from_direction_deg"),
+        "weather_precip_1h_mm": weather.get("precipitation_next_1h_mm"),
+        "weather_uv_index": weather.get("uv_index"),
+        "airq_eu_aqi": airq.get("european_aqi"),
+        "airq_us_aqi": airq.get("us_aqi"),
+        "airq_pm25": airq.get("pm2_5"),
+        "airq_pm10": airq.get("pm10"),
+        "airq_no2": airq.get("nitrogen_dioxide"),
+        "airq_o3": airq.get("ozone"),
     }
     fs = data.get("forecast_solar", {}) or {}
-    day = ((fs.get("payload") or {}).get("result") or {}).get("watt_hours_day") or {}
+    fs_result = ((fs.get("payload") or {}).get("result") or {})
+    day = fs_result.get("watt_hours_day") or {}
     if isinstance(day, dict) and day:
         keys = sorted(day.keys())
         if len(keys) >= 1:
             mapping["pv_today_wh"] = day.get(keys[0])
         if len(keys) >= 2:
             mapping["pv_tomorrow_wh"] = day.get(keys[1])
+    watts = fs_result.get("watts") or {}
+    if isinstance(watts, dict) and watts:
+        now_key = max(watts.keys())
+        mapping["pv_now_w"] = watts.get(now_key)
+    if isinstance(pv_live, dict):
+        mapping["pv_live_w"] = pv_live.get("value")
+    pv_now = mapping.get("pv_now_w")
+    pv_real = mapping.get("pv_live_w")
+    try:
+        if pv_now is not None and float(pv_now) > 0 and pv_real is not None:
+            mapping["pv_live_ratio"] = float(pv_real) / float(pv_now)
+    except Exception:
+        pass
 
     client.publish(f"{base}/availability", "online", retain=True)
     for key, value in mapping.items():
         if value is not None:
             client.publish(f"{base}/state/{key}", f"{value}", retain=True)
+    client.publish(
+        f"{base}/state/runtime_json",
+        json.dumps(data, ensure_ascii=False),
+        retain=True,
+    )
 
 
 async def _worker() -> None:
@@ -713,8 +794,14 @@ async def _worker() -> None:
                     _mqtt_publish_discovery(mqtt_client, cfg)
                     mqtt_ready = True
                 _mqtt_publish_state(mqtt_client, cfg, data)
+                WORKER_STATE["mqtt_connected"] = True
+                WORKER_STATE["mqtt_last_error"] = None
             except Exception:
                 mqtt_ready = False
+                WORKER_STATE["mqtt_connected"] = False
+                WORKER_STATE["mqtt_last_error"] = "publish_or_connect_failed"
+        else:
+            WORKER_STATE["mqtt_connected"] = False
 
         interval = int(cfg.get("interval_minutes") or 15)
         await asyncio.sleep(max(60, interval * 60))
@@ -777,6 +864,25 @@ async def health():
                 "forecast_exists": FORECAST_FILE.exists(),
                 "state_exists": STATE_FILE.exists(),
             },
+        }
+    )
+
+
+@app.get("/api/mqtt/status")
+async def mqtt_status():
+    cfg = _load_options()
+    mc = (cfg.get("mqtt") or {})
+    return JSONResponse(
+        {
+            "ok": True,
+            "enabled": bool(mc.get("enabled")),
+            "host": str(mc.get("host") or ""),
+            "port": int(mc.get("port") or 1883),
+            "base_topic": str(mc.get("base_topic") or "e-sunmind"),
+            "discovery_prefix": str(mc.get("discovery_prefix") or "homeassistant"),
+            "client_id": str(mc.get("client_id") or "e-sunmind-addon"),
+            "connected": bool(WORKER_STATE.get("mqtt_connected")),
+            "last_error": WORKER_STATE.get("mqtt_last_error"),
         }
     )
 
