@@ -254,6 +254,34 @@
     <div v-show="tab==='tech'">
       <main class="tech-main">
         <section class="card">
+          <h3>Configurazione Base Addon</h3>
+          <div class="form-grid">
+            <label>Latitude
+              <input type="number" step="0.000001" v-model.number="baseForm.latitude" />
+            </label>
+            <label>Longitude
+              <input type="number" step="0.000001" v-model.number="baseForm.longitude" />
+            </label>
+            <label>Timezone
+              <input type="text" v-model="baseForm.timezone" />
+            </label>
+            <label>Interval minutes
+              <input type="number" min="1" max="1440" v-model.number="baseForm.interval_minutes" />
+            </label>
+            <label>Location query
+              <input type="text" v-model="baseForm.location_query" />
+            </label>
+            <label>PV actual entity id
+              <input type="text" v-model="baseForm.pv_actual_entity_id" />
+            </label>
+          </div>
+          <div class="actions-inline">
+            <button class="btn" @click="saveBaseSettings">Salva Config Base</button>
+            <span class="note">{{ baseSaveStatus }}</span>
+          </div>
+        </section>
+
+        <section class="card">
           <h3>Tarature Overlay</h3>
           <div class="form-grid">
             <label>Raggio percorso sole (m)
@@ -375,6 +403,15 @@ const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
+const baseForm = ref({
+  latitude: 44.6973,
+  longitude: 7.8683,
+  timezone: 'Europe/Rome',
+  interval_minutes: 15,
+  location_query: '',
+  pv_actual_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
+})
+const baseSaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const forecastConfigText = computed(() => {
@@ -1115,11 +1152,44 @@ async function loadData() {
         azimuth: Number(fso.azimuth ?? 0),
         kwp: Number(fso.kwp ?? 6.0),
       }
+      baseForm.value = {
+        latitude: Number(oj?.latitude ?? 44.6973),
+        longitude: Number(oj?.longitude ?? 7.8683),
+        timezone: String(oj?.timezone || 'Europe/Rome'),
+        interval_minutes: Number(oj?.interval_minutes ?? 15),
+        location_query: String(oj?.location_query || ''),
+        pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+      }
       if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
       if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
     } catch (_) {
       // no-op
     }
+  }
+}
+
+async function saveBaseSettings() {
+  baseSaveStatus.value = 'Salvataggio...'
+  try {
+    const payload = {
+      latitude: Number(baseForm.value.latitude),
+      longitude: Number(baseForm.value.longitude),
+      timezone: String(baseForm.value.timezone || 'Europe/Rome').trim(),
+      interval_minutes: Number(baseForm.value.interval_minutes ?? 15),
+      location_query: String(baseForm.value.location_query || ''),
+      pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),
+    }
+    const r = await fetch('/api/options/base', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
+    baseSaveStatus.value = 'Salvato e applicato.'
+    await loadData()
+  } catch (e) {
+    baseSaveStatus.value = `Errore salvataggio: ${e.message}`
   }
 }
 

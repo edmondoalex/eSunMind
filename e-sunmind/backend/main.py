@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.59"
+APP_VERSION = "0.2.60"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -694,6 +694,66 @@ async def options_set_forecast_solar(payload: dict):
         "forecast_refreshed_now": refreshed,
         "forecast_refresh_error": refresh_error,
         "forecast_url_now": refreshed_url,
+    })
+
+
+@app.post("/api/options/base")
+async def options_set_base(payload: dict):
+    if not isinstance(payload, dict):
+        return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
+
+    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id")
+
+    raw = _load_local_options_raw()
+    for k in keys:
+        if k in payload:
+            raw[k] = payload[k]
+    _save_local_options_raw(raw)
+
+    ha_raw = _load_options_raw()
+    for k in keys:
+        if k in payload:
+            ha_raw[k] = payload[k]
+    try:
+        _save_options_raw(ha_raw)
+        saved_ha = True
+    except Exception:
+        saved_ha = False
+
+    refresh_error = None
+    try:
+        cfg = _load_options()
+        now_data = _compute_data(cfg)
+        coords = now_data.get("coordinates", {}) or {}
+
+        forecast = None
+        if cfg.get("forecast_solar", {}).get("enabled"):
+            forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+            if isinstance(forecast, dict):
+                forecast["_fetched_at_ts"] = time.time()
+                forecast["_cache_hit"] = False
+                now_data["forecast_solar"] = forecast
+                FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        weather = None
+        if cfg.get("weather", {}).get("enabled", True):
+            weather = _fetch_weather_met(cfg, float(coords["latitude"]), float(coords["longitude"]))
+            if isinstance(weather, dict):
+                weather["_fetched_at_ts"] = time.time()
+                weather["_cache_hit"] = False
+                now_data["weather"] = weather
+                WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        now_data["pv_live"] = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
+        DATA_FILE.write_text(json.dumps(now_data, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception as exc:
+        refresh_error = str(exc)
+
+    return JSONResponse({
+        "ok": True,
+        "saved_to": str(LOCAL_OPTIONS_FILE),
+        "mirrored_to_ha_options": saved_ha,
+        "refresh_error": refresh_error,
     })
 
 
