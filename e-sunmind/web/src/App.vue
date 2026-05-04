@@ -78,9 +78,6 @@
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }}°C</div>
         <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
         <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }}°C</div>
-        <div class="kpi"><strong>Entita temp reale:</strong> {{ externalTempEntityId || '-' }}</div>
-        <div class="kpi"><strong>Stato lettura temp:</strong> {{ externalTempStatus }}</div>
-        <div class="kpi" v-if="externalTempError"><strong>Errore temp reale:</strong> {{ externalTempError }}</div>
         <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
         <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }}°)</div>
         <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
@@ -308,6 +305,14 @@
             <button class="btn" @click="saveBaseSettings">Salva Config Base</button>
             <span class="note">{{ baseSaveStatus }}</span>
           </div>
+          <div class="form-grid">
+            <div class="kpi"><strong>Entita temp reale:</strong> {{ externalTempEntityId || '-' }}</div>
+            <div class="kpi"><strong>Stato lettura temp:</strong> {{ externalTempStatus }}</div>
+            <div class="kpi"><strong>Errore temp reale:</strong> {{ externalTempError || '-' }}</div>
+            <div class="kpi"><strong>Entita FV reale:</strong> {{ pvLiveEntityId || '-' }}</div>
+            <div class="kpi"><strong>Stato lettura FV:</strong> {{ pvLiveStatus }}</div>
+            <div class="kpi"><strong>Errore FV reale:</strong> {{ pvLiveError || '-' }}</div>
+          </div>
         </section>
 
         <section class="card" v-show="techExpanded">
@@ -509,6 +514,9 @@ const externalTempC = computed(() => {
 const externalTempEntityId = computed(() => String(data.value?.external_temp_live?.entity_id || ''))
 const externalTempStatus = computed(() => (data.value?.external_temp_live?.ok ? 'ok' : 'errore'))
 const externalTempError = computed(() => String(data.value?.external_temp_live?.error || ''))
+const pvLiveEntityId = computed(() => String(data.value?.pv_live?.entity_id || ''))
+const pvLiveStatus = computed(() => (data.value?.pv_live?.ok ? 'ok' : 'errore'))
+const pvLiveError = computed(() => String(data.value?.pv_live?.error || ''))
 const tempDeltaC = computed(() => {
   if (externalTempC.value === null || externalTempC.value === undefined) return null
   if (weatherTempC.value === null || weatherTempC.value === undefined) return null

@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.73"
+APP_VERSION = "0.2.74"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -251,6 +251,17 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
     if not entity:
         return None
     token = os.environ.get("SUPERVISOR_TOKEN", "").strip()
+    if not token:
+        for path in (
+            "/run/s6/container_environment/SUPERVISOR_TOKEN",
+            "/var/run/s6/container_environment/SUPERVISOR_TOKEN",
+        ):
+            try:
+                token = Path(path).read_text(encoding="utf-8").strip()
+            except Exception:
+                token = token or ""
+            if token:
+                break
     if not token:
         return {"ok": False, "entity_id": entity, "error": "missing_supervisor_token"}
     url = f"http://supervisor/core/api/states/{quote(entity)}"
