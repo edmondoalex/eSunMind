@@ -960,18 +960,16 @@ function stopWeatherAnimation() {
 
 function initBlockToggles() {
   if (blockTogglesInited) return
-  const roots = document.querySelectorAll('.panel, .card')
+  const roots = document.querySelectorAll('.panel, .card, .map-wrap')
   roots.forEach((el) => {
     if (!(el instanceof HTMLElement)) return
     if (el.querySelector(':scope > .block-toggle-inline')) return
     el.classList.add('collapsible-block')
     const t = document.createElement('div')
     t.className = 'block-toggle-inline'
-    t.textContent = 'Riduci'
     t.title = 'Click per ridurre/allargare'
     t.addEventListener('click', () => {
-      const collapsed = el.classList.toggle('is-collapsed')
-      t.textContent = collapsed ? 'Allarga' : 'Riduci'
+      el.classList.toggle('is-collapsed')
     })
     el.prepend(t)
   })
@@ -1379,21 +1377,27 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 }
 .block-toggle-inline{
   position:absolute;
-  top:6px;
-  left:8px;
+  top:2px;
+  left:2px;
   z-index:2;
-  font-size:11px;
-  font-weight:700;
-  color:#9fe6ff;
   cursor:pointer;
   user-select:none;
-  padding:2px 6px;
-  border:1px solid rgba(160,220,255,.35);
-  border-radius:7px;
-  background:rgba(8,16,26,.55);
+  width:34px;
+  height:24px;
+  border:none;
+  border-radius:6px;
+  background:transparent;
+  color:transparent;
 }
-.collapsible-block.is-collapsed > :not(.block-toggle-inline){
+.collapsible-block.is-collapsed > :not(.block-toggle-inline):not(:nth-child(2)){
   display:none !important;
+}
+.map-wrap.collapsible-block.is-collapsed > :not(.block-toggle-inline){
+  display:none !important;
+}
+.map-wrap.collapsible-block.is-collapsed{
+  height:56px;
+  min-height:56px;
 }
 .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 input[type='range']{width:100%}
