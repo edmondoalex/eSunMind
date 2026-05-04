@@ -46,6 +46,7 @@
       </div>
 
       <div class="map-wrap">
+        <div class="map-block-title">Mappa Sole/Meteo</div>
         <div id="solar-map"></div>
         <canvas
           v-show="weatherAnimEnabled"
@@ -354,6 +355,11 @@
         </section>
 
         <section class="card" v-show="techExpanded">
+          <h3>Risposta completa SunCalc (raw)</h3>
+          <pre class="json">{{ sunCalcRawText }}</pre>
+        </section>
+
+        <section class="card" v-show="techExpanded">
           <h3>Risposta completa JSON runtime (raw)</h3>
           <pre class="json">{{ pretty }}</pre>
         </section>
@@ -434,6 +440,22 @@ const baseForm = ref({
 const baseSaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
+const sunCalcRawText = computed(() => {
+  if (!data.value) return 'Nessun dato'
+  const src = data.value
+  const suncalcOnly = {
+    timestamp_local: src.timestamp_local,
+    timezone: src.timezone,
+    coordinates: src.coordinates,
+    resolved_location: src.resolved_location,
+    sun_times: src.sun_times,
+    sun_position: src.sun_position,
+    moon_position: src.moon_position,
+    moon_illumination: src.moon_illumination,
+    moon_times: src.moon_times,
+  }
+  return JSON.stringify(suncalcOnly, null, 2)
+})
 const forecastConfigText = computed(() => {
   const fs = data.value?.forecast_solar
   if (!fs) return 'forecast_solar non disponibile nel payload corrente.'
@@ -1392,12 +1414,12 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .collapsible-block.is-collapsed > :not(.block-toggle-inline):not(:nth-child(2)){
   display:none !important;
 }
-.map-wrap.collapsible-block.is-collapsed > :not(.block-toggle-inline){
+.map-wrap.collapsible-block.is-collapsed > :not(.block-toggle-inline):not(.map-block-title){
   display:none !important;
 }
 .map-wrap.collapsible-block.is-collapsed{
-  height:56px;
-  min-height:56px;
+  height:62px;
+  min-height:62px;
 }
 .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 input[type='range']{width:100%}
@@ -1424,6 +1446,19 @@ input[type='range']{width:100%}
 .map-wrap{height:68vh;min-height:420px}
 #solar-map{width:100%;height:100%}
 .map-wrap{position:relative}
+.map-block-title{
+  position:absolute;
+  top:8px;
+  left:44px;
+  z-index:510;
+  font-size:12px;
+  font-weight:700;
+  color:#dfe8f6;
+  padding:3px 8px;
+  border-radius:8px;
+  border:1px solid rgba(170,210,255,.35);
+  background:rgba(8,16,26,.68);
+}
 .weather-overlay-canvas{
   position:absolute;
   inset:0;
