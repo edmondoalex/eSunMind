@@ -79,7 +79,7 @@
             viewBox="0 0 900 250"
             preserveAspectRatio="none"
             role="img"
-            aria-label="Grafico meteo 24 ore: temperatura e pioggia"
+            aria-label="Grafico meteo 24 ore: temperatura, pioggia e vento"
             @mousemove="onWeatherChartMove"
             @mouseleave="onWeatherChartLeave"
           >
@@ -102,22 +102,28 @@
 
             <polyline :points="weatherTempPoints" class="weather-temp-line" />
             <circle v-for="(p, i) in weatherSeries" :key="`wd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromTemp(p.temp)" r="2.8" class="weather-temp-dot" />
+            <polyline :points="weatherWindPoints" class="weather-wind-line" />
+            <circle v-for="(p, i) in weatherSeries" :key="`wwd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromWind(p.wind)" r="2.2" class="weather-wind-dot" />
 
             <line v-if="weatherHoverPoint" :x1="weatherHoverPoint.x" :x2="weatherHoverPoint.x" y1="24" y2="190" class="chart-hover-line" />
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
               <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="180" height="54" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
               <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }} degC</text>
-              <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h</text>
+              <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
+            <text v-for="t in weatherRainTicks" :key="`wrl-${t}`" x="876" :y="weatherYFromRain(t) + 3" class="axis-label-y axis-label-y-right-rain">{{ fmt1(t) }}</text>
+            <text v-for="t in weatherWindTicks" :key="`wwl-${t}`" x="836" :y="weatherYFromWind(t) + 3" class="axis-label-y axis-label-y-right-wind">{{ fmt1(t) }}</text>
             <text x="18" y="20" class="axis-title">degC</text>
             <text x="876" y="20" class="axis-title">mm/h</text>
-            <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="208" class="axis-label-x">{{ p.hhmm }}</text>
+            <text x="836" y="20" class="axis-title axis-title-wind">m/s</text>
+            <text v-for="(p, i) in weatherSeries" v-if="i % 2 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="202" class="axis-label-x">{{ p.hhmm }}</text>
+            <text x="872" y="222" class="axis-title-x">Ora</text>
           </svg>
           <div class="chart-meta">
-            Linea gialla: temperatura | Barre azzurre: pioggia oraria | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
+            Linea gialla: temperatura | Barre azzurre: pioggia oraria | Linea ciano: vento | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
           </div>
         </div>
       </div>
@@ -343,7 +349,7 @@ let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
 let compassMarkers = []
-const weatherAnimEnabled = ref(true)
+const weatherAnimEnabled = ref(false)
 const weatherCanvasEl = ref(null)
 let weatherRafId = 0
 let weatherLastTs = 0
@@ -426,6 +432,7 @@ const weatherSeries = computed(() => {
     const n1 = d?.next_1_hours || {}
     const rain = Number(n1?.details?.precipitation_amount ?? 0)
     const temp = Number(inst?.air_temperature)
+    const wind = Number(inst?.wind_speed)
     const time = String(row?.time || '')
     const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
     return {
@@ -433,6 +440,7 @@ const weatherSeries = computed(() => {
       hhmm,
       temp: Number.isFinite(temp) ? temp : 0,
       rain: Number.isFinite(rain) ? rain : 0,
+      wind: Number.isFinite(wind) ? wind : 0,
     }
   })
 })
@@ -448,16 +456,33 @@ const weatherRainMax = computed(() => {
   if (!weatherSeries.value.length) return 1
   return Math.max(0.1, ...weatherSeries.value.map((x) => x.rain))
 })
+const weatherWindMax = computed(() => {
+  if (!weatherSeries.value.length) return 1
+  return Math.max(0.1, ...weatherSeries.value.map((x) => x.wind))
+})
 const weatherTempTicks = computed(() => {
   const mn = weatherTempMin.value
   const mx = weatherTempMax.value
   const span = Math.max(1, mx - mn)
   return [mn, mn + span * 0.33, mn + span * 0.66, mx]
 })
+const weatherRainTicks = computed(() => {
+  const mx = weatherRainMax.value
+  return [0, mx * 0.33, mx * 0.66, mx]
+})
+const weatherWindTicks = computed(() => {
+  const mx = weatherWindMax.value
+  return [0, mx * 0.33, mx * 0.66, mx]
+})
 const weatherTempPoints = computed(() => {
   const s = weatherSeries.value
   if (!s.length) return ''
   return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromTemp(p.temp).toFixed(1)}`).join(' ')
+})
+const weatherWindPoints = computed(() => {
+  const s = weatherSeries.value
+  if (!s.length) return ''
+  return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromWind(p.wind).toFixed(1)}`).join(' ')
 })
 const weatherHoverPoint = ref(null)
 const weatherBarHalfWidth = computed(() => {
@@ -622,6 +647,10 @@ function fmt2(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
   return Number(v).toFixed(2)
 }
+function fmt1(v) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
+  return Number(v).toFixed(1)
+}
 function xFromMinute(minute) {
   return 40 + (Number(minute) / 1440) * 640
 }
@@ -646,6 +675,10 @@ function weatherYFromTemp(temp) {
 function weatherYFromRain(rain) {
   const mx = Math.max(0.1, weatherRainMax.value)
   return 190 - (Number(rain) / mx) * 90
+}
+function weatherYFromWind(wind) {
+  const mx = Math.max(0.1, weatherWindMax.value)
+  return 190 - (Number(wind) / mx) * 160
 }
 function onWeatherChartMove(evt) {
   const s = weatherSeries.value
@@ -687,13 +720,13 @@ function seedWeatherParticles() {
   if (!cv) return
   const w = cv.width
   const h = cv.height
-  weatherClouds = Array.from({ length: 18 }, () => ({
+  weatherClouds = Array.from({ length: 10 }, () => ({
     x: Math.random() * w,
     y: (Math.random() * h * 0.45) + 10,
-    r: 28 + Math.random() * 64,
-    a: 0.06 + Math.random() * 0.14,
+    r: 18 + Math.random() * 34,
+    a: 0.02 + Math.random() * 0.05,
   }))
-  weatherRain = Array.from({ length: 160 }, () => ({
+  weatherRain = Array.from({ length: 120 }, () => ({
     x: Math.random() * w,
     y: Math.random() * h,
     l: 8 + Math.random() * 14,
@@ -728,10 +761,7 @@ function drawWeatherOverlayFrame(ts) {
     if (c.x < -c.r) c.x = w + c.r
     if (c.y > h * 0.55) c.y = 5
     if (c.y < 5) c.y = h * 0.45
-    const grad = ctx.createRadialGradient(c.x, c.y, c.r * 0.15, c.x, c.y, c.r)
-    grad.addColorStop(0, `rgba(185,215,230,${(c.a * cloudI * 1.8).toFixed(3)})`)
-    grad.addColorStop(1, 'rgba(185,215,230,0)')
-    ctx.fillStyle = grad
+    ctx.fillStyle = `rgba(176,205,220,${(c.a * cloudI * 0.9).toFixed(3)})`
     ctx.beginPath()
     ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2)
     ctx.fill()
@@ -749,11 +779,28 @@ function drawWeatherOverlayFrame(ts) {
       }
       if (p.x > w + 20) p.x = -10
       if (p.x < -20) p.x = w + 10
-      ctx.strokeStyle = `rgba(120,228,255,${(p.a * rainI).toFixed(3)})`
-      ctx.lineWidth = 1.1
+      ctx.strokeStyle = `rgba(86,201,240,${(p.a * rainI * 0.8).toFixed(3)})`
+      ctx.lineWidth = 0.9
       ctx.beginPath()
       ctx.moveTo(p.x, p.y)
       ctx.lineTo(p.x + sx * 0.08, p.y + p.l)
+      ctx.stroke()
+    }
+  }
+
+  // Wind streaks, subtle and directional.
+  const windStrength = Math.min(1, Math.hypot(wind.vx, wind.vy) / 6)
+  if (windStrength > 0.04) {
+    ctx.strokeStyle = `rgba(90,220,255,${(0.05 + windStrength * 0.1).toFixed(3)})`
+    ctx.lineWidth = 0.8
+    for (let i = 0; i < 24; i += 1) {
+      const bx = ((ts * 0.025 + i * 47) % (w + 40)) - 20
+      const by = (i * 23) % (h * 0.75)
+      const lx = wind.vx * 2.3
+      const ly = wind.vy * 2.3
+      ctx.beginPath()
+      ctx.moveTo(bx, by)
+      ctx.lineTo(bx + lx * 6, by + ly * 6)
       ctx.stroke()
     }
   }
@@ -1171,7 +1218,8 @@ input[type='range']{width:100%}
   height:100%;
   pointer-events:none;
   z-index:450;
-  mix-blend-mode:screen;
+  mix-blend-mode:normal;
+  opacity:.65;
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
@@ -1193,7 +1241,12 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-line{fill:none;stroke:#f2c235;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .weather-temp-line{fill:none;stroke:#f2c235;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .weather-temp-dot{fill:#ffe68f;stroke:#f2c235;stroke-width:1}
+.weather-wind-line{fill:none;stroke:#36d5ff;stroke-width:2;stroke-dasharray:5,4;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
+.weather-wind-dot{fill:#8cecff;stroke:#36d5ff;stroke-width:.9}
 .weather-rain-bar{fill:rgba(45,212,191,.46);stroke:rgba(125,242,228,.65);stroke-width:.8}
+.axis-label-y-right-rain{text-anchor:start;fill:#7df2e4}
+.axis-label-y-right-wind{text-anchor:start;fill:#8cecff}
+.axis-title-wind{fill:#8cecff}
 .chart-now{stroke:#2dd4bf;stroke-width:1.5;stroke-dasharray:6,5}
 .chart-hover-line{stroke:#e5edf8;stroke-width:1.2;stroke-dasharray:3,4;opacity:.85}
 .chart-hover-dot{fill:#ffffff;stroke:#f2c235;stroke-width:2}
