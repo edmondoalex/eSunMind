@@ -73,6 +73,8 @@
         <div class="kpi"><strong>Meteo provider:</strong> {{ weatherProvider || '-' }}</div>
         <div class="kpi"><strong>Meteo aggiornamento:</strong> {{ weatherTime || '-' }}</div>
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
+        <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }} degC</div>
+        <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }} degC</div>
         <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
         <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }} deg)</div>
         <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
@@ -292,6 +294,9 @@
             <label>PV actual entity id
               <input type="text" v-model="baseForm.pv_actual_entity_id" />
             </label>
+            <label>External temp entity id
+              <input type="text" v-model="baseForm.external_temp_entity_id" />
+            </label>
           </div>
           <div class="actions-inline">
             <button class="btn" @click="saveBaseSettings">Salva Config Base</button>
@@ -436,6 +441,7 @@ const baseForm = ref({
   interval_minutes: 15,
   location_query: '',
   pv_actual_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
+  external_temp_entity_id: 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature',
 })
 const baseSaveStatus = ref('')
 
@@ -490,6 +496,16 @@ const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
 const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
 const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
+const externalTempC = computed(() => {
+  const v = Number(data.value?.external_temp_live?.state)
+  return Number.isFinite(v) ? v : null
+})
+const tempDeltaC = computed(() => {
+  const r = Number(externalTempC.value)
+  const m = Number(weatherTempC.value)
+  if (!Number.isFinite(r) || !Number.isFinite(m)) return null
+  return r - m
+})
 const weatherWindCardinal = computed(() => {
   const d = Number(weatherWindDirDeg.value)
   if (!Number.isFinite(d)) return '-'
@@ -1259,6 +1275,7 @@ async function loadData() {
         interval_minutes: Number(oj?.interval_minutes ?? 15),
         location_query: String(oj?.location_query || ''),
         pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+        external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
       }
       if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
       if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
@@ -1278,6 +1295,7 @@ async function saveBaseSettings() {
       interval_minutes: Number(baseForm.value.interval_minutes ?? 15),
       location_query: String(baseForm.value.location_query || ''),
       pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),
+      external_temp_entity_id: String(baseForm.value.external_temp_entity_id || ''),
     }
     const r = await fetch('/api/options/base', {
       method: 'POST',

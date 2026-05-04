@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.69"
+APP_VERSION = "0.2.70"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -705,7 +705,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id")
+    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id")
 
     raw = _load_local_options_raw()
     for k in keys:
@@ -748,6 +748,7 @@ async def options_set_base(payload: dict):
                 WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
 
         now_data["pv_live"] = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
+        now_data["external_temp_live"] = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
         DATA_FILE.write_text(json.dumps(now_data, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as exc:
         refresh_error = str(exc)
