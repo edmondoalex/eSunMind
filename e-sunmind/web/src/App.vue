@@ -18,7 +18,7 @@
       </div>
     </header>
 
-    <template v-if="tab==='user'">
+    <div v-show="tab==='user'">
       <div class="timeline">
         <div class="time-labels">
           <span v-for="(h, i) in hours" :key="`h-${i}`">{{ `${String(h).padStart(2,'0')}:00` }}</span>
@@ -93,9 +93,9 @@
           </div>
         </div>
       </div>
-    </template>
+    </div>
 
-    <template v-else>
+    <div v-show="tab==='tech'">
       <main class="tech-main">
         <section class="card">
           <h3>Tarature Overlay</h3>
@@ -147,7 +147,7 @@
           <pre class="json">{{ pretty }}</pre>
         </section>
       </main>
-    </template>
+    </div>
   </div>
 </template>
 

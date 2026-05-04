@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.39"
+APP_VERSION = "0.2.40"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
