@@ -22,6 +22,8 @@
       <div class="view-tools">
         <button class="btn ghost" @click="userExpanded = !userExpanded">{{ userExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
       </div>
+      <div class="map-block-group">
+      <div class="map-group-title">Mappa + controlli simulazione</div>
       <div class="timeline">
         <div class="time-labels">
           <span v-for="(h, i) in hours" :key="`h-${i}`">{{ `${String(h).padStart(2,'0')}:00` }}</span>
@@ -58,6 +60,7 @@
           <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">↑</span>
           <span>Vento da {{ fmt(weatherWindDirDeg) }} deg ({{ weatherWindCardinal }})</span>
         </div>
+      </div>
       </div>
 
       <div class="panel" v-show="userExpanded">
@@ -998,7 +1001,7 @@ function stopWeatherAnimation() {
 
 function initBlockToggles() {
   if (blockTogglesInited) return
-  const roots = document.querySelectorAll('.panel, .card, .map-wrap')
+  const roots = document.querySelectorAll('.panel, .card, .map-block-group')
   roots.forEach((el) => {
     if (!(el instanceof HTMLElement)) return
     if (el.querySelector(':scope > .block-toggle-inline')) return
@@ -1411,6 +1414,17 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn.ghost.active{border-color:var(--accent);color:#cffff5}
 .timeline{padding:8px 12px;background:#232830;border-bottom:1px solid #3b4048}
+.map-block-group{
+  position:relative;
+}
+.map-group-title{
+  padding:8px 12px;
+  font-size:12px;
+  font-weight:700;
+  color:#dfe8f6;
+  background:#1b2028;
+  border-bottom:1px solid #2f3640;
+}
 .view-tools{display:none}
 .collapsible-block{
   position:relative;
