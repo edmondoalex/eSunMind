@@ -76,6 +76,11 @@
             <line :x1="fvNowX" :x2="fvNowX" y1="20" y2="150" class="chart-now" />
             <line v-if="hoverPoint" :x1="hoverPoint.x" :x2="hoverPoint.x" y1="20" y2="150" class="chart-hover-line" />
             <circle v-if="hoverPoint" :cx="hoverPoint.x" :cy="hoverPoint.y" r="4.5" class="chart-hover-dot" />
+            <g v-if="hoverPoint" :transform="`translate(${hoverTooltipX},${hoverTooltipY})`">
+              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="130" height="36" />
+              <text x="8" y="15" class="chart-tip-t1">{{ hoverPoint.time }}</text>
+              <text x="8" y="29" class="chart-tip-t2">{{ fmt0(hoverPoint.w) }} W</text>
+            </g>
 
             <text v-for="t in yTicks" :key="`yl-${t}`" x="34" :y="yFromW(t) + 3" class="axis-label-y">{{ Math.round(t) }}</text>
             <text v-for="t in xTicks" :key="`xl-${t}`" :x="xFromMinute(t)" y="168" class="axis-label-x">{{ fmtHourTick(t) }}</text>
@@ -284,6 +289,15 @@ const yTicks = computed(() => {
 })
 const xTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440]
 const hoverPoint = ref(null)
+const hoverTooltipX = computed(() => {
+  if (!hoverPoint.value) return 0
+  return hoverPoint.value.x > 560 ? hoverPoint.value.x - 138 : hoverPoint.value.x + 8
+})
+const hoverTooltipY = computed(() => {
+  if (!hoverPoint.value) return 0
+  const y = hoverPoint.value.y - 44
+  return y < 22 ? 22 : y
+})
 
 function fmt(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
@@ -653,6 +667,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-now{stroke:#2dd4bf;stroke-width:1.5;stroke-dasharray:6,5}
 .chart-hover-line{stroke:#e5edf8;stroke-width:1.2;stroke-dasharray:3,4;opacity:.85}
 .chart-hover-dot{fill:#ffffff;stroke:#f2c235;stroke-width:2}
+.chart-tip-bg{fill:rgba(8,14,22,.92);stroke:#5f738d;stroke-width:1}
+.chart-tip-t1{fill:#dfe8f6;font-size:11px;font-weight:700}
+.chart-tip-t2{fill:#f2c235;font-size:11px;font-weight:700}
 .axis-label-y{fill:#9fb0c7;font-size:10px;text-anchor:end}
 .axis-label-x{fill:#9fb0c7;font-size:10px;text-anchor:middle}
 .axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
