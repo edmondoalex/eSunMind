@@ -119,8 +119,8 @@
             <text x="18" y="20" class="axis-title">degC</text>
             <text x="876" y="20" class="axis-title">mm/h</text>
             <text x="836" y="20" class="axis-title axis-title-wind">m/s</text>
-            <text v-for="(p, i) in weatherSeries" v-if="i % 2 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="202" class="axis-label-x">{{ p.hhmm }}</text>
-            <text x="872" y="222" class="axis-title-x">Ora</text>
+            <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
+            <text x="872" y="224" class="axis-title-x">Ora (asse X)</text>
           </svg>
           <div class="chart-meta">
             Linea gialla: temperatura | Barre azzurre: pioggia oraria | Linea ciano: vento | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
@@ -1255,6 +1255,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-tip-t2{fill:#f2c235;font-size:11px;font-weight:700}
 .axis-label-y{fill:#9fb0c7;font-size:10px;text-anchor:end}
 .axis-label-x{fill:#9fb0c7;font-size:10px;text-anchor:middle}
+.axis-label-x-strong{fill:#dfe8f6;font-size:11px;font-weight:700}
 .axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
 .axis-title-x{fill:#c9d4e2;font-size:11px;font-weight:700;text-anchor:end}
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
