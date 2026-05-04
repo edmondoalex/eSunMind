@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.81"
+APP_VERSION = "0.2.82"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -591,12 +591,31 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
             payload["device_class"] = dclass
         client.publish(topic, json.dumps(payload), retain=True)
 
+    diag_text_sensors = [
+        ("pv_read_status", "PV Read Status"),
+        ("temp_read_status", "External Temp Read Status"),
+    ]
+    for key, name in diag_text_sensors:
+        topic = f"{prefix}/sensor/sunmind/{key}/config"
+        payload = {
+            "name": name,
+            "object_id": f"sunmind_{key}",
+            "unique_id": f"sunmind_{key}",
+            "state_topic": f"{base}/state/{key}",
+            "availability_topic": f"{base}/availability",
+            "icon": "mdi:information-outline",
+            "entity_category": "diagnostic",
+            "device": device,
+        }
+        client.publish(topic, json.dumps(payload), retain=True)
+
     # Diagnostic payloads for other addons/components.
     diag_sensor = {
-        "name": "e-SunMind Runtime JSON",
+        "name": "Runtime JSON",
         "object_id": "sunmind_runtime_json",
         "unique_id": "sunmind_runtime_json",
-        "state_topic": f"{base}/state/runtime_json",
+        "state_topic": f"{base}/state/runtime_status",
+        "json_attributes_topic": f"{base}/state/runtime_json",
         "availability_topic": f"{base}/availability",
         "icon": "mdi:code-json",
         "entity_category": "diagnostic",
@@ -669,6 +688,27 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
     for key, value in mapping.items():
         if value is not None:
             client.publish(f"{base}/state/{key}", f"{value}", retain=True)
+    if mapping.get("pv_live_w") is None:
+        client.publish(f"{base}/state/pv_live_w", "unknown", retain=True)
+    if mapping.get("external_temp_c") is None:
+        client.publish(f"{base}/state/external_temp_c", "unknown", retain=True)
+    if mapping.get("pv_live_ratio") is None:
+        client.publish(f"{base}/state/pv_live_ratio", "unknown", retain=True)
+    client.publish(
+        f"{base}/state/pv_read_status",
+        str((pv_live.get("error") if isinstance(pv_live, dict) else None) or "ok"),
+        retain=True,
+    )
+    client.publish(
+        f"{base}/state/temp_read_status",
+        str((temp_live.get("error") if isinstance(temp_live, dict) else None) or "ok"),
+        retain=True,
+    )
+    client.publish(
+        f"{base}/state/runtime_status",
+        str(data.get("timestamp_local") or "ok"),
+        retain=True,
+    )
     client.publish(
         f"{base}/state/runtime_json",
         json.dumps(data, ensure_ascii=False),
