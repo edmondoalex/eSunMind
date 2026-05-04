@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.47"
+APP_VERSION = "0.2.48"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -152,6 +152,9 @@ def _load_local_options_raw() -> dict[str, Any]:
 
 def _save_local_options_raw(payload: dict[str, Any]) -> None:
     LOCAL_OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+def _save_options_raw(payload: dict[str, Any]) -> None:
+    OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
@@ -498,5 +501,26 @@ async def options_set_forecast_solar(payload: dict):
             fs[k] = payload[k]
     raw["forecast_solar"] = fs
     _save_local_options_raw(raw)
-    return JSONResponse({"ok": True, "forecast_solar": fs, "saved_to": str(LOCAL_OPTIONS_FILE)})
+
+    # Mirror the same values into HA options file so Add-on Configuration UI shows updated values too.
+    ha_raw = _load_options_raw()
+    ha_fs = ha_raw.get("forecast_solar", {})
+    if not isinstance(ha_fs, dict):
+        ha_fs = {}
+    for k in ("enabled", "api_key", "declination", "azimuth", "kwp"):
+        if k in fs:
+            ha_fs[k] = fs[k]
+    ha_raw["forecast_solar"] = ha_fs
+    try:
+        _save_options_raw(ha_raw)
+        saved_ha = True
+    except Exception:
+        saved_ha = False
+
+    return JSONResponse({
+        "ok": True,
+        "forecast_solar": fs,
+        "saved_to": str(LOCAL_OPTIONS_FILE),
+        "mirrored_to_ha_options": saved_ha,
+    })
 
