@@ -147,7 +147,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import SunCalc from 'suncalc'
 
@@ -582,6 +582,14 @@ onMounted(() => {
   }, 3000)
 })
 onBeforeUnmount(() => { if (map) { map.remove(); map = null } })
+
+watch(tab, async (val) => {
+  if (val === 'user' && map) {
+    await nextTick()
+    map.invalidateSize()
+    drawSolarOverlay()
+  }
+})
 </script>
 
 <style>
