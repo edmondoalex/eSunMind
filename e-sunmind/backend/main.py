@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.35"
+APP_VERSION = "0.2.37"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -121,6 +121,20 @@ def _load_options() -> dict[str, Any]:
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     return defaults
+
+
+def _load_options_raw() -> dict[str, Any]:
+    if not OPTIONS_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
+        return raw if isinstance(raw, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_options_raw(payload: dict[str, Any]) -> None:
+    OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
@@ -442,4 +456,25 @@ async def health():
             },
         }
     )
+
+
+@app.get("/api/options")
+async def options_get():
+    return JSONResponse(_load_options())
+
+
+@app.post("/api/options/forecast_solar")
+async def options_set_forecast_solar(payload: dict):
+    if not isinstance(payload, dict):
+        return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
+    raw = _load_options_raw()
+    fs = raw.get("forecast_solar", {})
+    if not isinstance(fs, dict):
+        fs = {}
+    for k in ("enabled", "api_key", "declination", "azimuth", "kwp"):
+        if k in payload:
+            fs[k] = payload[k]
+    raw["forecast_solar"] = fs
+    _save_options_raw(raw)
+    return JSONResponse({"ok": True, "forecast_solar": fs})
 

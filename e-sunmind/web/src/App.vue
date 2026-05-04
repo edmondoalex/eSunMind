@@ -59,13 +59,33 @@
       <div class="panel">
         <div class="kpi chart-kpi">
           <strong>Grafico FV Oggi (W)</strong>
-          <svg class="fv-chart" viewBox="0 0 700 180" preserveAspectRatio="none" role="img" aria-label="Curva produzione FV giornaliera">
+          <svg
+            class="fv-chart"
+            viewBox="0 0 700 220"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Curva produzione FV giornaliera"
+            @mousemove="onChartMove"
+            @mouseleave="onChartLeave"
+          >
+            <line v-for="t in yTicks" :key="`y-${t}`" x1="40" :y1="yFromW(t)" x2="680" :y2="yFromW(t)" class="chart-grid" />
+            <line v-for="t in xTicks" :key="`x-${t}`" :x1="xFromMinute(t)" y1="20" :x2="xFromMinute(t)" y2="150" class="chart-grid-v" />
             <line x1="40" y1="150" x2="680" y2="150" class="chart-axis" />
             <line x1="40" y1="20" x2="40" y2="150" class="chart-axis" />
             <polyline :points="fvChartPoints" class="chart-line" />
             <line :x1="fvNowX" :x2="fvNowX" y1="20" y2="150" class="chart-now" />
+            <line v-if="hoverPoint" :x1="hoverPoint.x" :x2="hoverPoint.x" y1="20" y2="150" class="chart-hover-line" />
+            <circle v-if="hoverPoint" :cx="hoverPoint.x" :cy="hoverPoint.y" r="4.5" class="chart-hover-dot" />
+
+            <text v-for="t in yTicks" :key="`yl-${t}`" x="34" :y="yFromW(t) + 3" class="axis-label-y">{{ Math.round(t) }}</text>
+            <text v-for="t in xTicks" :key="`xl-${t}`" :x="xFromMinute(t)" y="168" class="axis-label-x">{{ fmtHourTick(t) }}</text>
+            <text x="8" y="16" class="axis-title">W</text>
+            <text x="672" y="184" class="axis-title-x">Ora</text>
           </svg>
-          <div class="chart-meta">0:00 → 23:59 | picco: {{ fmt0(fvPeakTodayW) }} W</div>
+          <div class="chart-meta">
+            0:00 → 23:59 | picco: {{ fmt0(fvPeakTodayW) }} W
+            <span v-if="hoverPoint"> | punto: {{ hoverPoint.time }} -> {{ fmt0(hoverPoint.w) }} W</span>
+          </div>
         </div>
       </div>
     </template>
@@ -92,6 +112,27 @@
 
         <section class="card">
           <h3>Tarature Forecast Solar (attuali)</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="fsForm.enabled" />
+            </label>
+            <label>API key
+              <input type="text" v-model="fsForm.api_key" placeholder="vuota = public API" />
+            </label>
+            <label>Declination (0-90)
+              <input type="number" min="0" max="90" v-model.number="fsForm.declination" />
+            </label>
+            <label>Azimuth (-180..180)
+              <input type="number" min="-180" max="180" v-model.number="fsForm.azimuth" />
+            </label>
+            <label>kWp
+              <input type="number" min="0.1" step="0.1" v-model.number="fsForm.kwp" />
+            </label>
+          </div>
+          <div class="actions-inline">
+            <button class="btn" @click="saveForecastSettings">Salva Tarature Forecast</button>
+            <span class="note">{{ fsSaveStatus }}</span>
+          </div>
           <div class="mono small">{{ forecastConfigText }}</div>
           <p class="note">Nota: queste tarature si impostano dal pannello configurazione addon Home Assistant.</p>
         </section>
@@ -149,6 +190,8 @@ const showLiveLine = ref(true)
 const showSimLine = ref(true)
 const showAxisNS = ref(true)
 const showAxisWE = ref(true)
+const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
+const fsSaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const forecastConfigText = computed(() => {
@@ -235,6 +278,12 @@ const forecastFetchedAtText = computed(() => {
   if (!Number.isFinite(ts) || ts <= 0) return '-'
   return new Date(ts * 1000).toLocaleString()
 })
+const yTicks = computed(() => {
+  const maxW = Math.max(1, Number(fvPeakTodayW.value || 1))
+  return [0, maxW * 0.25, maxW * 0.5, maxW * 0.75, maxW]
+})
+const xTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440]
+const hoverPoint = ref(null)
 
 function fmt(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
@@ -243,6 +292,49 @@ function fmt(v) {
 function fmt0(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
   return Math.round(Number(v)).toString()
+}
+function xFromMinute(minute) {
+  return 40 + (Number(minute) / 1440) * 640
+}
+function yFromW(w) {
+  const maxW = Math.max(1, Number(fvPeakTodayW.value || 1))
+  return 150 - (Number(w) / maxW) * 130
+}
+function fmtHourTick(minute) {
+  const h = Math.floor(Number(minute) / 60)
+  return `${String(h).padStart(2, '0')}:00`
+}
+function onChartMove(evt) {
+  const series = fvTodaySeries.value
+  if (!series.length) {
+    hoverPoint.value = null
+    return
+  }
+  const rect = evt.currentTarget.getBoundingClientRect()
+  const relX = evt.clientX - rect.left
+  const x = (relX / rect.width) * 700
+  const minute = Math.max(0, Math.min(1440, ((x - 40) / 640) * 1440))
+  let best = series[0]
+  let d = Math.abs(series[0].minute - minute)
+  for (const p of series) {
+    const nd = Math.abs(p.minute - minute)
+    if (nd < d) {
+      d = nd
+      best = p
+    }
+  }
+  const hh = Math.floor(best.minute / 60)
+  const mm = best.minute % 60
+  hoverPoint.value = {
+    minute: best.minute,
+    w: best.w,
+    x: xFromMinute(best.minute),
+    y: yFromW(best.w),
+    time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+  }
+}
+function onChartLeave() {
+  hoverPoint.value = null
 }
 function toDeg(rad) { return (rad * 180) / Math.PI }
 function suncalcAzToCompassDeg(azimuthRad) { return (toDeg(azimuthRad) + 180 + 360) % 360 }
@@ -433,6 +525,47 @@ async function loadData() {
     }
     drawSolarOverlay()
   }
+  const fs = data.value?.forecast_solar
+  if (fs && data.value) {
+    // Keep form in sync with current option defaults when available via options API fallback.
+    try {
+      const ro = await fetch('/api/options', { cache: 'no-store' })
+      const oj = await ro.json()
+      const fso = oj?.forecast_solar || {}
+      fsForm.value = {
+        enabled: Boolean(fso.enabled),
+        api_key: String(fso.api_key || ''),
+        declination: Number(fso.declination ?? 30),
+        azimuth: Number(fso.azimuth ?? 0),
+        kwp: Number(fso.kwp ?? 6.0),
+      }
+    } catch (_) {
+      // no-op
+    }
+  }
+}
+
+async function saveForecastSettings() {
+  fsSaveStatus.value = 'Salvataggio...'
+  try {
+    const payload = {
+      enabled: Boolean(fsForm.value.enabled),
+      api_key: String(fsForm.value.api_key || ''),
+      declination: Number(fsForm.value.declination ?? 30),
+      azimuth: Number(fsForm.value.azimuth ?? 0),
+      kwp: Number(fsForm.value.kwp ?? 6.0),
+    }
+    const r = await fetch('/api/options/forecast_solar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
+    fsSaveStatus.value = 'Salvato. Riavvia addon per applicare subito il nuovo ciclo.'
+  } catch (e) {
+    fsSaveStatus.value = `Errore salvataggio: ${e.message}`
+  }
 }
 
 onMounted(() => {
@@ -504,11 +637,20 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .note{font-size:12px;color:var(--muted)}
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}
 .chart-kpi{grid-column:1 / -1}
-.fv-chart{width:100%;height:220px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
+.fv-chart{width:100%;height:250px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
 .chart-axis{stroke:#607086;stroke-width:1}
+.chart-grid{stroke:#2d3b4d;stroke-width:.8;opacity:.55}
+.chart-grid-v{stroke:#243244;stroke-width:.8;opacity:.4}
 .chart-line{fill:none;stroke:#f2c235;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .chart-now{stroke:#2dd4bf;stroke-width:1.5;stroke-dasharray:6,5}
+.chart-hover-line{stroke:#e5edf8;stroke-width:1.2;stroke-dasharray:3,4;opacity:.85}
+.chart-hover-dot{fill:#ffffff;stroke:#f2c235;stroke-width:2}
+.axis-label-y{fill:#9fb0c7;font-size:10px;text-anchor:end}
+.axis-label-x{fill:#9fb0c7;font-size:10px;text-anchor:middle}
+.axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
+.axis-title-x{fill:#c9d4e2;font-size:11px;font-weight:700;text-anchor:end}
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
+.actions-inline{display:flex;align-items:center;gap:10px;margin:10px 0}
 .cardinal{
   color:#d8e1eb;
   font-size:11px;
