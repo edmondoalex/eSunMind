@@ -70,8 +70,10 @@
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
         <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
         <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }} deg)</div>
+        <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
         <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
+        <div class="kpi"><strong>UV index:</strong> {{ fmt(weatherUvIndex) }}</div>
         <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
         <div class="kpi"><strong>FV reale (HA):</strong> {{ fmt0(pvMeasuredW) }} W</div>
         <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
@@ -454,6 +456,8 @@ const weatherWindDirDeg = computed(() => weatherNorm.value?.wind_from_direction_
 const weatherCloudPct = computed(() => weatherNorm.value?.cloud_area_fraction_pct)
 const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_mm)
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
+const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
+const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
 const pvMeasuredW = computed(() => {
   const v = Number(data.value?.pv_live?.watts)
   return Number.isFinite(v) ? Math.max(0, v) : null
