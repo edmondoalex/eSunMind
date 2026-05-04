@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.76"
+APP_VERSION = "0.2.77"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -40,9 +40,11 @@ OPTIONS_FILE = Path("/data/options.json")
 LOCAL_OPTIONS_FILE = Path("/data/local_options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
 WEATHER_FILE = Path("/data/weather_met.json")
+AIR_QUALITY_FILE = Path("/data/air_quality_openmeteo.json")
 STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
 WEATHER_MIN_INTERVAL_SECONDS = 900
+AIR_QUALITY_MIN_INTERVAL_SECONDS = 1800
 WORKER_STATE: dict[str, Any] = {
     "last_loop_ts": 0.0,
     "last_ok_ts": 0.0,
@@ -112,6 +114,10 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "provider": "met",
         },
+        "air_quality": {
+            "enabled": True,
+            "provider": "open_meteo",
+        },
     }
     if not OPTIONS_FILE.exists():
         return defaults
@@ -128,6 +134,8 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(payload["forecast_solar"])
     if isinstance(payload.get("weather"), dict):
         defaults["weather"].update(payload["weather"])
+    if isinstance(payload.get("air_quality"), dict):
+        defaults["air_quality"].update(payload["air_quality"])
     # Local overrides are owned by addon UI and persist independently from HA-managed options.
     local = _load_local_options_raw()
     if isinstance(local.get("mqtt"), dict):
@@ -136,11 +144,14 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(local["forecast_solar"])
     if isinstance(local.get("weather"), dict):
         defaults["weather"].update(local["weather"])
+    if isinstance(local.get("air_quality"), dict):
+        defaults["air_quality"].update(local["air_quality"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
+    defaults["air_quality"]["provider"] = str(defaults["air_quality"].get("provider") or "open_meteo").strip().lower()
     return defaults
 
 
@@ -199,10 +210,6 @@ def _fetch_weather_met(cfg: dict[str, Any], latitude: float, longitude: float) -
     wc = cfg.get("weather", {}) or {}
     if not wc.get("enabled", True):
         return None
-    provider = str(wc.get("provider") or "met").strip().lower()
-    if provider != "met":
-        return {"ok": False, "provider": provider, "error": "provider_not_supported"}
-
     url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude}&lon={longitude}"
     req = Request(url, headers={"User-Agent": "e-SunMind/0.2 (+https://github.com/edmondoalex/eSunMind)"})
     try:
@@ -244,6 +251,65 @@ def _fetch_weather_met(cfg: dict[str, Any], latitude: float, longitude: float) -
         "normalized": normalized,
         "payload": payload,
     }
+
+
+def _fetch_weather_open_meteo(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
+    wc = cfg.get("weather", {}) or {}
+    if not wc.get("enabled", True):
+        return None
+    vars_hourly = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,uv_index,weather_code"
+    vars_current = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,uv_index,weather_code"
+    url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={latitude}&longitude={longitude}"
+        f"&current={vars_current}&hourly={vars_hourly}&timezone=auto&forecast_days=2"
+    )
+    try:
+        with urlopen(url, timeout=20) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        return {"ok": False, "provider": "open_meteo", "url": url, "error": str(exc)}
+
+    cur = payload.get("current") or {}
+    normalized = {
+        "time": cur.get("time"),
+        "air_temperature_c": cur.get("temperature_2m"),
+        "relative_humidity_pct": cur.get("relative_humidity_2m"),
+        "wind_speed_ms": (float(cur.get("wind_speed_10m")) / 3.6) if cur.get("wind_speed_10m") is not None else None,
+        "wind_from_direction_deg": cur.get("wind_direction_10m"),
+        "air_pressure_hpa": cur.get("pressure_msl"),
+        "cloud_area_fraction_pct": cur.get("cloud_cover"),
+        "uv_index": cur.get("uv_index"),
+        "symbol_code": cur.get("weather_code"),
+        "precipitation_next_1h_mm": cur.get("precipitation"),
+    }
+    return {
+        "ok": True,
+        "provider": "open_meteo",
+        "url": url,
+        "normalized": normalized,
+        "payload": payload,
+    }
+
+
+def _fetch_weather(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
+    wc = cfg.get("weather", {}) or {}
+    if not wc.get("enabled", True):
+        return None
+    provider = str(wc.get("provider") or "met").strip().lower()
+    if provider == "met":
+        return _fetch_weather_met(cfg, latitude, longitude)
+    if provider == "open_meteo":
+        return _fetch_weather_open_meteo(cfg, latitude, longitude)
+    if provider == "hybrid":
+        res = _fetch_weather_met(cfg, latitude, longitude)
+        if isinstance(res, dict) and res.get("ok"):
+            return res
+        fb = _fetch_weather_open_meteo(cfg, latitude, longitude)
+        if isinstance(fb, dict):
+            fb["_fallback_from"] = "met"
+        return fb
+    return {"ok": False, "provider": provider, "error": "provider_not_supported"}
 
 
 def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
@@ -296,6 +362,48 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
     }
 
 
+def _fetch_air_quality_open_meteo(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
+    aq = cfg.get("air_quality", {}) or {}
+    if not aq.get("enabled", True):
+        return None
+    provider = str(aq.get("provider") or "open_meteo").strip().lower()
+    if provider != "open_meteo":
+        return {"ok": False, "provider": provider, "error": "provider_not_supported"}
+
+    current_vars = "european_aqi,us_aqi,pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone"
+    hourly_vars = "european_aqi,us_aqi,pm10,pm2_5,ozone,nitrogen_dioxide"
+    url = (
+        "https://air-quality-api.open-meteo.com/v1/air-quality"
+        f"?latitude={latitude}&longitude={longitude}"
+        f"&current={current_vars}&hourly={hourly_vars}&timezone=auto"
+    )
+    try:
+        with urlopen(url, timeout=20) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        return {"ok": False, "provider": "open_meteo", "url": url, "error": str(exc)}
+
+    cur = payload.get("current") or {}
+    normalized = {
+        "time": cur.get("time"),
+        "european_aqi": cur.get("european_aqi"),
+        "us_aqi": cur.get("us_aqi"),
+        "pm10": cur.get("pm10"),
+        "pm2_5": cur.get("pm2_5"),
+        "carbon_monoxide": cur.get("carbon_monoxide"),
+        "nitrogen_dioxide": cur.get("nitrogen_dioxide"),
+        "sulphur_dioxide": cur.get("sulphur_dioxide"),
+        "ozone": cur.get("ozone"),
+    }
+    return {
+        "ok": True,
+        "provider": "open_meteo",
+        "url": url,
+        "normalized": normalized,
+        "payload": payload,
+    }
+
+
 def _read_forecast_cache() -> dict[str, Any] | None:
     if not FORECAST_FILE.exists():
         return None
@@ -310,6 +418,15 @@ def _read_weather_cache() -> dict[str, Any] | None:
         return None
     try:
         return json.loads(WEATHER_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _read_air_quality_cache() -> dict[str, Any] | None:
+    if not AIR_QUALITY_FILE.exists():
+        return None
+    try:
+        return json.loads(AIR_QUALITY_FILE.read_text(encoding="utf-8"))
     except Exception:
         return None
 
@@ -516,16 +633,32 @@ async def _worker() -> None:
                     weather = dict(w_cache)
                     weather["_cache_hit"] = True
                 else:
-                    weather = _fetch_weather_met(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                    weather = _fetch_weather(cfg, float(coords["latitude"]), float(coords["longitude"]))
                     if isinstance(weather, dict):
                         weather["_fetched_at_ts"] = now_ts
                         weather["_cache_hit"] = False
                         WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+            airq = None
+            aq_cfg = cfg.get("air_quality", {}) or {}
+            if aq_cfg.get("enabled", True):
+                now_ts = time.time()
+                aq_cache = _read_air_quality_cache()
+                aq_last_ts = float((aq_cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
+                if (aq_cache is not None) and (now_ts - aq_last_ts < AIR_QUALITY_MIN_INTERVAL_SECONDS):
+                    airq = dict(aq_cache)
+                    airq["_cache_hit"] = True
+                else:
+                    airq = _fetch_air_quality_open_meteo(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                    if isinstance(airq, dict):
+                        airq["_fetched_at_ts"] = now_ts
+                        airq["_cache_hit"] = False
+                        AIR_QUALITY_FILE.write_text(json.dumps(airq, ensure_ascii=False, indent=2), encoding="utf-8")
             pv_live = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
             temp_live = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
             data["pv_live"] = pv_live
             data["external_temp_live"] = temp_live
             data["weather"] = weather
+            data["air_quality"] = airq
             data["forecast_solar"] = forecast
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
             if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
@@ -751,7 +884,7 @@ async def options_set_base(payload: dict):
 
         weather = None
         if cfg.get("weather", {}).get("enabled", True):
-            weather = _fetch_weather_met(cfg, float(coords["latitude"]), float(coords["longitude"]))
+            weather = _fetch_weather(cfg, float(coords["latitude"]), float(coords["longitude"]))
             if isinstance(weather, dict):
                 weather["_fetched_at_ts"] = time.time()
                 weather["_cache_hit"] = False

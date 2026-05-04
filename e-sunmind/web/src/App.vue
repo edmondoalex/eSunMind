@@ -157,6 +157,18 @@
       </div>
 
       <div class="panel" v-show="userExpanded">
+        <div class="kpi"><strong>Qualita aria provider:</strong> {{ airqProvider || '-' }}</div>
+        <div class="kpi"><strong>AQI EU:</strong> {{ fmt0(airqEu) }}</div>
+        <div class="kpi"><strong>AQI US:</strong> {{ fmt0(airqUs) }}</div>
+        <div class="kpi"><strong>PM2.5:</strong> {{ fmt(airqPm25) }} ug/m3</div>
+        <div class="kpi"><strong>PM10:</strong> {{ fmt(airqPm10) }} ug/m3</div>
+        <div class="kpi"><strong>NO2:</strong> {{ fmt(airqNo2) }} ug/m3</div>
+        <div class="kpi"><strong>O3:</strong> {{ fmt(airqO3) }} ug/m3</div>
+        <div class="kpi"><strong>CO:</strong> {{ fmt(airqCo) }} ug/m3</div>
+        <div class="kpi"><strong>SO2:</strong> {{ fmt(airqSo2) }} ug/m3</div>
+      </div>
+
+      <div class="panel" v-show="userExpanded">
         <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
         <div class="kpi"><strong>FV Oggi:</strong> {{ fmt0(fvTodayWh) }} Wh</div>
         <div class="kpi"><strong>FV Domani:</strong> {{ fmt0(fvTomorrowWh) }} Wh</div>
@@ -373,6 +385,11 @@
         </section>
 
         <section class="card" v-show="techExpanded">
+          <h3>Risposta completa Air Quality (raw)</h3>
+          <pre class="json">{{ airqRawText }}</pre>
+        </section>
+
+        <section class="card" v-show="techExpanded">
           <h3>Risposta completa SunCalc (raw)</h3>
           <pre class="json">{{ sunCalcRawText }}</pre>
         </section>
@@ -497,6 +514,21 @@ const weatherRawText = computed(() => {
   if (!raw) return 'Nessun payload weather disponibile.'
   return JSON.stringify(raw, null, 2)
 })
+const airqRawText = computed(() => {
+  const raw = data.value?.air_quality
+  if (!raw) return 'Nessun payload air_quality disponibile.'
+  return JSON.stringify(raw, null, 2)
+})
+const airqNorm = computed(() => data.value?.air_quality?.normalized || null)
+const airqProvider = computed(() => data.value?.air_quality?.provider || null)
+const airqEu = computed(() => airqNorm.value?.european_aqi)
+const airqUs = computed(() => airqNorm.value?.us_aqi)
+const airqPm25 = computed(() => airqNorm.value?.pm2_5)
+const airqPm10 = computed(() => airqNorm.value?.pm10)
+const airqNo2 = computed(() => airqNorm.value?.nitrogen_dioxide)
+const airqO3 = computed(() => airqNorm.value?.ozone)
+const airqCo = computed(() => airqNorm.value?.carbon_monoxide)
+const airqSo2 = computed(() => airqNorm.value?.sulphur_dioxide)
 const weatherNorm = computed(() => data.value?.weather?.normalized || null)
 const weatherProvider = computed(() => data.value?.weather?.provider || null)
 const weatherTime = computed(() => weatherNorm.value?.time || null)
