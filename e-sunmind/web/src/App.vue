@@ -125,6 +125,9 @@
             <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
             <text x="872" y="224" class="axis-title-x">Ora (asse X)</text>
           </svg>
+          <div class="weather-x-hours">
+            <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
+          </div>
           <div class="chart-meta">
             Linea gialla: temperatura | Barre azzurre: pioggia oraria | Linea ciano: vento | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
           </div>
@@ -510,6 +513,11 @@ const weatherWindPoints = computed(() => {
   const s = weatherSeries.value
   if (!s.length) return ''
   return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromWind(p.wind).toFixed(1)}`).join(' ')
+})
+const weatherXAxisHours = computed(() => {
+  const s = weatherSeries.value
+  if (!s.length) return []
+  return s.filter((_, i) => i % 3 === 0 || i === s.length - 1)
 })
 const weatherHoverPoint = ref(null)
 const weatherBarHalfWidth = computed(() => {
@@ -1286,6 +1294,20 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
 .axis-title-x{fill:#c9d4e2;font-size:11px;font-weight:700;text-anchor:end}
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
+.weather-x-hours{
+  margin-top:4px;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:0 46px 0 54px;
+  color:#dfe8f6;
+  font-size:11px;
+  font-weight:700;
+}
+.weather-x-hours span{
+  min-width:34px;
+  text-align:center;
+}
 .bar-chart-area{
   display:flex;
   gap:10px;
