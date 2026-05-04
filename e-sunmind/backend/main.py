@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.75"
+APP_VERSION = "0.2.76"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -250,7 +250,7 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
     entity = str(entity_id or "").strip()
     if not entity:
         return None
-    token = os.environ.get("SUPERVISOR_TOKEN", "").strip()
+    token = os.environ.get("SUPERVISOR_TOKEN", "").strip() or os.environ.get("HASSIO_TOKEN", "").strip()
     if not token:
         for path in (
             "/run/s6/container_environment/SUPERVISOR_TOKEN",
