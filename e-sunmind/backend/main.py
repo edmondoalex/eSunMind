@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.49"
+APP_VERSION = "0.2.50"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -517,10 +517,53 @@ async def options_set_forecast_solar(payload: dict):
     except Exception:
         saved_ha = False
 
+    # Force immediate refresh on new forecast settings:
+    # reset throttling state and clear cached forecast snapshot.
+    WORKER_STATE["forecast_last_fetch_ts"] = 0.0
+    WORKER_STATE["forecast_backoff_until_ts"] = 0.0
+    WORKER_STATE["forecast_last_error"] = None
+    try:
+        if FORECAST_FILE.exists():
+            FORECAST_FILE.unlink()
+    except Exception:
+        pass
+
+    # Apply settings right away (without waiting next worker interval).
+    refreshed = False
+    refresh_error = None
+    refreshed_url = None
+    try:
+        cfg = _load_options()
+        now_data = _compute_data(cfg)
+        coords = now_data.get("coordinates", {}) or {}
+        forecast = None
+        if cfg.get("forecast_solar", {}).get("enabled"):
+            forecast = _fetch_forecast_solar(cfg, float(coords["latitude"]), float(coords["longitude"]))
+            if isinstance(forecast, dict):
+                now_ts = time.time()
+                forecast["_fetched_at_ts"] = now_ts
+                forecast["_cache_hit"] = False
+                refreshed_url = forecast.get("url")
+                if forecast.get("ok"):
+                    WORKER_STATE["forecast_last_fetch_ts"] = now_ts
+                    WORKER_STATE["forecast_last_error"] = None
+                else:
+                    WORKER_STATE["forecast_last_error"] = str(forecast.get("error"))
+                    WORKER_STATE["forecast_backoff_until_ts"] = now_ts + FORECAST_MIN_INTERVAL_SECONDS
+                FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
+        now_data["forecast_solar"] = forecast
+        DATA_FILE.write_text(json.dumps(now_data, ensure_ascii=False, indent=2), encoding="utf-8")
+        refreshed = True
+    except Exception as exc:
+        refresh_error = str(exc)
+
     return JSONResponse({
         "ok": True,
         "forecast_solar": fs,
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
+        "forecast_refreshed_now": refreshed,
+        "forecast_refresh_error": refresh_error,
+        "forecast_url_now": refreshed_url,
     })
 

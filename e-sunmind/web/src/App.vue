@@ -737,7 +737,9 @@ async function saveForecastSettings() {
     })
     const j = await r.json()
     if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
-    fsSaveStatus.value = 'Salvato. Riavvia addon per applicare subito il nuovo ciclo.'
+    const urlNow = j?.forecast_url_now ? ` URL: ${j.forecast_url_now}` : ''
+    fsSaveStatus.value = `Salvato e applicato subito.${urlNow}`
+    await loadData()
   } catch (e) {
     fsSaveStatus.value = `Errore salvataggio: ${e.message}`
   }
