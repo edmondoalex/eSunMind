@@ -30,12 +30,13 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.45"
+APP_VERSION = "0.2.46"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
+LOCAL_OPTIONS_FILE = Path("/data/local_options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
 STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
@@ -116,6 +117,12 @@ def _load_options() -> dict[str, Any]:
         defaults["mqtt"].update(payload["mqtt"])
     if isinstance(payload.get("forecast_solar"), dict):
         defaults["forecast_solar"].update(payload["forecast_solar"])
+    # Local overrides are owned by addon UI and persist independently from HA-managed options.
+    local = _load_local_options_raw()
+    if isinstance(local.get("mqtt"), dict):
+        defaults["mqtt"].update(local["mqtt"])
+    if isinstance(local.get("forecast_solar"), dict):
+        defaults["forecast_solar"].update(local["forecast_solar"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
@@ -133,8 +140,18 @@ def _load_options_raw() -> dict[str, Any]:
         return {}
 
 
-def _save_options_raw(payload: dict[str, Any]) -> None:
-    OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+def _load_local_options_raw() -> dict[str, Any]:
+    if not LOCAL_OPTIONS_FILE.exists():
+        return {}
+    try:
+        raw = json.loads(LOCAL_OPTIONS_FILE.read_text(encoding="utf-8"))
+        return raw if isinstance(raw, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_local_options_raw(payload: dict[str, Any]) -> None:
+    LOCAL_OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
@@ -460,14 +477,19 @@ async def health():
 
 @app.get("/api/options")
 async def options_get():
-    return JSONResponse(_load_options())
+    merged = _load_options()
+    merged["_meta"] = {
+        "ha_options_file": str(OPTIONS_FILE),
+        "local_options_file": str(LOCAL_OPTIONS_FILE),
+    }
+    return JSONResponse(merged)
 
 
 @app.post("/api/options/forecast_solar")
 async def options_set_forecast_solar(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
-    raw = _load_options_raw()
+    raw = _load_local_options_raw()
     fs = raw.get("forecast_solar", {})
     if not isinstance(fs, dict):
         fs = {}
@@ -475,6 +497,6 @@ async def options_set_forecast_solar(payload: dict):
         if k in payload:
             fs[k] = payload[k]
     raw["forecast_solar"] = fs
-    _save_options_raw(raw)
-    return JSONResponse({"ok": True, "forecast_solar": fs})
+    _save_local_options_raw(raw)
+    return JSONResponse({"ok": True, "forecast_solar": fs, "saved_to": str(LOCAL_OPTIONS_FILE)})
 
