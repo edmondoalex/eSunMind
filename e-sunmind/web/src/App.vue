@@ -120,6 +120,7 @@
 
             <polyline :points="weatherTempPoints" class="weather-temp-line" />
             <circle v-for="(p, i) in weatherSeries" :key="`wd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromTemp(p.temp)" r="2.8" class="weather-temp-dot" />
+            <polyline v-if="weatherRealTempPoints" :points="weatherRealTempPoints" class="weather-real-temp-line" />
             <polyline :points="weatherWindPoints" class="weather-wind-line" />
             <circle v-for="(p, i) in weatherSeries" :key="`wwd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromWind(p.wind)" r="2.2" class="weather-wind-dot" />
             <polyline :points="weatherHumidityPoints" class="weather-humidity-line" />
@@ -129,11 +130,12 @@
 
             <line v-if="weatherHoverPoint" :x1="weatherHoverPoint.x" :x2="weatherHoverPoint.x" y1="24" y2="190" class="chart-hover-line" />
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
-              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="230" height="68" />
+              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="250" height="82" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
               <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}°C</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
               <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
+              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Â°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Â°C</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
@@ -149,7 +151,7 @@
             <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
           </div>
           <div class="chart-meta">
-            Linea gialla: temperatura | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}°C
+            Linea gialla: temp meteo | Magenta: temp reale | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}°C
           </div>
         </div>
       </div>
@@ -644,6 +646,12 @@ const weatherTempPoints = computed(() => {
   if (!s.length) return ''
   return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromTemp(p.temp).toFixed(1)}`).join(' ')
 })
+const weatherRealTempPoints = computed(() => {
+  const s = weatherSeries.value
+  const rt = Number(externalTempC.value)
+  if (!s.length || !Number.isFinite(rt)) return ''
+  return s.map((_, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromTemp(rt).toFixed(1)}`).join(' ')
+})
 const weatherWindPoints = computed(() => {
   const s = weatherSeries.value
   if (!s.length) return ''
@@ -880,11 +888,13 @@ function onWeatherChartMove(evt) {
   const x = (relX / rect.width) * 900
   const idx = Math.max(0, Math.min(s.length - 1, Math.round(((x - 50) / 820) * (s.length - 1))))
   const p = s[idx]
+  const rt = Number(externalTempC.value)
   weatherHoverPoint.value = {
     ...p,
     x: weatherXFromIdx(idx),
     y: weatherYFromTemp(p.temp),
     label: p.time ? p.time.replace('T', ' ').replace('Z', ' UTC') : p.hhmm,
+    deltaRealTemp: Number.isFinite(rt) ? (rt - Number(p.temp)) : null,
   }
 }
 function onWeatherChartLeave() {
@@ -1563,6 +1573,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-line{fill:none;stroke:#f2c235;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 .weather-temp-line{fill:none;stroke:#f2c235;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 .weather-temp-dot{fill:#ffe68f;stroke:#f2c235;stroke-width:1}
+.weather-real-temp-line{fill:none;stroke:#ff4dc4;stroke-width:2;stroke-dasharray:7,4;opacity:.95}
 .weather-wind-line{fill:none;stroke:#36d5ff;stroke-width:2;stroke-dasharray:5,4;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
 .weather-wind-dot{fill:#8cecff;stroke:#36d5ff;stroke-width:.9}
 .weather-humidity-line{fill:none;stroke:#6ee7b7;stroke-width:1.8;stroke-dasharray:3,3;opacity:.9}
