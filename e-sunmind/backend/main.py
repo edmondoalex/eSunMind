@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.62"
+APP_VERSION = "0.2.63"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -90,6 +90,7 @@ def _load_options() -> dict[str, Any]:
         "interval_minutes": 15,
         "location_query": "",
         "pv_actual_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
+        "external_temp_entity_id": "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature",
         "mqtt": {
             "enabled": False,
             "host": "192.168.3.13",
@@ -118,7 +119,7 @@ def _load_options() -> dict[str, Any]:
         payload = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return defaults
-    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id"):
+    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id"):
         if key in payload:
             defaults[key] = payload[key]
     if isinstance(payload.get("mqtt"), dict):
@@ -510,7 +511,9 @@ async def _worker() -> None:
                         weather["_cache_hit"] = False
                         WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
             pv_live = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
+            temp_live = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
             data["pv_live"] = pv_live
+            data["external_temp_live"] = temp_live
             data["weather"] = weather
             data["forecast_solar"] = forecast
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")

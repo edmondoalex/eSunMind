@@ -112,13 +112,18 @@
             <circle v-for="(p, i) in weatherSeries" :key="`wd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromTemp(p.temp)" r="2.8" class="weather-temp-dot" />
             <polyline :points="weatherWindPoints" class="weather-wind-line" />
             <circle v-for="(p, i) in weatherSeries" :key="`wwd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromWind(p.wind)" r="2.2" class="weather-wind-dot" />
+            <polyline :points="weatherHumidityPoints" class="weather-humidity-line" />
+            <circle v-for="(p, i) in weatherSeries" :key="`whd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromHumidity(p.humidity)" r="2" class="weather-humidity-dot" />
+            <polyline :points="weatherPressurePoints" class="weather-pressure-line" />
+            <circle v-for="(p, i) in weatherSeries" :key="`wpd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromPressure(p.pressure)" r="1.8" class="weather-pressure-dot" />
 
             <line v-if="weatherHoverPoint" :x1="weatherHoverPoint.x" :x2="weatherHoverPoint.x" y1="24" y2="190" class="chart-hover-line" />
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
-              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="180" height="54" />
+              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="230" height="68" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
               <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }} degC</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
+              <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
@@ -134,7 +139,7 @@
             <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
           </div>
           <div class="chart-meta">
-            Linea gialla: temperatura | Barre azzurre: pioggia oraria | Linea ciano: vento | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
+            Linea gialla: temperatura | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
           </div>
         </div>
       </div>
@@ -512,6 +517,8 @@ const weatherSeries = computed(() => {
     const rain = Number(n1?.details?.precipitation_amount ?? 0)
     const temp = Number(inst?.air_temperature)
     const wind = Number(inst?.wind_speed)
+    const humidity = Number(inst?.relative_humidity)
+    const pressure = Number(inst?.air_pressure_at_sea_level)
     const time = String(row?.time || '')
     const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
     return {
@@ -520,6 +527,8 @@ const weatherSeries = computed(() => {
       temp: Number.isFinite(temp) ? temp : 0,
       rain: Number.isFinite(rain) ? rain : 0,
       wind: Number.isFinite(wind) ? wind : 0,
+      humidity: Number.isFinite(humidity) ? humidity : 0,
+      pressure: Number.isFinite(pressure) ? pressure : 0,
     }
   })
 })
@@ -538,6 +547,14 @@ const weatherRainMax = computed(() => {
 const weatherWindMax = computed(() => {
   if (!weatherSeries.value.length) return 1
   return Math.max(0.1, ...weatherSeries.value.map((x) => x.wind))
+})
+const weatherPressureMin = computed(() => {
+  if (!weatherSeries.value.length) return 1000
+  return Math.min(...weatherSeries.value.map((x) => x.pressure))
+})
+const weatherPressureMax = computed(() => {
+  if (!weatherSeries.value.length) return 1020
+  return Math.max(...weatherSeries.value.map((x) => x.pressure))
 })
 const weatherTempTicks = computed(() => {
   const mn = weatherTempMin.value
@@ -562,6 +579,16 @@ const weatherWindPoints = computed(() => {
   const s = weatherSeries.value
   if (!s.length) return ''
   return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromWind(p.wind).toFixed(1)}`).join(' ')
+})
+const weatherHumidityPoints = computed(() => {
+  const s = weatherSeries.value
+  if (!s.length) return ''
+  return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromHumidity(p.humidity).toFixed(1)}`).join(' ')
+})
+const weatherPressurePoints = computed(() => {
+  const s = weatherSeries.value
+  if (!s.length) return ''
+  return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromPressure(p.pressure).toFixed(1)}`).join(' ')
 })
 const weatherXAxisHours = computed(() => {
   const s = weatherSeries.value
@@ -763,6 +790,15 @@ function weatherYFromRain(rain) {
 function weatherYFromWind(wind) {
   const mx = Math.max(0.1, weatherWindMax.value)
   return 190 - (Number(wind) / mx) * 160
+}
+function weatherYFromHumidity(humidity) {
+  return 190 - (Math.max(0, Math.min(100, Number(humidity))) / 100) * 160
+}
+function weatherYFromPressure(pressure) {
+  const mn = weatherPressureMin.value
+  const mx = weatherPressureMax.value
+  const span = Math.max(0.1, mx - mn)
+  return 190 - ((Number(pressure) - mn) / span) * 160
 }
 function onWeatherChartMove(evt) {
   const s = weatherSeries.value
@@ -1361,6 +1397,10 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .weather-temp-dot{fill:#ffe68f;stroke:#f2c235;stroke-width:1}
 .weather-wind-line{fill:none;stroke:#36d5ff;stroke-width:2;stroke-dasharray:5,4;stroke-linecap:round;stroke-linejoin:round;opacity:.95}
 .weather-wind-dot{fill:#8cecff;stroke:#36d5ff;stroke-width:.9}
+.weather-humidity-line{fill:none;stroke:#6ee7b7;stroke-width:1.8;stroke-dasharray:3,3;opacity:.9}
+.weather-humidity-dot{fill:#b8f8df;stroke:#6ee7b7;stroke-width:.8}
+.weather-pressure-line{fill:none;stroke:#a78bfa;stroke-width:1.8;stroke-dasharray:2,4;opacity:.9}
+.weather-pressure-dot{fill:#ddd6fe;stroke:#a78bfa;stroke-width:.8}
 .weather-rain-bar{fill:rgba(45,212,191,.46);stroke:rgba(125,242,228,.65);stroke-width:.8}
 .axis-label-y-right-rain{text-anchor:start;fill:#7df2e4}
 .axis-label-y-right-wind{text-anchor:start;fill:#8cecff}
