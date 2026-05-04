@@ -111,19 +111,32 @@
       <div class="panel">
         <div class="kpi chart-kpi">
           <strong>Fotovoltaico - Potenza prevista ora per ora</strong>
-          <div class="day-bars">
-            <div v-for="d in fvHourBars" :key="`h-${d.time}`" class="day-bar-item">
-              <div
-                class="day-bar-wrap"
-                @mouseenter="hoverHourBar = d"
-                @mouseleave="hoverHourBar = null"
-              >
-                <div class="day-bar" :style="{ height: `${d.pct}%` }"></div>
-                <div v-if="hoverHourBar && hoverHourBar.time === d.time" class="bar-tooltip">
-                  {{ d.time }} -> {{ fmt0(d.w) }} W
+          <div class="actions-inline">
+            <label>Giorno barre:
+              <select v-model="selectedForecastDate">
+                <option v-for="d in fvDayRows" :key="`bars-${d.date}`" :value="d.date">{{ d.dayName }} {{ d.dateLabel }}</option>
+              </select>
+            </label>
+            <span class="note">Giorni disponibili: {{ fvDayRows.length }}</span>
+          </div>
+          <div class="bar-chart-area">
+            <div class="bar-y-axis">
+              <div v-for="t in yTicks" :key="`by-${t}`" class="bar-y-tick">{{ fmt0(t) }}</div>
+            </div>
+            <div class="day-bars">
+              <div v-for="d in fvHourBars" :key="`h-${d.time}`" class="day-bar-item">
+                <div
+                  class="day-bar-wrap"
+                  @mouseenter="hoverHourBar = d"
+                  @mouseleave="hoverHourBar = null"
+                >
+                  <div class="day-bar" :style="{ height: `${d.pct}%` }"></div>
+                  <div v-if="hoverHourBar && hoverHourBar.time === d.time" class="bar-tooltip">
+                    {{ d.time }} -> {{ fmt0(d.w) }} W | {{ fmt2(d.kwh) }} kWh
+                  </div>
                 </div>
+                <div class="day-bar-label">{{ d.time }}</div>
               </div>
-              <div class="day-bar-label">{{ d.time }}</div>
             </div>
           </div>
           <div class="chart-meta">Asse Y: potenza oraria (W) normalizzata al picco del giorno selezionato.</div>
@@ -323,6 +336,7 @@ const fvPeakTodayW = computed(() => {
 })
 const fvTodaySeries = computed(() => {
   const w = forecastResult.value?.watts
+  const whp = forecastResult.value?.watt_hours_period
   if (!w || typeof w !== 'object') return []
   const dayPrefix = selectedForecastDate.value || (new Date().toISOString().slice(0, 10))
   const series = Object.entries(w)
@@ -330,7 +344,12 @@ const fvTodaySeries = computed(() => {
     .map(([k, v]) => {
       const hh = Number(String(k).slice(11, 13))
       const mm = Number(String(k).slice(14, 16))
-      return { minute: (hh * 60) + mm, w: Number(v) }
+      const wh = whp && typeof whp === 'object' ? Number(whp[k]) : null
+      return {
+        minute: (hh * 60) + mm,
+        w: Number(v),
+        wh: Number.isFinite(wh) ? wh : null,
+      }
     })
     .filter((x) => Number.isFinite(x.minute) && Number.isFinite(x.w))
     .sort((a, b) => a.minute - b.minute)
@@ -394,6 +413,7 @@ const fvHourBars = computed(() => {
     return {
       w: x.w,
       pct: Math.max(3, (x.w / maxW) * 100),
+      kwh: Number.isFinite(x.wh) ? Number(x.wh) / 1000 : null,
       time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
     }
   })
@@ -421,6 +441,10 @@ function fmt(v) {
 function fmt0(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
   return Math.round(Number(v)).toString()
+}
+function fmt2(v) {
+  if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
+  return Number(v).toFixed(2)
 }
 function xFromMinute(minute) {
   return 40 + (Number(minute) / 1440) * 640
@@ -829,6 +853,25 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
 .axis-title-x{fill:#c9d4e2;font-size:11px;font-weight:700;text-anchor:end}
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
+.bar-chart-area{
+  display:flex;
+  gap:10px;
+  align-items:flex-end;
+}
+.bar-y-axis{
+  height:140px;
+  min-width:44px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  align-items:flex-end;
+  color:#9fb0c7;
+  font-size:11px;
+  padding-bottom:2px;
+}
+.bar-y-tick{
+  line-height:1;
+}
 .day-bars{
   margin-top:10px;
   display:flex;
@@ -951,6 +994,10 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .panel{
     grid-template-columns:1fr 1fr;
+  }
+  .bar-y-axis{
+    min-width:38px;
+    font-size:10px;
   }
 }
 </style>
