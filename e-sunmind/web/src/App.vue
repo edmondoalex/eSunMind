@@ -9,7 +9,7 @@
     <header class="topbar">
       <div class="brand">
         <img src="/logo.png" alt="e-SunMind logo" class="brand-logo" />
-        <span>e-SunMind</span>
+        <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
       </div>
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">User UI</button>
@@ -459,6 +459,7 @@ const tab = ref('user')
 const showSplash = ref(true)
 const userExpanded = ref(true)
 const techExpanded = ref(true)
+const appVersion = ref('0.0.0')
 const data = ref(null)
 const lat = ref(null)
 const lon = ref(null)
@@ -1473,6 +1474,16 @@ async function loadData() {
   }
 }
 
+async function loadStatusVersion() {
+  try {
+    const r = await fetch('/api/status', { cache: 'no-store' })
+    const j = await r.json()
+    if (j?.version) appVersion.value = String(j.version)
+  } catch (_) {
+    // keep fallback
+  }
+}
+
 async function saveBaseSettings() {
   baseSaveStatus.value = 'Salvataggio...'
   try {
@@ -1533,6 +1544,7 @@ onMounted(() => {
   const idx = rounded
   if (idx >= 0) timeIndex.value = idx
   loadData()
+  loadStatusVersion()
   window.addEventListener('resize', resizeWeatherCanvas)
   startWeatherAnimation()
   initBlockToggles()
@@ -1594,6 +1606,7 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:rgba(10,15,22,.9)}
 .brand{font-weight:700;display:flex;align-items:center;gap:8px}
 .brand-logo{width:28px;height:28px;object-fit:contain;border-radius:6px}
+.brand-version{font-weight:600;opacity:.85}
 .actions{display:flex;gap:8px;align-items:center}
 .btn{background:linear-gradient(135deg, var(--accent), #6cf1c9);border:none;color:#062524;padding:6px 12px;border-radius:999px;font-weight:700;cursor:pointer}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
