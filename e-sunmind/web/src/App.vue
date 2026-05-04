@@ -53,6 +53,10 @@
           class="weather-overlay-canvas"
           aria-hidden="true"
         ></canvas>
+        <div v-if="weatherAnimEnabled" class="wind-compass-chip">
+          <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">↑</span>
+          <span>Vento da {{ fmt(weatherWindDirDeg) }} deg ({{ weatherWindCardinal }})</span>
+        </div>
       </div>
 
       <div class="panel" v-show="userExpanded">
@@ -464,6 +468,13 @@ const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
 const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
 const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
+const weatherWindCardinal = computed(() => {
+  const d = Number(weatherWindDirDeg.value)
+  if (!Number.isFinite(d)) return '-'
+  const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+  const idx = Math.round((((d % 360) + 360) % 360) / 45) % 8
+  return dirs[idx]
+})
 const pvMeasuredW = computed(() => {
   const v = Number(data.value?.pv_live?.watts)
   return Number.isFinite(v) ? Math.max(0, v) : null
@@ -1418,6 +1429,32 @@ input[type='range']{width:100%}
   z-index:450;
   mix-blend-mode:normal;
   opacity:.65;
+}
+.wind-compass-chip{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:520;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:10px;
+  border:1px solid rgba(130,200,255,.45);
+  background:rgba(8,18,30,.72);
+  color:#d7ecff;
+  font-size:12px;
+  font-weight:700;
+  backdrop-filter: blur(2px);
+}
+.wind-compass-arrow{
+  display:inline-block;
+  width:18px;
+  height:18px;
+  line-height:18px;
+  text-align:center;
+  color:#5ee7ff;
+  text-shadow:0 0 8px rgba(94,231,255,.55);
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
