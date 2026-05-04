@@ -113,10 +113,17 @@
           <strong>Fotovoltaico - Potenza prevista ora per ora</strong>
           <div class="day-bars">
             <div v-for="d in fvHourBars" :key="`h-${d.time}`" class="day-bar-item">
-              <div class="day-bar-wrap">
-                <div class="day-bar" :style="{ height: `${d.pct}%` }" :title="`${d.time}: ${fmt0(d.w)} W`"></div>
+              <div
+                class="day-bar-wrap"
+                @mouseenter="hoverHourBar = d"
+                @mouseleave="hoverHourBar = null"
+              >
+                <div class="day-bar" :style="{ height: `${d.pct}%` }"></div>
+                <div v-if="hoverHourBar && hoverHourBar.time === d.time" class="bar-tooltip">
+                  {{ d.time }} -> {{ fmt0(d.w) }} W
+                </div>
               </div>
-              <div class="day-bar-label">{{ d.showLabel ? d.time : '' }}</div>
+              <div class="day-bar-label">{{ d.time }}</div>
             </div>
           </div>
           <div class="chart-meta">Asse Y: potenza oraria (W) normalizzata al picco del giorno selezionato.</div>
@@ -261,6 +268,7 @@ const showAxisWE = ref(true)
 const showPvAzLine = ref(false)
 const pvAzimuthDeg = ref(0)
 const selectedForecastDate = ref('')
+const hoverHourBar = ref(null)
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
 
@@ -380,14 +388,13 @@ const fvHourBars = computed(() => {
   const s = fvTodaySeries.value
   if (!s.length) return []
   const maxW = Math.max(...s.map((x) => x.w), 1)
-  return s.map((x, idx) => {
+  return s.map((x) => {
     const hh = Math.floor(x.minute / 60)
     const mm = x.minute % 60
     return {
       w: x.w,
       pct: Math.max(3, (x.w / maxW) * 100),
       time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
-      showLabel: idx % 2 === 0,
     }
   })
 })
@@ -824,13 +831,22 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
 .day-bars{
   margin-top:10px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(52px,1fr));
+  display:flex;
+  flex-wrap:nowrap;
+  overflow-x:auto;
   gap:8px;
   align-items:end;
+  padding-bottom:2px;
 }
-.day-bar-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.day-bar-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  flex:0 0 72px;
+}
 .day-bar-wrap{
+  position:relative;
   width:100%;
   height:140px;
   border:1px solid var(--border);
@@ -848,6 +864,21 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   box-shadow:0 0 10px rgba(242,194,53,.35);
 }
 .day-bar-label{font-size:11px;color:var(--muted);text-transform:capitalize}
+.bar-tooltip{
+  position:absolute;
+  left:50%;
+  transform:translateX(-50%);
+  bottom:calc(100% + 6px);
+  background:rgba(8,14,22,.95);
+  border:1px solid #5f738d;
+  border-radius:8px;
+  padding:4px 8px;
+  font-size:11px;
+  color:#dfe8f6;
+  white-space:nowrap;
+  pointer-events:none;
+  z-index:5;
+}
 .day-table{
   width:100%;
   border-collapse:collapse;
