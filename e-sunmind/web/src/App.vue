@@ -328,11 +328,16 @@ const fvCurrentW = computed(() => {
   return keys.length ? Number(w[keys[0]]) : null
 })
 const fvPeakTodayW = computed(() => {
-  const rows = fvDayRows.value
-  if (!rows.length) return null
+  const w = forecastResult.value?.watts
+  if (!w || typeof w !== 'object') return null
   const today = new Date().toISOString().slice(0, 10)
-  const day = rows.find((x) => x.date === today) || rows[0]
-  return day ? day.wh : null
+  const vals = Object.entries(w)
+    .filter(([k]) => String(k).startsWith(today))
+    .map(([, v]) => Number(v))
+    .filter((x) => Number.isFinite(x))
+  if (vals.length) return Math.max(...vals)
+  const all = Object.values(w).map((v) => Number(v)).filter((x) => Number.isFinite(x))
+  return all.length ? Math.max(...all) : null
 })
 const fvTodaySeries = computed(() => {
   const w = forecastResult.value?.watts
