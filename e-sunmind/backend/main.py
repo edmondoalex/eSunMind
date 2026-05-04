@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 from urllib.error import URLError
 from urllib.parse import quote
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import paho.mqtt.client as mqtt
 import pytz
@@ -30,7 +30,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.52"
+APP_VERSION = "0.2.53"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -38,8 +38,10 @@ DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
 LOCAL_OPTIONS_FILE = Path("/data/local_options.json")
 FORECAST_FILE = Path("/data/forecast_solar.json")
+WEATHER_FILE = Path("/data/weather_met.json")
 STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
+WEATHER_MIN_INTERVAL_SECONDS = 900
 WORKER_STATE: dict[str, Any] = {
     "last_loop_ts": 0.0,
     "last_ok_ts": 0.0,
@@ -103,6 +105,10 @@ def _load_options() -> dict[str, Any]:
             "azimuth": 0,
             "kwp": 6.0,
         },
+        "weather": {
+            "enabled": True,
+            "provider": "met",
+        },
     }
     if not OPTIONS_FILE.exists():
         return defaults
@@ -117,16 +123,21 @@ def _load_options() -> dict[str, Any]:
         defaults["mqtt"].update(payload["mqtt"])
     if isinstance(payload.get("forecast_solar"), dict):
         defaults["forecast_solar"].update(payload["forecast_solar"])
+    if isinstance(payload.get("weather"), dict):
+        defaults["weather"].update(payload["weather"])
     # Local overrides are owned by addon UI and persist independently from HA-managed options.
     local = _load_local_options_raw()
     if isinstance(local.get("mqtt"), dict):
         defaults["mqtt"].update(local["mqtt"])
     if isinstance(local.get("forecast_solar"), dict):
         defaults["forecast_solar"].update(local["forecast_solar"])
+    if isinstance(local.get("weather"), dict):
+        defaults["weather"].update(local["weather"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
+    defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
     return defaults
 
 
@@ -179,8 +190,57 @@ def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float
         return {"ok": True, "url": url, "payload": payload}
     except URLError as exc:
         return {"ok": False, "url": url, "error": str(exc)}
+
+
+def _fetch_weather_met(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
+    wc = cfg.get("weather", {}) or {}
+    if not wc.get("enabled", True):
+        return None
+    provider = str(wc.get("provider") or "met").strip().lower()
+    if provider != "met":
+        return {"ok": False, "provider": provider, "error": "provider_not_supported"}
+
+    url = f"https://api.met.no/weatherapi/locationforecast/2.0/compact?lat={latitude}&lon={longitude}"
+    req = Request(url, headers={"User-Agent": "e-SunMind/0.2 (+https://github.com/edmondoalex/eSunMind)"})
+    try:
+        with urlopen(req, timeout=20) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except URLError as exc:
+        return {"ok": False, "provider": "met", "url": url, "error": str(exc)}
     except Exception as exc:
-        return {"ok": False, "url": url, "error": str(exc)}
+        return {"ok": False, "provider": "met", "url": url, "error": str(exc)}
+
+    ts = (((payload or {}).get("properties") or {}).get("timeseries")) or []
+    if not isinstance(ts, list) or not ts:
+        return {"ok": False, "provider": "met", "url": url, "error": "invalid_payload_timeseries"}
+
+    first = ts[0] if isinstance(ts[0], dict) else {}
+    first_data = (first.get("data") or {}) if isinstance(first, dict) else {}
+    instant = ((first_data.get("instant") or {}).get("details") or {}) if isinstance(first_data, dict) else {}
+    next1 = ((first_data.get("next_1_hours") or {}) if isinstance(first_data, dict) else {})
+    summary = ((next1.get("summary") or {}) if isinstance(next1, dict) else {})
+    details_1h = ((next1.get("details") or {}) if isinstance(next1, dict) else {})
+
+    normalized = {
+        "time": first.get("time"),
+        "air_temperature_c": instant.get("air_temperature"),
+        "relative_humidity_pct": instant.get("relative_humidity"),
+        "wind_speed_ms": instant.get("wind_speed"),
+        "wind_from_direction_deg": instant.get("wind_from_direction"),
+        "air_pressure_hpa": instant.get("air_pressure_at_sea_level"),
+        "cloud_area_fraction_pct": instant.get("cloud_area_fraction"),
+        "uv_index": instant.get("ultraviolet_index_clear_sky"),
+        "symbol_code": summary.get("symbol_code"),
+        "precipitation_next_1h_mm": details_1h.get("precipitation_amount"),
+    }
+
+    return {
+        "ok": True,
+        "provider": "met",
+        "url": url,
+        "normalized": normalized,
+        "payload": payload,
+    }
 
 
 def _read_forecast_cache() -> dict[str, Any] | None:
@@ -188,6 +248,15 @@ def _read_forecast_cache() -> dict[str, Any] | None:
         return None
     try:
         return json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _read_weather_cache() -> dict[str, Any] | None:
+    if not WEATHER_FILE.exists():
+        return None
+    try:
+        return json.loads(WEATHER_FILE.read_text(encoding="utf-8"))
     except Exception:
         return None
 
@@ -383,6 +452,23 @@ async def _worker() -> None:
                         else:
                             WORKER_STATE["forecast_last_error"] = str(forecast.get("error"))
                             WORKER_STATE["forecast_backoff_until_ts"] = now_ts + FORECAST_MIN_INTERVAL_SECONDS
+
+            weather = None
+            w_cfg = cfg.get("weather", {}) or {}
+            if w_cfg.get("enabled", True):
+                now_ts = time.time()
+                w_cache = _read_weather_cache()
+                w_last_ts = float((w_cache or {}).get("_fetched_at_ts", 0.0) or 0.0)
+                if (w_cache is not None) and (now_ts - w_last_ts < WEATHER_MIN_INTERVAL_SECONDS):
+                    weather = dict(w_cache)
+                    weather["_cache_hit"] = True
+                else:
+                    weather = _fetch_weather_met(cfg, float(coords["latitude"]), float(coords["longitude"]))
+                    if isinstance(weather, dict):
+                        weather["_fetched_at_ts"] = now_ts
+                        weather["_cache_hit"] = False
+                        WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+            data["weather"] = weather
             data["forecast_solar"] = forecast
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
             if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):

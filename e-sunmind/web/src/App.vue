@@ -55,6 +55,17 @@
       </div>
 
       <div class="panel">
+        <div class="kpi"><strong>Meteo provider:</strong> {{ weatherProvider || '-' }}</div>
+        <div class="kpi"><strong>Meteo aggiornamento:</strong> {{ weatherTime || '-' }}</div>
+        <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
+        <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
+        <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }} deg)</div>
+        <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
+        <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
+        <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
+      </div>
+
+      <div class="panel">
         <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
         <div class="kpi"><strong>FV Oggi:</strong> {{ fmt0(fvTodayWh) }} Wh</div>
         <div class="kpi"><strong>FV Domani:</strong> {{ fmt0(fvTomorrowWh) }} Wh</div>
@@ -224,6 +235,11 @@
         </section>
 
         <section class="card">
+          <h3>Risposta completa Meteo MET (raw)</h3>
+          <pre class="json">{{ weatherRawText }}</pre>
+        </section>
+
+        <section class="card">
           <h3>JSON runtime</h3>
           <pre class="json">{{ pretty }}</pre>
         </section>
@@ -303,6 +319,21 @@ const forecastRawText = computed(() => {
   if (!raw) return 'Nessun payload forecast_solar disponibile.'
   return JSON.stringify(raw, null, 2)
 })
+const weatherRawText = computed(() => {
+  const raw = data.value?.weather
+  if (!raw) return 'Nessun payload weather disponibile.'
+  return JSON.stringify(raw, null, 2)
+})
+const weatherNorm = computed(() => data.value?.weather?.normalized || null)
+const weatherProvider = computed(() => data.value?.weather?.provider || null)
+const weatherTime = computed(() => weatherNorm.value?.time || null)
+const weatherTempC = computed(() => weatherNorm.value?.air_temperature_c)
+const weatherHumidityPct = computed(() => weatherNorm.value?.relative_humidity_pct)
+const weatherWindMs = computed(() => weatherNorm.value?.wind_speed_ms)
+const weatherWindDirDeg = computed(() => weatherNorm.value?.wind_from_direction_deg)
+const weatherCloudPct = computed(() => weatherNorm.value?.cloud_area_fraction_pct)
+const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_mm)
+const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
 
 const forecastResult = computed(() => data.value?.forecast_solar?.payload?.result || null)
 const forecastOk = computed(() => Boolean(data.value?.forecast_solar?.ok))
