@@ -70,6 +70,9 @@
         <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
         <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
+        <div class="kpi"><strong>FV reale (HA):</strong> {{ fmt0(pvMeasuredW) }} W</div>
+        <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
+        <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
       </div>
       <div class="panel">
         <div class="kpi chart-kpi">
@@ -403,6 +406,25 @@ const weatherWindDirDeg = computed(() => weatherNorm.value?.wind_from_direction_
 const weatherCloudPct = computed(() => weatherNorm.value?.cloud_area_fraction_pct)
 const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_mm)
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
+const pvMeasuredW = computed(() => {
+  const v = Number(data.value?.pv_live?.watts)
+  return Number.isFinite(v) ? Math.max(0, v) : null
+})
+const pvForecastNowW = computed(() => {
+  const w = data.value?.forecast_solar?.payload?.result?.watts
+  if (!w || typeof w !== 'object') return null
+  const now = new Date()
+  const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:00:00`
+  const v = Number(w[key])
+  if (Number.isFinite(v)) return Math.max(0, v)
+  return null
+})
+const pvLiveRatio = computed(() => {
+  const m = Number(pvMeasuredW.value)
+  const f = Number(pvForecastNowW.value)
+  if (!Number.isFinite(m) || !Number.isFinite(f) || f <= 0) return 0.7
+  return Math.max(0, Math.min(1.25, m / f))
+})
 const weatherWindVec = computed(() => {
   const dir = Number(weatherWindDirDeg.value)
   const speed = Number(weatherWindMs.value)
@@ -415,13 +437,18 @@ const weatherWindVec = computed(() => {
 })
 const weatherCloudIntensity = computed(() => {
   const c = Number(weatherCloudPct.value)
-  if (!Number.isFinite(c)) return 0.35
-  return Math.max(0.08, Math.min(0.85, c / 100))
+  const cloudBase = Number.isFinite(c) ? Math.max(0.08, Math.min(0.85, c / 100)) : 0.35
+  const ratio = pvLiveRatio.value
+  // If real PV is low vs forecast, increase cloud aggressiveness.
+  const factor = ratio >= 1 ? 0.72 : (1 + (1 - ratio) * 0.9)
+  return Math.max(0.05, Math.min(0.92, cloudBase * factor))
 })
 const weatherRainIntensity = computed(() => {
   const r = Number(weatherNext1hMm.value)
   if (!Number.isFinite(r) || r <= 0) return 0
-  return Math.max(0.08, Math.min(1, r / 3))
+  const ratio = pvLiveRatio.value
+  const factor = ratio >= 1 ? 0.8 : (1 + (1 - ratio) * 0.6)
+  return Math.max(0.06, Math.min(1, (r / 3) * factor))
 })
 const weatherSeries = computed(() => {
   const ts = data.value?.weather?.payload?.properties?.timeseries

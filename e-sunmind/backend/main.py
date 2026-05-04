@@ -1,5 +1,6 @@
-﻿import asyncio
+import asyncio
 import json
+import os
 import time
 from datetime import datetime
 from math import cos, pi
@@ -30,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.57"
+APP_VERSION = "0.2.58"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -88,6 +89,7 @@ def _load_options() -> dict[str, Any]:
         "timezone": "Europe/Rome",
         "interval_minutes": 15,
         "location_query": "",
+        "pv_actual_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
         "mqtt": {
             "enabled": False,
             "host": "192.168.3.13",
@@ -116,7 +118,7 @@ def _load_options() -> dict[str, Any]:
         payload = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return defaults
-    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query"):
+    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id"):
         if key in payload:
             defaults[key] = payload[key]
     if isinstance(payload.get("mqtt"), dict):
@@ -240,6 +242,45 @@ def _fetch_weather_met(cfg: dict[str, Any], latitude: float, longitude: float) -
         "url": url,
         "normalized": normalized,
         "payload": payload,
+    }
+
+
+def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
+    entity = str(entity_id or "").strip()
+    if not entity:
+        return None
+    token = os.environ.get("SUPERVISOR_TOKEN", "").strip()
+    if not token:
+        return {"ok": False, "entity_id": entity, "error": "missing_supervisor_token"}
+    url = f"http://supervisor/core/api/states/{quote(entity)}"
+    req = Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=10) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        return {"ok": False, "entity_id": entity, "error": str(exc)}
+
+    state_raw = payload.get("state")
+    attrs = payload.get("attributes") or {}
+    watts = None
+    try:
+        watts = float(state_raw)
+    except Exception:
+        watts = None
+    return {
+        "ok": True,
+        "entity_id": entity,
+        "state": state_raw,
+        "unit": attrs.get("unit_of_measurement"),
+        "watts": watts,
+        "friendly_name": attrs.get("friendly_name"),
+        "last_updated": payload.get("last_updated"),
     }
 
 
@@ -468,6 +509,8 @@ async def _worker() -> None:
                         weather["_fetched_at_ts"] = now_ts
                         weather["_cache_hit"] = False
                         WEATHER_FILE.write_text(json.dumps(weather, ensure_ascii=False, indent=2), encoding="utf-8")
+            pv_live = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
+            data["pv_live"] = pv_live
             data["weather"] = weather
             data["forecast_solar"] = forecast
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -652,4 +695,5 @@ async def options_set_forecast_solar(payload: dict):
         "forecast_refresh_error": refresh_error,
         "forecast_url_now": refreshed_url,
     })
+
 
