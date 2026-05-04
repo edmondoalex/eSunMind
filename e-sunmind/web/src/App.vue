@@ -44,7 +44,6 @@
         <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }} deg</div>
         <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }} deg</div>
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
-        <div class="kpi">Ora simulata: {{ selectedTimeLabel }}</div>
       </div>
 
       <div class="panel">
@@ -181,7 +180,7 @@
             <span class="note">{{ fsSaveStatus }}</span>
           </div>
           <div class="mono small">{{ forecastConfigText }}</div>
-          <p class="note">Nota: queste tarature si impostano dal pannello configurazione addon Home Assistant.</p>
+          <p class="note">Le tarature forecast sono modificabili e salvabili direttamente da questa UI tecnica.</p>
         </section>
 
         <section class="card">
