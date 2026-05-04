@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.83"
+APP_VERSION = "0.2.84"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -62,6 +62,18 @@ def _dt_to_iso(value):
     if value is None:
         return None
     return value.isoformat()
+
+
+def _parse_forecast_dt(value: str) -> datetime | None:
+    s = str(value or "").strip()
+    if not s:
+        return None
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return datetime.strptime(s, fmt)
+        except Exception:
+            continue
+    return None
 
 
 def _moon_illumination(now_utc: datetime) -> dict[str, float]:
@@ -676,8 +688,37 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
             mapping["pv_tomorrow_wh"] = day.get(keys[1])
     watts = fs_result.get("watts") or {}
     if isinstance(watts, dict) and watts:
-        now_key = max(watts.keys())
-        mapping["pv_now_w"] = watts.get(now_key)
+        now_local = None
+        try:
+            ts = str(data.get("timestamp_local") or "")
+            if ts:
+                now_local = datetime.fromisoformat(ts)
+        except Exception:
+            now_local = None
+        selected_key = None
+        selected_dt = None
+        for k in watts.keys():
+            kd = _parse_forecast_dt(k)
+            if kd is None:
+                continue
+            if now_local is None:
+                if selected_dt is None or kd > selected_dt:
+                    selected_dt = kd
+                    selected_key = k
+                continue
+            # choose latest point not in the future; fallback to nearest future if needed
+            if kd <= now_local.replace(tzinfo=None):
+                if selected_dt is None or kd > selected_dt:
+                    selected_dt = kd
+                    selected_key = k
+        if selected_key is None:
+            # all points are in the future: choose earliest one
+            for k in sorted(watts.keys()):
+                if _parse_forecast_dt(k) is not None:
+                    selected_key = k
+                    break
+        if selected_key is not None:
+            mapping["pv_now_w"] = watts.get(selected_key)
     if isinstance(pv_live, dict):
         mapping["pv_live_w"] = pv_live.get("value")
     pv_now = mapping.get("pv_now_w")
