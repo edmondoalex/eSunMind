@@ -64,6 +64,56 @@
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
         <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
       </div>
+      <div class="panel">
+        <div class="kpi chart-kpi">
+          <strong>Meteo Prossime 24h</strong>
+          <svg
+            class="weather-chart"
+            viewBox="0 0 900 250"
+            preserveAspectRatio="none"
+            role="img"
+            aria-label="Grafico meteo 24 ore: temperatura e pioggia"
+            @mousemove="onWeatherChartMove"
+            @mouseleave="onWeatherChartLeave"
+          >
+            <line x1="50" y1="190" x2="870" y2="190" class="chart-axis" />
+            <line x1="50" y1="24" x2="50" y2="190" class="chart-axis" />
+            <line x1="870" y1="24" x2="870" y2="190" class="chart-axis" />
+
+            <line v-for="t in weatherTempTicks" :key="`wt-${t}`" x1="50" :y1="weatherYFromTemp(t)" x2="870" :y2="weatherYFromTemp(t)" class="chart-grid" />
+            <line v-for="(_, i) in weatherSeries" v-if="i % 3 === 0" :key="`wx-${i}`" :x1="weatherXFromIdx(i)" y1="24" :x2="weatherXFromIdx(i)" y2="190" class="chart-grid-v" />
+
+            <rect
+              v-for="(p, i) in weatherSeries"
+              :key="`wr-${i}`"
+              :x="weatherXFromIdx(i) - weatherBarHalfWidth"
+              :y="weatherYFromRain(p.rain)"
+              :width="weatherBarHalfWidth * 2"
+              :height="Math.max(0, 190 - weatherYFromRain(p.rain))"
+              class="weather-rain-bar"
+            />
+
+            <polyline :points="weatherTempPoints" class="weather-temp-line" />
+            <circle v-for="(p, i) in weatherSeries" :key="`wd-${i}`" :cx="weatherXFromIdx(i)" :cy="weatherYFromTemp(p.temp)" r="2.8" class="weather-temp-dot" />
+
+            <line v-if="weatherHoverPoint" :x1="weatherHoverPoint.x" :x2="weatherHoverPoint.x" y1="24" y2="190" class="chart-hover-line" />
+            <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
+              <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="180" height="54" />
+              <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
+              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }} degC</text>
+              <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h</text>
+            </g>
+
+            <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
+            <text x="18" y="20" class="axis-title">degC</text>
+            <text x="876" y="20" class="axis-title">mm/h</text>
+            <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="208" class="axis-label-x">{{ p.hhmm }}</text>
+          </svg>
+          <div class="chart-meta">
+            Linea gialla: temperatura | Barre azzurre: pioggia oraria | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
+          </div>
+        </div>
+      </div>
 
       <div class="panel">
         <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
@@ -334,6 +384,62 @@ const weatherWindDirDeg = computed(() => weatherNorm.value?.wind_from_direction_
 const weatherCloudPct = computed(() => weatherNorm.value?.cloud_area_fraction_pct)
 const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_mm)
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
+const weatherSeries = computed(() => {
+  const ts = data.value?.weather?.payload?.properties?.timeseries
+  if (!Array.isArray(ts)) return []
+  return ts.slice(0, 24).map((row) => {
+    const d = row?.data || {}
+    const inst = d?.instant?.details || {}
+    const n1 = d?.next_1_hours || {}
+    const rain = Number(n1?.details?.precipitation_amount ?? 0)
+    const temp = Number(inst?.air_temperature)
+    const time = String(row?.time || '')
+    const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
+    return {
+      time,
+      hhmm,
+      temp: Number.isFinite(temp) ? temp : 0,
+      rain: Number.isFinite(rain) ? rain : 0,
+    }
+  })
+})
+const weatherTempMin = computed(() => {
+  if (!weatherSeries.value.length) return 0
+  return Math.min(...weatherSeries.value.map((x) => x.temp))
+})
+const weatherTempMax = computed(() => {
+  if (!weatherSeries.value.length) return 1
+  return Math.max(...weatherSeries.value.map((x) => x.temp))
+})
+const weatherRainMax = computed(() => {
+  if (!weatherSeries.value.length) return 1
+  return Math.max(0.1, ...weatherSeries.value.map((x) => x.rain))
+})
+const weatherTempTicks = computed(() => {
+  const mn = weatherTempMin.value
+  const mx = weatherTempMax.value
+  const span = Math.max(1, mx - mn)
+  return [mn, mn + span * 0.33, mn + span * 0.66, mx]
+})
+const weatherTempPoints = computed(() => {
+  const s = weatherSeries.value
+  if (!s.length) return ''
+  return s.map((p, i) => `${weatherXFromIdx(i).toFixed(1)},${weatherYFromTemp(p.temp).toFixed(1)}`).join(' ')
+})
+const weatherHoverPoint = ref(null)
+const weatherBarHalfWidth = computed(() => {
+  const n = weatherSeries.value.length || 1
+  return Math.max(3, Math.min(10, (820 / n) * 0.32))
+})
+const weatherHoverTooltipX = computed(() => {
+  if (!weatherHoverPoint.value) return 0
+  return weatherHoverPoint.value.x > 700 ? weatherHoverPoint.value.x - 188 : weatherHoverPoint.value.x + 8
+})
+const weatherHoverTooltipY = computed(() => {
+  if (!weatherHoverPoint.value) return 0
+  const y = weatherHoverPoint.value.y - 60
+  return y < 24 ? 24 : y
+})
 
 const forecastResult = computed(() => data.value?.forecast_solar?.payload?.result || null)
 const forecastOk = computed(() => Boolean(data.value?.forecast_solar?.ok))
@@ -493,6 +599,41 @@ function yFromW(w) {
 function fmtHourTick(minute) {
   const h = Math.floor(Number(minute) / 60)
   return `${String(h).padStart(2, '0')}:00`
+}
+function weatherXFromIdx(idx) {
+  const n = Math.max(1, weatherSeries.value.length - 1)
+  return 50 + (Number(idx) / n) * 820
+}
+function weatherYFromTemp(temp) {
+  const mn = weatherTempMin.value
+  const mx = weatherTempMax.value
+  const span = Math.max(1, mx - mn)
+  return 190 - ((Number(temp) - mn) / span) * 166
+}
+function weatherYFromRain(rain) {
+  const mx = Math.max(0.1, weatherRainMax.value)
+  return 190 - (Number(rain) / mx) * 90
+}
+function onWeatherChartMove(evt) {
+  const s = weatherSeries.value
+  if (!s.length) {
+    weatherHoverPoint.value = null
+    return
+  }
+  const rect = evt.currentTarget.getBoundingClientRect()
+  const relX = evt.clientX - rect.left
+  const x = (relX / rect.width) * 900
+  const idx = Math.max(0, Math.min(s.length - 1, Math.round(((x - 50) / 820) * (s.length - 1))))
+  const p = s[idx]
+  weatherHoverPoint.value = {
+    ...p,
+    x: weatherXFromIdx(idx),
+    y: weatherYFromTemp(p.temp),
+    label: p.time ? p.time.replace('T', ' ').replace('Z', ' UTC') : p.hhmm,
+  }
+}
+function onWeatherChartLeave() {
+  weatherHoverPoint.value = null
 }
 function onChartMove(evt) {
   const series = fvTodaySeries.value
@@ -877,10 +1018,14 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}
 .chart-kpi{grid-column:1 / -1}
 .fv-chart{width:100%;height:250px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
+.weather-chart{width:100%;height:270px;display:block;margin-top:8px;border:1px solid var(--border);border-radius:8px;background:rgba(12,20,28,.7)}
 .chart-axis{stroke:#607086;stroke-width:1}
 .chart-grid{stroke:#2d3b4d;stroke-width:.8;opacity:.55}
 .chart-grid-v{stroke:#243244;stroke-width:.8;opacity:.4}
 .chart-line{fill:none;stroke:#f2c235;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.weather-temp-line{fill:none;stroke:#f2c235;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.weather-temp-dot{fill:#ffe68f;stroke:#f2c235;stroke-width:1}
+.weather-rain-bar{fill:rgba(45,212,191,.46);stroke:rgba(125,242,228,.65);stroke-width:.8}
 .chart-now{stroke:#2dd4bf;stroke-width:1.5;stroke-dasharray:6,5}
 .chart-hover-line{stroke:#e5edf8;stroke-width:1.2;stroke-dasharray:3,4;opacity:.85}
 .chart-hover-dot{fill:#ffffff;stroke:#f2c235;stroke-width:2}
