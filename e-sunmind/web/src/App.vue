@@ -121,7 +121,7 @@
           </div>
           <div class="bar-chart-area">
             <div class="bar-y-axis">
-              <div v-for="t in yTicks" :key="`by-${t}`" class="bar-y-tick">{{ fmt0(t) }}</div>
+              <div v-for="t in yTicksBars" :key="`by-${t}`" class="bar-y-tick">{{ fmt0(t) }}</div>
             </div>
             <div class="day-bars">
               <div v-for="d in fvHourBars" :key="`h-${d.time}`" class="day-bar-item">
@@ -413,7 +413,7 @@ const fvHourBars = computed(() => {
     return {
       w: x.w,
       pct: Math.max(3, (x.w / maxW) * 100),
-      kwh: Number.isFinite(x.wh) ? Number(x.wh) / 1000 : null,
+      kwh: Number.isFinite(x.wh) ? Number(x.wh) / 1000 : (Number(x.w) / 1000),
       time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
     }
   })
@@ -422,6 +422,7 @@ const yTicks = computed(() => {
   const maxW = Math.max(1, Number(fvPeakSelectedW.value || 1))
   return [0, maxW * 0.25, maxW * 0.5, maxW * 0.75, maxW]
 })
+const yTicksBars = computed(() => [...yTicks.value].reverse())
 const xTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440]
 const hoverPoint = ref(null)
 const hoverTooltipX = computed(() => {
@@ -879,6 +880,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   display:flex;
   flex-wrap:nowrap;
   overflow-x:auto;
+  overflow-y:visible;
   gap:8px;
   align-items:end;
   padding-bottom:2px;
@@ -913,7 +915,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   position:absolute;
   left:50%;
   transform:translateX(-50%);
-  bottom:calc(100% + 6px);
+  top:6px;
   background:rgba(8,14,22,.95);
   border:1px solid #5f738d;
   border-radius:8px;
