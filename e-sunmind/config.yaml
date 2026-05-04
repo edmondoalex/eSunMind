@@ -1,7 +1,7 @@
 ﻿name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.2.85"
+version: "0.2.86"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -47,6 +47,24 @@ options:
   air_quality:
     enabled: true
     provider: "open_meteo"
+  tende_map:
+    enabled: true
+    mqtt_host: "192.168.3.13"
+    mqtt_port: 1883
+    mqtt_username: ""
+    mqtt_password: ""
+    topic_state: "e-tendeintelligenti/map/shades"
+    topic_availability: "e-tendeintelligenti/availability"
+    stale_seconds: 180
+  tende_map:
+    enabled: true
+    mqtt_host: "192.168.3.13"
+    mqtt_port: 1883
+    mqtt_username: ""
+    mqtt_password: ""
+    topic_state: "e-tendeintelligenti/map/shades"
+    topic_availability: "e-tendeintelligenti/availability"
+    stale_seconds: 180
 schema:
   log_level: list(trace|debug|info|warning|error)
   latitude: float
@@ -77,3 +95,21 @@ schema:
   air_quality:
     enabled: bool
     provider: list(open_meteo)
+  tende_map:
+    enabled: bool
+    mqtt_host: str
+    mqtt_port: port
+    mqtt_username: str?
+    mqtt_password: password?
+    topic_state: str
+    topic_availability: str
+    stale_seconds: int(30,86400)
+  tende_map:
+    enabled: bool
+    mqtt_host: str
+    mqtt_port: port
+    mqtt_username: str?
+    mqtt_password: password?
+    topic_state: str
+    topic_availability: str
+    stale_seconds: int(30,86400)

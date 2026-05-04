@@ -36,6 +36,7 @@
           <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
           <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
           <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
+          <label><input type="checkbox" v-model="showTendeSectors" @change="drawSolarOverlay" /> Spicchi Tende (e-Tende)</label>
           <label><input type="checkbox" v-model="weatherAnimEnabled" /> Animazione meteo</label>
         </div>
         <div class="pv-az-controls" v-if="showPvAzLine">
@@ -50,6 +51,7 @@
       <div class="map-wrap">
         <div class="map-block-title">Mappa Sole/Meteo</div>
         <div id="solar-map"></div>
+        <div v-if="tendeMapWarning" class="tende-badge">{{ tendeMapWarning }}</div>
         <canvas
           v-show="weatherAnimEnabled"
           ref="weatherCanvasEl"
@@ -491,6 +493,7 @@ let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
 let compassMarkers = []
+let tendeSectorLayers = []
 const weatherAnimEnabled = ref(false)
 const weatherCanvasEl = ref(null)
 let weatherRafId = 0
@@ -507,6 +510,7 @@ const showSimLine = ref(true)
 const showAxisNS = ref(true)
 const showAxisWE = ref(true)
 const showPvAzLine = ref(false)
+const showTendeSectors = ref(true)
 const pvAzimuthDeg = ref(0)
 const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
@@ -573,6 +577,19 @@ const airqRawText = computed(() => {
   return JSON.stringify(raw, null, 2)
 })
 const airqNorm = computed(() => data.value?.air_quality?.normalized || null)
+const tendeMap = computed(() => data.value?.tende_map || null)
+const tendeMapShades = computed(() => {
+  const arr = tendeMap.value?.shades
+  return Array.isArray(arr) ? arr.filter((s) => s && s.enabled !== false) : []
+})
+const tendeMapWarning = computed(() => {
+  const tm = tendeMap.value
+  if (!showTendeSectors.value) return ''
+  if (!tm || !tm.ok) return 'Dati tende non pronti'
+  if (tm.availability && tm.availability !== 'online') return `Tende ${tm.availability}`
+  if (tm.stale) return 'Dati tende non aggiornati'
+  return ''
+})
 const airqProvider = computed(() => data.value?.air_quality?.provider || null)
 const airqEu = computed(() => airqNorm.value?.european_aqi)
 const airqUs = computed(() => airqNorm.value?.us_aqi)
@@ -1247,6 +1264,28 @@ function destinationPoint(latDeg, lonDeg, bearingDeg, distanceM) {
   return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]
 }
 
+function colorFromId(id) {
+  const palette = ['#60a5fa', '#34d399', '#f59e0b', '#f472b6', '#a78bfa', '#22d3ee', '#fb7185', '#84cc16']
+  let h = 0
+  const s = String(id || '')
+  for (let i = 0; i < s.length; i += 1) h = ((h << 5) - h) + s.charCodeAt(i)
+  return palette[Math.abs(h) % palette.length]
+}
+
+function buildSectorPolygonPoints(azStart, azEnd, radiusM) {
+  const pts = [[lat.value, lon.value]]
+  const a0 = ((Number(azStart) % 360) + 360) % 360
+  let a1 = ((Number(azEnd) % 360) + 360) % 360
+  if (a1 < a0) a1 += 360
+  const step = 3
+  for (let a = a0; a <= a1; a += step) {
+    pts.push(destinationPoint(lat.value, lon.value, a % 360, radiusM))
+  }
+  pts.push(destinationPoint(lat.value, lon.value, a1 % 360, radiusM))
+  pts.push([lat.value, lon.value])
+  return pts
+}
+
 function baseDateAtHour(hour, minute = 0) {
   const base = data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()
   const d = new Date(base)
@@ -1283,7 +1322,9 @@ function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
   ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
+  for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
+  tendeSectorLayers = []
 
   centerMarker = L.circleMarker([lat.value, lon.value], { radius: 4, color: '#ffd24a', fillColor: '#ffd24a', fillOpacity: 1, weight: 1 }).addTo(map)
 
@@ -1415,6 +1456,28 @@ function drawSolarOverlay() {
       interactive: false,
     }).addTo(map)
     compassMarkers.push(mk)
+  }
+
+  if (showTendeSectors.value) {
+    const stale = Boolean(tendeMap.value?.stale) || (tendeMap.value?.availability && tendeMap.value?.availability !== 'online')
+    for (const shade of tendeMapShades.value) {
+      const azStart = Number(shade.azimuth_start_deg)
+      const azEnd = Number(shade.azimuth_end_deg)
+      if (!Number.isFinite(azStart) || !Number.isFinite(azEnd)) continue
+      const color = String(shade.color || colorFromId(shade.id))
+      const active = Boolean(shade.active)
+      const opacity = stale ? 0.14 : (active ? 0.34 : 0.2)
+      const poly = L.polygon(buildSectorPolygonPoints(azStart, azEnd, cfg.value.sectorRadiusM), {
+        color,
+        weight: active ? 2.4 : 1.4,
+        opacity: stale ? 0.5 : 0.9,
+        fillColor: color,
+        fillOpacity: opacity,
+      }).addTo(map)
+      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° → ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
+      poly.bindTooltip(tip)
+      tendeSectorLayers.push(poly)
+    }
   }
 }
 
@@ -1715,6 +1778,19 @@ input[type='range']{width:100%}
   font-size:12px;
   font-weight:700;
   backdrop-filter: blur(2px);
+}
+.tende-badge{
+  position:absolute;
+  top:10px;
+  right:10px;
+  z-index:420;
+  background:rgba(114, 28, 36, .86);
+  color:#ffd9de;
+  border:1px solid rgba(255, 180, 190, .45);
+  border-radius:10px;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:700;
 }
 .wind-compass-arrow{
   display:inline-block;

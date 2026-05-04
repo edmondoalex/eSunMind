@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import threading
 import time
 from datetime import datetime
 from math import cos, pi
@@ -31,7 +32,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.85"
+APP_VERSION = "0.2.86"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -42,6 +43,7 @@ FORECAST_FILE = Path("/data/forecast_solar.json")
 WEATHER_FILE = Path("/data/weather_met.json")
 WEATHER_OPEN_METEO_FILE = Path("/data/weather_open_meteo.json")
 AIR_QUALITY_FILE = Path("/data/air_quality_openmeteo.json")
+TENDE_MAP_FILE = Path("/data/tende_map.json")
 STATE_FILE = Path("/data/state.json")
 FORECAST_MIN_INTERVAL_SECONDS = 3600
 WEATHER_MIN_INTERVAL_SECONDS = 900
@@ -55,6 +57,18 @@ WORKER_STATE: dict[str, Any] = {
     "forecast_backoff_until_ts": 0.0,
     "mqtt_connected": False,
     "mqtt_last_error": None,
+    "tende_map_connected": False,
+    "tende_map_last_error": None,
+    "tende_map_last_msg_ts": 0.0,
+    "tende_map_availability": "unknown",
+}
+
+TENDE_MAP_RUNTIME: dict[str, Any] = {
+    "client": None,
+    "cfg_key": None,
+    "thread": None,
+    "stop_event": None,
+    "lock": threading.Lock(),
 }
 
 
@@ -133,6 +147,16 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "provider": "open_meteo",
         },
+        "tende_map": {
+            "enabled": True,
+            "mqtt_host": "192.168.3.13",
+            "mqtt_port": 1883,
+            "mqtt_username": "",
+            "mqtt_password": "",
+            "topic_state": "e-tendeintelligenti/map/shades",
+            "topic_availability": "e-tendeintelligenti/availability",
+            "stale_seconds": 180,
+        },
     }
     if not OPTIONS_FILE.exists():
         return defaults
@@ -151,6 +175,8 @@ def _load_options() -> dict[str, Any]:
         defaults["weather"].update(payload["weather"])
     if isinstance(payload.get("air_quality"), dict):
         defaults["air_quality"].update(payload["air_quality"])
+    if isinstance(payload.get("tende_map"), dict):
+        defaults["tende_map"].update(payload["tende_map"])
     # Local overrides are owned by addon UI and persist independently from HA-managed options.
     local = _load_local_options_raw()
     if isinstance(local.get("mqtt"), dict):
@@ -161,12 +187,15 @@ def _load_options() -> dict[str, Any]:
         defaults["weather"].update(local["weather"])
     if isinstance(local.get("air_quality"), dict):
         defaults["air_quality"].update(local["air_quality"])
+    if isinstance(local.get("tende_map"), dict):
+        defaults["tende_map"].update(local["tende_map"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
     defaults["air_quality"]["provider"] = str(defaults["air_quality"].get("provider") or "open_meteo").strip().lower()
+    defaults["tende_map"]["stale_seconds"] = max(30, min(86400, int(defaults["tende_map"].get("stale_seconds", 180) or 180)))
     return defaults
 
 
@@ -195,6 +224,192 @@ def _save_local_options_raw(payload: dict[str, Any]) -> None:
 
 def _save_options_raw(payload: dict[str, Any]) -> None:
     OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+    shades_in = payload.get("shades")
+    if not isinstance(shades_in, list):
+        return None
+    shades_out: list[dict[str, Any]] = []
+    for item in shades_in:
+        if not isinstance(item, dict):
+            continue
+        shade_id = str(item.get("id") or "").strip()
+        if not shade_id:
+            continue
+        try:
+            az_start = float(item.get("azimuth_start_deg"))
+            az_end = float(item.get("azimuth_end_deg"))
+        except Exception:
+            continue
+        alt_min = item.get("altitude_min_deg")
+        alt_max = item.get("altitude_max_deg")
+        shades_out.append(
+            {
+                "id": shade_id,
+                "name": str(item.get("name") or shade_id),
+                "cover_entity": (str(item.get("cover_entity")).strip() if item.get("cover_entity") else None),
+                "enabled": bool(item.get("enabled", True)),
+                "active": bool(item.get("active", False)),
+                "azimuth_start_deg": az_start % 360.0,
+                "azimuth_end_deg": az_end % 360.0,
+                "altitude_min_deg": float(alt_min) if alt_min is not None else None,
+                "altitude_max_deg": float(alt_max) if alt_max is not None else None,
+                "priority": int(item.get("priority")) if item.get("priority") is not None else None,
+                "color": (str(item.get("color")).strip() if item.get("color") else None),
+            }
+        )
+    if not shades_out:
+        return None
+    return {
+        "updated_at": str(payload.get("updated_at") or datetime.utcnow().isoformat()),
+        "source": str(payload.get("source") or "e-tendeintelligenti"),
+        "shades": shades_out,
+    }
+
+
+def _read_tende_map_payload() -> dict[str, Any] | None:
+    if not TENDE_MAP_FILE.exists():
+        return None
+    try:
+        raw = json.loads(TENDE_MAP_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return _validate_tende_map_payload(raw)
+
+
+def _build_tende_map_snapshot(cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    if cfg is None:
+        cfg = _load_options()
+    tm_cfg = (cfg.get("tende_map") or {}) if isinstance(cfg, dict) else {}
+    stale_seconds_cfg = max(30, int(tm_cfg.get("stale_seconds", 180) or 180))
+    payload = _read_tende_map_payload()
+    last_msg_ts = float(WORKER_STATE.get("tende_map_last_msg_ts", 0.0) or 0.0)
+    stale = True if last_msg_ts <= 0 else (time.time() - last_msg_ts) > stale_seconds_cfg
+    availability = str(WORKER_STATE.get("tende_map_availability") or "unknown")
+    if payload is None:
+        return {
+            "ok": False,
+            "availability": availability,
+            "stale": True,
+            "updated_at": None,
+            "source": "e-tendeintelligenti",
+            "shades": [],
+        }
+    return {
+        "ok": True,
+        "availability": availability,
+        "stale": stale,
+        "updated_at": payload.get("updated_at"),
+        "source": payload.get("source") or "e-tendeintelligenti",
+        "shades": payload.get("shades") or [],
+    }
+
+
+def _start_tende_map_subscriber(cfg: dict[str, Any]) -> None:
+    tm_cfg = (cfg.get("tende_map") or {}) if isinstance(cfg, dict) else {}
+    if not tm_cfg.get("enabled", True):
+        return
+    cfg_key = json.dumps(tm_cfg, sort_keys=True)
+    with TENDE_MAP_RUNTIME["lock"]:
+        if TENDE_MAP_RUNTIME.get("thread") is not None and TENDE_MAP_RUNTIME.get("cfg_key") == cfg_key:
+            return
+        stop_event = TENDE_MAP_RUNTIME.get("stop_event")
+        if isinstance(stop_event, threading.Event):
+            stop_event.set()
+        TENDE_MAP_RUNTIME["stop_event"] = threading.Event()
+        TENDE_MAP_RUNTIME["cfg_key"] = cfg_key
+
+    def _runner(local_cfg: dict[str, Any], local_stop: threading.Event) -> None:
+        host = str(local_cfg.get("mqtt_host") or "core-mosquitto")
+        port = int(local_cfg.get("mqtt_port") or 1883)
+        username = str(local_cfg.get("mqtt_username") or "").strip()
+        password = str(local_cfg.get("mqtt_password") or "")
+        topic_state = str(local_cfg.get("topic_state") or "e-tendeintelligenti/map/shades")
+        topic_av = str(local_cfg.get("topic_availability") or "e-tendeintelligenti/availability")
+
+        def _on_connect(client: mqtt.Client, _userdata: Any, _flags: Any, rc: int) -> None:
+            if rc == 0:
+                WORKER_STATE["tende_map_connected"] = True
+                WORKER_STATE["tende_map_last_error"] = None
+                client.subscribe(topic_state, qos=1)
+                client.subscribe(topic_av, qos=1)
+            else:
+                WORKER_STATE["tende_map_connected"] = False
+                WORKER_STATE["tende_map_last_error"] = f"connect_rc_{rc}"
+
+        def _on_disconnect(_client: mqtt.Client, _userdata: Any, _rc: int) -> None:
+            WORKER_STATE["tende_map_connected"] = False
+
+        def _on_message(_client: mqtt.Client, _userdata: Any, msg: mqtt.MQTTMessage) -> None:
+            topic = str(msg.topic or "")
+            text = ""
+            try:
+                text = msg.payload.decode("utf-8", errors="replace")
+            except Exception:
+                text = ""
+            if topic == topic_av:
+                val = text.strip().lower()
+                WORKER_STATE["tende_map_availability"] = val if val in {"online", "offline"} else "unknown"
+                _save_state()
+                return
+            if topic != topic_state:
+                return
+            try:
+                parsed = json.loads(text)
+                validated = _validate_tende_map_payload(parsed)
+                if validated is None:
+                    raise ValueError("invalid_payload")
+                TENDE_MAP_FILE.write_text(json.dumps(validated, ensure_ascii=False, indent=2), encoding="utf-8")
+                WORKER_STATE["tende_map_last_msg_ts"] = time.time()
+                WORKER_STATE["tende_map_last_error"] = None
+            except Exception as exc:
+                WORKER_STATE["tende_map_last_error"] = str(exc)
+            finally:
+                _save_state()
+
+        while not local_stop.is_set():
+            client: mqtt.Client | None = None
+            try:
+                client = mqtt.Client(client_id=f"e-sunmind-tende-map-{int(time.time())}")
+                if username:
+                    client.username_pw_set(username, password)
+                client.on_connect = _on_connect
+                client.on_disconnect = _on_disconnect
+                client.on_message = _on_message
+                client.connect(host, port, 60)
+                with TENDE_MAP_RUNTIME["lock"]:
+                    TENDE_MAP_RUNTIME["client"] = client
+                client.loop_start()
+                while not local_stop.is_set():
+                    time.sleep(1.0)
+            except Exception as exc:
+                WORKER_STATE["tende_map_connected"] = False
+                WORKER_STATE["tende_map_last_error"] = str(exc)
+                _save_state()
+                time.sleep(5.0)
+            finally:
+                try:
+                    if client is not None:
+                        client.loop_stop()
+                        client.disconnect()
+                except Exception:
+                    pass
+                with TENDE_MAP_RUNTIME["lock"]:
+                    if TENDE_MAP_RUNTIME.get("client") is client:
+                        TENDE_MAP_RUNTIME["client"] = None
+
+    thread = threading.Thread(
+        target=_runner,
+        args=(dict(tm_cfg), TENDE_MAP_RUNTIME["stop_event"]),
+        name="tende-map-subscriber",
+        daemon=True,
+    )
+    with TENDE_MAP_RUNTIME["lock"]:
+        TENDE_MAP_RUNTIME["thread"] = thread
+    thread.start()
 
 
 def _fetch_forecast_solar(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
@@ -457,6 +672,171 @@ def _read_air_quality_cache() -> dict[str, Any] | None:
         return json.loads(AIR_QUALITY_FILE.read_text(encoding="utf-8"))
     except Exception:
         return None
+
+
+def _read_tende_map_cache() -> dict[str, Any] | None:
+    if not TENDE_MAP_FILE.exists():
+        return None
+    try:
+        raw = json.loads(TENDE_MAP_FILE.read_text(encoding="utf-8"))
+        return raw if isinstance(raw, dict) else None
+    except Exception:
+        return None
+
+
+def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    shades_in = payload.get("shades") if isinstance(payload, dict) else None
+    shades_out = []
+    if isinstance(shades_in, list):
+        for item in shades_in:
+            if not isinstance(item, dict):
+                continue
+            sid = str(item.get("id") or "").strip()
+            if not sid:
+                continue
+            try:
+                az_start = float(item.get("azimuth_start_deg"))
+                az_end = float(item.get("azimuth_end_deg"))
+            except Exception:
+                continue
+            alt_min = item.get("altitude_min_deg")
+            alt_max = item.get("altitude_max_deg")
+            shades_out.append(
+                {
+                    "id": sid,
+                    "name": str(item.get("name") or sid),
+                    "cover_entity": (str(item.get("cover_entity")).strip() if item.get("cover_entity") else None),
+                    "enabled": bool(item.get("enabled", True)),
+                    "active": bool(item.get("active", False)),
+                    "azimuth_start_deg": az_start % 360.0,
+                    "azimuth_end_deg": az_end % 360.0,
+                    "altitude_min_deg": float(alt_min) if alt_min is not None else None,
+                    "altitude_max_deg": float(alt_max) if alt_max is not None else None,
+                    "priority": int(item.get("priority")) if item.get("priority") is not None else None,
+                    "color": (str(item.get("color")).strip() if item.get("color") else None),
+                }
+            )
+    return {
+        "ok": True,
+        "source": str(payload.get("source") or "e-tendeintelligenti"),
+        "updated_at": payload.get("updated_at"),
+        "shades": shades_out,
+    }
+
+
+def _tende_map_mqtt_start_or_refresh(cfg: dict[str, Any]) -> None:
+    tc = (cfg.get("tende_map") or {})
+    if not tc.get("enabled", True):
+        with TENDE_MAP_RUNTIME["lock"]:
+            client = TENDE_MAP_RUNTIME.get("client")
+            if client is not None:
+                try:
+                    client.loop_stop()
+                    client.disconnect()
+                except Exception:
+                    pass
+                TENDE_MAP_RUNTIME["client"] = None
+                TENDE_MAP_RUNTIME["cfg_key"] = None
+        WORKER_STATE["tende_map_connected"] = False
+        return
+
+    cfg_key = "|".join(
+        [
+            str(tc.get("mqtt_host") or ""),
+            str(tc.get("mqtt_port") or 1883),
+            str(tc.get("mqtt_username") or ""),
+            str(tc.get("topic_state") or ""),
+            str(tc.get("topic_availability") or ""),
+        ]
+    )
+    with TENDE_MAP_RUNTIME["lock"]:
+        if TENDE_MAP_RUNTIME.get("client") is not None and TENDE_MAP_RUNTIME.get("cfg_key") == cfg_key:
+            return
+        old = TENDE_MAP_RUNTIME.get("client")
+        if old is not None:
+            try:
+                old.loop_stop()
+                old.disconnect()
+            except Exception:
+                pass
+
+        host = str(tc.get("mqtt_host") or "192.168.3.13").strip()
+        port = int(tc.get("mqtt_port") or 1883)
+        username = str(tc.get("mqtt_username") or "").strip()
+        password = str(tc.get("mqtt_password") or "")
+        topic_state = str(tc.get("topic_state") or "e-tendeintelligenti/map/shades").strip()
+        topic_av = str(tc.get("topic_availability") or "e-tendeintelligenti/availability").strip()
+
+        client = mqtt.Client(client_id="e-sunmind-tende-map")
+        if username:
+            client.username_pw_set(username, password)
+
+        def _on_connect(c, _u, _f, rc):
+            try:
+                c.subscribe(topic_state, qos=0)
+                c.subscribe(topic_av, qos=0)
+                WORKER_STATE["tende_map_connected"] = True
+                WORKER_STATE["tende_map_last_error"] = None
+            except Exception as exc:
+                WORKER_STATE["tende_map_last_error"] = str(exc)
+
+        def _on_disconnect(_c, _u, _rc):
+            WORKER_STATE["tende_map_connected"] = False
+
+        def _on_message(_c, _u, msg):
+            now_ts = time.time()
+            WORKER_STATE["tende_map_last_msg_ts"] = now_ts
+            try:
+                if msg.topic == topic_av:
+                    val = (msg.payload.decode("utf-8", errors="ignore").strip().lower() or "unknown")
+                    WORKER_STATE["tende_map_availability"] = val if val in {"online", "offline"} else "unknown"
+                    return
+                if msg.topic != topic_state:
+                    return
+                decoded = msg.payload.decode("utf-8", errors="ignore")
+                parsed = json.loads(decoded)
+                norm = _normalize_tende_map_payload(parsed if isinstance(parsed, dict) else {})
+                norm["_received_at_ts"] = now_ts
+                TENDE_MAP_FILE.write_text(json.dumps(norm, ensure_ascii=False, indent=2), encoding="utf-8")
+                WORKER_STATE["tende_map_last_error"] = None
+            except Exception as exc:
+                WORKER_STATE["tende_map_last_error"] = str(exc)
+
+        client.on_connect = _on_connect
+        client.on_disconnect = _on_disconnect
+        client.on_message = _on_message
+        try:
+            client.connect(host, port, 60)
+            client.loop_start()
+            TENDE_MAP_RUNTIME["client"] = client
+            TENDE_MAP_RUNTIME["cfg_key"] = cfg_key
+        except Exception as exc:
+            WORKER_STATE["tende_map_connected"] = False
+            WORKER_STATE["tende_map_last_error"] = str(exc)
+            TENDE_MAP_RUNTIME["client"] = None
+            TENDE_MAP_RUNTIME["cfg_key"] = None
+
+
+def _build_tende_map_data(cfg: dict[str, Any]) -> dict[str, Any]:
+    tc = (cfg.get("tende_map") or {})
+    if not tc.get("enabled", True):
+        return {"ok": False, "error": "disabled", "availability": "unknown", "stale": True, "shades": []}
+    cached = _read_tende_map_cache()
+    if cached is None:
+        return {"ok": False, "error": "data_not_ready", "availability": WORKER_STATE.get("tende_map_availability", "unknown"), "stale": True, "shades": []}
+    last_ts = float(cached.get("_received_at_ts", 0.0) or 0.0)
+    stale_seconds = int(tc.get("stale_seconds") or 180)
+    stale = (time.time() - last_ts) > stale_seconds if last_ts > 0 else True
+    return {
+        "ok": True,
+        "source": cached.get("source") or "e-tendeintelligenti",
+        "updated_at": cached.get("updated_at"),
+        "availability": WORKER_STATE.get("tende_map_availability", "unknown"),
+        "stale": stale,
+        "shades": cached.get("shades") if isinstance(cached.get("shades"), list) else [],
+        "_received_at_ts": last_ts,
+        "_stale_seconds": stale_seconds,
+    }
 
 
 def _save_state() -> None:
@@ -767,6 +1147,7 @@ async def _worker() -> None:
     while True:
         WORKER_STATE["last_loop_ts"] = time.time()
         cfg = _load_options()
+        _start_tende_map_subscriber(cfg)
         try:
             data = _compute_data(cfg)
             coords = data.get("coordinates", {})
@@ -853,6 +1234,7 @@ async def _worker() -> None:
             data["weather_open_meteo"] = weather_open_meteo
             data["air_quality"] = airq
             data["forecast_solar"] = forecast
+            data["tende_map"] = _build_tende_map_snapshot(cfg)
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
             if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
                 FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -923,7 +1305,16 @@ async def data():
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    payload["tende_map"] = _build_tende_map_snapshot(_load_options())
     return JSONResponse(payload)
+
+
+@app.get("/api/tende/map")
+async def tende_map_get():
+    snapshot = _build_tende_map_snapshot(_load_options())
+    if not snapshot.get("ok"):
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    return JSONResponse(snapshot)
 
 
 @app.get("/api/sun/live")
@@ -1089,7 +1480,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id")
+    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "tende_map")
 
     raw = _load_local_options_raw()
     for k in keys:
