@@ -19,6 +19,9 @@
     </header>
 
     <div v-show="tab==='user'">
+      <div class="view-tools">
+        <button class="btn ghost" @click="userExpanded = !userExpanded">{{ userExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
+      </div>
       <div class="timeline">
         <div class="time-labels">
           <span v-for="(h, i) in hours" :key="`h-${i}`">{{ `${String(h).padStart(2,'0')}:00` }}</span>
@@ -52,7 +55,7 @@
         ></canvas>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
         <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }} deg</div>
         <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div>
@@ -61,7 +64,7 @@
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi"><strong>Meteo provider:</strong> {{ weatherProvider || '-' }}</div>
         <div class="kpi"><strong>Meteo aggiornamento:</strong> {{ weatherTime || '-' }}</div>
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
@@ -74,7 +77,7 @@
         <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
         <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
       </div>
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi chart-kpi">
           <strong>Meteo Prossime 24h</strong>
           <svg
@@ -134,7 +137,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi"><strong>Solar FV stato:</strong> {{ forecastOk ? 'OK' : 'N/D' }}</div>
         <div class="kpi"><strong>FV Oggi:</strong> {{ fmt0(fvTodayWh) }} Wh</div>
         <div class="kpi"><strong>FV Domani:</strong> {{ fmt0(fvTomorrowWh) }} Wh</div>
@@ -143,7 +146,7 @@
         <div class="kpi"><strong>Ultimo fetch:</strong> {{ forecastFetchedAtText }}</div>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi chart-kpi">
           <strong>Grafico FV Oggi (W)</strong>
           <div class="actions-inline">
@@ -188,7 +191,7 @@
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel" v-show="userExpanded">
         <div class="kpi chart-kpi">
           <strong>Fotovoltaico - Potenza prevista ora per ora</strong>
           <div class="actions-inline">
@@ -252,6 +255,9 @@
     </div>
 
     <div v-show="tab==='tech'">
+      <div class="view-tools">
+        <button class="btn ghost" @click="techExpanded = !techExpanded">{{ techExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
+      </div>
       <main class="tech-main">
         <section class="card">
           <h3>Configurazione Base Addon</h3>
@@ -281,7 +287,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card" v-show="techExpanded">
           <h3>Tarature Overlay</h3>
           <div class="form-grid">
             <label>Raggio percorso sole (m)
@@ -299,7 +305,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card" v-show="techExpanded">
           <h3>Tarature Forecast Solar (attuali)</h3>
           <div class="form-grid">
             <label>Enabled
@@ -326,18 +332,18 @@
           <p class="note">Le tarature forecast sono modificabili e salvabili direttamente da questa UI tecnica.</p>
         </section>
 
-        <section class="card">
+        <section class="card" v-show="techExpanded">
           <h3>Risposta completa Forecast Solar (raw)</h3>
           <pre class="json">{{ forecastRawText }}</pre>
         </section>
 
-        <section class="card">
+        <section class="card" v-show="techExpanded">
           <h3>Risposta completa Meteo MET (raw)</h3>
           <pre class="json">{{ weatherRawText }}</pre>
         </section>
 
-        <section class="card">
-          <h3>JSON runtime</h3>
+        <section class="card" v-show="techExpanded">
+          <h3>Risposta completa JSON runtime (raw)</h3>
           <pre class="json">{{ pretty }}</pre>
         </section>
       </main>
@@ -352,6 +358,8 @@ import SunCalc from 'suncalc'
 
 const tab = ref('user')
 const showSplash = ref(true)
+const userExpanded = ref(true)
+const techExpanded = ref(true)
 const data = ref(null)
 const lat = ref(null)
 const lon = ref(null)
@@ -1291,6 +1299,7 @@ body{margin:0;font-family:"Space Grotesk","IBM Plex Sans","Trebuchet MS",sans-se
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
 .btn.ghost.active{border-color:var(--accent);color:#cffff5}
 .timeline{padding:8px 12px;background:#232830;border-bottom:1px solid #3b4048}
+.view-tools{padding:8px 12px;background:#1b2028;border-bottom:1px solid #2f3640}
 .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 input[type='range']{width:100%}
 .time-meta{font-size:12px;color:#dfe8f6;margin-top:4px}
