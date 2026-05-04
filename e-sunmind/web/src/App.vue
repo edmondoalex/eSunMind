@@ -43,7 +43,7 @@
             <input type="range" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @input="drawSolarOverlay" />
           </label>
           <input class="pv-az-input" type="number" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @change="drawSolarOverlay" />
-          <span class="pv-az-value">{{ pvAzimuthDeg }} deg</span>
+          <span class="pv-az-value">{{ pvAzimuthDeg }}°</span>
         </div>
       </div>
 
@@ -58,31 +58,31 @@
         ></canvas>
         <div v-if="weatherAnimEnabled" class="wind-compass-chip">
           <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">↑</span>
-          <span>Vento da {{ fmt(weatherWindDirDeg) }} deg ({{ weatherWindCardinal }})</span>
+          <span>Vento da {{ fmt(weatherWindDirDeg) }}° ({{ weatherWindCardinal }})</span>
         </div>
       </div>
       </div>
 
       <div class="panel" v-show="userExpanded">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
-        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }} deg</div>
-        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }} deg</div>
-        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }} deg</div>
-        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }} deg</div>
+        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}°</div>
+        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div>
+        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}°</div>
+        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}°</div>
         <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
       </div>
 
       <div class="panel" v-show="userExpanded">
         <div class="kpi"><strong>Meteo provider:</strong> {{ weatherProvider || '-' }}</div>
         <div class="kpi"><strong>Meteo aggiornamento:</strong> {{ weatherTime || '-' }}</div>
-        <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
-        <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }} degC</div>
-        <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }} degC</div>
+        <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }}°C</div>
+        <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
+        <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }}°C</div>
         <div class="kpi"><strong>Entita temp reale:</strong> {{ externalTempEntityId || '-' }}</div>
         <div class="kpi"><strong>Stato lettura temp:</strong> {{ externalTempStatus }}</div>
         <div class="kpi" v-if="externalTempError"><strong>Errore temp reale:</strong> {{ externalTempError }}</div>
         <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
-        <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }} deg)</div>
+        <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }}°)</div>
         <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
         <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
@@ -134,7 +134,7 @@
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
               <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="230" height="68" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
-              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }} degC</text>
+              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}°C</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
               <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
             </g>
@@ -142,7 +142,7 @@
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
             <text v-for="t in weatherRainTicks" :key="`wrl-${t}`" x="876" :y="weatherYFromRain(t) + 3" class="axis-label-y axis-label-y-right-rain">{{ fmt1(t) }}</text>
             <text v-for="t in weatherWindTicks" :key="`wwl-${t}`" x="836" :y="weatherYFromWind(t) + 3" class="axis-label-y axis-label-y-right-wind">{{ fmt1(t) }}</text>
-            <text x="18" y="20" class="axis-title">degC</text>
+            <text x="18" y="20" class="axis-title">°C</text>
             <text x="876" y="20" class="axis-title">mm/h</text>
             <text x="836" y="20" class="axis-title axis-title-wind">m/s</text>
             <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
@@ -152,7 +152,7 @@
             <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
           </div>
           <div class="chart-meta">
-            Linea gialla: temperatura | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }} degC
+            Linea gialla: temperatura | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}°C
           </div>
         </div>
       </div>
