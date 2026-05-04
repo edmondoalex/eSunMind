@@ -93,6 +93,48 @@
           </div>
         </div>
       </div>
+
+      <div class="panel">
+        <div class="kpi chart-kpi">
+          <strong>Fotovoltaico - Totale previsto per giorno</strong>
+          <div class="day-bars">
+            <div v-for="d in fvDayRows" :key="d.date" class="day-bar-item">
+              <div class="day-bar-wrap">
+                <div class="day-bar" :style="{ height: `${d.pct}%` }" :title="`${d.dayName} ${d.dateLabel}: ${fmt0(d.wh)} Wh`"></div>
+              </div>
+              <div class="day-bar-label">{{ d.dayShort }}</div>
+            </div>
+          </div>
+          <div class="chart-meta">Asse Y: energia giornaliera (Wh) normalizzata al massimo del periodo.</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="kpi chart-kpi">
+          <strong>Tabella giorni forecast</strong>
+          <table class="day-table">
+            <thead>
+              <tr>
+                <th>Giorno</th>
+                <th>Data</th>
+                <th>Wh</th>
+                <th>kWh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="d in fvDayRows" :key="`row-${d.date}`">
+                <td>{{ d.dayName }}</td>
+                <td>{{ d.dateLabel }}</td>
+                <td>{{ fmt0(d.wh) }}</td>
+                <td>{{ (d.wh / 1000).toFixed(2) }}</td>
+              </tr>
+              <tr v-if="!fvDayRows.length">
+                <td colspan="4">Nessun dato giornaliero disponibile.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div v-show="tab==='tech'">
@@ -282,6 +324,29 @@ const forecastFetchedAtText = computed(() => {
   const ts = Number(data.value?.forecast_solar?._fetched_at_ts)
   if (!Number.isFinite(ts) || ts <= 0) return '-'
   return new Date(ts * 1000).toLocaleString()
+})
+const fvDayRows = computed(() => {
+  const d = forecastResult.value?.watt_hours_day
+  if (!d || typeof d !== 'object') return []
+  const entries = Object.entries(d)
+    .map(([date, wh]) => ({ date: String(date), wh: Number(wh) }))
+    .filter((x) => Number.isFinite(x.wh))
+    .sort((a, b) => a.date.localeCompare(b.date))
+  if (!entries.length) return []
+  const maxWh = Math.max(...entries.map((x) => x.wh), 1)
+  return entries.map((x) => {
+    const dt = new Date(`${x.date}T12:00:00`)
+    const dayName = dt.toLocaleDateString('it-IT', { weekday: 'long' })
+    const dayShort = dt.toLocaleDateString('it-IT', { weekday: 'short' })
+    const dateLabel = dt.toLocaleDateString('it-IT')
+    return {
+      ...x,
+      dayName,
+      dayShort,
+      dateLabel,
+      pct: Math.max(4, (x.wh / maxWh) * 100),
+    }
+  })
 })
 const yTicks = computed(() => {
   const maxW = Math.max(1, Number(fvPeakTodayW.value || 1))
@@ -675,6 +740,44 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .axis-title{fill:#c9d4e2;font-size:11px;font-weight:700}
 .axis-title-x{fill:#c9d4e2;font-size:11px;font-weight:700;text-anchor:end}
 .chart-meta{margin-top:6px;font-size:12px;color:var(--muted)}
+.day-bars{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(52px,1fr));
+  gap:8px;
+  align-items:end;
+}
+.day-bar-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.day-bar-wrap{
+  width:100%;
+  height:140px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:rgba(10,16,24,.65);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:4px;
+}
+.day-bar{
+  width:70%;
+  border-radius:6px 6px 3px 3px;
+  background:linear-gradient(180deg,#f7cf44,#e89f10);
+  box-shadow:0 0 10px rgba(242,194,53,.35);
+}
+.day-bar-label{font-size:11px;color:var(--muted);text-transform:capitalize}
+.day-table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+  font-size:13px;
+}
+.day-table th,.day-table td{
+  border-bottom:1px solid var(--border);
+  padding:8px 6px;
+  text-align:left;
+}
+.day-table th{color:#cdd9ea;font-weight:700}
 .actions-inline{display:flex;align-items:center;gap:10px;margin:10px 0}
 .cardinal{
   color:#d8e1eb;
