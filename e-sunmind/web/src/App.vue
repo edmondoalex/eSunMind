@@ -66,6 +66,13 @@
       <div class="panel">
         <div class="kpi chart-kpi">
           <strong>Grafico FV Oggi (W)</strong>
+          <div class="actions-inline">
+            <label>Giorno curva:
+              <select v-model="selectedForecastDate">
+                <option v-for="d in fvDayRows" :key="`sel-${d.date}`" :value="d.date">{{ d.dayName }} {{ d.dateLabel }}</option>
+              </select>
+            </label>
+          </div>
           <svg
             class="fv-chart"
             viewBox="0 0 700 220"
@@ -95,7 +102,7 @@
             <text x="672" y="184" class="axis-title-x">Ora</text>
           </svg>
           <div class="chart-meta">
-            0:00 → 23:59 | picco: {{ fmt0(fvPeakTodayW) }} W
+            0:00 → 23:59 | picco: {{ fmt0(fvPeakSelectedW) }} W
             <span v-if="hoverPoint"> | punto: {{ hoverPoint.time }} -> {{ fmt0(hoverPoint.w) }} W</span>
           </div>
         </div>
@@ -192,6 +199,11 @@
         </section>
 
         <section class="card">
+          <h3>Risposta completa Forecast Solar (raw)</h3>
+          <pre class="json">{{ forecastRawText }}</pre>
+        </section>
+
+        <section class="card">
           <h3>JSON runtime</h3>
           <pre class="json">{{ pretty }}</pre>
         </section>
@@ -248,6 +260,7 @@ const showAxisNS = ref(true)
 const showAxisWE = ref(true)
 const showPvAzLine = ref(false)
 const pvAzimuthDeg = ref(0)
+const selectedForecastDate = ref('')
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
 
@@ -263,6 +276,11 @@ const forecastConfigText = computed(() => {
     fetched_at_ts: fs._fetched_at_ts,
     error: fs.error || null,
   }, null, 2)
+})
+const forecastRawText = computed(() => {
+  const raw = data.value?.forecast_solar
+  if (!raw) return 'Nessun payload forecast_solar disponibile.'
+  return JSON.stringify(raw, null, 2)
 })
 
 const forecastResult = computed(() => data.value?.forecast_solar?.payload?.result || null)
@@ -289,22 +307,16 @@ const fvCurrentW = computed(() => {
   return keys.length ? Number(w[keys[0]]) : null
 })
 const fvPeakTodayW = computed(() => {
-  const w = forecastResult.value?.watts
-  if (!w || typeof w !== 'object') return null
-  const now = new Date()
-  const dayPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  const vals = Object.entries(w)
-    .filter(([k]) => String(k).startsWith(dayPrefix))
-    .map(([, v]) => Number(v))
-    .filter((v) => Number.isFinite(v))
-  if (!vals.length) return null
-  return Math.max(...vals)
+  const rows = fvDayRows.value
+  if (!rows.length) return null
+  const today = new Date().toISOString().slice(0, 10)
+  const day = rows.find((x) => x.date === today) || rows[0]
+  return day ? day.wh : null
 })
 const fvTodaySeries = computed(() => {
   const w = forecastResult.value?.watts
   if (!w || typeof w !== 'object') return []
-  const now = new Date()
-  const dayPrefix = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  const dayPrefix = selectedForecastDate.value || (new Date().toISOString().slice(0, 10))
   const series = Object.entries(w)
     .filter(([k]) => String(k).startsWith(dayPrefix))
     .map(([k, v]) => {
@@ -315,6 +327,11 @@ const fvTodaySeries = computed(() => {
     .filter((x) => Number.isFinite(x.minute) && Number.isFinite(x.w))
     .sort((a, b) => a.minute - b.minute)
   return series
+})
+const fvPeakSelectedW = computed(() => {
+  const s = fvTodaySeries.value
+  if (!s.length) return null
+  return Math.max(...s.map((x) => x.w))
 })
 const fvChartPoints = computed(() => {
   const s = fvTodaySeries.value
@@ -360,7 +377,7 @@ const fvDayRows = computed(() => {
   })
 })
 const yTicks = computed(() => {
-  const maxW = Math.max(1, Number(fvPeakTodayW.value || 1))
+  const maxW = Math.max(1, Number(fvPeakSelectedW.value || 1))
   return [0, maxW * 0.25, maxW * 0.5, maxW * 0.75, maxW]
 })
 const xTicks = [0, 180, 360, 540, 720, 900, 1080, 1260, 1440]
@@ -387,7 +404,7 @@ function xFromMinute(minute) {
   return 40 + (Number(minute) / 1440) * 640
 }
 function yFromW(w) {
-  const maxW = Math.max(1, Number(fvPeakTodayW.value || 1))
+  const maxW = Math.max(1, Number(fvPeakSelectedW.value || 1))
   return 150 - (Number(w) / maxW) * 130
 }
 function fmtHourTick(minute) {
@@ -650,6 +667,7 @@ async function loadData() {
         kwp: Number(fso.kwp ?? 6.0),
       }
       if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
+      if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
     } catch (_) {
       // no-op
     }
