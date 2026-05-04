@@ -31,7 +31,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.84"
+APP_VERSION = "0.2.85"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -924,6 +924,28 @@ async def data():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     return JSONResponse(payload)
+
+
+@app.get("/api/sun/live")
+async def sun_live():
+    if not DATA_FILE.exists():
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    sp = payload.get("sun_position", {}) if isinstance(payload, dict) else {}
+    az = sp.get("azimuth_compass_deg")
+    alt = sp.get("altitude_deg")
+    updated_at = payload.get("timestamp_local") if isinstance(payload, dict) else None
+    if az is None or alt is None or not updated_at:
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    return JSONResponse(
+        {
+            "ok": True,
+            "azimuth_compass_deg": float(az),
+            "altitude_deg": float(alt),
+            "updated_at": str(updated_at),
+            "source": "e-sunmind",
+        }
+    )
 
 
 @app.get("/api/solar_forecast")
