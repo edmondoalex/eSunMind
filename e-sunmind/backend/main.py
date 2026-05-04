@@ -32,7 +32,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.86"
+APP_VERSION = "0.2.87"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -364,6 +364,9 @@ def _start_tende_map_subscriber(cfg: dict[str, Any]) -> None:
                     raise ValueError("invalid_payload")
                 TENDE_MAP_FILE.write_text(json.dumps(validated, ensure_ascii=False, indent=2), encoding="utf-8")
                 WORKER_STATE["tende_map_last_msg_ts"] = time.time()
+                # If state payload is valid, assume source is online even if availability topic is missing.
+                if str(WORKER_STATE.get("tende_map_availability") or "unknown") == "unknown":
+                    WORKER_STATE["tende_map_availability"] = "online"
                 WORKER_STATE["tende_map_last_error"] = None
             except Exception as exc:
                 WORKER_STATE["tende_map_last_error"] = str(exc)
