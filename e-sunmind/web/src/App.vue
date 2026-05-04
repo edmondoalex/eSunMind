@@ -78,6 +78,9 @@
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }} degC</div>
         <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }} degC</div>
         <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }} degC</div>
+        <div class="kpi"><strong>Entita temp reale:</strong> {{ externalTempEntityId || '-' }}</div>
+        <div class="kpi"><strong>Stato lettura temp:</strong> {{ externalTempStatus }}</div>
+        <div class="kpi" v-if="externalTempError"><strong>Errore temp reale:</strong> {{ externalTempError }}</div>
         <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
         <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }} deg)</div>
         <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
@@ -503,7 +506,12 @@ const externalTempC = computed(() => {
   const v = Number(data.value?.external_temp_live?.state)
   return Number.isFinite(v) ? v : null
 })
+const externalTempEntityId = computed(() => String(data.value?.external_temp_live?.entity_id || ''))
+const externalTempStatus = computed(() => (data.value?.external_temp_live?.ok ? 'ok' : 'errore'))
+const externalTempError = computed(() => String(data.value?.external_temp_live?.error || ''))
 const tempDeltaC = computed(() => {
+  if (externalTempC.value === null || externalTempC.value === undefined) return null
+  if (weatherTempC.value === null || weatherTempC.value === undefined) return null
   const r = Number(externalTempC.value)
   const m = Number(weatherTempC.value)
   if (!Number.isFinite(r) || !Number.isFinite(m)) return null
