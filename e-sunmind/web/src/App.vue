@@ -573,6 +573,7 @@ let weatherRafId = 0
 let weatherLastTs = 0
 let weatherClouds = []
 let weatherRain = []
+let weatherMist = []
 let blockTogglesInited = false
 let tendeMapObj = null
 let tendeCenter = null
@@ -1217,18 +1218,25 @@ function seedWeatherParticles() {
   if (!cv) return
   const w = cv.width
   const h = cv.height
-  weatherClouds = Array.from({ length: 10 }, () => ({
+  weatherClouds = Array.from({ length: 7 }, () => ({
     x: Math.random() * w,
-    y: (Math.random() * h * 0.45) + 10,
-    r: 18 + Math.random() * 34,
-    a: 0.02 + Math.random() * 0.05,
+    y: (Math.random() * h * 0.5) + h * 0.05,
+    r: 70 + Math.random() * 140,
+    a: 0.035 + Math.random() * 0.055,
+    phase: Math.random() * Math.PI * 2,
   }))
-  weatherRain = Array.from({ length: 120 }, () => ({
+  weatherMist = Array.from({ length: 5 }, () => ({
     x: Math.random() * w,
     y: Math.random() * h,
-    l: 8 + Math.random() * 14,
-    v: 120 + Math.random() * 180,
-    a: 0.10 + Math.random() * 0.25,
+    r: 180 + Math.random() * 260,
+    a: 0.018 + Math.random() * 0.028,
+  }))
+  weatherRain = Array.from({ length: 90 }, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    l: 10 + Math.random() * 18,
+    v: 70 + Math.random() * 110,
+    a: 0.055 + Math.random() * 0.12,
   }))
 }
 
@@ -1249,26 +1257,59 @@ function drawWeatherOverlayFrame(ts) {
   const cloudI = weatherCloudIntensity.value
   const rainI = weatherRainIntensity.value
 
-  if (!weatherClouds.length || !weatherRain.length) seedWeatherParticles()
+  if (!weatherClouds.length || !weatherRain.length || !weatherMist.length) seedWeatherParticles()
+
+  const daylight = Math.max(0.08, Math.min(1, Number(data.value?.sun_position?.altitude_deg ?? currentSun.value.altitudeDeg ?? 0) / 65))
+  const sunVisibility = Math.max(0, Math.min(1, (1 - cloudI * 0.82) * (1 - rainI * 0.45) * daylight))
+  if (sunVisibility > 0.04) {
+    const cx = w * 0.5
+    const cy = h * 0.42
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(w, h) * 0.72)
+    g.addColorStop(0, `rgba(255,224,92,${(0.12 * sunVisibility).toFixed(3)})`)
+    g.addColorStop(0.35, `rgba(255,204,65,${(0.055 * sunVisibility).toFixed(3)})`)
+    g.addColorStop(1, 'rgba(255,204,65,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, w, h)
+  }
+
+  if (cloudI > 0.08) {
+    ctx.fillStyle = `rgba(170,188,198,${(0.045 * cloudI).toFixed(3)})`
+    ctx.fillRect(0, 0, w, h)
+  }
+
+  for (const m of weatherMist) {
+    m.x += wind.vx * dt * 4
+    if (m.x > w + m.r) m.x = -m.r
+    if (m.x < -m.r) m.x = w + m.r
+    const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.r)
+    g.addColorStop(0, `rgba(205,222,230,${(m.a * cloudI).toFixed(3)})`)
+    g.addColorStop(1, 'rgba(205,222,230,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(m.x - m.r, m.y - m.r, m.r * 2, m.r * 2)
+  }
 
   for (const c of weatherClouds) {
-    c.x += wind.vx * dt * 18
-    c.y += wind.vy * dt * 3
+    c.phase += dt * 0.22
+    c.x += wind.vx * dt * 7
+    c.y += Math.sin(c.phase) * dt * 3 + wind.vy * dt * 0.8
     if (c.x > w + c.r) c.x = -c.r
     if (c.x < -c.r) c.x = w + c.r
-    if (c.y > h * 0.55) c.y = 5
-    if (c.y < 5) c.y = h * 0.45
-    ctx.fillStyle = `rgba(176,205,220,${(c.a * cloudI * 0.9).toFixed(3)})`
-    ctx.beginPath()
-    ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2)
-    ctx.fill()
+    if (c.y > h * 0.72) c.y = h * 0.12
+    if (c.y < h * 0.04) c.y = h * 0.62
+    const g = ctx.createRadialGradient(c.x, c.y, c.r * 0.1, c.x, c.y, c.r)
+    g.addColorStop(0, `rgba(196,213,220,${(c.a * cloudI).toFixed(3)})`)
+    g.addColorStop(0.58, `rgba(154,174,184,${(c.a * cloudI * 0.55).toFixed(3)})`)
+    g.addColorStop(1, 'rgba(154,174,184,0)')
+    ctx.fillStyle = g
+    ctx.fillRect(c.x - c.r, c.y - c.r, c.r * 2, c.r * 2)
   }
 
   if (rainI > 0.02) {
-    const sx = wind.vx * 14
-    const sy = 220 + Math.abs(wind.vy * 10)
+    const sx = wind.vx * 7
+    const sy = 115 + Math.abs(wind.vy * 4)
+    ctx.lineCap = 'round'
     for (const p of weatherRain) {
-      p.x += sx * dt + wind.vx * dt * 20
+      p.x += sx * dt + wind.vx * dt * 10
       p.y += (p.v + sy) * dt
       if (p.y > h + 20) {
         p.y = -10
@@ -1276,28 +1317,28 @@ function drawWeatherOverlayFrame(ts) {
       }
       if (p.x > w + 20) p.x = -10
       if (p.x < -20) p.x = w + 10
-      ctx.strokeStyle = `rgba(86,201,240,${(p.a * rainI * 0.8).toFixed(3)})`
-      ctx.lineWidth = 0.9
+      ctx.strokeStyle = `rgba(160,205,222,${(p.a * rainI * 0.62).toFixed(3)})`
+      ctx.lineWidth = 0.75
       ctx.beginPath()
       ctx.moveTo(p.x, p.y)
-      ctx.lineTo(p.x + sx * 0.08, p.y + p.l)
+      ctx.lineTo(p.x + sx * 0.05, p.y + p.l)
       ctx.stroke()
     }
   }
 
-  // Wind streaks, subtle and directional.
+  // Directional air movement, intentionally faint to avoid flicker.
   const windStrength = Math.min(1, Math.hypot(wind.vx, wind.vy) / 5)
-  if (windStrength > 0.04) {
-    ctx.strokeStyle = `rgba(70,210,255,${(0.12 + windStrength * 0.22).toFixed(3)})`
-    ctx.lineWidth = 1.2
-    for (let i = 0; i < 42; i += 1) {
-      const bx = ((ts * 0.025 + i * 47) % (w + 40)) - 20
-      const by = (i * 23) % (h * 0.75)
+  if (windStrength > 0.12 && rainI < 0.35) {
+    ctx.strokeStyle = `rgba(185,225,235,${(0.018 + windStrength * 0.035).toFixed(3)})`
+    ctx.lineWidth = 1
+    for (let i = 0; i < 9; i += 1) {
+      const bx = ((ts * 0.0035 + i * 173) % (w + 100)) - 50
+      const by = (i * 83) % (h * 0.78)
       const lx = wind.vx * 2.3
       const ly = wind.vy * 2.3
       ctx.beginPath()
       ctx.moveTo(bx, by)
-      ctx.lineTo(bx + lx * 6, by + ly * 6)
+      ctx.lineTo(bx + lx * 9, by + ly * 9)
       ctx.stroke()
     }
   }
@@ -2279,7 +2320,7 @@ input[type='range']{width:100%}
   pointer-events:none;
   z-index:450;
   mix-blend-mode:normal;
-  opacity:.65;
+  opacity:.48;
 }
 .wind-compass-chip{
   position:absolute;
