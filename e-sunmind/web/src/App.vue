@@ -1617,18 +1617,27 @@ function drawTendeEditor() {
   }).addTo(tendeMapObj)
 
   if (tendeEditMode.value) {
+    const updatePreview = () => {
+      if (!tendePoly || !selectedShadeEdit.value) return
+      const pts = buildSectorPolygonPoints(
+        selectedShadeEdit.value.azimuth_start_deg,
+        selectedShadeEdit.value.azimuth_end_deg,
+        cfg.value.sectorRadiusM
+      )
+      tendePoly.setLatLngs(pts)
+    }
     tendeStartMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
     tendeEndMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
     tendeStartMarker.on('drag', (e) => {
       s.azimuth_start_deg = angleFromCenter(e.latlng)
-      drawTendeEditor()
+      updatePreview()
     })
     tendeEndMarker.on('drag', (e) => {
       s.azimuth_end_deg = angleFromCenter(e.latlng)
-      drawTendeEditor()
+      updatePreview()
     })
-    tendeStartMarker.on('dragend', () => { tendeMapObj.dragging.enable() })
-    tendeEndMarker.on('dragend', () => { tendeMapObj.dragging.enable() })
+    tendeStartMarker.on('dragend', () => { tendeMapObj.dragging.enable(); drawTendeEditor() })
+    tendeEndMarker.on('dragend', () => { tendeMapObj.dragging.enable(); drawTendeEditor() })
   }
 }
 
