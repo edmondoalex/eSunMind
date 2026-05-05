@@ -562,6 +562,7 @@ let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
 let annualElevationBand = null
+let annualElevationBandLayers = []
 let compassMarkers = []
 let tendeSectorLayers = []
 const weatherAnimEnabled = ref(false)
@@ -1465,6 +1466,8 @@ function buildElevationCurveForDate(baseDate, steps = 96) {
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
   ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
+  for (const l of annualElevationBandLayers) map.removeLayer(l)
+  annualElevationBandLayers = []
   for (const m of compassMarkers) map.removeLayer(m)
   for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
@@ -1538,14 +1541,37 @@ function drawSolarOverlay() {
     const summerCurve = buildElevationCurveForDate(summerDay, 120)
     const winterCurve = buildElevationCurveForDate(winterDay, 120)
     if (summerCurve.length > 2 && winterCurve.length > 2) {
-      const poly = [...winterCurve, ...summerCurve.slice().reverse()]
-      annualElevationBand = L.polygon(poly, {
+      const n = Math.min(summerCurve.length, winterCurve.length)
+      for (let i = 0; i < n - 1; i += 1) {
+        const quad = [
+          winterCurve[i],
+          winterCurve[i + 1],
+          summerCurve[i + 1],
+          summerCurve[i],
+        ]
+        const q = L.polygon(quad, {
+          color: '#facc15',
+          weight: 0,
+          opacity: 0,
+          fillColor: '#facc15',
+          fillOpacity: 0.16,
+        }).addTo(map)
+        annualElevationBandLayers.push(q)
+      }
+      // subtle outlines for min/max boundaries
+      annualElevationBand = L.polyline(winterCurve, {
         color: '#facc15',
         weight: 0.8,
         opacity: 0.32,
-        fillColor: '#facc15',
-        fillOpacity: 0.16,
+        dashArray: '4,6',
       }).addTo(map)
+      const annualElevationBandTop = L.polyline(summerCurve, {
+        color: '#facc15',
+        weight: 0.8,
+        opacity: 0.32,
+        dashArray: '4,6',
+      }).addTo(map)
+      annualElevationBandLayers.push(annualElevationBandTop)
     }
   }
 
