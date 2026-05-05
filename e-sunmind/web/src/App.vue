@@ -396,6 +396,14 @@
             <label>Timezone
               <input type="text" v-model="baseForm.timezone" />
             </label>
+            <label>Sorgente coordinate
+              <select v-model="baseForm.coordinates_source_mode">
+                <option value="auto">Auto</option>
+                <option value="e_tende">Forza e-Tende</option>
+                <option value="ha_core">Forza Home Assistant</option>
+                <option value="local">Forza Config locale</option>
+              </select>
+            </label>
             <label>Interval minutes
               <input type="number" min="1" max="1440" v-model.number="baseForm.interval_minutes" />
             </label>
@@ -586,6 +594,7 @@ const baseForm = ref({
   latitude: 44.6973,
   longitude: 7.8683,
   timezone: 'Europe/Rome',
+  coordinates_source_mode: 'auto',
   interval_minutes: 15,
   location_query: '',
   pv_actual_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
@@ -1802,6 +1811,7 @@ async function loadData() {
         latitude: Number(oj?.latitude ?? 44.6973),
         longitude: Number(oj?.longitude ?? 7.8683),
         timezone: String(oj?.timezone || 'Europe/Rome'),
+        coordinates_source_mode: String(oj?.coordinates_source_mode || 'auto'),
         interval_minutes: Number(oj?.interval_minutes ?? 15),
         location_query: String(oj?.location_query || ''),
         pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
@@ -1839,6 +1849,7 @@ async function saveBaseSettings() {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),
       timezone: String(baseForm.value.timezone || 'Europe/Rome').trim(),
+      coordinates_source_mode: String(baseForm.value.coordinates_source_mode || 'auto').trim(),
       interval_minutes: Number(baseForm.value.interval_minutes ?? 15),
       location_query: String(baseForm.value.location_query || ''),
       pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),

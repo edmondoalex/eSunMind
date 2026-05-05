@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.5"
+APP_VERSION = "0.3.6"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -119,6 +119,7 @@ def _load_options() -> dict[str, Any]:
         "latitude": 44.6973,
         "longitude": 7.8683,
         "timezone": "Europe/Rome",
+        "coordinates_source_mode": "auto",
         "interval_minutes": 15,
         "location_query": "",
         "pv_actual_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
@@ -166,7 +167,7 @@ def _load_options() -> dict[str, Any]:
         payload = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return defaults
-    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id"):
+    for key in ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id"):
         if key in payload:
             defaults[key] = payload[key]
     if isinstance(payload.get("mqtt"), dict):
@@ -192,6 +193,10 @@ def _load_options() -> dict[str, Any]:
     if isinstance(local.get("tende_map"), dict):
         defaults["tende_map"].update(local["tende_map"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
+    mode = str(defaults.get("coordinates_source_mode") or "auto").strip().lower()
+    if mode not in {"auto", "e_tende", "ha_core", "local"}:
+        mode = "auto"
+    defaults["coordinates_source_mode"] = mode
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
@@ -950,24 +955,30 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
     lon = float(cfg.get("longitude", 7.8683))
     tz = str(cfg.get("timezone", "Europe/Rome"))
     source = "local_config"
+    mode = str(cfg.get("coordinates_source_mode") or "auto").strip().lower()
+    if mode not in {"auto", "e_tende", "ha_core", "local"}:
+        mode = "auto"
 
-    tm = _read_tende_map_cache()
-    if isinstance(tm, dict):
-        try:
-            tlat = tm.get("latitude")
-            tlon = tm.get("longitude")
-            if tlat is not None and tlon is not None:
-                lat = float(tlat)
-                lon = float(tlon)
-                source = "e-tendeintelligenti"
-            ttz = tm.get("timezone")
-            if ttz is not None and str(ttz).strip():
-                tz = str(ttz).strip()
-                source = "e-tendeintelligenti"
-        except Exception:
-            pass
+    if mode in {"auto", "e_tende"}:
+        tm = _read_tende_map_cache()
+        if isinstance(tm, dict):
+            try:
+                tlat = tm.get("latitude")
+                tlon = tm.get("longitude")
+                if tlat is not None and tlon is not None:
+                    lat = float(tlat)
+                    lon = float(tlon)
+                    source = "e-tendeintelligenti"
+                ttz = tm.get("timezone")
+                if ttz is not None and str(ttz).strip():
+                    tz = str(ttz).strip()
+                    source = "e-tendeintelligenti"
+            except Exception:
+                pass
+        if mode == "e_tende":
+            return lat, lon, tz, source
 
-    if source != "e-tendeintelligenti":
+    if mode in {"auto", "ha_core"} and source != "e-tendeintelligenti":
         ha_cfg = _fetch_ha_core_config()
         if isinstance(ha_cfg, dict):
             try:
@@ -983,6 +994,8 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
                     source = "home_assistant_core"
             except Exception:
                 pass
+        if mode == "ha_core":
+            return lat, lon, tz, source
 
     return lat, lon, tz, source
 
@@ -1717,7 +1730,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "tende_map")
+    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "tende_map")
 
     raw = _load_local_options_raw()
     for k in keys:

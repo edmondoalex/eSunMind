@@ -1,7 +1,7 @@
 ﻿name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.3.5"
+version: "0.3.6"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -22,6 +22,7 @@ options:
   latitude: 44.6973
   longitude: 7.8683
   timezone: "Europe/Rome"
+  coordinates_source_mode: "auto"
   interval_minutes: 15
   location_query: ""
   pv_actual_entity_id: "sensor.zcs_easas_1_activepower_pv_ext"
@@ -62,6 +63,7 @@ schema:
   latitude: float
   longitude: float
   timezone: str
+  coordinates_source_mode: str
   interval_minutes: int(1,1440)
   location_query: str?
   pv_actual_entity_id: str?
