@@ -1541,8 +1541,8 @@ function drawSolarOverlay() {
       const poly = [...winterCurve, ...summerCurve.slice().reverse()]
       annualElevationBand = L.polygon(poly, {
         color: '#facc15',
-        weight: 1.4,
-        opacity: 0.45,
+        weight: 0.8,
+        opacity: 0.32,
         fillColor: '#facc15',
         fillOpacity: 0.16,
       }).addTo(map)
