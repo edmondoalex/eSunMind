@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.17"
+APP_VERSION = "0.3.18"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -119,7 +119,7 @@ def _load_options() -> dict[str, Any]:
         "latitude": 44.6973,
         "longitude": 7.8683,
         "timezone": "Europe/Rome",
-        "coordinates_source_mode": "auto",
+        "coordinates_source_mode": "e_tende",
         "interval_minutes": 15,
         "overlay": {
             "pathRadiusM": 102,
@@ -203,9 +203,9 @@ def _load_options() -> dict[str, Any]:
     if isinstance(local.get("overlay"), dict):
         defaults["overlay"].update(local["overlay"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
-    mode = str(defaults.get("coordinates_source_mode") or "auto").strip().lower()
-    if mode not in {"auto", "e_tende", "ha_core", "local"}:
-        mode = "auto"
+    mode = str(defaults.get("coordinates_source_mode") or "e_tende").strip().lower()
+    if mode not in {"e_tende", "ha_core", "local"}:
+        mode = "e_tende"
     defaults["coordinates_source_mode"] = mode
     defaults["forecast_solar"]["declination"] = max(0, min(90, int(defaults["forecast_solar"].get("declination", 30) or 30)))
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
@@ -995,9 +995,9 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
     lon = float(cfg.get("longitude", 7.8683))
     tz = str(cfg.get("timezone", "Europe/Rome"))
     source = "local_config"
-    mode = str(cfg.get("coordinates_source_mode") or "auto").strip().lower()
-    if mode not in {"auto", "e_tende", "ha_core", "local"}:
-        mode = "auto"
+    mode = str(cfg.get("coordinates_source_mode") or "e_tende").strip().lower()
+    if mode not in {"e_tende", "ha_core", "local"}:
+        mode = "e_tende"
 
     def _to_float_maybe(v: Any) -> float | None:
         if v is None:
@@ -1038,7 +1038,7 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
             out_tz = str(ttz).strip()
         return out_lat, out_lon, out_tz
 
-    if mode in {"auto", "e_tende"}:
+    if mode == "e_tende":
         tm = _read_tende_map_cache()
         if isinstance(tm, dict):
             tlat, tlon, ttz = _extract_tende_geo(tm)
@@ -1054,7 +1054,7 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
                 source = "e-tende_missing_coords"
             return lat, lon, tz, source
 
-    if mode in {"auto", "ha_core"} and source != "e-tendeintelligenti":
+    if mode == "ha_core" and source != "e-tendeintelligenti":
         ha_cfg = _fetch_ha_core_config()
         if isinstance(ha_cfg, dict):
             try:

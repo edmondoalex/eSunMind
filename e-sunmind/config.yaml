@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.3.17"
+version: "0.3.18"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -22,7 +22,7 @@ options:
   latitude: 44.6973
   longitude: 7.8683
   timezone: "Europe/Rome"
-  coordinates_source_mode: "auto"
+  coordinates_source_mode: "e_tende"
   interval_minutes: 15
   overlay:
     pathRadiusM: 102
