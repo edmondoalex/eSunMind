@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.3.25"
+version: "0.3.26"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -51,6 +51,15 @@ options:
   weather:
     enabled: true
     provider: "met"
+  weather_station:
+    enabled: false
+    provider: "homeassistant"
+    stale_seconds: 180
+    wind_speed_entity_id: ""
+    wind_gust_entity_id: ""
+    wind_direction_entity_id: ""
+    rain_rate_entity_id: ""
+    rain_1h_entity_id: ""
   weather_guard:
     enabled: true
     wind_alarm_ms: 12.0
@@ -106,6 +115,15 @@ schema:
   weather:
     enabled: bool
     provider: list(met|open_meteo|hybrid)
+  weather_station:
+    enabled: bool
+    provider: list(homeassistant)
+    stale_seconds: int(30,86400)
+    wind_speed_entity_id: str?
+    wind_gust_entity_id: str?
+    wind_direction_entity_id: str?
+    rain_rate_entity_id: str?
+    rain_1h_entity_id: str?
   weather_guard:
     enabled: bool
     wind_alarm_ms: float(0,80)

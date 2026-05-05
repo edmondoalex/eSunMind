@@ -77,3 +77,31 @@ e-Tende deve leggere:
 - `severe_weather_alarm`: allarme aggregato, vero se uno dei tre allarmi e attivo.
 
 Nota config: `facade_azimuth_deg = -1` significa facciata non configurata; in API viene restituito `null`.
+
+### Stazione meteo reale opzionale
+
+Il weather guard funziona anche senza stazione meteo, usando MET/Open-Meteo. Se e disponibile una stazione Ecowitt/GW1101 integrata in Home Assistant, si possono configurare le entita reali:
+
+```yaml
+weather_station:
+  enabled: true
+  provider: "homeassistant"
+  stale_seconds: 180
+  wind_speed_entity_id: "sensor.ecowitt_wind_speed"
+  wind_gust_entity_id: "sensor.ecowitt_wind_gust"
+  wind_direction_entity_id: "sensor.ecowitt_wind_direction"
+  rain_rate_entity_id: "sensor.ecowitt_rain_rate"
+  rain_1h_entity_id: "sensor.ecowitt_hourly_rain"
+```
+
+Priorita:
+
+- stazione reale Home Assistant, se configurata e non stale;
+- MET/Open-Meteo come fallback automatico;
+- fail safe con `ok=false` e allarmi a `false` se non ci sono dati validi.
+
+Le unita vengono normalizzate:
+
+- vento sempre in `m/s`;
+- rain rate sempre in `mm/h`;
+- pioggia 1h sempre in `mm`.

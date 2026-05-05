@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.25"
+APP_VERSION = "0.3.26"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -152,6 +152,16 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "provider": "met",
         },
+        "weather_station": {
+            "enabled": False,
+            "provider": "homeassistant",
+            "stale_seconds": 180,
+            "wind_speed_entity_id": "",
+            "wind_gust_entity_id": "",
+            "wind_direction_entity_id": "",
+            "rain_rate_entity_id": "",
+            "rain_1h_entity_id": "",
+        },
         "weather_guard": {
             "enabled": True,
             "wind_alarm_ms": 12.0,
@@ -192,6 +202,8 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(payload["forecast_solar"])
     if isinstance(payload.get("weather"), dict):
         defaults["weather"].update(payload["weather"])
+    if isinstance(payload.get("weather_station"), dict):
+        defaults["weather_station"].update(payload["weather_station"])
     if isinstance(payload.get("weather_guard"), dict):
         defaults["weather_guard"].update(payload["weather_guard"])
     if isinstance(payload.get("air_quality"), dict):
@@ -208,6 +220,8 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(local["forecast_solar"])
     if isinstance(local.get("weather"), dict):
         defaults["weather"].update(local["weather"])
+    if isinstance(local.get("weather_station"), dict):
+        defaults["weather_station"].update(local["weather_station"])
     if isinstance(local.get("weather_guard"), dict):
         defaults["weather_guard"].update(local["weather_guard"])
     if isinstance(local.get("air_quality"), dict):
@@ -225,6 +239,10 @@ def _load_options() -> dict[str, Any]:
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
+    ws = defaults["weather_station"]
+    ws["enabled"] = bool(ws.get("enabled", False))
+    ws["provider"] = str(ws.get("provider") or "homeassistant").strip().lower()
+    ws["stale_seconds"] = max(30, min(86400, int(ws.get("stale_seconds", 180) or 180)))
     wg = defaults["weather_guard"]
     wg["enabled"] = bool(wg.get("enabled", True))
     wg["wind_alarm_ms"] = max(0.0, min(80.0, float(wg.get("wind_alarm_ms", 12.0) or 12.0)))
@@ -676,6 +694,51 @@ def _angular_diff_deg(a: float, b: float) -> float:
     return abs((float(a) - float(b) + 180.0) % 360.0 - 180.0)
 
 
+def _parse_ha_ts(value: Any) -> float | None:
+    try:
+        if not value:
+            return None
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+
+
+def _normalize_wind_to_ms(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"m/s", "mps", "meter/s", "meters/s", "metri/s"}:
+        return v
+    if u in {"km/h", "kmh", "kph"}:
+        return v / 3.6
+    if u in {"mph", "mi/h"}:
+        return v * 0.44704
+    if u in {"kn", "kt", "kts", "knot", "knots"}:
+        return v * 0.514444
+    return v
+
+
+def _normalize_rain_rate_to_mm_h(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"in/h", "inch/h", "inches/h"}:
+        return v * 25.4
+    return v
+
+
+def _normalize_rain_to_mm(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"in", "inch", "inches"}:
+        return v * 25.4
+    return v
+
+
 def _weather_payload_ts(payload: dict[str, Any] | None) -> float | None:
     if not isinstance(payload, dict):
         return None
@@ -690,6 +753,75 @@ def _weather_payload_ts(payload: dict[str, Any] | None) -> float | None:
         return dt.timestamp()
     except Exception:
         return None
+
+
+def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
+    ws_cfg = cfg.get("weather_station") or {}
+    enabled = bool(ws_cfg.get("enabled", False))
+    out: dict[str, Any] = {
+        "ok": False,
+        "enabled": enabled,
+        "provider": str(ws_cfg.get("provider") or "homeassistant"),
+        "source": "homeassistant",
+        "normalized": {},
+        "entities": {},
+        "error": None,
+    }
+    if not enabled:
+        out["error"] = "disabled"
+        return out
+
+    fields = {
+        "wind_speed_ms": ("wind_speed_entity_id", _normalize_wind_to_ms),
+        "wind_gust_ms": ("wind_gust_entity_id", _normalize_wind_to_ms),
+        "wind_from_direction_deg": ("wind_direction_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "rain_rate_mm_h": ("rain_rate_entity_id", _normalize_rain_rate_to_mm_h),
+        "rain_1h_mm": ("rain_1h_entity_id", _normalize_rain_to_mm),
+    }
+    normalized: dict[str, Any] = {}
+    timestamps: list[float] = []
+    errors: dict[str, Any] = {}
+    for target_key, (cfg_key, normalizer) in fields.items():
+        entity_id = str(ws_cfg.get(cfg_key) or "").strip()
+        if not entity_id:
+            continue
+        st = _fetch_ha_entity_state(entity_id)
+        out["entities"][cfg_key] = st
+        if not isinstance(st, dict) or not st.get("ok"):
+            errors[cfg_key] = (st or {}).get("error") if isinstance(st, dict) else "read_failed"
+            continue
+        value = normalizer(st.get("value"), st.get("unit"))
+        if value is None:
+            errors[cfg_key] = "non_numeric"
+            continue
+        normalized[target_key] = value
+        ts = _parse_ha_ts(st.get("last_updated"))
+        if ts is not None:
+            timestamps.append(ts)
+
+    if "wind_from_direction_deg" in normalized:
+        normalized["wind_from_direction_deg"] = normalized["wind_from_direction_deg"] % 360.0
+    if "rain_rate_mm_h" in normalized:
+        normalized["precipitation_next_1h_mm"] = normalized["rain_rate_mm_h"]
+    if "rain_1h_mm" in normalized and "precipitation_next_1h_mm" not in normalized:
+        normalized["precipitation_next_1h_mm"] = normalized["rain_1h_mm"]
+
+    stale_seconds = int(ws_cfg.get("stale_seconds", 180) or 180)
+    oldest_ts = min(timestamps) if timestamps else None
+    age = None if oldest_ts is None else time.time() - oldest_ts
+    stale = oldest_ts is None or age > stale_seconds
+    out["normalized"] = normalized
+    out["stale"] = stale
+    out["age_seconds"] = None if age is None else round(age, 1)
+    out["errors"] = errors
+    out["ok"] = bool(normalized) and not stale
+    if out["ok"]:
+        out["provider"] = "weather_station"
+        out["_fetched_at_ts"] = oldest_ts
+        out["error"] = None
+    else:
+        out["error"] = "station_stale_or_empty" if stale else "station_fields_missing"
+    return out
 
 
 def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -718,11 +850,12 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
         base["error"] = "data_not_ready"
         return base
 
+    weather_station = data.get("weather_station") if isinstance(data.get("weather_station"), dict) else None
     weather = data.get("weather") if isinstance(data.get("weather"), dict) else None
     weather_open = data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None
     stale_seconds = int(wg_cfg.get("stale_seconds", 180) or 180)
     candidates: list[tuple[dict[str, Any], float]] = []
-    for candidate in (weather, weather_open):
+    for candidate in (weather_station, weather, weather_open):
         if not (isinstance(candidate, dict) and candidate.get("ok")):
             continue
         candidate_ts = _weather_payload_ts(candidate)
@@ -768,6 +901,12 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
     if wind_speed is None or rain_1h is None:
         base["error"] = "weather_fields_missing"
         base["stale"] = False
+        base["station"] = {
+            "enabled": bool((weather_station or {}).get("enabled", False)) if isinstance(weather_station, dict) else False,
+            "ok": bool((weather_station or {}).get("ok", False)) if isinstance(weather_station, dict) else False,
+            "error": (weather_station or {}).get("error") if isinstance(weather_station, dict) else None,
+            "age_seconds": (weather_station or {}).get("age_seconds") if isinstance(weather_station, dict) else None,
+        }
         return base
 
     rain_rate = max(0.0, rain_1h)
@@ -791,6 +930,13 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
             "stale": False,
             "age_seconds": round(now - weather_ts, 1),
             "source": (selected or {}).get("provider"),
+            "station": {
+                "enabled": bool((weather_station or {}).get("enabled", False)) if isinstance(weather_station, dict) else False,
+                "ok": bool((weather_station or {}).get("ok", False)) if isinstance(weather_station, dict) else False,
+                "used": (selected is weather_station),
+                "error": (weather_station or {}).get("error") if isinstance(weather_station, dict) else None,
+                "age_seconds": (weather_station or {}).get("age_seconds") if isinstance(weather_station, dict) else None,
+            },
             "wind_speed_ms": wind_speed,
             "wind_gust_ms": wind_gust,
             "wind_dir_deg": None if wind_dir is None else wind_dir % 360.0,
@@ -1624,9 +1770,11 @@ async def _worker() -> None:
             pv_live = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
             temp_live = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
             humidity_live = _fetch_ha_entity_state(str(cfg.get("external_humidity_entity_id") or ""))
+            weather_station = _build_weather_station_snapshot(cfg)
             data["pv_live"] = pv_live
             data["external_temp_live"] = temp_live
             data["external_humidity_live"] = humidity_live
+            data["weather_station"] = weather_station
             data["weather"] = weather
             data["weather_open_meteo"] = weather_open_meteo
             data["air_quality"] = airq
@@ -1705,6 +1853,7 @@ async def data():
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     cfg = _load_options()
     payload["tende_map"] = _build_tende_map_snapshot(cfg)
+    payload["weather_station"] = _build_weather_station_snapshot(cfg)
     payload["weather_guard"] = _build_weather_guard(payload, cfg)
     return JSONResponse(payload)
 
@@ -1714,7 +1863,9 @@ async def weather_guard_get():
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    return JSONResponse(_build_weather_guard(payload, _load_options()))
+    cfg = _load_options()
+    payload["weather_station"] = _build_weather_station_snapshot(cfg)
+    return JSONResponse(_build_weather_guard(payload, cfg))
 
 
 @app.get("/api/tende/map")
@@ -1992,7 +2143,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "tende_map")
+    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "weather_station", "tende_map")
 
     raw = _load_local_options_raw()
     for k in keys:
@@ -2047,6 +2198,8 @@ async def options_set_base(payload: dict):
         now_data["pv_live"] = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
         now_data["external_temp_live"] = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
         now_data["external_humidity_live"] = _fetch_ha_entity_state(str(cfg.get("external_humidity_entity_id") or ""))
+        now_data["weather_station"] = _build_weather_station_snapshot(cfg)
+        now_data["weather_guard"] = _build_weather_guard(now_data, cfg)
         DATA_FILE.write_text(json.dumps(now_data, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as exc:
         refresh_error = str(exc)
