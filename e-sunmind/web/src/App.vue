@@ -450,6 +450,10 @@
               <input type="number" v-model.number="cfg.mapZoom" min="14" max="22" @change="applyMapView" />
             </label>
           </div>
+          <div class="actions-inline">
+            <button class="btn" @click="saveOverlaySettings">Salva Tarature Overlay</button>
+            <span class="note">{{ overlaySaveStatus }}</span>
+          </div>
         </section>
 
         <section class="card" v-show="techExpanded">
@@ -602,6 +606,7 @@ const baseForm = ref({
   external_humidity_entity_id: 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity',
 })
 const baseSaveStatus = ref('')
+const overlaySaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const localTimestampLabel = computed(() => {
@@ -1818,6 +1823,13 @@ async function loadData() {
         external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
         external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
       }
+      const ov = oj?.overlay || {}
+      cfg.value = {
+        pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
+        sectorRadiusM: Number(ov?.sectorRadiusM ?? cfg.value.sectorRadiusM ?? 110),
+        sunRadiusM: Number(ov?.sunRadiusM ?? cfg.value.sunRadiusM ?? 95),
+        mapZoom: Number(ov?.mapZoom ?? cfg.value.mapZoom ?? 18),
+      }
       if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
       if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
     } catch (_) {
@@ -1892,6 +1904,29 @@ async function saveForecastSettings() {
     await loadData()
   } catch (e) {
     fsSaveStatus.value = `Errore salvataggio: ${e.message}`
+  }
+}
+
+async function saveOverlaySettings() {
+  overlaySaveStatus.value = 'Salvataggio...'
+  try {
+    const payload = {
+      pathRadiusM: Number(cfg.value.pathRadiusM ?? 102),
+      sectorRadiusM: Number(cfg.value.sectorRadiusM ?? 110),
+      sunRadiusM: Number(cfg.value.sunRadiusM ?? 95),
+      mapZoom: Number(cfg.value.mapZoom ?? 18),
+    }
+    const r = await fetch('/api/options/overlay', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
+    overlaySaveStatus.value = 'Tarature overlay salvate.'
+    await loadData()
+  } catch (e) {
+    overlaySaveStatus.value = `Errore salvataggio overlay: ${e.message}`
   }
 }
 

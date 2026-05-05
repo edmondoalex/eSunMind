@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.6"
+APP_VERSION = "0.3.7"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -121,6 +121,12 @@ def _load_options() -> dict[str, Any]:
         "timezone": "Europe/Rome",
         "coordinates_source_mode": "auto",
         "interval_minutes": 15,
+        "overlay": {
+            "pathRadiusM": 102,
+            "sectorRadiusM": 110,
+            "sunRadiusM": 95,
+            "mapZoom": 18,
+        },
         "location_query": "",
         "pv_actual_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
         "external_temp_entity_id": "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature",
@@ -180,6 +186,8 @@ def _load_options() -> dict[str, Any]:
         defaults["air_quality"].update(payload["air_quality"])
     if isinstance(payload.get("tende_map"), dict):
         defaults["tende_map"].update(payload["tende_map"])
+    if isinstance(payload.get("overlay"), dict):
+        defaults["overlay"].update(payload["overlay"])
     # Local overrides are owned by addon UI and persist independently from HA-managed options.
     local = _load_local_options_raw()
     if isinstance(local.get("mqtt"), dict):
@@ -192,6 +200,8 @@ def _load_options() -> dict[str, Any]:
         defaults["air_quality"].update(local["air_quality"])
     if isinstance(local.get("tende_map"), dict):
         defaults["tende_map"].update(local["tende_map"])
+    if isinstance(local.get("overlay"), dict):
+        defaults["overlay"].update(local["overlay"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
     mode = str(defaults.get("coordinates_source_mode") or "auto").strip().lower()
     if mode not in {"auto", "e_tende", "ha_core", "local"}:
@@ -203,6 +213,10 @@ def _load_options() -> dict[str, Any]:
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
     defaults["air_quality"]["provider"] = str(defaults["air_quality"].get("provider") or "open_meteo").strip().lower()
     defaults["tende_map"]["stale_seconds"] = max(30, min(86400, int(defaults["tende_map"].get("stale_seconds", 180) or 180)))
+    defaults["overlay"]["pathRadiusM"] = max(30, min(300, int(defaults["overlay"].get("pathRadiusM", 102) or 102)))
+    defaults["overlay"]["sectorRadiusM"] = max(30, min(300, int(defaults["overlay"].get("sectorRadiusM", 110) or 110)))
+    defaults["overlay"]["sunRadiusM"] = max(30, min(300, int(defaults["overlay"].get("sunRadiusM", 95) or 95)))
+    defaults["overlay"]["mapZoom"] = max(14, min(22, int(defaults["overlay"].get("mapZoom", 18) or 18)))
     return defaults
 
 
@@ -1794,6 +1808,46 @@ async def options_set_base(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
         "refresh_error": refresh_error,
+    })
+
+
+@app.post("/api/options/overlay")
+async def options_set_overlay(payload: dict):
+    if not isinstance(payload, dict):
+        return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
+
+    overlay = {
+        "pathRadiusM": max(30, min(300, int(payload.get("pathRadiusM", 102) or 102))),
+        "sectorRadiusM": max(30, min(300, int(payload.get("sectorRadiusM", 110) or 110))),
+        "sunRadiusM": max(30, min(300, int(payload.get("sunRadiusM", 95) or 95))),
+        "mapZoom": max(14, min(22, int(payload.get("mapZoom", 18) or 18))),
+    }
+
+    raw = _load_local_options_raw()
+    raw_overlay = raw.get("overlay", {})
+    if not isinstance(raw_overlay, dict):
+        raw_overlay = {}
+    raw_overlay.update(overlay)
+    raw["overlay"] = raw_overlay
+    _save_local_options_raw(raw)
+
+    ha_raw = _load_options_raw()
+    ha_overlay = ha_raw.get("overlay", {})
+    if not isinstance(ha_overlay, dict):
+        ha_overlay = {}
+    ha_overlay.update(overlay)
+    ha_raw["overlay"] = ha_overlay
+    try:
+        _save_options_raw(ha_raw)
+        saved_ha = True
+    except Exception:
+        saved_ha = False
+
+    return JSONResponse({
+        "ok": True,
+        "overlay": overlay,
+        "saved_to": str(LOCAL_OPTIONS_FILE),
+        "mirrored_to_ha_options": saved_ha,
     })
 
 
