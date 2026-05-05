@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.15"
+APP_VERSION = "0.3.16"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -973,6 +973,17 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
     if mode not in {"auto", "e_tende", "ha_core", "local"}:
         mode = "auto"
 
+    def _to_float_maybe(v: Any) -> float | None:
+        if v is None:
+            return None
+        try:
+            return float(v)
+        except Exception:
+            try:
+                return float(str(v).strip().replace(",", "."))
+            except Exception:
+                return None
+
     def _extract_tende_geo(tm_payload: dict[str, Any]) -> tuple[float | None, float | None, str | None]:
         tlat = tm_payload.get("latitude")
         tlon = tm_payload.get("longitude")
@@ -995,14 +1006,8 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
         out_lat = None
         out_lon = None
         out_tz = None
-        try:
-            if tlat is not None:
-                out_lat = float(tlat)
-            if tlon is not None:
-                out_lon = float(tlon)
-        except Exception:
-            out_lat = None
-            out_lon = None
+        out_lat = _to_float_maybe(tlat)
+        out_lon = _to_float_maybe(tlon)
         if ttz is not None and str(ttz).strip():
             out_tz = str(ttz).strip()
         return out_lat, out_lon, out_tz

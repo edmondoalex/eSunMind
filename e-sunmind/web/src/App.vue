@@ -1543,6 +1543,14 @@ function drawSolarOverlay() {
     lineJoin: 'round',
   }).addTo(map)
 
+  const dt = baseDateAtHour(selectedTime.value.h, selectedTime.value.m)
+  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
+  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
+  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
+  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
+  const srAz = suncalcAzToCompassDeg(srPos.azimuth)
+  const ssAz = suncalcAzToCompassDeg(ssPos.azimuth)
+
   if (showAnnualElevationBand.value) {
     const year = (data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()).getFullYear()
     const summerDay = new Date(year, 5, 21, 12, 0, 0) // 21 Jun
@@ -1607,13 +1615,6 @@ function drawSolarOverlay() {
     }
   }
 
-  const dt = baseDateAtHour(selectedTime.value.h, selectedTime.value.m)
-  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
-  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
-  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
-  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
-  const srAz = suncalcAzToCompassDeg(srPos.azimuth)
-  const ssAz = suncalcAzToCompassDeg(ssPos.azimuth)
   const pos = SunCalc.getPosition(dt, lat.value, lon.value)
   const az = suncalcAzToCompassDeg(pos.azimuth)
   const alt = toDeg(pos.altitude)
