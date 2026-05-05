@@ -1798,43 +1798,40 @@ async function loadData() {
     }
     drawSolarOverlay()
   }
-  const fs = data.value?.forecast_solar
-  if (fs && data.value) {
-    // Keep form in sync with current option defaults when available via options API fallback.
-    try {
-      const ro = await fetch('/api/options', { cache: 'no-store' })
-      const oj = await ro.json()
-      const fso = oj?.forecast_solar || {}
-      fsForm.value = {
-        enabled: Boolean(fso.enabled),
-        api_key: String(fso.api_key || ''),
-        declination: Number(fso.declination ?? 30),
-        azimuth: Number(fso.azimuth ?? 0),
-        kwp: Number(fso.kwp ?? 6.0),
-      }
-      baseForm.value = {
-        latitude: Number(oj?.latitude ?? 44.6973),
-        longitude: Number(oj?.longitude ?? 7.8683),
-        timezone: String(oj?.timezone || 'Europe/Rome'),
-        coordinates_source_mode: String(oj?.coordinates_source_mode || 'auto'),
-        interval_minutes: Number(oj?.interval_minutes ?? 15),
-        location_query: String(oj?.location_query || ''),
-        pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
-        external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
-        external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
-      }
-      const ov = oj?.overlay || {}
-      cfg.value = {
-        pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
-        sectorRadiusM: Number(ov?.sectorRadiusM ?? cfg.value.sectorRadiusM ?? 110),
-        sunRadiusM: Number(ov?.sunRadiusM ?? cfg.value.sunRadiusM ?? 95),
-        mapZoom: Number(ov?.mapZoom ?? cfg.value.mapZoom ?? 18),
-      }
-      if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
-      if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
-    } catch (_) {
-      // no-op
+  // Keep forms in sync with current persisted options, independent from forecast availability.
+  try {
+    const ro = await fetch('/api/options', { cache: 'no-store' })
+    const oj = await ro.json()
+    const fso = oj?.forecast_solar || {}
+    fsForm.value = {
+      enabled: Boolean(fso.enabled),
+      api_key: String(fso.api_key || ''),
+      declination: Number(fso.declination ?? 30),
+      azimuth: Number(fso.azimuth ?? 0),
+      kwp: Number(fso.kwp ?? 6.0),
     }
+    baseForm.value = {
+      latitude: Number(oj?.latitude ?? 44.6973),
+      longitude: Number(oj?.longitude ?? 7.8683),
+      timezone: String(oj?.timezone || 'Europe/Rome'),
+      coordinates_source_mode: String(oj?.coordinates_source_mode || 'auto'),
+      interval_minutes: Number(oj?.interval_minutes ?? 15),
+      location_query: String(oj?.location_query || ''),
+      pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+      external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
+      external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
+    }
+    const ov = oj?.overlay || {}
+    cfg.value = {
+      pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
+      sectorRadiusM: Number(ov?.sectorRadiusM ?? cfg.value.sectorRadiusM ?? 110),
+      sunRadiusM: Number(ov?.sunRadiusM ?? cfg.value.sunRadiusM ?? 95),
+      mapZoom: Number(ov?.mapZoom ?? cfg.value.mapZoom ?? 18),
+    }
+    if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
+    if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
+  } catch (_) {
+    // no-op
   }
   if (!selectedShadeId.value && tendeMapShades.value.length) {
     selectShade(tendeMapShades.value[0].id)
