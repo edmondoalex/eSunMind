@@ -336,6 +336,23 @@
         <button class="btn" @click="saveSelectedShade" :disabled="!selectedShadeEdit">Salva taratura</button>
         <span class="note">{{ tendeSaveStatus }}</span>
       </div>
+      <div class="card" v-if="selectedShadeEdit">
+        <h3>Taratura {{ selectedShadeEdit.name || selectedShadeEdit.id }}</h3>
+        <div class="tende-cal-grid">
+          <label>Azimuth start
+            <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_start_deg" @change="drawTendeEditor" />
+          </label>
+          <label>Azimuth end
+            <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_end_deg" @change="drawTendeEditor" />
+          </label>
+          <label>Altitudine min
+            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_min_deg" />
+          </label>
+          <label>Altitudine max
+            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_max_deg" />
+          </label>
+        </div>
+      </div>
       <div class="tende-layout">
         <div class="tende-list card">
           <h3>Tende dal component</h3>
@@ -1633,7 +1650,9 @@ async function saveSelectedShade() {
     })
     const j = await r.json()
     if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
-    tendeSaveStatus.value = 'Taratura inviata a e-Tende.'
+    if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Taratura applicata (ACK ricevuto).'
+    else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
+    else tendeSaveStatus.value = 'Taratura inviata (ACK non ricevuto).'
     await loadData()
   } catch (e) {
     tendeSaveStatus.value = `Errore: ${e.message}`
@@ -2143,6 +2162,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .tende-page{padding:10px}
 .tende-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
 .tende-layout{display:grid;grid-template-columns:320px 1fr;gap:10px}
 .tende-list{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:74vh;overflow:auto}
 .shade-item{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;text-align:left;color:#dbe7ff}
