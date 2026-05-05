@@ -1463,6 +1463,14 @@ function buildElevationCurveForDate(baseDate, steps = 96) {
   return buildElevationCurvePoints(sunrise, sunset, steps)
 }
 
+function azInRange(az, start, end) {
+  const a = ((Number(az) % 360) + 360) % 360
+  const s = ((Number(start) % 360) + 360) % 360
+  const e = ((Number(end) % 360) + 360) % 360
+  if (s <= e) return a >= s && a <= e
+  return a >= s || a <= e
+}
+
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
   ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
@@ -1542,12 +1550,27 @@ function drawSolarOverlay() {
     const winterCurve = buildElevationCurveForDate(winterDay, 120)
     if (summerCurve.length > 2 && winterCurve.length > 2) {
       const n = Math.min(summerCurve.length, winterCurve.length)
+      const srCl = srAz
+      const ssCl = ssAz
+      const winterClipped = []
+      const summerClipped = []
       for (let i = 0; i < n - 1; i += 1) {
+        const w0 = winterCurve[i]
+        const w1 = winterCurve[i + 1]
+        const s0 = summerCurve[i]
+        const s1 = summerCurve[i + 1]
+        const azW0 = (Math.atan2(w0[1] - lon.value, w0[0] - lat.value) * 180 / Math.PI + 360) % 360
+        const azW1 = (Math.atan2(w1[1] - lon.value, w1[0] - lat.value) * 180 / Math.PI + 360) % 360
+        const azS0 = (Math.atan2(s0[1] - lon.value, s0[0] - lat.value) * 180 / Math.PI + 360) % 360
+        const azS1 = (Math.atan2(s1[1] - lon.value, s1[0] - lat.value) * 180 / Math.PI + 360) % 360
+        if (!(azInRange(azW0, srCl, ssCl) && azInRange(azW1, srCl, ssCl) && azInRange(azS0, srCl, ssCl) && azInRange(azS1, srCl, ssCl))) {
+          continue
+        }
         const quad = [
-          winterCurve[i],
-          winterCurve[i + 1],
-          summerCurve[i + 1],
-          summerCurve[i],
+          w0,
+          w1,
+          s1,
+          s0,
         ]
         const q = L.polygon(quad, {
           color: '#facc15',
@@ -1557,21 +1580,29 @@ function drawSolarOverlay() {
           fillOpacity: 0.16,
         }).addTo(map)
         annualElevationBandLayers.push(q)
+        if (!winterClipped.length || winterClipped[winterClipped.length - 1] !== w0) winterClipped.push(w0)
+        winterClipped.push(w1)
+        if (!summerClipped.length || summerClipped[summerClipped.length - 1] !== s0) summerClipped.push(s0)
+        summerClipped.push(s1)
       }
       // subtle outlines for min/max boundaries
-      annualElevationBand = L.polyline(winterCurve, {
-        color: '#facc15',
-        weight: 0.8,
-        opacity: 0.32,
-        dashArray: '4,6',
-      }).addTo(map)
-      const annualElevationBandTop = L.polyline(summerCurve, {
-        color: '#facc15',
-        weight: 0.8,
-        opacity: 0.32,
-        dashArray: '4,6',
-      }).addTo(map)
-      annualElevationBandLayers.push(annualElevationBandTop)
+      if (winterClipped.length > 1) {
+        annualElevationBand = L.polyline(winterClipped, {
+          color: '#facc15',
+          weight: 0.8,
+          opacity: 0.32,
+          dashArray: '4,6',
+        }).addTo(map)
+      }
+      if (summerClipped.length > 1) {
+        const annualElevationBandTop = L.polyline(summerClipped, {
+          color: '#facc15',
+          weight: 0.8,
+          opacity: 0.32,
+          dashArray: '4,6',
+        }).addTo(map)
+        annualElevationBandLayers.push(annualElevationBandTop)
+      }
     }
   }
 
