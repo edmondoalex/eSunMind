@@ -537,6 +537,7 @@ let sunMarkerLive = null
 let sunriseRay = null
 let sunsetRay = null
 let altitudeRing = null
+let altitudeGuideLine = null
 let axisNS = null
 let axisWE = null
 let pvAzLine = null
@@ -1376,7 +1377,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
@@ -1467,6 +1468,7 @@ function drawSolarOverlay() {
 
   const simRadius = altitudeToRadius(alt)
   const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
+  const horizonPtSameAz = destinationPoint(lat.value, lon.value, az, cfg.value.sectorRadiusM)
   const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM)
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
@@ -1487,6 +1489,13 @@ function drawSolarOverlay() {
         iconAnchor: [13, 13],
       }),
       interactive: false,
+    }).addTo(map)
+    altitudeGuideLine = L.polyline([sunPt, horizonPtSameAz], {
+      color: '#ffe08a',
+      weight: 2.1,
+      opacity: 0.92,
+      dashArray: '6,6',
+      lineCap: 'round',
     }).addTo(map)
   }
 
