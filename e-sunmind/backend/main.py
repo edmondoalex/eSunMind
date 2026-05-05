@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.91"
+APP_VERSION = "0.2.92"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1359,13 +1359,21 @@ async def tende_map_update(payload: dict):
     port = int(tm_cfg.get("mqtt_port") or 1883)
     username = str(tm_cfg.get("mqtt_username") or "").strip()
     password = str(tm_cfg.get("mqtt_password") or "")
-    cmd_topic = "e-tendeintelligenti/cmd/shades/update"
+    cmd_topics = [
+        "e-tendeintelligenti/cmd/shades/update",
+        "e-tendeintelligenti/cmd/map/shades/update",
+    ]
     ack_topic = "e-tendeintelligenti/cmd/shades/update/ack"
     request_id = uuid.uuid4().hex
     msg = {
         "source": "e-sunmind",
         "request_id": request_id,
         "updated_at": datetime.utcnow().isoformat(),
+        "id": shade_id,
+        "azimuth_start_deg": az_start % 360.0,
+        "azimuth_end_deg": az_end % 360.0,
+        "altitude_min_deg": payload.get("altitude_min_deg"),
+        "altitude_max_deg": payload.get("altitude_max_deg"),
         "shade": {
             "id": shade_id,
             "azimuth_start_deg": az_start % 360.0,
@@ -1373,6 +1381,15 @@ async def tende_map_update(payload: dict):
             "altitude_min_deg": payload.get("altitude_min_deg"),
             "altitude_max_deg": payload.get("altitude_max_deg"),
         },
+        "shades": [
+            {
+                "id": shade_id,
+                "azimuth_start_deg": az_start % 360.0,
+                "azimuth_end_deg": az_end % 360.0,
+                "altitude_min_deg": payload.get("altitude_min_deg"),
+                "altitude_max_deg": payload.get("altitude_max_deg"),
+            }
+        ],
     }
     client = None
     ack_result: dict[str, Any] | None = None
@@ -1392,11 +1409,22 @@ async def tende_map_update(payload: dict):
         client.connect(host, port, 60)
         client.loop_start()
         client.subscribe(ack_topic, qos=1)
-        client.publish(cmd_topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
+        for topic in cmd_topics:
+            client.publish(topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
         t0 = time.time()
         while (time.time() - t0) < 2.2 and ack_result is None:
             time.sleep(0.05)
-        return JSONResponse({"ok": True, "topic": cmd_topic, "payload": msg, "ack": ack_result})
+        if not ack_result:
+            return JSONResponse(
+                {"ok": False, "error": "ack_timeout", "topics": cmd_topics, "payload": msg},
+                status_code=504,
+            )
+        if not (ack_result.get("ok") is True or str(ack_result.get("status") or "").lower() == "ok"):
+            return JSONResponse(
+                {"ok": False, "error": "ack_negative", "topics": cmd_topics, "payload": msg, "ack": ack_result},
+                status_code=502,
+            )
+        return JSONResponse({"ok": True, "topics": cmd_topics, "payload": msg, "ack": ack_result})
     except Exception as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
     finally:
