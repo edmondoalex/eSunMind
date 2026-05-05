@@ -1373,6 +1373,14 @@ function buildSectorPolygonPoints(azStart, azEnd, radiusM) {
   return pts
 }
 
+function buildRingPoints(radiusM) {
+  const pts = []
+  for (let a = 0; a <= 360; a += 2) {
+    pts.push(destinationPoint(lat.value, lon.value, a, radiusM))
+  }
+  return pts
+}
+
 function baseDateAtHour(hour, minute = 0) {
   const base = data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()
   const d = new Date(base)
@@ -1486,13 +1494,14 @@ function drawSolarOverlay() {
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
   const liveAlt = Number(data.value?.sun_position?.altitude_deg)
   const ringAlt = Number.isFinite(liveAlt) ? liveAlt : alt
-  altitudeRing = L.circle([lat.value, lon.value], {
-    radius: Math.max(0, altitudeToRadius(ringAlt)),
-    color: '#f7d13f',
-    weight: 1.2,
-    opacity: 0.55,
-    dashArray: '4,6',
-    fillOpacity: 0,
+  const altRadius = Math.max(0, altitudeToRadius(ringAlt))
+  altitudeRing = L.polyline(buildRingPoints(altRadius), {
+    color: '#fff1a8',
+    weight: 2.8,
+    opacity: 0.95,
+    dashArray: '10,6',
+    lineCap: 'round',
+    lineJoin: 'round',
   }).addTo(map)
 
   const simRadius = altitudeToRadius(alt)
