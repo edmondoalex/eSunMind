@@ -1435,6 +1435,23 @@ function buildSunPathPoints() {
   return points
 }
 
+function buildElevationCurvePoints(sunrise, sunset, steps = 72) {
+  const points = []
+  const srMs = sunrise.getTime()
+  const ssMs = sunset.getTime()
+  const total = Math.max(1, ssMs - srMs)
+  for (let i = 0; i <= steps; i += 1) {
+    const t = srMs + (total * i) / steps
+    const dt = new Date(t)
+    const p = SunCalc.getPosition(dt, lat.value, lon.value)
+    const az = suncalcAzToCompassDeg(p.azimuth)
+    const alt = Math.max(0, toDeg(p.altitude))
+    const r = altitudeToRadius(alt)
+    points.push(destinationPoint(lat.value, lon.value, az, r))
+  }
+  return points
+}
+
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
   ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
@@ -1517,14 +1534,12 @@ function drawSolarOverlay() {
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
   const simRadius = altitudeToRadius(alt)
   const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
-  // Build elevation ring from the actual rendered sun marker distance on map.
-  // This guarantees visual coherence (ring always crosses the sun point).
-  const altRadius = map.distance([lat.value, lon.value], sunPt)
-  altitudeRing = L.polyline(buildRingPoints(altRadius), {
+  // Real elevation curve from sunrise to sunset (time-sampled), instead of concentric ring.
+  altitudeRing = L.polyline(buildElevationCurvePoints(sunrise, sunset, 96), {
     color: '#fff1a8',
-    weight: 3.2,
+    weight: 3.4,
     opacity: 0.98,
-    dashArray: '10,6',
+    dashArray: '8,5',
     lineCap: 'round',
     lineJoin: 'round',
   }).addTo(map)
