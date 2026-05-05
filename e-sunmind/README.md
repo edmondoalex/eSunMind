@@ -80,12 +80,12 @@ Nota config: `facade_azimuth_deg = -1` significa facciata non configurata; in AP
 
 ### Stazione meteo reale opzionale
 
-Il weather guard funziona anche senza stazione meteo, usando MET/Open-Meteo. Se e disponibile una stazione Ecowitt/GW1101 integrata in Home Assistant, si possono configurare le entita reali:
+Il weather guard funziona anche senza stazione meteo, usando MET/Open-Meteo. Se e disponibile una stazione Ecowitt/GW1101 integrata in e-Control, si possono configurare le entita reali:
 
 ```yaml
 weather_station:
   enabled: true
-  provider: "homeassistant"
+  provider: "e_control"
   stale_seconds: 180
   wind_speed_entity_id: "sensor.ecowitt_wind_speed"
   wind_gust_entity_id: "sensor.ecowitt_wind_gust"
@@ -96,7 +96,7 @@ weather_station:
 
 Priorita:
 
-- stazione reale Home Assistant, se configurata e non stale;
+- stazione reale e-Control, se configurata e non stale;
 - MET/Open-Meteo come fallback automatico;
 - fail safe con `ok=false` e allarmi a `false` se non ci sono dati validi.
 

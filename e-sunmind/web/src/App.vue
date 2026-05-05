@@ -14,6 +14,7 @@
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">User UI</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
+        <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
         <button class="btn" @click="loadData">Aggiorna</button>
       </div>
@@ -381,10 +382,7 @@
       </div>
     </div>
 
-    <div v-show="tab==='tech'">
-      <div class="view-tools">
-        <button class="btn ghost" @click="techExpanded = !techExpanded">{{ techExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
-      </div>
+    <div v-show="tab==='setting'">
       <main class="tech-main">
         <section class="card">
           <h3>Configurazione Base Addon</h3>
@@ -435,7 +433,7 @@
           </div>
         </section>
 
-        <section class="card" v-show="techExpanded">
+        <section class="card">
           <h3>Tarature Overlay</h3>
           <div class="form-grid">
             <label>Raggio percorso sole (m)
@@ -457,7 +455,7 @@
           </div>
         </section>
 
-        <section class="card" v-show="techExpanded">
+        <section class="card">
           <h3>Tarature Forecast Solar (attuali)</h3>
           <div class="form-grid">
             <label>Enabled
@@ -481,8 +479,140 @@
             <span class="note">{{ fsSaveStatus }}</span>
           </div>
           <div class="mono small">{{ forecastConfigText }}</div>
-          <p class="note">Le tarature forecast sono modificabili e salvabili direttamente da questa UI tecnica.</p>
+          <p class="note">Le tarature forecast sono modificabili e salvabili direttamente da Setting.</p>
         </section>
+
+        <section class="card">
+          <h3>Weather</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="weatherForm.enabled" />
+            </label>
+            <label>Provider
+              <select v-model="weatherForm.provider">
+                <option value="met">MET</option>
+                <option value="open_meteo">Open-Meteo</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Weather Station e-Control</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="weatherStationForm.enabled" />
+            </label>
+            <label>Stale seconds
+              <input type="number" min="30" max="86400" v-model.number="weatherStationForm.stale_seconds" />
+            </label>
+            <label>Wind speed entity id
+              <input type="text" v-model="weatherStationForm.wind_speed_entity_id" />
+            </label>
+            <label>Wind gust entity id
+              <input type="text" v-model="weatherStationForm.wind_gust_entity_id" />
+            </label>
+            <label>Wind direction entity id
+              <input type="text" v-model="weatherStationForm.wind_direction_entity_id" />
+            </label>
+            <label>Rain rate entity id
+              <input type="text" v-model="weatherStationForm.rain_rate_entity_id" />
+            </label>
+            <label>Rain 1h entity id
+              <input type="text" v-model="weatherStationForm.rain_1h_entity_id" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Weather Guard</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="weatherGuardForm.enabled" />
+            </label>
+            <label>Wind alarm m/s
+              <input type="number" min="0" max="80" step="0.1" v-model.number="weatherGuardForm.wind_alarm_ms" />
+            </label>
+            <label>Rain alarm mm/h
+              <input type="number" min="0" max="200" step="0.1" v-model.number="weatherGuardForm.rain_alarm_mm_h" />
+            </label>
+            <label>Stravento min wind m/s
+              <input type="number" min="0" max="80" step="0.1" v-model.number="weatherGuardForm.facade_rain_min_wind_ms" />
+            </label>
+            <label>Stravento min rain mm/h
+              <input type="number" min="0" max="200" step="0.1" v-model.number="weatherGuardForm.facade_rain_min_mm_h" />
+            </label>
+            <label>Facciata azimuth deg (-1 = non configurata)
+              <input type="number" min="-1" max="360" step="0.1" v-model.number="weatherGuardForm.facade_azimuth_deg" />
+            </label>
+            <label>Facciata half FOV deg
+              <input type="number" min="0" max="180" step="0.1" v-model.number="weatherGuardForm.facade_half_fov_deg" />
+            </label>
+            <label>Stale seconds
+              <input type="number" min="30" max="86400" v-model.number="weatherGuardForm.stale_seconds" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Air Quality</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="airQualityForm.enabled" />
+            </label>
+            <label>Provider
+              <select v-model="airQualityForm.provider">
+                <option value="open_meteo">Open-Meteo</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Tende Map MQTT</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="tendeMapForm.enabled" />
+            </label>
+            <label>MQTT host
+              <input type="text" v-model="tendeMapForm.mqtt_host" />
+            </label>
+            <label>MQTT port
+              <input type="number" min="1" max="65535" v-model.number="tendeMapForm.mqtt_port" />
+            </label>
+            <label>MQTT username
+              <input type="text" v-model="tendeMapForm.mqtt_username" />
+            </label>
+            <label>MQTT password
+              <input type="password" v-model="tendeMapForm.mqtt_password" />
+            </label>
+            <label>Topic state
+              <input type="text" v-model="tendeMapForm.topic_state" />
+            </label>
+            <label>Topic availability
+              <input type="text" v-model="tendeMapForm.topic_availability" />
+            </label>
+            <label>Stale seconds
+              <input type="number" min="30" max="86400" v-model.number="tendeMapForm.stale_seconds" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="actions-inline">
+            <button class="btn" @click="saveBaseSettings">Salva Setting</button>
+            <span class="note">{{ baseSaveStatus }}</span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div v-show="tab==='tech'">
+      <div class="view-tools">
+        <button class="btn ghost" @click="techExpanded = !techExpanded">{{ techExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
+      </div>
+      <main class="tech-main">
 
         <section class="card" v-show="techExpanded">
           <h3>Risposta completa Forecast Solar (raw)</h3>
@@ -602,6 +732,37 @@ const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
+const weatherForm = ref({ enabled: true, provider: 'met' })
+const weatherStationForm = ref({
+  enabled: false,
+  stale_seconds: 180,
+  wind_speed_entity_id: '',
+  wind_gust_entity_id: '',
+  wind_direction_entity_id: '',
+  rain_rate_entity_id: '',
+  rain_1h_entity_id: '',
+})
+const weatherGuardForm = ref({
+  enabled: true,
+  wind_alarm_ms: 12.0,
+  rain_alarm_mm_h: 1.5,
+  facade_rain_min_wind_ms: 6.0,
+  facade_rain_min_mm_h: 0.8,
+  facade_azimuth_deg: -1.0,
+  facade_half_fov_deg: 60.0,
+  stale_seconds: 180,
+})
+const airQualityForm = ref({ enabled: true, provider: 'open_meteo' })
+const tendeMapForm = ref({
+  enabled: true,
+  mqtt_host: '192.168.3.13',
+  mqtt_port: 1883,
+  mqtt_username: '',
+  mqtt_password: '',
+  topic_state: 'e-tendeintelligenti/map/shades',
+  topic_availability: 'e-tendeintelligenti/availability',
+  stale_seconds: 180,
+})
 const baseForm = ref({
   latitude: 44.6973,
   longitude: 7.8683,
@@ -695,7 +856,7 @@ const coordinatesSourceLabel = computed(() => {
   const raw = String(data.value?.coordinates_source || '').trim().toLowerCase()
   if (raw === 'e-tendeintelligenti') return 'e-Tende Intelligenti'
   if (raw === 'e-tende_missing_coords') return 'e-Tende (coordinate mancanti nel payload)'
-  if (raw === 'home_assistant_core') return 'Home Assistant Core'
+  if (raw === 'home_assistant_core') return 'e-Control Core'
   if (raw === 'location_query') return 'Location query'
   if (raw === 'local_config') return 'Config locale e-SunMind'
   return raw || '-'
@@ -2042,6 +2203,48 @@ async function loadData() {
       external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
       external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
     }
+    const wo = oj?.weather || {}
+    weatherForm.value = {
+      enabled: Boolean(wo.enabled ?? true),
+      provider: String(wo.provider || 'met'),
+    }
+    const wso = oj?.weather_station || {}
+    weatherStationForm.value = {
+      enabled: Boolean(wso.enabled),
+      stale_seconds: Number(wso.stale_seconds ?? 180),
+      wind_speed_entity_id: String(wso.wind_speed_entity_id || ''),
+      wind_gust_entity_id: String(wso.wind_gust_entity_id || ''),
+      wind_direction_entity_id: String(wso.wind_direction_entity_id || ''),
+      rain_rate_entity_id: String(wso.rain_rate_entity_id || ''),
+      rain_1h_entity_id: String(wso.rain_1h_entity_id || ''),
+    }
+    const wgo = oj?.weather_guard || {}
+    weatherGuardForm.value = {
+      enabled: Boolean(wgo.enabled ?? true),
+      wind_alarm_ms: Number(wgo.wind_alarm_ms ?? 12.0),
+      rain_alarm_mm_h: Number(wgo.rain_alarm_mm_h ?? 1.5),
+      facade_rain_min_wind_ms: Number(wgo.facade_rain_min_wind_ms ?? 6.0),
+      facade_rain_min_mm_h: Number(wgo.facade_rain_min_mm_h ?? 0.8),
+      facade_azimuth_deg: Number(wgo.facade_azimuth_deg ?? -1.0),
+      facade_half_fov_deg: Number(wgo.facade_half_fov_deg ?? 60.0),
+      stale_seconds: Number(wgo.stale_seconds ?? 180),
+    }
+    const aqo = oj?.air_quality || {}
+    airQualityForm.value = {
+      enabled: Boolean(aqo.enabled ?? true),
+      provider: String(aqo.provider || 'open_meteo'),
+    }
+    const tmo = oj?.tende_map || {}
+    tendeMapForm.value = {
+      enabled: Boolean(tmo.enabled ?? true),
+      mqtt_host: String(tmo.mqtt_host || '192.168.3.13'),
+      mqtt_port: Number(tmo.mqtt_port ?? 1883),
+      mqtt_username: String(tmo.mqtt_username || ''),
+      mqtt_password: String(tmo.mqtt_password || ''),
+      topic_state: String(tmo.topic_state || 'e-tendeintelligenti/map/shades'),
+      topic_availability: String(tmo.topic_availability || 'e-tendeintelligenti/availability'),
+      stale_seconds: Number(tmo.stale_seconds ?? 180),
+    }
     const ov = oj?.overlay || {}
     cfg.value = {
       pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
@@ -2085,6 +2288,44 @@ async function saveBaseSettings() {
       pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),
       external_temp_entity_id: String(baseForm.value.external_temp_entity_id || ''),
       external_humidity_entity_id: String(baseForm.value.external_humidity_entity_id || ''),
+      weather: {
+        enabled: Boolean(weatherForm.value.enabled),
+        provider: String(weatherForm.value.provider || 'met'),
+      },
+      weather_station: {
+        enabled: Boolean(weatherStationForm.value.enabled),
+        provider: 'e_control',
+        stale_seconds: Number(weatherStationForm.value.stale_seconds ?? 180),
+        wind_speed_entity_id: String(weatherStationForm.value.wind_speed_entity_id || ''),
+        wind_gust_entity_id: String(weatherStationForm.value.wind_gust_entity_id || ''),
+        wind_direction_entity_id: String(weatherStationForm.value.wind_direction_entity_id || ''),
+        rain_rate_entity_id: String(weatherStationForm.value.rain_rate_entity_id || ''),
+        rain_1h_entity_id: String(weatherStationForm.value.rain_1h_entity_id || ''),
+      },
+      weather_guard: {
+        enabled: Boolean(weatherGuardForm.value.enabled),
+        wind_alarm_ms: Number(weatherGuardForm.value.wind_alarm_ms ?? 12.0),
+        rain_alarm_mm_h: Number(weatherGuardForm.value.rain_alarm_mm_h ?? 1.5),
+        facade_rain_min_wind_ms: Number(weatherGuardForm.value.facade_rain_min_wind_ms ?? 6.0),
+        facade_rain_min_mm_h: Number(weatherGuardForm.value.facade_rain_min_mm_h ?? 0.8),
+        facade_azimuth_deg: Number(weatherGuardForm.value.facade_azimuth_deg ?? -1.0),
+        facade_half_fov_deg: Number(weatherGuardForm.value.facade_half_fov_deg ?? 60.0),
+        stale_seconds: Number(weatherGuardForm.value.stale_seconds ?? 180),
+      },
+      air_quality: {
+        enabled: Boolean(airQualityForm.value.enabled),
+        provider: String(airQualityForm.value.provider || 'open_meteo'),
+      },
+      tende_map: {
+        enabled: Boolean(tendeMapForm.value.enabled),
+        mqtt_host: String(tendeMapForm.value.mqtt_host || ''),
+        mqtt_port: Number(tendeMapForm.value.mqtt_port ?? 1883),
+        mqtt_username: String(tendeMapForm.value.mqtt_username || ''),
+        mqtt_password: String(tendeMapForm.value.mqtt_password || ''),
+        topic_state: String(tendeMapForm.value.topic_state || ''),
+        topic_availability: String(tendeMapForm.value.topic_availability || ''),
+        stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
+      },
     }
     const r = await fetch('/api/options/base', {
       method: 'POST',

@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.26"
+APP_VERSION = "0.3.27"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -154,7 +154,7 @@ def _load_options() -> dict[str, Any]:
         },
         "weather_station": {
             "enabled": False,
-            "provider": "homeassistant",
+            "provider": "e_control",
             "stale_seconds": 180,
             "wind_speed_entity_id": "",
             "wind_gust_entity_id": "",
@@ -241,7 +241,7 @@ def _load_options() -> dict[str, Any]:
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
     ws = defaults["weather_station"]
     ws["enabled"] = bool(ws.get("enabled", False))
-    ws["provider"] = str(ws.get("provider") or "homeassistant").strip().lower()
+    ws["provider"] = str(ws.get("provider") or "e_control").strip().lower()
     ws["stale_seconds"] = max(30, min(86400, int(ws.get("stale_seconds", 180) or 180)))
     wg = defaults["weather_guard"]
     wg["enabled"] = bool(wg.get("enabled", True))
@@ -761,8 +761,8 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ok": False,
         "enabled": enabled,
-        "provider": str(ws_cfg.get("provider") or "homeassistant"),
-        "source": "homeassistant",
+        "provider": str(ws_cfg.get("provider") or "e_control"),
+        "source": "e-Control",
         "normalized": {},
         "entities": {},
         "error": None,
@@ -2143,7 +2143,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "weather_station", "tende_map")
+    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "weather", "weather_station", "weather_guard", "air_quality", "tende_map")
 
     raw = _load_local_options_raw()
     for k in keys:
