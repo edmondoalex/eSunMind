@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.16"
+APP_VERSION = "0.3.17"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -247,6 +247,42 @@ def _save_options_raw(payload: dict[str, Any]) -> None:
     OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _coerce_float(v: Any) -> float | None:
+    if v is None:
+        return None
+    try:
+        return float(v)
+    except Exception:
+        try:
+            return float(str(v).strip().replace(",", "."))
+        except Exception:
+            return None
+
+
+def _extract_geo_from_payload(payload: dict[str, Any]) -> tuple[float | None, float | None, str | None]:
+    lat = payload.get("latitude")
+    lon = payload.get("longitude")
+    tz = payload.get("timezone")
+    if lat is None:
+        lat = payload.get("lat")
+    if lon is None:
+        lon = payload.get("lon")
+    if tz is None:
+        tz = payload.get("tz")
+    coords = payload.get("coordinates")
+    if isinstance(coords, dict):
+        if lat is None:
+            lat = coords.get("latitude", coords.get("lat"))
+        if lon is None:
+            lon = coords.get("longitude", coords.get("lon"))
+        if tz is None:
+            tz = coords.get("timezone", coords.get("tz"))
+    lat_f = _coerce_float(lat)
+    lon_f = _coerce_float(lon)
+    tz_s = str(tz).strip() if tz is not None and str(tz).strip() else None
+    return lat_f, lon_f, tz_s
+
+
 def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
     if not isinstance(payload, dict):
         return None
@@ -294,17 +330,12 @@ def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
         "source": str(payload.get("source") or "e-tendeintelligenti"),
         "shades": shades_out,
     }
-    try:
-        lat = payload.get("latitude")
-        lon = payload.get("longitude")
-        tz = payload.get("timezone")
-        if lat is not None and lon is not None:
-            out["latitude"] = float(lat)
-            out["longitude"] = float(lon)
-        if tz is not None and str(tz).strip():
-            out["timezone"] = str(tz).strip()
-    except Exception:
-        pass
+    lat, lon, tz = _extract_geo_from_payload(payload)
+    if lat is not None and lon is not None:
+        out["latitude"] = lat
+        out["longitude"] = lon
+    if tz is not None:
+        out["timezone"] = tz
     return out
 
 
@@ -817,17 +848,12 @@ def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "updated_at": payload.get("updated_at"),
         "shades": shades_out,
     }
-    try:
-        lat = payload.get("latitude")
-        lon = payload.get("longitude")
-        tz = payload.get("timezone")
-        if lat is not None and lon is not None:
-            out["latitude"] = float(lat)
-            out["longitude"] = float(lon)
-        if tz is not None and str(tz).strip():
-            out["timezone"] = str(tz).strip()
-    except Exception:
-        pass
+    lat, lon, tz = _extract_geo_from_payload(payload)
+    if lat is not None and lon is not None:
+        out["latitude"] = lat
+        out["longitude"] = lon
+    if tz is not None:
+        out["timezone"] = tz
     return out
 
 
