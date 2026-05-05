@@ -1652,6 +1652,7 @@ async function saveSelectedShade() {
   try {
     const payload = {
       id: selectedShadeEdit.value.id,
+      cover_entity: selectedShadeEdit.value.cover_entity || null,
       azimuth_start_deg: selectedShadeEdit.value.azimuth_start_deg,
       azimuth_end_deg: selectedShadeEdit.value.azimuth_end_deg,
       altitude_min_deg: selectedShadeEdit.value.altitude_min_deg,

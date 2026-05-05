@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.94"
+APP_VERSION = "0.2.95"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1345,6 +1345,7 @@ async def tende_map_update(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
     shade_id = str(payload.get("id") or "").strip()
+    cover_entity = str(payload.get("cover_entity") or "").strip()
     if not shade_id:
         return JSONResponse({"ok": False, "error": "missing_id"}, status_code=400)
     try:
@@ -1373,12 +1374,14 @@ async def tende_map_update(payload: dict):
         "request_id": request_id,
         "updated_at": datetime.utcnow().isoformat(),
         "id": shade_id,
+        "cover_entity": cover_entity or None,
         "azimuth_start_deg": az_start % 360.0,
         "azimuth_end_deg": az_end % 360.0,
         "altitude_min_deg": payload.get("altitude_min_deg"),
         "altitude_max_deg": payload.get("altitude_max_deg"),
         "shade": {
             "id": shade_id,
+            "cover_entity": cover_entity or None,
             "azimuth_start_deg": az_start % 360.0,
             "azimuth_end_deg": az_end % 360.0,
             "altitude_min_deg": payload.get("altitude_min_deg"),
@@ -1387,6 +1390,7 @@ async def tende_map_update(payload: dict):
         "shades": [
             {
                 "id": shade_id,
+                "cover_entity": cover_entity or None,
                 "azimuth_start_deg": az_start % 360.0,
                 "azimuth_end_deg": az_end % 360.0,
                 "altitude_min_deg": payload.get("altitude_min_deg"),
