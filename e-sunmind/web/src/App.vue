@@ -37,6 +37,7 @@
           <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
           <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
           <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
+          <label><input type="checkbox" v-model="showAnnualElevationBand" @change="drawSolarOverlay" /> Fascia elevazione annua</label>
           <label><input type="checkbox" v-model="showTendeSectors" @change="drawSolarOverlay" /> Spicchi Tende (e-Tende)</label>
           <label><input type="checkbox" v-model="weatherAnimEnabled" /> Animazione meteo</label>
         </div>
@@ -560,6 +561,7 @@ let axisNS = null
 let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
+let annualElevationBand = null
 let compassMarkers = []
 let tendeSectorLayers = []
 const weatherAnimEnabled = ref(false)
@@ -584,6 +586,7 @@ const showSimLine = ref(true)
 const showAxisNS = ref(true)
 const showAxisWE = ref(true)
 const showPvAzLine = ref(false)
+const showAnnualElevationBand = ref(true)
 const showTendeSectors = ref(true)
 const tendeEditMode = ref(false)
 const selectedShadeId = ref('')
@@ -1452,9 +1455,16 @@ function buildElevationCurvePoints(sunrise, sunset, steps = 72) {
   return points
 }
 
+function buildElevationCurveForDate(baseDate, steps = 96) {
+  const times = SunCalc.getTimes(baseDate, lat.value, lon.value)
+  const sunrise = times?.sunrise instanceof Date ? times.sunrise : baseDateAtHour(6)
+  const sunset = times?.sunset instanceof Date ? times.sunset : baseDateAtHour(20)
+  return buildElevationCurvePoints(sunrise, sunset, steps)
+}
+
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
@@ -1520,6 +1530,24 @@ function drawSolarOverlay() {
     lineCap: 'round',
     lineJoin: 'round',
   }).addTo(map)
+
+  if (showAnnualElevationBand.value) {
+    const year = (data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()).getFullYear()
+    const summerDay = new Date(year, 5, 21, 12, 0, 0) // 21 Jun
+    const winterDay = new Date(year, 11, 21, 12, 0, 0) // 21 Dec
+    const summerCurve = buildElevationCurveForDate(summerDay, 120)
+    const winterCurve = buildElevationCurveForDate(winterDay, 120)
+    if (summerCurve.length > 2 && winterCurve.length > 2) {
+      const poly = [...winterCurve, ...summerCurve.slice().reverse()]
+      annualElevationBand = L.polygon(poly, {
+        color: '#facc15',
+        weight: 1.4,
+        opacity: 0.45,
+        fillColor: '#facc15',
+        fillOpacity: 0.16,
+      }).addTo(map)
+    }
+  }
 
   const dt = baseDateAtHour(selectedTime.value.h, selectedTime.value.m)
   const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
