@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.23"
+APP_VERSION = "0.3.24"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -152,6 +152,16 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "provider": "met",
         },
+        "weather_guard": {
+            "enabled": True,
+            "wind_alarm_ms": 12.0,
+            "rain_alarm_mm_h": 1.5,
+            "facade_rain_min_wind_ms": 6.0,
+            "facade_rain_min_mm_h": 0.8,
+            "facade_azimuth_deg": None,
+            "facade_half_fov_deg": 60.0,
+            "stale_seconds": 180,
+        },
         "air_quality": {
             "enabled": True,
             "provider": "open_meteo",
@@ -182,6 +192,8 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(payload["forecast_solar"])
     if isinstance(payload.get("weather"), dict):
         defaults["weather"].update(payload["weather"])
+    if isinstance(payload.get("weather_guard"), dict):
+        defaults["weather_guard"].update(payload["weather_guard"])
     if isinstance(payload.get("air_quality"), dict):
         defaults["air_quality"].update(payload["air_quality"])
     if isinstance(payload.get("tende_map"), dict):
@@ -196,6 +208,8 @@ def _load_options() -> dict[str, Any]:
         defaults["forecast_solar"].update(local["forecast_solar"])
     if isinstance(local.get("weather"), dict):
         defaults["weather"].update(local["weather"])
+    if isinstance(local.get("weather_guard"), dict):
+        defaults["weather_guard"].update(local["weather_guard"])
     if isinstance(local.get("air_quality"), dict):
         defaults["air_quality"].update(local["air_quality"])
     if isinstance(local.get("tende_map"), dict):
@@ -211,6 +225,19 @@ def _load_options() -> dict[str, Any]:
     defaults["forecast_solar"]["azimuth"] = max(-180, min(180, int(defaults["forecast_solar"].get("azimuth", 0) or 0)))
     defaults["forecast_solar"]["kwp"] = max(0.1, min(1000.0, float(defaults["forecast_solar"].get("kwp", 6.0) or 6.0)))
     defaults["weather"]["provider"] = str(defaults["weather"].get("provider") or "met").strip().lower()
+    wg = defaults["weather_guard"]
+    wg["enabled"] = bool(wg.get("enabled", True))
+    wg["wind_alarm_ms"] = max(0.0, min(80.0, float(wg.get("wind_alarm_ms", 12.0) or 12.0)))
+    wg["rain_alarm_mm_h"] = max(0.0, min(200.0, float(wg.get("rain_alarm_mm_h", 1.5) or 1.5)))
+    wg["facade_rain_min_wind_ms"] = max(0.0, min(80.0, float(wg.get("facade_rain_min_wind_ms", 6.0) or 6.0)))
+    wg["facade_rain_min_mm_h"] = max(0.0, min(200.0, float(wg.get("facade_rain_min_mm_h", 0.8) or 0.8)))
+    try:
+        facade_az = wg.get("facade_azimuth_deg")
+        wg["facade_azimuth_deg"] = None if facade_az in (None, "") else float(facade_az) % 360.0
+    except Exception:
+        wg["facade_azimuth_deg"] = None
+    wg["facade_half_fov_deg"] = max(0.0, min(180.0, float(wg.get("facade_half_fov_deg", 60.0) or 60.0)))
+    wg["stale_seconds"] = max(30, min(86400, int(wg.get("stale_seconds", 180) or 180)))
     defaults["air_quality"]["provider"] = str(defaults["air_quality"].get("provider") or "open_meteo").strip().lower()
     defaults["tende_map"]["stale_seconds"] = max(30, min(86400, int(defaults["tende_map"].get("stale_seconds", 180) or 180)))
     defaults["overlay"]["pathRadiusM"] = max(30, min(300, int(defaults["overlay"].get("pathRadiusM", 102) or 102)))
@@ -557,6 +584,7 @@ def _fetch_weather_met(cfg: dict[str, Any], latitude: float, longitude: float) -
         "air_temperature_c": instant.get("air_temperature"),
         "relative_humidity_pct": instant.get("relative_humidity"),
         "wind_speed_ms": instant.get("wind_speed"),
+        "wind_gust_ms": instant.get("wind_speed_of_gust"),
         "wind_from_direction_deg": instant.get("wind_from_direction"),
         "air_pressure_hpa": instant.get("air_pressure_at_sea_level"),
         "cloud_area_fraction_pct": instant.get("cloud_area_fraction"),
@@ -578,8 +606,8 @@ def _fetch_weather_open_meteo(cfg: dict[str, Any], latitude: float, longitude: f
     wc = cfg.get("weather", {}) or {}
     if not wc.get("enabled", True):
         return None
-    vars_hourly = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,uv_index,weather_code"
-    vars_current = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_direction_10m,uv_index,weather_code"
+    vars_hourly = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,weather_code"
+    vars_current = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,weather_code"
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={latitude}&longitude={longitude}"
@@ -597,6 +625,7 @@ def _fetch_weather_open_meteo(cfg: dict[str, Any], latitude: float, longitude: f
         "air_temperature_c": cur.get("temperature_2m"),
         "relative_humidity_pct": cur.get("relative_humidity_2m"),
         "wind_speed_ms": (float(cur.get("wind_speed_10m")) / 3.6) if cur.get("wind_speed_10m") is not None else None,
+        "wind_gust_ms": (float(cur.get("wind_gusts_10m")) / 3.6) if cur.get("wind_gusts_10m") is not None else None,
         "wind_from_direction_deg": cur.get("wind_direction_10m"),
         "air_pressure_hpa": cur.get("pressure_msl"),
         "cloud_area_fraction_pct": cur.get("cloud_cover"),
@@ -631,6 +660,151 @@ def _fetch_weather(cfg: dict[str, Any], latitude: float, longitude: float) -> di
             fb["_fallback_from"] = "met"
         return fb
     return {"ok": False, "provider": provider, "error": "provider_not_supported"}
+
+
+def _to_float_or_none(value: Any) -> float | None:
+    try:
+        if value is None or value == "":
+            return None
+        return float(value)
+    except Exception:
+        return None
+
+
+def _angular_diff_deg(a: float, b: float) -> float:
+    return abs((float(a) - float(b) + 180.0) % 360.0 - 180.0)
+
+
+def _weather_payload_ts(payload: dict[str, Any] | None) -> float | None:
+    if not isinstance(payload, dict):
+        return None
+    fetched = _to_float_or_none(payload.get("_fetched_at_ts"))
+    if fetched is not None:
+        return fetched
+    try:
+        t = ((payload.get("normalized") or {}).get("time")) if isinstance(payload.get("normalized"), dict) else None
+        if not t:
+            return None
+        dt = datetime.fromisoformat(str(t).replace("Z", "+00:00"))
+        return dt.timestamp()
+    except Exception:
+        return None
+
+
+def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    now = time.time()
+    cfg = cfg or _load_options()
+    wg_cfg = (cfg.get("weather_guard") or {})
+    updated_at = datetime.now(pytz.timezone(str(cfg.get("timezone") or "Europe/Rome"))).isoformat()
+    base = {
+        "ok": False,
+        "enabled": bool(wg_cfg.get("enabled", True)),
+        "wind_speed_ms": 0.0,
+        "wind_gust_ms": None,
+        "wind_dir_deg": None,
+        "rain_rate_mm_h": 0.0,
+        "rain_1h_mm": None,
+        "facade_rain_risk": False,
+        "wind_alarm": False,
+        "rain_alarm": False,
+        "severe_weather_alarm": False,
+        "updated_at": updated_at,
+    }
+    if not base["enabled"]:
+        base["error"] = "disabled"
+        return base
+    if not isinstance(data, dict):
+        base["error"] = "data_not_ready"
+        return base
+
+    weather = data.get("weather") if isinstance(data.get("weather"), dict) else None
+    weather_open = data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None
+    stale_seconds = int(wg_cfg.get("stale_seconds", 180) or 180)
+    candidates: list[tuple[dict[str, Any], float]] = []
+    for candidate in (weather, weather_open):
+        if not (isinstance(candidate, dict) and candidate.get("ok")):
+            continue
+        candidate_ts = _weather_payload_ts(candidate)
+        if candidate_ts is not None:
+            candidates.append((candidate, candidate_ts))
+    candidates.sort(key=lambda item: item[1], reverse=True)
+    selected = None
+    weather_ts = None
+    for candidate, candidate_ts in candidates:
+        if (now - candidate_ts) <= stale_seconds:
+            selected = candidate
+            weather_ts = candidate_ts
+            break
+    if selected is None and candidates:
+        selected, weather_ts = candidates[0]
+    if weather_ts is None or (now - weather_ts) > stale_seconds:
+        base["error"] = "weather_stale_or_missing"
+        base["stale"] = True
+        base["age_seconds"] = None if weather_ts is None else round(now - weather_ts, 1)
+        return base
+
+    norm = (selected.get("normalized") if selected else None) or {}
+    fallback_norms = [
+        (candidate.get("normalized") if isinstance(candidate.get("normalized"), dict) else {})
+        for candidate, _candidate_ts in candidates
+        if candidate is not selected
+    ]
+
+    wind_speed = _to_float_or_none(norm.get("wind_speed_ms"))
+    wind_gust = _to_float_or_none(norm.get("wind_gust_ms"))
+    wind_dir = _to_float_or_none(norm.get("wind_from_direction_deg"))
+    rain_1h = _to_float_or_none(norm.get("precipitation_next_1h_mm"))
+    for fb_norm in fallback_norms:
+        if wind_speed is None:
+            wind_speed = _to_float_or_none(fb_norm.get("wind_speed_ms"))
+        if wind_gust is None:
+            wind_gust = _to_float_or_none(fb_norm.get("wind_gust_ms"))
+        if wind_dir is None:
+            wind_dir = _to_float_or_none(fb_norm.get("wind_from_direction_deg"))
+        if rain_1h is None:
+            rain_1h = _to_float_or_none(fb_norm.get("precipitation_next_1h_mm"))
+
+    if wind_speed is None or rain_1h is None:
+        base["error"] = "weather_fields_missing"
+        base["stale"] = False
+        return base
+
+    rain_rate = max(0.0, rain_1h)
+    wind_for_alarm = wind_gust if wind_gust is not None else wind_speed
+    wind_alarm = wind_for_alarm >= float(wg_cfg.get("wind_alarm_ms", 12.0) or 12.0)
+    rain_alarm = rain_rate >= float(wg_cfg.get("rain_alarm_mm_h", 1.5) or 1.5)
+    facade_az = _to_float_or_none(wg_cfg.get("facade_azimuth_deg"))
+    facade_half = float(wg_cfg.get("facade_half_fov_deg", 60.0) or 60.0)
+    in_facade_cone = False
+    if facade_az is not None and wind_dir is not None:
+        in_facade_cone = _angular_diff_deg(wind_dir, facade_az) <= facade_half
+    facade_rain_risk = (
+        rain_rate >= float(wg_cfg.get("facade_rain_min_mm_h", 0.8) or 0.8)
+        and wind_speed >= float(wg_cfg.get("facade_rain_min_wind_ms", 6.0) or 6.0)
+        and in_facade_cone
+    )
+
+    base.update(
+        {
+            "ok": True,
+            "stale": False,
+            "age_seconds": round(now - weather_ts, 1),
+            "source": (selected or {}).get("provider"),
+            "wind_speed_ms": wind_speed,
+            "wind_gust_ms": wind_gust,
+            "wind_dir_deg": None if wind_dir is None else wind_dir % 360.0,
+            "rain_rate_mm_h": rain_rate,
+            "rain_1h_mm": rain_1h,
+            "facade_azimuth_deg": None if facade_az is None else facade_az % 360.0,
+            "facade_half_fov_deg": facade_half,
+            "facade_wind_in_cone": in_facade_cone,
+            "facade_rain_risk": facade_rain_risk,
+            "wind_alarm": wind_alarm,
+            "rain_alarm": rain_alarm,
+            "severe_weather_alarm": bool(wind_alarm or rain_alarm or facade_rain_risk),
+        }
+    )
+    return base
 
 
 def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
@@ -1457,6 +1631,7 @@ async def _worker() -> None:
             data["air_quality"] = airq
             data["forecast_solar"] = forecast
             data["tende_map"] = _build_tende_map_snapshot(cfg)
+            data["weather_guard"] = _build_weather_guard(data, cfg)
             DATA_FILE.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
             if forecast is not None and isinstance(forecast, dict) and not forecast.get("_cache_hit", False):
                 FORECAST_FILE.write_text(json.dumps(forecast, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -1527,8 +1702,18 @@ async def data():
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    payload["tende_map"] = _build_tende_map_snapshot(_load_options())
+    cfg = _load_options()
+    payload["tende_map"] = _build_tende_map_snapshot(cfg)
+    payload["weather_guard"] = _build_weather_guard(payload, cfg)
     return JSONResponse(payload)
+
+
+@app.get("/api/weather/guard")
+async def weather_guard_get():
+    if not DATA_FILE.exists():
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    return JSONResponse(_build_weather_guard(payload, _load_options()))
 
 
 @app.get("/api/tende/map")

@@ -32,3 +32,46 @@ Esempio curl:
 ```bash
 curl -sS http://192.168.3.24:1980/api/sun/live
 ```
+
+### Weather guard per e-Tende
+
+Endpoint sicurezza meteo:
+
+- `GET /api/weather/guard`
+
+Risposta `200`:
+
+```json
+{
+  "ok": true,
+  "enabled": true,
+  "wind_speed_ms": 4.3,
+  "wind_gust_ms": null,
+  "wind_dir_deg": 287.6,
+  "rain_rate_mm_h": 0.2,
+  "rain_1h_mm": 0.2,
+  "facade_rain_risk": false,
+  "wind_alarm": false,
+  "rain_alarm": false,
+  "severe_weather_alarm": false,
+  "updated_at": "2026-05-05T12:00:00+02:00"
+}
+```
+
+Risposta `503` quando il runtime non ha ancora prodotto dati:
+
+```json
+{
+  "ok": false,
+  "error": "data_not_ready"
+}
+```
+
+Gli stessi dati sono inclusi in `GET /api/data` nel blocco `weather_guard` e quindi anche nel payload MQTT `runtime_json`.
+
+e-Tende deve leggere:
+
+- `wind_alarm`: protezione vento forte.
+- `rain_alarm`: protezione pioggia.
+- `facade_rain_risk`: stravento, cioe pioggia con vento nel cono della facciata.
+- `severe_weather_alarm`: allarme aggregato, vero se uno dei tre allarmi e attivo.
