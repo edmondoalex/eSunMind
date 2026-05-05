@@ -1455,7 +1455,8 @@ function drawSolarOverlay() {
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
 
-  const sunPt = destinationPoint(lat.value, lon.value, az, cfg.value.sectorRadiusM)
+  const simRadius = altitudeToRadius(alt)
+  const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
   const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.pathRadiusM)
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
@@ -1481,8 +1482,10 @@ function drawSolarOverlay() {
 
   if (showLiveLine.value) {
       const liveAz = Number(data.value?.sun_position?.azimuth_compass_deg)
+      const liveAlt = Number(data.value?.sun_position?.altitude_deg)
       if (Number.isFinite(liveAz)) {
-      const livePt = destinationPoint(lat.value, lon.value, liveAz, cfg.value.sectorRadiusM)
+      const liveRadius = Number.isFinite(liveAlt) ? altitudeToRadius(liveAlt) : cfg.value.sectorRadiusM
+      const livePt = destinationPoint(lat.value, lon.value, liveAz, liveRadius)
       sunLineLive = L.polyline([[lat.value, lon.value], livePt], {
         color: '#2dd4bf',
         weight: 2.6,
