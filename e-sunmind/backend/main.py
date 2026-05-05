@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.27"
+APP_VERSION = "0.3.28"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -842,6 +842,13 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
         "rain_alarm": False,
         "severe_weather_alarm": False,
         "updated_at": updated_at,
+        "station": {
+            "enabled": False,
+            "ok": False,
+            "used": False,
+            "error": None,
+            "age_seconds": None,
+        },
     }
     if not base["enabled"]:
         base["error"] = "disabled"
@@ -851,6 +858,13 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
         return base
 
     weather_station = data.get("weather_station") if isinstance(data.get("weather_station"), dict) else None
+    base["station"] = {
+        "enabled": bool((weather_station or {}).get("enabled", False)) if isinstance(weather_station, dict) else False,
+        "ok": bool((weather_station or {}).get("ok", False)) if isinstance(weather_station, dict) else False,
+        "used": False,
+        "error": (weather_station or {}).get("error") if isinstance(weather_station, dict) else None,
+        "age_seconds": (weather_station or {}).get("age_seconds") if isinstance(weather_station, dict) else None,
+    }
     weather = data.get("weather") if isinstance(data.get("weather"), dict) else None
     weather_open = data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None
     stale_seconds = int(wg_cfg.get("stale_seconds", 180) or 180)
@@ -901,12 +915,6 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
     if wind_speed is None or rain_1h is None:
         base["error"] = "weather_fields_missing"
         base["stale"] = False
-        base["station"] = {
-            "enabled": bool((weather_station or {}).get("enabled", False)) if isinstance(weather_station, dict) else False,
-            "ok": bool((weather_station or {}).get("ok", False)) if isinstance(weather_station, dict) else False,
-            "error": (weather_station or {}).get("error") if isinstance(weather_station, dict) else None,
-            "age_seconds": (weather_station or {}).get("age_seconds") if isinstance(weather_station, dict) else None,
-        }
         return base
 
     rain_rate = max(0.0, rain_1h)
@@ -931,11 +939,11 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
             "age_seconds": round(now - weather_ts, 1),
             "source": (selected or {}).get("provider"),
             "station": {
-                "enabled": bool((weather_station or {}).get("enabled", False)) if isinstance(weather_station, dict) else False,
-                "ok": bool((weather_station or {}).get("ok", False)) if isinstance(weather_station, dict) else False,
+                "enabled": bool(base["station"].get("enabled")),
+                "ok": bool(base["station"].get("ok")),
                 "used": (selected is weather_station),
-                "error": (weather_station or {}).get("error") if isinstance(weather_station, dict) else None,
-                "age_seconds": (weather_station or {}).get("age_seconds") if isinstance(weather_station, dict) else None,
+                "error": base["station"].get("error"),
+                "age_seconds": base["station"].get("age_seconds"),
             },
             "wind_speed_ms": wind_speed,
             "wind_gust_ms": wind_gust,

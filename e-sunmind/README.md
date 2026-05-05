@@ -75,8 +75,12 @@ e-Tende deve leggere:
 - `rain_alarm`: protezione pioggia.
 - `facade_rain_risk`: stravento, cioe pioggia con vento nel cono della facciata.
 - `severe_weather_alarm`: allarme aggregato, vero se uno dei tre allarmi e attivo.
+- `station.used`: `true` quando gli allarmi derivano dalla stazione reale e-Control/Ecowitt.
+- `station.used`: `false` quando e-SunMind sta usando fallback MET/Open-Meteo oppure la stazione non e valida.
 
 Nota config: `facade_azimuth_deg = -1` significa facciata non configurata; in API viene restituito `null`.
+
+Contratto stabile per e-Tende: i campi root di `/api/weather/guard` restano retrocompatibili e l'oggetto `station` contiene sempre `enabled`, `ok`, `used`, `error`, `age_seconds`.
 
 ### Stazione meteo reale opzionale
 
