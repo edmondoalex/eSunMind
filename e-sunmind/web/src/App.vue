@@ -1264,12 +1264,9 @@ function destinationPoint(latDeg, lonDeg, bearingDeg, distanceM) {
   return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]
 }
 
-function colorFromId(id) {
-  const palette = ['#60a5fa', '#34d399', '#f59e0b', '#f472b6', '#a78bfa', '#22d3ee', '#fb7185', '#84cc16']
-  let h = 0
-  const s = String(id || '')
-  for (let i = 0; i < s.length; i += 1) h = ((h << 5) - h) + s.charCodeAt(i)
-  return palette[Math.abs(h) % palette.length]
+function colorFromIndex(index) {
+  const hue = (index * 137.508) % 360
+  return `hsl(${hue.toFixed(1)}, 82%, 56%)`
 }
 
 function buildSectorPolygonPoints(azStart, azEnd, radiusM) {
@@ -1460,11 +1457,12 @@ function drawSolarOverlay() {
 
   if (showTendeSectors.value) {
     const stale = Boolean(tendeMap.value?.stale) || (tendeMap.value?.availability && tendeMap.value?.availability !== 'online')
-    for (const shade of tendeMapShades.value) {
+    const shades = tendeMapShades.value
+    shades.forEach((shade, idx) => {
       const azStart = Number(shade.azimuth_start_deg)
       const azEnd = Number(shade.azimuth_end_deg)
-      if (!Number.isFinite(azStart) || !Number.isFinite(azEnd)) continue
-      const color = String(shade.color || colorFromId(shade.id))
+      if (!Number.isFinite(azStart) || !Number.isFinite(azEnd)) return
+      const color = String(shade.color || colorFromIndex(idx))
       const active = Boolean(shade.active)
       const opacity = stale ? 0.14 : (active ? 0.34 : 0.2)
       const poly = L.polygon(buildSectorPolygonPoints(azStart, azEnd, cfg.value.sectorRadiusM), {
@@ -1477,7 +1475,7 @@ function drawSolarOverlay() {
       const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° → ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
       poly.bindTooltip(tip)
       tendeSectorLayers.push(poly)
-    }
+    })
   }
 }
 
