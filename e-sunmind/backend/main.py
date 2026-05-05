@@ -241,11 +241,16 @@ def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
         shade_id = str(item.get("id") or "").strip()
         if not shade_id:
             continue
+        az_start = None
+        az_end = None
         try:
-            az_start = float(item.get("azimuth_start_deg"))
-            az_end = float(item.get("azimuth_end_deg"))
+            if item.get("azimuth_start_deg") is not None:
+                az_start = float(item.get("azimuth_start_deg"))
+            if item.get("azimuth_end_deg") is not None:
+                az_end = float(item.get("azimuth_end_deg"))
         except Exception:
-            continue
+            az_start = az_start if isinstance(az_start, float) else None
+            az_end = az_end if isinstance(az_end, float) else None
         alt_min = item.get("altitude_min_deg")
         alt_max = item.get("altitude_max_deg")
         shades_out.append(
@@ -255,8 +260,8 @@ def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
                 "cover_entity": (str(item.get("cover_entity")).strip() if item.get("cover_entity") else None),
                 "enabled": bool(item.get("enabled", True)),
                 "active": bool(item.get("active", False)),
-                "azimuth_start_deg": az_start % 360.0,
-                "azimuth_end_deg": az_end % 360.0,
+                "azimuth_start_deg": (az_start % 360.0) if isinstance(az_start, float) else None,
+                "azimuth_end_deg": (az_end % 360.0) if isinstance(az_end, float) else None,
                 "altitude_min_deg": float(alt_min) if alt_min is not None else None,
                 "altitude_max_deg": float(alt_max) if alt_max is not None else None,
                 "priority": int(item.get("priority")) if item.get("priority") is not None else None,
@@ -265,11 +270,23 @@ def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
         )
     if not shades_out:
         return None
-    return {
+    out = {
         "updated_at": str(payload.get("updated_at") or datetime.utcnow().isoformat()),
         "source": str(payload.get("source") or "e-tendeintelligenti"),
         "shades": shades_out,
     }
+    try:
+        lat = payload.get("latitude")
+        lon = payload.get("longitude")
+        tz = payload.get("timezone")
+        if lat is not None and lon is not None:
+            out["latitude"] = float(lat)
+            out["longitude"] = float(lon)
+        if tz is not None and str(tz).strip():
+            out["timezone"] = str(tz).strip()
+    except Exception:
+        pass
+    return out
 
 
 def _read_tende_map_payload() -> dict[str, Any] | None:
@@ -620,6 +637,36 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
     }
 
 
+def _fetch_ha_core_config() -> dict[str, Any] | None:
+    token = os.environ.get("SUPERVISOR_TOKEN", "").strip() or os.environ.get("HASSIO_TOKEN", "").strip()
+    if not token:
+        for path in (
+            "/run/s6/container_environment/SUPERVISOR_TOKEN",
+            "/var/run/s6/container_environment/SUPERVISOR_TOKEN",
+        ):
+            try:
+                token = Path(path).read_text(encoding="utf-8").strip()
+            except Exception:
+                token = token or ""
+            if token:
+                break
+    if not token:
+        return None
+    req = Request(
+        "http://supervisor/core/api/config",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=10) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        return payload if isinstance(payload, dict) else None
+    except Exception:
+        return None
+
+
 def _fetch_air_quality_open_meteo(cfg: dict[str, Any], latitude: float, longitude: float) -> dict[str, Any] | None:
     aq = cfg.get("air_quality", {}) or {}
     if not aq.get("enabled", True):
@@ -718,11 +765,16 @@ def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
             sid = str(item.get("id") or "").strip()
             if not sid:
                 continue
+            az_start = None
+            az_end = None
             try:
-                az_start = float(item.get("azimuth_start_deg"))
-                az_end = float(item.get("azimuth_end_deg"))
+                if item.get("azimuth_start_deg") is not None:
+                    az_start = float(item.get("azimuth_start_deg"))
+                if item.get("azimuth_end_deg") is not None:
+                    az_end = float(item.get("azimuth_end_deg"))
             except Exception:
-                continue
+                az_start = az_start if isinstance(az_start, float) else None
+                az_end = az_end if isinstance(az_end, float) else None
             alt_min = item.get("altitude_min_deg")
             alt_max = item.get("altitude_max_deg")
             shades_out.append(
@@ -732,20 +784,32 @@ def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
                     "cover_entity": (str(item.get("cover_entity")).strip() if item.get("cover_entity") else None),
                     "enabled": bool(item.get("enabled", True)),
                     "active": bool(item.get("active", False)),
-                    "azimuth_start_deg": az_start % 360.0,
-                    "azimuth_end_deg": az_end % 360.0,
+                    "azimuth_start_deg": (az_start % 360.0) if isinstance(az_start, float) else None,
+                    "azimuth_end_deg": (az_end % 360.0) if isinstance(az_end, float) else None,
                     "altitude_min_deg": float(alt_min) if alt_min is not None else None,
                     "altitude_max_deg": float(alt_max) if alt_max is not None else None,
                     "priority": int(item.get("priority")) if item.get("priority") is not None else None,
                     "color": (str(item.get("color")).strip() if item.get("color") else None),
                 }
             )
-    return {
+    out = {
         "ok": True,
         "source": str(payload.get("source") or "e-tendeintelligenti"),
         "updated_at": payload.get("updated_at"),
         "shades": shades_out,
     }
+    try:
+        lat = payload.get("latitude")
+        lon = payload.get("longitude")
+        tz = payload.get("timezone")
+        if lat is not None and lon is not None:
+            out["latitude"] = float(lat)
+            out["longitude"] = float(lon)
+        if tz is not None and str(tz).strip():
+            out["timezone"] = str(tz).strip()
+    except Exception:
+        pass
+    return out
 
 
 def _tende_map_mqtt_start_or_refresh(cfg: dict[str, Any]) -> None:
@@ -881,9 +945,50 @@ def _load_state() -> None:
         pass
 
 
+def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
+    lat = float(cfg.get("latitude", 44.6973))
+    lon = float(cfg.get("longitude", 7.8683))
+    tz = str(cfg.get("timezone", "Europe/Rome"))
+    source = "local_config"
+
+    tm = _read_tende_map_cache()
+    if isinstance(tm, dict):
+        try:
+            tlat = tm.get("latitude")
+            tlon = tm.get("longitude")
+            if tlat is not None and tlon is not None:
+                lat = float(tlat)
+                lon = float(tlon)
+                source = "e-tendeintelligenti"
+            ttz = tm.get("timezone")
+            if ttz is not None and str(ttz).strip():
+                tz = str(ttz).strip()
+                source = "e-tendeintelligenti"
+        except Exception:
+            pass
+
+    if source != "e-tendeintelligenti":
+        ha_cfg = _fetch_ha_core_config()
+        if isinstance(ha_cfg, dict):
+            try:
+                hlat = ha_cfg.get("latitude")
+                hlon = ha_cfg.get("longitude")
+                if hlat is not None and hlon is not None:
+                    lat = float(hlat)
+                    lon = float(hlon)
+                    source = "home_assistant_core"
+                htz = ha_cfg.get("time_zone")
+                if htz is not None and str(htz).strip():
+                    tz = str(htz).strip()
+                    source = "home_assistant_core"
+            except Exception:
+                pass
+
+    return lat, lon, tz, source
+
+
 def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
-    latitude = float(cfg["latitude"])
-    longitude = float(cfg["longitude"])
+    latitude, longitude, resolved_tz, coord_source = _resolve_runtime_geo(cfg)
     location_query = str(cfg.get("location_query") or "").strip()
     resolved_location = None
 
@@ -894,6 +999,7 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
             if found is not None:
                 latitude = float(found.latitude)
                 longitude = float(found.longitude)
+                coord_source = "location_query"
                 resolved_location = {
                     "query": location_query,
                     "display_name": found.address,
@@ -903,7 +1009,7 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
         except Exception:
             resolved_location = {"query": location_query, "error": "geocoding_failed_using_manual_coordinates"}
 
-    tz = pytz.timezone(str(cfg["timezone"]))
+    tz = pytz.timezone(str(resolved_tz))
     now = datetime.now(tz)
     now_utc = now.astimezone(pytz.utc)
 
@@ -944,7 +1050,8 @@ def _compute_data(cfg: dict[str, Any]) -> dict[str, Any]:
 
     return {
         "timestamp_local": now.isoformat(),
-        "timezone": str(cfg["timezone"]),
+        "timezone": str(resolved_tz),
+        "coordinates_source": coord_source,
         "coordinates": {"latitude": latitude, "longitude": longitude},
         "resolved_location": resolved_location,
         "sun_times": sun_times,

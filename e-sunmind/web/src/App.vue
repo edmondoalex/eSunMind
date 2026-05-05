@@ -68,6 +68,7 @@
 
       <div class="panel" v-show="userExpanded">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
+        <div class="kpi">Sorgente coordinate: {{ coordinatesSourceLabel }}</div>
         <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}°</div>
         <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div>
         <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}°</div>
@@ -89,7 +90,7 @@
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
         <div class="kpi"><strong>UV index:</strong> {{ fmt(weatherUvIndex) }}</div>
         <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
-        <div class="kpi"><strong>FV reale (HA):</strong> {{ fmt0(pvMeasuredW) }} W</div>
+        <div class="kpi"><strong>FV reale e-Control:</strong> {{ fmt0(pvMeasuredW) }} W</div>
         <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
         <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
       </div>
@@ -665,9 +666,17 @@ const airqNorm = computed(() => data.value?.air_quality?.normalized || null)
 const tendeMap = computed(() => data.value?.tende_map || null)
 const tendeMapShades = computed(() => {
   const arr = tendeMap.value?.shades
-  return Array.isArray(arr) ? arr.filter((s) => s && s.enabled !== false) : []
+  return Array.isArray(arr) ? arr.filter((s) => s) : []
 })
 const tendeCoverStates = computed(() => tendeMap.value?.cover_states || {})
+const coordinatesSourceLabel = computed(() => {
+  const raw = String(data.value?.coordinates_source || '').trim().toLowerCase()
+  if (raw === 'e-tendeintelligenti') return 'e-Tende Intelligenti'
+  if (raw === 'home_assistant_core') return 'Home Assistant Core'
+  if (raw === 'location_query') return 'Location query'
+  if (raw === 'local_config') return 'Config locale e-SunMind'
+  return raw || '-'
+})
 const tendeMapWarning = computed(() => {
   const tm = tendeMap.value
   if (!showTendeSectors.value) return ''
@@ -1492,20 +1501,20 @@ function drawSolarOverlay() {
   const az = suncalcAzToCompassDeg(pos.azimuth)
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
-  const liveAlt = Number(data.value?.sun_position?.altitude_deg)
-  const ringAlt = Number.isFinite(liveAlt) ? liveAlt : alt
-  const altRadius = Math.max(0, altitudeToRadius(ringAlt))
+  const simRadius = altitudeToRadius(alt)
+  const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
+  // Build elevation ring from the actual rendered sun marker distance on map.
+  // This guarantees visual coherence (ring always crosses the sun point).
+  const altRadius = map.distance([lat.value, lon.value], sunPt)
   altitudeRing = L.polyline(buildRingPoints(altRadius), {
     color: '#fff1a8',
-    weight: 2.8,
-    opacity: 0.95,
+    weight: 3.2,
+    opacity: 0.98,
     dashArray: '10,6',
     lineCap: 'round',
     lineJoin: 'round',
   }).addTo(map)
 
-  const simRadius = altitudeToRadius(alt)
-  const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
   const horizonPtSameAz = destinationPoint(lat.value, lon.value, az, cfg.value.sectorRadiusM)
   const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM)
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
@@ -1630,8 +1639,8 @@ function selectShade(id) {
     id: shade.id,
     name: shade.name,
     cover_entity: shade.cover_entity,
-    azimuth_start_deg: Number(shade.azimuth_start_deg),
-    azimuth_end_deg: Number(shade.azimuth_end_deg),
+    azimuth_start_deg: Number.isFinite(Number(shade.azimuth_start_deg)) ? Number(shade.azimuth_start_deg) : 0,
+    azimuth_end_deg: Number.isFinite(Number(shade.azimuth_end_deg)) ? Number(shade.azimuth_end_deg) : 0,
     altitude_min_deg: shade.altitude_min_deg,
     altitude_max_deg: shade.altitude_max_deg,
   }
