@@ -72,7 +72,7 @@
         <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div>
         <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}°</div>
         <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}°</div>
-        <div class="kpi">Data locale: {{ data?.timestamp_local || '-' }}</div>
+        <div class="kpi">Data locale: {{ localTimestampLabel }}</div>
       </div>
 
       <div class="panel" v-show="userExpanded">
@@ -542,6 +542,7 @@ let sunriseRay = null
 let sunsetRay = null
 let altitudeRing = null
 let altitudeGuideLine = null
+let altitudeGuideLabel = null
 let axisNS = null
 let axisWE = null
 let pvAzLine = null
@@ -593,6 +594,25 @@ const baseForm = ref({
 const baseSaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
+const localTimestampLabel = computed(() => {
+  const raw = data.value?.timestamp_local
+  if (!raw) return '-'
+  try {
+    const d = new Date(raw)
+    if (Number.isNaN(d.getTime())) return String(raw)
+    return d.toLocaleString('it-IT', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    })
+  } catch (_) {
+    return String(raw)
+  }
+})
 const sunCalcRawText = computed(() => {
   if (!data.value) return 'Nessun dato'
   const src = data.value
@@ -1386,7 +1406,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
@@ -1484,10 +1504,19 @@ function drawSolarOverlay() {
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
 
   if (showSimLine.value) {
-    sunLine = L.polyline([[lat.value, lon.value], sunPt], {
+    // Azimuth line (center -> horizon)
+    sunLine = L.polyline([[lat.value, lon.value], horizonPtSameAz], {
       color: '#d86a2a',
-      weight: 2.8,
-      opacity: 0.9,
+      weight: 2.2,
+      opacity: 0.85,
+      lineCap: 'round',
+      dashArray: '7,5',
+    }).addTo(map)
+    // Elevation segment (horizon -> current sun point)
+    altitudeGuideLine = L.polyline([horizonPtSameAz, sunPt], {
+      color: '#f8f8f8',
+      weight: 3.4,
+      opacity: 0.98,
       lineCap: 'round',
     }).addTo(map)
     sunMarker = L.marker(sunPt, {
@@ -1499,12 +1528,15 @@ function drawSolarOverlay() {
       }),
       interactive: false,
     }).addTo(map)
-    altitudeGuideLine = L.polyline([sunPt, horizonPtSameAz], {
-      color: '#ffe08a',
-      weight: 2.1,
-      opacity: 0.92,
-      dashArray: '6,6',
-      lineCap: 'round',
+    const mid = destinationPoint(lat.value, lon.value, az, (simRadius + cfg.value.sectorRadiusM) / 2)
+    altitudeGuideLabel = L.marker(mid, {
+      icon: L.divIcon({
+        className: 'altitude-label-wrap',
+        html: `<span class="altitude-label">Elev ${fmt(Math.max(0, alt))}°</span>`,
+        iconSize: [86, 18],
+        iconAnchor: [43, 9],
+      }),
+      interactive: false,
     }).addTo(map)
   }
 
@@ -2237,6 +2269,17 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .tende-handle-start{background:#22c55e}
 .tende-handle-end{background:#ef4444}
+.altitude-label{
+  display:inline-block;
+  background:rgba(8,14,22,.92);
+  border:1px solid rgba(255,255,255,.42);
+  color:#f5f8ff;
+  border-radius:8px;
+  padding:1px 7px;
+  font-size:11px;
+  font-weight:700;
+  text-shadow:0 1px 2px rgba(0,0,0,.75);
+}
 
 @media (max-width: 768px){
   .topbar{
