@@ -1597,33 +1597,38 @@ function drawTendeEditor() {
   }).addTo(tendeMapObj)
   const p1 = destinationPoint(lat.value, lon.value, s.azimuth_start_deg, cfg.value.sectorRadiusM)
   const p2 = destinationPoint(lat.value, lon.value, s.azimuth_end_deg, cfg.value.sectorRadiusM)
-  tendeStartMarker = L.circleMarker(p1, { radius: 8, color: '#ffffff', fillColor: '#22c55e', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj)
-  tendeEndMarker = L.circleMarker(p2, { radius: 8, color: '#ffffff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj)
+  tendeStartMarker = L.marker(p1, {
+    draggable: tendeEditMode.value,
+    icon: L.divIcon({
+      className: 'tende-handle-wrap',
+      html: '<span class="tende-handle tende-handle-start"></span>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    }),
+  }).addTo(tendeMapObj)
+  tendeEndMarker = L.marker(p2, {
+    draggable: tendeEditMode.value,
+    icon: L.divIcon({
+      className: 'tende-handle-wrap',
+      html: '<span class="tende-handle tende-handle-end"></span>',
+      iconSize: [18, 18],
+      iconAnchor: [9, 9],
+    }),
+  }).addTo(tendeMapObj)
 
   if (tendeEditMode.value) {
-    let dragging = null
-    const onMove = (e) => {
-      if (!dragging) return
-      const a = angleFromCenter(e.latlng)
-      if (dragging === 'start') s.azimuth_start_deg = a
-      else s.azimuth_end_deg = a
+    tendeStartMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
+    tendeEndMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
+    tendeStartMarker.on('drag', (e) => {
+      s.azimuth_start_deg = angleFromCenter(e.latlng)
       drawTendeEditor()
-    }
-    const stop = () => {
-      dragging = null
-      tendeMapObj.off('mousemove', onMove)
-      tendeMapObj.off('mouseup', stop)
-    }
-    tendeStartMarker.on('mousedown', () => {
-      dragging = 'start'
-      tendeMapObj.on('mousemove', onMove)
-      tendeMapObj.on('mouseup', stop)
     })
-    tendeEndMarker.on('mousedown', () => {
-      dragging = 'end'
-      tendeMapObj.on('mousemove', onMove)
-      tendeMapObj.on('mouseup', stop)
+    tendeEndMarker.on('drag', (e) => {
+      s.azimuth_end_deg = angleFromCenter(e.latlng)
+      drawTendeEditor()
     })
+    tendeStartMarker.on('dragend', () => { tendeMapObj.dragging.enable() })
+    tendeEndMarker.on('dragend', () => { tendeMapObj.dragging.enable() })
   }
 }
 
@@ -2170,6 +2175,16 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .shade-item.active{outline:2px solid #41d6c3}
 .tende-map-wrap{padding:10px}
 #tende-map{height:68vh;min-height:420px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.tende-handle{
+  display:block;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  border:2px solid #fff;
+  box-shadow:0 0 8px rgba(0,0,0,.45);
+}
+.tende-handle-start{background:#22c55e}
+.tende-handle-end{background:#ef4444}
 
 @media (max-width: 768px){
   .topbar{
