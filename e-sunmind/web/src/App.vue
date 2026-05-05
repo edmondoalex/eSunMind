@@ -36,6 +36,7 @@
           <label><input type="checkbox" v-model="showSimLine" @change="drawSolarOverlay" /> Linea SIMULATA</label>
           <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
           <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
+          <label><input type="checkbox" v-model="showSunRefs" @change="drawSolarOverlay" /> Label Alba/Tramonto</label>
           <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
           <label><input type="checkbox" v-model="showAnnualElevationBand" @change="drawSolarOverlay" /> Fascia elevazione annua</label>
           <label><input type="checkbox" v-model="showTendeSectors" @change="drawSolarOverlay" /> Spicchi Cover (e_Tende Intelligenti)</label>
@@ -587,6 +588,7 @@ const showLiveLine = ref(true)
 const showSimLine = ref(true)
 const showAxisNS = ref(true)
 const showAxisWE = ref(true)
+const showSunRefs = ref(true)
 const showPvAzLine = ref(false)
 const showAnnualElevationBand = ref(true)
 const showTendeSectors = ref(true)
@@ -1402,6 +1404,19 @@ function buildSectorPolygonPoints(azStart, azEnd, radiusM) {
   return pts
 }
 
+function buildSectorBandPolygonPoints(azStart, azEnd, radiusOuterM, radiusInnerM) {
+  const pts = []
+  const a0 = ((Number(azStart) % 360) + 360) % 360
+  let a1 = ((Number(azEnd) % 360) + 360) % 360
+  if (a1 < a0) a1 += 360
+  const step = 3
+  for (let a = a0; a <= a1; a += step) pts.push(destinationPoint(lat.value, lon.value, a % 360, radiusOuterM))
+  pts.push(destinationPoint(lat.value, lon.value, a1 % 360, radiusOuterM))
+  for (let a = a1; a >= a0; a -= step) pts.push(destinationPoint(lat.value, lon.value, a % 360, radiusInnerM))
+  pts.push(destinationPoint(lat.value, lon.value, a0 % 360, radiusInnerM))
+  return pts
+}
+
 function buildRingPoints(radiusM) {
   const pts = []
   for (let a = 0; a <= 360; a += 2) {
@@ -1671,24 +1686,26 @@ function drawSolarOverlay() {
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
   const srLblPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM + 10)
   const ssLblPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM + 10)
-  sunriseLabel = L.marker(srLblPt, {
-    icon: L.divIcon({
-      className: 'sun-ref-label-wrap',
-      html: '<span class="sun-ref-label sunrise">Alba</span>',
-      iconSize: [52, 18],
-      iconAnchor: [26, 9],
-    }),
-    interactive: false,
-  }).addTo(map)
-  sunsetLabel = L.marker(ssLblPt, {
-    icon: L.divIcon({
-      className: 'sun-ref-label-wrap',
-      html: '<span class="sun-ref-label sunset">Tramonto</span>',
-      iconSize: [72, 18],
-      iconAnchor: [36, 9],
-    }),
-    interactive: false,
-  }).addTo(map)
+  if (showSunRefs.value) {
+    sunriseLabel = L.marker(srLblPt, {
+      icon: L.divIcon({
+        className: 'sun-ref-label-wrap',
+        html: '<span class="sun-ref-label sunrise">Alba</span>',
+        iconSize: [52, 18],
+        iconAnchor: [26, 9],
+      }),
+      interactive: false,
+    }).addTo(map)
+    sunsetLabel = L.marker(ssLblPt, {
+      icon: L.divIcon({
+        className: 'sun-ref-label-wrap',
+        html: '<span class="sun-ref-label sunset">Tramonto</span>',
+        iconSize: [72, 18],
+        iconAnchor: [36, 9],
+      }),
+      interactive: false,
+    }).addTo(map)
+  }
 
   if (showSimLine.value) {
     // Azimuth line (center -> horizon)
@@ -1771,10 +1788,18 @@ function drawSolarOverlay() {
       const azStart = Number(shade.azimuth_start_deg)
       const azEnd = Number(shade.azimuth_end_deg)
       if (!Number.isFinite(azStart) || !Number.isFinite(azEnd)) return
+      const altMin = Number(shade.altitude_min_deg)
+      const altMax = Number(shade.altitude_max_deg)
+      const hasAltBand = Number.isFinite(altMin) && Number.isFinite(altMax)
+      const rOuter = hasAltBand ? altitudeToRadius(Math.min(altMin, altMax)) : cfg.value.sectorRadiusM
+      const rInner = hasAltBand ? altitudeToRadius(Math.max(altMin, altMax)) : 0
       const color = String(shade.color || colorFromIndex(idx))
       const active = Boolean(shade.active)
       const opacity = stale ? 0.14 : (active ? 0.34 : 0.2)
-      const poly = L.polygon(buildSectorPolygonPoints(azStart, azEnd, cfg.value.sectorRadiusM), {
+      const points = hasAltBand
+        ? buildSectorBandPolygonPoints(azStart, azEnd, rOuter, rInner)
+        : buildSectorPolygonPoints(azStart, azEnd, cfg.value.sectorRadiusM)
+      const poly = L.polygon(points, {
         color,
         weight: active ? 2.4 : 1.4,
         opacity: stale ? 0.5 : 0.9,
