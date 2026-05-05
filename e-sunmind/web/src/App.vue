@@ -536,6 +536,7 @@ let sunLineLive = null
 let sunMarkerLive = null
 let sunriseRay = null
 let sunsetRay = null
+let altitudeRing = null
 let axisNS = null
 let axisWE = null
 let pvAzLine = null
@@ -1350,10 +1351,9 @@ function baseDateAtHour(hour, minute = 0) {
 }
 
 function altitudeToRadius(altDeg) {
-  // Sky-dome projection: horizon on outer ring, zenith at center.
-  const a = Math.max(-6, Math.min(90, Number(altDeg)))
-  const normalized = 1 - Math.sin((Math.max(0, a) * Math.PI) / 180)
-  return cfg.value.sectorRadiusM * normalized
+  // Sky-dome projection on horizontal plane: r = R * cos(altitude)
+  const a = Math.max(0, Math.min(90, Number(altDeg)))
+  return cfg.value.sectorRadiusM * Math.cos((a * Math.PI) / 180)
 }
 
 function buildSunPathPoints() {
@@ -1376,7 +1376,7 @@ function buildSunPathPoints() {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, axisNS, axisWE, pvAzLine, pvAzMarker].forEach((l) => { if (l) map.removeLayer(l) })
   for (const m of compassMarkers) map.removeLayer(m)
   for (const l of tendeSectorLayers) map.removeLayer(l)
   compassMarkers = []
@@ -1454,11 +1454,21 @@ function drawSolarOverlay() {
   const az = suncalcAzToCompassDeg(pos.azimuth)
   const alt = toDeg(pos.altitude)
   currentSun.value = { azimuthDeg: az, altitudeDeg: alt }
+  const liveAlt = Number(data.value?.sun_position?.altitude_deg)
+  const ringAlt = Number.isFinite(liveAlt) ? liveAlt : alt
+  altitudeRing = L.circle([lat.value, lon.value], {
+    radius: Math.max(0, altitudeToRadius(ringAlt)),
+    color: '#f7d13f',
+    weight: 1.2,
+    opacity: 0.55,
+    dashArray: '4,6',
+    fillOpacity: 0,
+  }).addTo(map)
 
   const simRadius = altitudeToRadius(alt)
   const sunPt = destinationPoint(lat.value, lon.value, az, simRadius)
-  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.pathRadiusM)
-  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.pathRadiusM)
+  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM)
+  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
 
@@ -1472,9 +1482,9 @@ function drawSolarOverlay() {
     sunMarker = L.marker(sunPt, {
       icon: L.divIcon({
         className: 'sun-icon-wrap',
-        html: '<span class="sun-icon"></span>',
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        html: `<span class="sun-icon" style="transform:scale(${(0.9 + Math.max(0, Math.min(alt, 90)) / 180).toFixed(2)})"></span>`,
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
       }),
       interactive: false,
     }).addTo(map)
