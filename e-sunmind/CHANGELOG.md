@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.29
+
+- Aggiunta pagina `Setting` con salvataggio unico `Salva tutto`.
+- Spostati i form di configurazione fuori dalla pagina `Tecnica`.
+- Aggiunti testi guida per `Weather Guard` e configurazione stravento.
+
 ## 0.3.28
 
 - Stabilizzato contratto `/api/weather/guard` per e-Tende 0.1.55.
@@ -7,4 +13,3 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-

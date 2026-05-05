@@ -384,6 +384,13 @@
 
     <div v-show="tab==='setting'">
       <main class="tech-main">
+        <section class="card setting-save-card">
+          <div class="actions-inline">
+            <button class="btn" @click="saveAllSettings">Salva tutto</button>
+            <span class="note">{{ allSaveStatus }}</span>
+          </div>
+        </section>
+
         <section class="card">
           <h3>Configurazione Base Addon</h3>
           <div class="form-grid">
@@ -419,10 +426,6 @@
               <input type="text" v-model="baseForm.external_humidity_entity_id" />
             </label>
           </div>
-          <div class="actions-inline">
-            <button class="btn" @click="saveBaseSettings">Salva Config Base</button>
-            <span class="note">{{ baseSaveStatus }}</span>
-          </div>
           <div class="form-grid">
             <div class="kpi"><strong>Entita temp reale:</strong> {{ externalTempEntityId || '-' }}</div>
             <div class="kpi"><strong>Stato lettura temp:</strong> {{ externalTempStatus }}</div>
@@ -449,10 +452,6 @@
               <input type="number" v-model.number="cfg.mapZoom" min="14" max="22" @change="applyMapView" />
             </label>
           </div>
-          <div class="actions-inline">
-            <button class="btn" @click="saveOverlaySettings">Salva Tarature Overlay</button>
-            <span class="note">{{ overlaySaveStatus }}</span>
-          </div>
         </section>
 
         <section class="card">
@@ -473,10 +472,6 @@
             <label>kWp
               <input type="number" min="0.1" step="0.1" v-model.number="fsForm.kwp" />
             </label>
-          </div>
-          <div class="actions-inline">
-            <button class="btn" @click="saveForecastSettings">Salva Tarature Forecast</button>
-            <span class="note">{{ fsSaveStatus }}</span>
           </div>
           <div class="mono small">{{ forecastConfigText }}</div>
           <p class="note">Le tarature forecast sono modificabili e salvabili direttamente da Setting.</p>
@@ -527,32 +522,46 @@
 
         <section class="card">
           <h3>Weather Guard</h3>
+          <p class="note">
+            Qui imposti quando e-SunMind deve segnalare pericolo meteo a e-Tende.
+            Se non sai il valore della facciata, lascia <strong>-1</strong>: vento forte e pioggia funzionano comunque, viene disattivato solo lo stravento verso finestra.
+          </p>
           <div class="form-grid">
             <label>Enabled
               <input type="checkbox" v-model="weatherGuardForm.enabled" />
             </label>
             <label>Wind alarm m/s
               <input type="number" min="0" max="80" step="0.1" v-model.number="weatherGuardForm.wind_alarm_ms" />
+              <small>Allarme vento forte. 12 m/s = circa 43 km/h.</small>
             </label>
             <label>Rain alarm mm/h
               <input type="number" min="0" max="200" step="0.1" v-model.number="weatherGuardForm.rain_alarm_mm_h" />
+              <small>Allarme pioggia. 1.5 mm/h = pioggia moderata.</small>
             </label>
             <label>Stravento min wind m/s
               <input type="number" min="0" max="80" step="0.1" v-model.number="weatherGuardForm.facade_rain_min_wind_ms" />
+              <small>Vento minimo per considerare pioggia spinta verso facciata.</small>
             </label>
             <label>Stravento min rain mm/h
               <input type="number" min="0" max="200" step="0.1" v-model.number="weatherGuardForm.facade_rain_min_mm_h" />
+              <small>Pioggia minima per attivare controllo stravento.</small>
             </label>
             <label>Facciata azimuth deg (-1 = non configurata)
               <input type="number" min="-1" max="360" step="0.1" v-model.number="weatherGuardForm.facade_azimuth_deg" />
+              <small>Direzione verso cui guarda la finestra/facciata: N=0, E=90, S=180, W=270. -1 disattiva stravento.</small>
             </label>
             <label>Facciata half FOV deg
               <input type="number" min="0" max="180" step="0.1" v-model.number="weatherGuardForm.facade_half_fov_deg" />
+              <small>Ampiezza cono vento. 60 significa +/-60 gradi rispetto alla facciata.</small>
             </label>
             <label>Stale seconds
               <input type="number" min="30" max="86400" v-model.number="weatherGuardForm.stale_seconds" />
+              <small>Dopo quanti secondi i dati meteo diventano vecchi.</small>
             </label>
           </div>
+          <p class="note">
+            Esempio: facciata verso sud = 180, half FOV = 60. Lo stravento scatta se piove, c'e vento sufficiente e il vento arriva nel cono 120..240 gradi.
+          </p>
         </section>
 
         <section class="card">
@@ -599,12 +608,6 @@
           </div>
         </section>
 
-        <section class="card">
-          <div class="actions-inline">
-            <button class="btn" @click="saveBaseSettings">Salva Setting</button>
-            <span class="note">{{ baseSaveStatus }}</span>
-          </div>
-        </section>
       </main>
     </div>
 
@@ -732,6 +735,7 @@ const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
 const fsForm = ref({ enabled: false, api_key: '', declination: 30, azimuth: 0, kwp: 6.0 })
 const fsSaveStatus = ref('')
+const allSaveStatus = ref('')
 const weatherForm = ref({ enabled: true, provider: 'met' })
 const weatherStationForm = ref({
   enabled: false,
@@ -2338,6 +2342,95 @@ async function saveBaseSettings() {
     await loadData()
   } catch (e) {
     baseSaveStatus.value = `Errore salvataggio: ${e.message}`
+  }
+}
+
+async function saveAllSettings() {
+  allSaveStatus.value = 'Salvataggio...'
+  baseSaveStatus.value = ''
+  fsSaveStatus.value = ''
+  overlaySaveStatus.value = ''
+  try {
+    const basePayload = {
+      latitude: Number(baseForm.value.latitude),
+      longitude: Number(baseForm.value.longitude),
+      timezone: String(baseForm.value.timezone || 'Europe/Rome').trim(),
+      coordinates_source_mode: String(baseForm.value.coordinates_source_mode || 'e_tende').trim(),
+      interval_minutes: Number(baseForm.value.interval_minutes ?? 15),
+      location_query: String(baseForm.value.location_query || ''),
+      pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),
+      external_temp_entity_id: String(baseForm.value.external_temp_entity_id || ''),
+      external_humidity_entity_id: String(baseForm.value.external_humidity_entity_id || ''),
+      weather: {
+        enabled: Boolean(weatherForm.value.enabled),
+        provider: String(weatherForm.value.provider || 'met'),
+      },
+      weather_station: {
+        enabled: Boolean(weatherStationForm.value.enabled),
+        provider: 'e_control',
+        stale_seconds: Number(weatherStationForm.value.stale_seconds ?? 180),
+        wind_speed_entity_id: String(weatherStationForm.value.wind_speed_entity_id || ''),
+        wind_gust_entity_id: String(weatherStationForm.value.wind_gust_entity_id || ''),
+        wind_direction_entity_id: String(weatherStationForm.value.wind_direction_entity_id || ''),
+        rain_rate_entity_id: String(weatherStationForm.value.rain_rate_entity_id || ''),
+        rain_1h_entity_id: String(weatherStationForm.value.rain_1h_entity_id || ''),
+      },
+      weather_guard: {
+        enabled: Boolean(weatherGuardForm.value.enabled),
+        wind_alarm_ms: Number(weatherGuardForm.value.wind_alarm_ms ?? 12.0),
+        rain_alarm_mm_h: Number(weatherGuardForm.value.rain_alarm_mm_h ?? 1.5),
+        facade_rain_min_wind_ms: Number(weatherGuardForm.value.facade_rain_min_wind_ms ?? 6.0),
+        facade_rain_min_mm_h: Number(weatherGuardForm.value.facade_rain_min_mm_h ?? 0.8),
+        facade_azimuth_deg: Number(weatherGuardForm.value.facade_azimuth_deg ?? -1.0),
+        facade_half_fov_deg: Number(weatherGuardForm.value.facade_half_fov_deg ?? 60.0),
+        stale_seconds: Number(weatherGuardForm.value.stale_seconds ?? 180),
+      },
+      air_quality: {
+        enabled: Boolean(airQualityForm.value.enabled),
+        provider: String(airQualityForm.value.provider || 'open_meteo'),
+      },
+      tende_map: {
+        enabled: Boolean(tendeMapForm.value.enabled),
+        mqtt_host: String(tendeMapForm.value.mqtt_host || ''),
+        mqtt_port: Number(tendeMapForm.value.mqtt_port ?? 1883),
+        mqtt_username: String(tendeMapForm.value.mqtt_username || ''),
+        mqtt_password: String(tendeMapForm.value.mqtt_password || ''),
+        topic_state: String(tendeMapForm.value.topic_state || ''),
+        topic_availability: String(tendeMapForm.value.topic_availability || ''),
+        stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
+      },
+    }
+    const overlayPayload = {
+      pathRadiusM: Number(cfg.value.pathRadiusM ?? 102),
+      sectorRadiusM: Number(cfg.value.sectorRadiusM ?? 110),
+      sunRadiusM: Number(cfg.value.sunRadiusM ?? 95),
+      mapZoom: Number(cfg.value.mapZoom ?? 18),
+    }
+    const forecastPayload = {
+      enabled: Boolean(fsForm.value.enabled),
+      api_key: String(fsForm.value.api_key || ''),
+      declination: Number(fsForm.value.declination ?? 30),
+      azimuth: Number(fsForm.value.azimuth ?? 0),
+      kwp: Number(fsForm.value.kwp ?? 6.0),
+    }
+    const steps = [
+      ['/api/options/base', basePayload],
+      ['/api/options/overlay', overlayPayload],
+      ['/api/options/forecast_solar', forecastPayload],
+    ]
+    for (const [url, payload] of steps) {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const j = await r.json()
+      if (!r.ok || !j.ok) throw new Error(`${url}: ${j.error || 'save_failed'}`)
+    }
+    allSaveStatus.value = 'Tutto salvato e applicato.'
+    await loadData()
+  } catch (e) {
+    allSaveStatus.value = `Errore salvataggio: ${e.message}`
   }
 }
 
