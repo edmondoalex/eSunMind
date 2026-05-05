@@ -81,7 +81,8 @@
         <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }}°C</div>
         <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
         <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }}°C</div>
-        <div class="kpi"><strong>Umidita:</strong> {{ fmt(weatherHumidityPct) }} %</div>
+        <div class="kpi"><strong>Umidita reale:</strong> {{ fmt(externalHumidityPct) }} %</div>
+        <div class="kpi"><strong>Umidita meteo:</strong> {{ fmt(weatherHumidityPct) }} %</div>
         <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }}°)</div>
         <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
         <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
@@ -406,6 +407,9 @@
             <label>External temp entity id
               <input type="text" v-model="baseForm.external_temp_entity_id" />
             </label>
+            <label>External humidity entity id
+              <input type="text" v-model="baseForm.external_humidity_entity_id" />
+            </label>
           </div>
           <div class="actions-inline">
             <button class="btn" @click="saveBaseSettings">Salva Config Base</button>
@@ -584,6 +588,7 @@ const baseForm = ref({
   location_query: '',
   pv_actual_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   external_temp_entity_id: 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature',
+  external_humidity_entity_id: 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity',
 })
 const baseSaveStatus = ref('')
 
@@ -723,6 +728,10 @@ const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
 const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
 const externalTempC = computed(() => {
   const v = Number(data.value?.external_temp_live?.state)
+  return Number.isFinite(v) ? v : null
+})
+const externalHumidityPct = computed(() => {
+  const v = Number(data.value?.external_humidity_live?.state)
   return Number.isFinite(v) ? v : null
 })
 const externalTempEntityId = computed(() => String(data.value?.external_temp_live?.entity_id || ''))
@@ -1747,6 +1756,7 @@ async function loadData() {
         location_query: String(oj?.location_query || ''),
         pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
+        external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
       }
       if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
       if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
@@ -1783,6 +1793,7 @@ async function saveBaseSettings() {
       location_query: String(baseForm.value.location_query || ''),
       pv_actual_entity_id: String(baseForm.value.pv_actual_entity_id || ''),
       external_temp_entity_id: String(baseForm.value.external_temp_entity_id || ''),
+      external_humidity_entity_id: String(baseForm.value.external_humidity_entity_id || ''),
     }
     const r = await fetch('/api/options/base', {
       method: 'POST',

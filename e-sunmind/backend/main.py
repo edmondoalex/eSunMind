@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.99"
+APP_VERSION = "0.3.0"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -123,6 +123,7 @@ def _load_options() -> dict[str, Any]:
         "location_query": "",
         "pv_actual_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
         "external_temp_entity_id": "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature",
+        "external_humidity_entity_id": "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity",
         "mqtt": {
             "enabled": False,
             "host": "192.168.3.13",
@@ -165,7 +166,7 @@ def _load_options() -> dict[str, Any]:
         payload = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
     except Exception:
         return defaults
-    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id"):
+    for key in ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id"):
         if key in payload:
             defaults[key] = payload[key]
     if isinstance(payload.get("mqtt"), dict):
@@ -1251,8 +1252,10 @@ async def _worker() -> None:
                         AIR_QUALITY_FILE.write_text(json.dumps(airq, ensure_ascii=False, indent=2), encoding="utf-8")
             pv_live = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
             temp_live = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
+            humidity_live = _fetch_ha_entity_state(str(cfg.get("external_humidity_entity_id") or ""))
             data["pv_live"] = pv_live
             data["external_temp_live"] = temp_live
+            data["external_humidity_live"] = humidity_live
             data["weather"] = weather
             data["weather_open_meteo"] = weather_open_meteo
             data["air_quality"] = airq
@@ -1607,7 +1610,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "tende_map")
+    keys = ("latitude", "longitude", "timezone", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "tende_map")
 
     raw = _load_local_options_raw()
     for k in keys:
@@ -1661,6 +1664,7 @@ async def options_set_base(payload: dict):
 
         now_data["pv_live"] = _fetch_ha_entity_state(str(cfg.get("pv_actual_entity_id") or ""))
         now_data["external_temp_live"] = _fetch_ha_entity_state(str(cfg.get("external_temp_entity_id") or ""))
+        now_data["external_humidity_live"] = _fetch_ha_entity_state(str(cfg.get("external_humidity_entity_id") or ""))
         DATA_FILE.write_text(json.dumps(now_data, ensure_ascii=False, indent=2), encoding="utf-8")
     except Exception as exc:
         refresh_error = str(exc)

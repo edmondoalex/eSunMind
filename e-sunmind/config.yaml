@@ -1,7 +1,7 @@
 ﻿name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in Home Assistant"
-version: "0.2.99"
+version: "0.3.0"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -26,6 +26,7 @@ options:
   location_query: ""
   pv_actual_entity_id: "sensor.zcs_easas_1_activepower_pv_ext"
   external_temp_entity_id: "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature"
+  external_humidity_entity_id: "sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity"
   mqtt:
     enabled: false
     host: "192.168.3.13"
@@ -56,15 +57,6 @@ options:
     topic_state: "e-tendeintelligenti/map/shades"
     topic_availability: "e-tendeintelligenti/availability"
     stale_seconds: 180
-  tende_map:
-    enabled: true
-    mqtt_host: "192.168.3.13"
-    mqtt_port: 1883
-    mqtt_username: ""
-    mqtt_password: ""
-    topic_state: "e-tendeintelligenti/map/shades"
-    topic_availability: "e-tendeintelligenti/availability"
-    stale_seconds: 180
 schema:
   log_level: list(trace|debug|info|warning|error)
   latitude: float
@@ -74,6 +66,7 @@ schema:
   location_query: str?
   pv_actual_entity_id: str?
   external_temp_entity_id: str?
+  external_humidity_entity_id: str?
   mqtt:
     enabled: bool
     host: str
@@ -95,15 +88,6 @@ schema:
   air_quality:
     enabled: bool
     provider: list(open_meteo)
-  tende_map:
-    enabled: bool
-    mqtt_host: str
-    mqtt_port: port
-    mqtt_username: str?
-    mqtt_password: password?
-    topic_state: str
-    topic_availability: str
-    stale_seconds: int(30,86400)
   tende_map:
     enabled: bool
     mqtt_host: str
