@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.14"
+APP_VERSION = "0.3.15"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -973,23 +973,54 @@ def _resolve_runtime_geo(cfg: dict[str, Any]) -> tuple[float, float, str, str]:
     if mode not in {"auto", "e_tende", "ha_core", "local"}:
         mode = "auto"
 
+    def _extract_tende_geo(tm_payload: dict[str, Any]) -> tuple[float | None, float | None, str | None]:
+        tlat = tm_payload.get("latitude")
+        tlon = tm_payload.get("longitude")
+        ttz = tm_payload.get("timezone")
+        # Compatibility aliases
+        if tlat is None:
+            tlat = tm_payload.get("lat")
+        if tlon is None:
+            tlon = tm_payload.get("lon")
+        if ttz is None:
+            ttz = tm_payload.get("tz")
+        coords = tm_payload.get("coordinates")
+        if isinstance(coords, dict):
+            if tlat is None:
+                tlat = coords.get("latitude", coords.get("lat"))
+            if tlon is None:
+                tlon = coords.get("longitude", coords.get("lon"))
+            if ttz is None:
+                ttz = coords.get("timezone", coords.get("tz"))
+        out_lat = None
+        out_lon = None
+        out_tz = None
+        try:
+            if tlat is not None:
+                out_lat = float(tlat)
+            if tlon is not None:
+                out_lon = float(tlon)
+        except Exception:
+            out_lat = None
+            out_lon = None
+        if ttz is not None and str(ttz).strip():
+            out_tz = str(ttz).strip()
+        return out_lat, out_lon, out_tz
+
     if mode in {"auto", "e_tende"}:
         tm = _read_tende_map_cache()
         if isinstance(tm, dict):
-            try:
-                tlat = tm.get("latitude")
-                tlon = tm.get("longitude")
-                if tlat is not None and tlon is not None:
-                    lat = float(tlat)
-                    lon = float(tlon)
-                    source = "e-tendeintelligenti"
-                ttz = tm.get("timezone")
-                if ttz is not None and str(ttz).strip():
-                    tz = str(ttz).strip()
-                    source = "e-tendeintelligenti"
-            except Exception:
-                pass
+            tlat, tlon, ttz = _extract_tende_geo(tm)
+            if tlat is not None and tlon is not None:
+                lat = tlat
+                lon = tlon
+                source = "e-tendeintelligenti"
+            if ttz is not None:
+                tz = ttz
+                source = "e-tendeintelligenti"
         if mode == "e_tende":
+            if source != "e-tendeintelligenti":
+                source = "e-tende_missing_coords"
             return lat, lon, tz, source
 
     if mode in {"auto", "ha_core"} and source != "e-tendeintelligenti":

@@ -690,6 +690,7 @@ const tendeCoverStates = computed(() => tendeMap.value?.cover_states || {})
 const coordinatesSourceLabel = computed(() => {
   const raw = String(data.value?.coordinates_source || '').trim().toLowerCase()
   if (raw === 'e-tendeintelligenti') return 'e-Tende Intelligenti'
+  if (raw === 'e-tende_missing_coords') return 'e-Tende (coordinate mancanti nel payload)'
   if (raw === 'home_assistant_core') return 'Home Assistant Core'
   if (raw === 'location_query') return 'Location query'
   if (raw === 'local_config') return 'Config locale e-SunMind'
