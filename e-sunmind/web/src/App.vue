@@ -553,6 +553,8 @@ let sunLineLive = null
 let sunMarkerLive = null
 let sunriseRay = null
 let sunsetRay = null
+let sunriseLabel = null
+let sunsetLabel = null
 let altitudeRing = null
 let altitudeGuideLine = null
 let altitudeGuideLabel = null
@@ -1522,7 +1524,7 @@ function interpAltByAz(samples, azTarget) {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, sunriseLabel, sunsetLabel, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
   for (const l of annualElevationBandLayers) map.removeLayer(l)
   annualElevationBandLayers = []
   for (const m of compassMarkers) map.removeLayer(m)
@@ -1667,6 +1669,26 @@ function drawSolarOverlay() {
   const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
   sunriseRay = L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 3.2, opacity: 0.95 }).addTo(map)
   sunsetRay = L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 3.2, opacity: 0.95 }).addTo(map)
+  const srLblPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM + 10)
+  const ssLblPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM + 10)
+  sunriseLabel = L.marker(srLblPt, {
+    icon: L.divIcon({
+      className: 'sun-ref-label-wrap',
+      html: '<span class="sun-ref-label sunrise">Alba</span>',
+      iconSize: [52, 18],
+      iconAnchor: [26, 9],
+    }),
+    interactive: false,
+  }).addTo(map)
+  sunsetLabel = L.marker(ssLblPt, {
+    icon: L.divIcon({
+      className: 'sun-ref-label-wrap',
+      html: '<span class="sun-ref-label sunset">Tramonto</span>',
+      iconSize: [72, 18],
+      iconAnchor: [36, 9],
+    }),
+    interactive: false,
+  }).addTo(map)
 
   if (showSimLine.value) {
     // Azimuth line (center -> horizon)
@@ -2427,6 +2449,23 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   display:inline-block;
   width:18px;
   text-align:center;
+}
+.sun-ref-label{
+  display:inline-block;
+  padding:1px 6px;
+  border-radius:10px;
+  font-size:11px;
+  font-weight:700;
+  border:1px solid rgba(255,255,255,.25);
+  text-shadow:0 1px 2px rgba(0,0,0,.8);
+}
+.sun-ref-label.sunrise{
+  color:#ffd8be;
+  background:rgba(249,115,22,.35);
+}
+.sun-ref-label.sunset{
+  color:#fff3be;
+  background:rgba(250,204,21,.30);
 }
 .sun-icon-wrap{
   background:transparent;
