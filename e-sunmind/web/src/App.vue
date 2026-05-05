@@ -355,7 +355,7 @@
       </div>
       <div class="tende-layout">
         <div class="tende-list card">
-          <h3>Tende dal component</h3>
+          <h3>Cover da e-Tende Intelligenti</h3>
           <div v-if="!tendeMapShades.length" class="note">Nessuna tenda ricevuta.</div>
           <button
             v-for="s in tendeMapShades"
