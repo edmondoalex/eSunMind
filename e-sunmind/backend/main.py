@@ -32,7 +32,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.88"
+APP_VERSION = "0.2.89"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -298,13 +298,32 @@ def _build_tende_map_snapshot(cfg: dict[str, Any] | None = None) -> dict[str, An
             "source": "e-tendeintelligenti",
             "shades": [],
         }
+    shades = payload.get("shades") or []
+    cover_states: dict[str, Any] = {}
+    for s in shades:
+        if not isinstance(s, dict):
+            continue
+        ce = str(s.get("cover_entity") or "").strip()
+        if not ce or ce in cover_states:
+            continue
+        st = _fetch_ha_entity_state(ce)
+        if isinstance(st, dict):
+            cover_states[ce] = {
+                "ok": bool(st.get("ok")),
+                "state": st.get("state"),
+                "value": st.get("value"),
+                "unit": st.get("unit"),
+                "error": st.get("error"),
+                "last_updated": st.get("last_updated"),
+            }
     return {
         "ok": True,
         "availability": availability,
         "stale": stale,
         "updated_at": payload.get("updated_at"),
         "source": payload.get("source") or "e-tendeintelligenti",
-        "shades": payload.get("shades") or [],
+        "shades": shades,
+        "cover_states": cover_states,
     }
 
 
@@ -1318,6 +1337,58 @@ async def tende_map_get():
     if not snapshot.get("ok"):
         return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
     return JSONResponse(snapshot)
+
+
+@app.post("/api/tende/map/update")
+async def tende_map_update(payload: dict):
+    if not isinstance(payload, dict):
+        return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
+    shade_id = str(payload.get("id") or "").strip()
+    if not shade_id:
+        return JSONResponse({"ok": False, "error": "missing_id"}, status_code=400)
+    try:
+        az_start = float(payload.get("azimuth_start_deg"))
+        az_end = float(payload.get("azimuth_end_deg"))
+    except Exception:
+        return JSONResponse({"ok": False, "error": "invalid_azimuth"}, status_code=400)
+
+    cfg = _load_options()
+    tm_cfg = (cfg.get("tende_map") or {})
+    host = str(tm_cfg.get("mqtt_host") or "192.168.3.13").strip()
+    port = int(tm_cfg.get("mqtt_port") or 1883)
+    username = str(tm_cfg.get("mqtt_username") or "").strip()
+    password = str(tm_cfg.get("mqtt_password") or "")
+    cmd_topic = "e-tendeintelligenti/cmd/shades/update"
+    msg = {
+        "source": "e-sunmind",
+        "updated_at": datetime.utcnow().isoformat(),
+        "shade": {
+            "id": shade_id,
+            "azimuth_start_deg": az_start % 360.0,
+            "azimuth_end_deg": az_end % 360.0,
+            "altitude_min_deg": payload.get("altitude_min_deg"),
+            "altitude_max_deg": payload.get("altitude_max_deg"),
+        },
+    }
+    client = None
+    try:
+        client = mqtt.Client(client_id=f"e-sunmind-cmd-{int(time.time())}")
+        if username:
+            client.username_pw_set(username, password)
+        client.connect(host, port, 60)
+        client.loop_start()
+        client.publish(cmd_topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
+        time.sleep(0.2)
+        return JSONResponse({"ok": True, "topic": cmd_topic, "payload": msg})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+    finally:
+        try:
+            if client is not None:
+                client.loop_stop()
+                client.disconnect()
+        except Exception:
+            pass
 
 
 @app.get("/api/sun/live")

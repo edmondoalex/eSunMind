@@ -13,6 +13,7 @@
       </div>
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">User UI</button>
+        <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
         <button class="btn" @click="loadData">Aggiorna</button>
       </div>
@@ -329,6 +330,36 @@
       </div>
     </div>
 
+    <div v-show="tab==='tende'" class="tende-page">
+      <div class="tende-toolbar">
+        <button class="btn ghost" :class="{active: tendeEditMode}" @click="toggleTendeEditMode">{{ tendeEditMode ? 'Fine modifica' : 'Modifica su mappa' }}</button>
+        <button class="btn" @click="saveSelectedShade" :disabled="!selectedShadeEdit">Salva taratura</button>
+        <span class="note">{{ tendeSaveStatus }}</span>
+      </div>
+      <div class="tende-layout">
+        <div class="tende-list card">
+          <h3>Tende dal component</h3>
+          <div v-if="!tendeMapShades.length" class="note">Nessuna tenda ricevuta.</div>
+          <button
+            v-for="s in tendeMapShades"
+            :key="s.id"
+            class="shade-item"
+            :class="{active: selectedShadeId===s.id}"
+            @click="selectShade(s.id)"
+          >
+            <strong>{{ s.name || s.id }}</strong>
+            <span>{{ s.cover_entity || '-' }}</span>
+            <span>Az {{ fmt(s.azimuth_start_deg) }}° → {{ fmt(s.azimuth_end_deg) }}°</span>
+            <span>Stato: {{ coverStateLabel(s.cover_entity) }}</span>
+          </button>
+        </div>
+        <div class="tende-map-wrap card">
+          <h3>Mappa taratura tenda</h3>
+          <div id="tende-map"></div>
+        </div>
+      </div>
+    </div>
+
     <div v-show="tab==='tech'">
       <div class="view-tools">
         <button class="btn ghost" @click="techExpanded = !techExpanded">{{ techExpanded ? 'Riduci campi' : 'Allarga campi' }}</button>
@@ -501,6 +532,12 @@ let weatherLastTs = 0
 let weatherClouds = []
 let weatherRain = []
 let blockTogglesInited = false
+let tendeMapObj = null
+let tendeCenter = null
+let tendeRing = null
+let tendePoly = null
+let tendeStartMarker = null
+let tendeEndMarker = null
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -511,6 +548,10 @@ const showAxisNS = ref(true)
 const showAxisWE = ref(true)
 const showPvAzLine = ref(false)
 const showTendeSectors = ref(true)
+const tendeEditMode = ref(false)
+const selectedShadeId = ref('')
+const selectedShadeEdit = ref(null)
+const tendeSaveStatus = ref('')
 const pvAzimuthDeg = ref(0)
 const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
@@ -582,6 +623,7 @@ const tendeMapShades = computed(() => {
   const arr = tendeMap.value?.shades
   return Array.isArray(arr) ? arr.filter((s) => s && s.enabled !== false) : []
 })
+const tendeCoverStates = computed(() => tendeMap.value?.cover_states || {})
 const tendeMapWarning = computed(() => {
   const tm = tendeMap.value
   if (!showTendeSectors.value) return ''
@@ -1484,6 +1526,120 @@ function applyMapView() {
   drawSolarOverlay()
 }
 
+function coverStateLabel(entityId) {
+  const st = tendeCoverStates.value?.[entityId]
+  if (!st) return '-'
+  if (st.error) return `errore (${st.error})`
+  return st.state || '-'
+}
+
+function selectShade(id) {
+  selectedShadeId.value = id
+  const shade = tendeMapShades.value.find((s) => s.id === id)
+  if (!shade) return
+  selectedShadeEdit.value = {
+    id: shade.id,
+    name: shade.name,
+    cover_entity: shade.cover_entity,
+    azimuth_start_deg: Number(shade.azimuth_start_deg),
+    azimuth_end_deg: Number(shade.azimuth_end_deg),
+    altitude_min_deg: shade.altitude_min_deg,
+    altitude_max_deg: shade.altitude_max_deg,
+  }
+  drawTendeEditor()
+}
+
+function angleFromCenter(latlng) {
+  const dx = latlng.lng - lon.value
+  const dy = latlng.lat - lat.value
+  const raw = (Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360
+  return raw
+}
+
+function ensureTendeMap() {
+  if (tendeMapObj || lat.value == null || lon.value == null) return
+  tendeMapObj = L.map('tende-map', { zoomControl: true, attributionControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles © Esri',
+    maxZoom: 20,
+  }).addTo(tendeMapObj)
+}
+
+function drawTendeEditor() {
+  if (!tendeMapObj || !selectedShadeEdit.value || lat.value == null || lon.value == null) return
+  ;[tendeCenter, tendeRing, tendePoly, tendeStartMarker, tendeEndMarker].forEach((l) => { if (l) tendeMapObj.removeLayer(l) })
+  const s = selectedShadeEdit.value
+  tendeCenter = L.circleMarker([lat.value, lon.value], { radius: 4, color: '#ffd24a', fillColor: '#ffd24a', fillOpacity: 1 }).addTo(tendeMapObj)
+  tendeRing = L.circle([lat.value, lon.value], { radius: cfg.value.sectorRadiusM, color: '#7f8a95', weight: 1.2, fillOpacity: 0 }).addTo(tendeMapObj)
+  const color = colorFromIndex(tendeMapShades.value.findIndex((x) => x.id === s.id))
+  tendePoly = L.polygon(buildSectorPolygonPoints(s.azimuth_start_deg, s.azimuth_end_deg, cfg.value.sectorRadiusM), {
+    color,
+    weight: 2.4,
+    fillColor: color,
+    fillOpacity: 0.28,
+  }).addTo(tendeMapObj)
+  const p1 = destinationPoint(lat.value, lon.value, s.azimuth_start_deg, cfg.value.sectorRadiusM)
+  const p2 = destinationPoint(lat.value, lon.value, s.azimuth_end_deg, cfg.value.sectorRadiusM)
+  tendeStartMarker = L.circleMarker(p1, { radius: 8, color: '#ffffff', fillColor: '#22c55e', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj)
+  tendeEndMarker = L.circleMarker(p2, { radius: 8, color: '#ffffff', fillColor: '#ef4444', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj)
+
+  if (tendeEditMode.value) {
+    let dragging = null
+    const onMove = (e) => {
+      if (!dragging) return
+      const a = angleFromCenter(e.latlng)
+      if (dragging === 'start') s.azimuth_start_deg = a
+      else s.azimuth_end_deg = a
+      drawTendeEditor()
+    }
+    const stop = () => {
+      dragging = null
+      tendeMapObj.off('mousemove', onMove)
+      tendeMapObj.off('mouseup', stop)
+    }
+    tendeStartMarker.on('mousedown', () => {
+      dragging = 'start'
+      tendeMapObj.on('mousemove', onMove)
+      tendeMapObj.on('mouseup', stop)
+    })
+    tendeEndMarker.on('mousedown', () => {
+      dragging = 'end'
+      tendeMapObj.on('mousemove', onMove)
+      tendeMapObj.on('mouseup', stop)
+    })
+  }
+}
+
+function toggleTendeEditMode() {
+  tendeEditMode.value = !tendeEditMode.value
+  drawTendeEditor()
+}
+
+async function saveSelectedShade() {
+  if (!selectedShadeEdit.value) return
+  tendeSaveStatus.value = 'Salvataggio...'
+  try {
+    const payload = {
+      id: selectedShadeEdit.value.id,
+      azimuth_start_deg: selectedShadeEdit.value.azimuth_start_deg,
+      azimuth_end_deg: selectedShadeEdit.value.azimuth_end_deg,
+      altitude_min_deg: selectedShadeEdit.value.altitude_min_deg,
+      altitude_max_deg: selectedShadeEdit.value.altitude_max_deg,
+    }
+    const r = await fetch('/api/tende/map/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
+    tendeSaveStatus.value = 'Taratura inviata a e-Tende.'
+    await loadData()
+  } catch (e) {
+    tendeSaveStatus.value = `Errore: ${e.message}`
+  }
+}
+
 async function loadData() {
   const r = await fetch('/api/data', { cache: 'no-store' })
   const j = await r.json()
@@ -1532,6 +1688,12 @@ async function loadData() {
     } catch (_) {
       // no-op
     }
+  }
+  if (!selectedShadeId.value && tendeMapShades.value.length) {
+    selectShade(tendeMapShades.value[0].id)
+  } else if (selectedShadeId.value) {
+    const ex = tendeMapShades.value.find((s) => s.id === selectedShadeId.value)
+    if (ex) selectShade(ex.id)
   }
 }
 
@@ -1615,6 +1777,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
+  if (tendeMapObj) { tendeMapObj.remove(); tendeMapObj = null }
   stopWeatherAnimation()
   window.removeEventListener('resize', resizeWeatherCanvas)
 })
@@ -1627,6 +1790,15 @@ watch(tab, async (val) => {
     drawSolarOverlay()
     resizeWeatherCanvas()
     if (weatherAnimEnabled.value) startWeatherAnimation()
+  } else if (val === 'tende') {
+    await nextTick()
+    ensureTendeMap()
+    if (tendeMapObj && lat.value != null && lon.value != null) {
+      tendeMapObj.setView([lat.value, lon.value], cfg.value.mapZoom)
+      tendeMapObj.invalidateSize()
+      if (!selectedShadeId.value && tendeMapShades.value.length) selectShade(tendeMapShades.value[0].id)
+      else drawTendeEditor()
+    }
   } else {
     stopWeatherAnimation()
   }
@@ -1969,6 +2141,14 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     0 0 0 3px rgba(255, 214, 67, 0.22),
     0 0 14px rgba(255, 192, 48, 0.7);
 }
+.tende-page{padding:10px}
+.tende-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tende-layout{display:grid;grid-template-columns:320px 1fr;gap:10px}
+.tende-list{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:74vh;overflow:auto}
+.shade-item{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;text-align:left;color:#dbe7ff}
+.shade-item.active{outline:2px solid #41d6c3}
+.tende-map-wrap{padding:10px}
+#tende-map{height:68vh;min-height:420px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
 
 @media (max-width: 768px){
   .topbar{
@@ -2002,6 +2182,13 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .panel{
     grid-template-columns:1fr 1fr;
+  }
+  .tende-layout{
+    grid-template-columns:1fr;
+  }
+  #tende-map{
+    height:56dvh;
+    min-height:320px;
   }
   .bar-y-axis{
     min-width:38px;
