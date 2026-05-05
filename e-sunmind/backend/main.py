@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.2.93"
+APP_VERSION = "0.2.94"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1363,7 +1363,10 @@ async def tende_map_update(payload: dict):
         "e-tendeintelligenti/cmd/shades/update",
         "e-tendeintelligenti/cmd/map/shades/update",
     ]
-    ack_topic = "e-tendeintelligenti/cmd/shades/update/ack"
+    ack_topics = [
+        "e-tendeintelligenti/cmd/shades/update/ack",
+        "e-tendeintelligenti/cmd/map/shades/update/ack",
+    ]
     request_id = uuid.uuid4().hex
     msg = {
         "source": "e-sunmind",
@@ -1408,15 +1411,16 @@ async def tende_map_update(payload: dict):
         client.on_message = _on_message
         client.connect(host, port, 60)
         client.loop_start()
-        client.subscribe(ack_topic, qos=1)
+        for at in ack_topics:
+            client.subscribe(at, qos=1)
         for topic in cmd_topics:
             client.publish(topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
         t0 = time.time()
-        while (time.time() - t0) < 2.2 and ack_result is None:
+        while (time.time() - t0) < 6.0 and ack_result is None:
             time.sleep(0.05)
         if not ack_result:
             return JSONResponse(
-                {"ok": False, "error": "ack_timeout", "topics": cmd_topics, "payload": msg},
+                {"ok": False, "error": "ack_timeout", "topics": cmd_topics, "ack_topics": ack_topics, "payload": msg},
                 status_code=504,
             )
         if not (ack_result.get("ok") is True or str(ack_result.get("status") or "").lower() == "ok"):

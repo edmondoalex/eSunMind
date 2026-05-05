@@ -1663,13 +1663,22 @@ async function saveSelectedShade() {
       body: JSON.stringify(payload),
     })
     const j = await r.json()
-    if (!r.ok || !j.ok) throw new Error(j.error || 'save_failed')
+    if (!r.ok || !j.ok) {
+      const err = new Error(j.error || 'save_failed')
+      err.cause = j
+      throw err
+    }
     if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Taratura applicata (ACK ricevuto).'
     else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
     else tendeSaveStatus.value = 'Taratura inviata (ACK non ricevuto).'
     await loadData()
   } catch (e) {
-    tendeSaveStatus.value = `Errore: ${e.message}`
+    let extra = ''
+    try {
+      if (e?.cause?.ack?.error) extra = ` (${e.cause.ack.error})`
+      else if (e?.cause?.error) extra = ` (${e.cause.error})`
+    } catch (_) {}
+    tendeSaveStatus.value = `Errore: ${e.message}${extra}`
   }
 }
 
