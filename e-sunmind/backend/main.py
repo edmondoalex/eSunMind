@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.24"
+APP_VERSION = "0.3.25"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -158,7 +158,7 @@ def _load_options() -> dict[str, Any]:
             "rain_alarm_mm_h": 1.5,
             "facade_rain_min_wind_ms": 6.0,
             "facade_rain_min_mm_h": 0.8,
-            "facade_azimuth_deg": None,
+            "facade_azimuth_deg": -1.0,
             "facade_half_fov_deg": 60.0,
             "stale_seconds": 180,
         },
@@ -233,7 +233,8 @@ def _load_options() -> dict[str, Any]:
     wg["facade_rain_min_mm_h"] = max(0.0, min(200.0, float(wg.get("facade_rain_min_mm_h", 0.8) or 0.8)))
     try:
         facade_az = wg.get("facade_azimuth_deg")
-        wg["facade_azimuth_deg"] = None if facade_az in (None, "") else float(facade_az) % 360.0
+        facade_value = None if facade_az in (None, "") else float(facade_az)
+        wg["facade_azimuth_deg"] = None if facade_value is None or facade_value < 0 else facade_value % 360.0
     except Exception:
         wg["facade_azimuth_deg"] = None
     wg["facade_half_fov_deg"] = max(0.0, min(180.0, float(wg.get("facade_half_fov_deg", 60.0) or 60.0)))

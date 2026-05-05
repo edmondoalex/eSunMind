@@ -75,3 +75,5 @@ e-Tende deve leggere:
 - `rain_alarm`: protezione pioggia.
 - `facade_rain_risk`: stravento, cioe pioggia con vento nel cono della facciata.
 - `severe_weather_alarm`: allarme aggregato, vero se uno dei tre allarmi e attivo.
+
+Nota config: `facade_azimuth_deg = -1` significa facciata non configurata; in API viene restituito `null`.
