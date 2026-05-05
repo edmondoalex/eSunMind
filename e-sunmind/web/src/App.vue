@@ -400,7 +400,7 @@
             <label>Sorgente coordinate
               <select v-model="baseForm.coordinates_source_mode">
                 <option value="e_tende">Forza e-Tende</option>
-                <option value="ha_core">Forza Home Assistant</option>
+                <option value="ha_core">Forza e-Control</option>
                 <option value="local">Forza Config locale</option>
               </select>
             </label>
