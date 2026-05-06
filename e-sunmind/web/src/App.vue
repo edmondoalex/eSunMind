@@ -2286,9 +2286,12 @@ async function saveSelectedShade() {
     })
     const j = await r.json()
     if (!r.ok || !j.ok) { const err = new Error(j.error || 'save_failed'); err.cause = j; throw err }
-    if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Configurazione cover applicata (ACK ricevuto).'
+    if (j.status === 'confirmed_by_map') tendeSaveStatus.value = 'Configurazione cover applicata (confermata dalla mappa).'
+    else if (j.status === 'sent_no_ack') tendeSaveStatus.value = 'Configurazione inviata a e-Tende (ACK non ricevuto, aggiornamento in corso).'
+    else if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Configurazione cover applicata (ACK ricevuto).'
     else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
     else tendeSaveStatus.value = 'Configurazione inviata (ACK non ricevuto).'
+    if (j.status === 'sent_no_ack') await new Promise((resolve) => setTimeout(resolve, 1500))
     await loadData()
   } catch (e) {
     let extra = ''

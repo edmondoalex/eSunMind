@@ -47,6 +47,7 @@ Da `0.3.33` `/api/sun/live` e reale nel backend e il `runtime_json` MQTT resta c
 Da `0.3.34` il comando invia anche il nome cover e accetta target senza `id` quando e presente `cover_entity`, per allinearsi al lookup robusto di e-Tende 0.1.69.
 Da `0.3.35` un ACK negativo duplicato non blocca piu il salvataggio se entro timeout arriva anche l'ACK positivo.
 Da `0.3.36` il comando viene pubblicato su un solo topic primario e, se l'ACK non arriva, il salvataggio viene confermato dal payload mappa aggiornato.
+Da `0.3.37` l'assenza di ACK non genera piu HTTP 504 se il comando e stato pubblicato; la UI segnala `inviato senza ACK` e aggiorna la mappa dopo un breve ritardo.
 
 ### Weather guard per e-Tende
 

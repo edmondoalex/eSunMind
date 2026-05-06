@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.36"
+APP_VERSION = "0.3.37"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -2151,8 +2151,16 @@ async def tende_map_update(payload: dict):
                     status_code=502,
                 )
             return JSONResponse(
-                {"ok": False, "error": "ack_timeout", "topics": cmd_topics, "ack_topics": ack_topics, "payload": msg},
-                status_code=504,
+                {
+                    "ok": True,
+                    "status": "sent_no_ack",
+                    "warning": "ack_timeout",
+                    "topics": cmd_topics,
+                    "ack_topics": ack_topics,
+                    "payload": msg,
+                    "ack": None,
+                    "ack_errors": ack_errors[-5:],
+                }
             )
         return JSONResponse({"ok": True, "topics": cmd_topics, "payload": msg, "ack": ack_result, "ack_errors": ack_errors[-5:]})
     except Exception as exc:
