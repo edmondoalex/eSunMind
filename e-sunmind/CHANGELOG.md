@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.31
+
+- Pagina `Tende/Cover`: editor completo della cover selezionata con tarature, protezioni meteo e diagnostica runtime.
+- `/api/tende/map/update` ora invia a e-Tende anche `settings` completi, mantenendo compatibilita con i campi flat esistenti.
+- Payload tende normalizzato con `settings` e `sensors` per ogni cover.
+- Mappa taratura cover focalizzata sulla sola cover selezionata con linea alba, tramonto, curva elevazione reale e linea sole live.
+
 ## 0.3.30
 
 - Weather guard piu robusto quando il runtime non contiene meteo valido.

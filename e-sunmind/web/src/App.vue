@@ -344,18 +344,95 @@
       <div class="card" v-if="selectedShadeEdit">
         <h3>Taratura {{ selectedShadeEdit.name || selectedShadeEdit.id }}</h3>
         <div class="tende-cal-grid">
+          <label>Automazione
+            <input type="checkbox" v-model="selectedShadeEdit.enabled" />
+          </label>
+          <label>Apri se sole assente
+            <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
+          </label>
+          <label>Modalita Start/Stop
+            <input type="checkbox" v-model="selectedShadeEdit.use_start_stop_azimuth" />
+          </label>
+          <label>Modalita Open/Close
+            <input type="checkbox" v-model="selectedShadeEdit.command_mode_open_close" />
+          </label>
+          <label>Azimut finestra
+            <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.window_azimuth" @change="drawTendeEditor" />
+          </label>
           <label>Azimuth start
             <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_start_deg" @change="drawTendeEditor" />
           </label>
           <label>Azimuth end
             <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_end_deg" @change="drawTendeEditor" />
           </label>
+          <label>Campo visivo sinistro
+            <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_left" @change="drawTendeEditor" />
+          </label>
+          <label>Campo visivo destro
+            <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_right" @change="drawTendeEditor" />
+          </label>
           <label>Altitudine min
-            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_min_deg" />
+            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_min_deg" @change="drawTendeEditor" />
           </label>
           <label>Altitudine max
-            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_max_deg" />
+            <input type="number" min="-10" max="90" step="0.1" v-model.number="selectedShadeEdit.altitude_max_deg" @change="drawTendeEditor" />
           </label>
+          <label>Posizione riposo
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.default_position" />
+          </label>
+          <label>Posizione notte
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.sunset_position" />
+          </label>
+          <label>Posizione minima
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_position" />
+          </label>
+          <label>Posizione massima
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.max_position" />
+          </label>
+          <label>Delta minimo
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_delta" />
+          </label>
+          <label>Intervallo minuti
+            <input type="number" min="1" max="120" step="1" v-model.number="selectedShadeEdit.interval_minutes" />
+          </label>
+          <label>Soglia Open/Close
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.open_close_threshold" />
+          </label>
+          <label>Soglia sonda FV
+            <input type="number" min="0" max="20000" step="10" v-model.number="selectedShadeEdit.sun_probe_threshold" />
+          </label>
+          <label>Protezione Meteo Guard
+            <input type="checkbox" v-model="selectedShadeEdit.weather_guard_enabled" />
+          </label>
+          <label>Proteggi vento
+            <input type="checkbox" v-model="selectedShadeEdit.protect_on_wind_alarm" />
+          </label>
+          <label>Proteggi pioggia
+            <input type="checkbox" v-model="selectedShadeEdit.protect_on_rain_alarm" />
+          </label>
+          <label>Proteggi stravento facciata
+            <input type="checkbox" v-model="selectedShadeEdit.protect_on_facade_rain_risk" />
+          </label>
+          <label>Posizione sicurezza meteo
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_safe_position" />
+          </label>
+          <label>Posizione sicurezza vento
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
+          </label>
+          <label>Posizione sicurezza pioggia
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
+          </label>
+          <label>Posizione sicurezza stravento
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_facade_rain_safe_position" />
+          </label>
+        </div>
+        <div class="tende-sensors" v-if="selectedShadeEdit.sensors">
+          <span>Sole: {{ fmt(selectedShadeEdit.sensors.sun_azimuth) }}&deg; / {{ fmt(selectedShadeEdit.sensors.sun_elevation) }}&deg;</span>
+          <span>Sole davanti: {{ boolLabel(selectedShadeEdit.sensors.sun_in_front) }}</span>
+          <span>Range elevazione: {{ boolLabel(selectedShadeEdit.sensors.sun_in_elevation_range) }}</span>
+          <span>Allarme meteo: {{ selectedShadeEdit.sensors.weather_active_alarm || 'none' }}</span>
+          <span>Target meteo: {{ targetValue(selectedShadeEdit.sensors.weather_target_position) }}</span>
+          <span>Rischio facciata: {{ boolLabel(selectedShadeEdit.sensors.weather_cover_facade_rain_risk) }}</span>
         </div>
       </div>
       <div class="tende-layout">
@@ -714,6 +791,7 @@ let tendeRing = null
 let tendePoly = null
 let tendeStartMarker = null
 let tendeEndMarker = null
+let tendeEditorExtraLayers = []
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -1591,6 +1669,16 @@ function destinationPoint(latDeg, lonDeg, bearingDeg, distanceM) {
   return [(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]
 }
 
+function targetValue(value) {
+  return value === null || value === undefined || value === '' ? '-' : value
+}
+
+function boolLabel(value) {
+  if (value === true) return 'Acceso'
+  if (value === false) return 'Spento'
+  return '-'
+}
+
 function colorFromIndex(index) {
   const hue = (index * 137.508) % 360
   return `hsl(${hue.toFixed(1)}, 82%, 56%)`
@@ -2031,6 +2119,12 @@ function coverStateLabel(entityId) {
   return st.state || '-'
 }
 
+function pickSetting(shade, key, fallback = null) {
+  const st = shade?.settings || {}
+  if (st[key] !== undefined && st[key] !== null) return st[key]
+  return fallback
+}
+
 function selectShade(id) {
   selectedShadeId.value = id
   const shade = tendeMapShades.value.find((s) => s.id === id)
@@ -2039,10 +2133,34 @@ function selectShade(id) {
     id: shade.id,
     name: shade.name,
     cover_entity: shade.cover_entity,
-    azimuth_start_deg: Number.isFinite(Number(shade.azimuth_start_deg)) ? Number(shade.azimuth_start_deg) : 0,
-    azimuth_end_deg: Number.isFinite(Number(shade.azimuth_end_deg)) ? Number(shade.azimuth_end_deg) : 0,
-    altitude_min_deg: shade.altitude_min_deg,
-    altitude_max_deg: shade.altitude_max_deg,
+    enabled: Boolean(pickSetting(shade, 'enabled', shade.enabled)),
+    open_when_no_sun: Boolean(pickSetting(shade, 'open_when_no_sun', true)),
+    use_start_stop_azimuth: Boolean(pickSetting(shade, 'use_start_stop_azimuth', true)),
+    command_mode_open_close: String(pickSetting(shade, 'command_mode', 'open_close')) === 'open_close',
+    window_azimuth: Number(pickSetting(shade, 'window_azimuth', 0)),
+    azimuth_start_deg: Number.isFinite(Number(pickSetting(shade, 'azimuth_start_deg', shade.azimuth_start_deg))) ? Number(pickSetting(shade, 'azimuth_start_deg', shade.azimuth_start_deg)) : 0,
+    azimuth_end_deg: Number.isFinite(Number(pickSetting(shade, 'azimuth_end_deg', shade.azimuth_end_deg))) ? Number(pickSetting(shade, 'azimuth_end_deg', shade.azimuth_end_deg)) : 0,
+    fov_left: Number(pickSetting(shade, 'fov_left', 70)),
+    fov_right: Number(pickSetting(shade, 'fov_right', 70)),
+    altitude_min_deg: Number(pickSetting(shade, 'altitude_min_deg', shade.altitude_min_deg ?? 8)),
+    altitude_max_deg: Number(pickSetting(shade, 'altitude_max_deg', shade.altitude_max_deg ?? 80)),
+    default_position: Number(pickSetting(shade, 'default_position', 100)),
+    sunset_position: Number(pickSetting(shade, 'sunset_position', 0)),
+    min_position: Number(pickSetting(shade, 'min_position', 0)),
+    max_position: Number(pickSetting(shade, 'max_position', 100)),
+    min_delta: Number(pickSetting(shade, 'min_delta', 3)),
+    interval_minutes: Number(pickSetting(shade, 'interval_minutes', 5)),
+    open_close_threshold: Number(pickSetting(shade, 'open_close_threshold', 50)),
+    sun_probe_threshold: Number(pickSetting(shade, 'sun_probe_threshold', 300)),
+    weather_guard_enabled: Boolean(pickSetting(shade, 'weather_guard_enabled', false)),
+    protect_on_wind_alarm: Boolean(pickSetting(shade, 'protect_on_wind_alarm', true)),
+    protect_on_rain_alarm: Boolean(pickSetting(shade, 'protect_on_rain_alarm', true)),
+    protect_on_facade_rain_risk: Boolean(pickSetting(shade, 'protect_on_facade_rain_risk', true)),
+    weather_safe_position: Number(pickSetting(shade, 'weather_safe_position', 100)),
+    weather_wind_safe_position: Number(pickSetting(shade, 'weather_wind_safe_position', pickSetting(shade, 'weather_safe_position', 100))),
+    weather_rain_safe_position: Number(pickSetting(shade, 'weather_rain_safe_position', pickSetting(shade, 'weather_safe_position', 100))),
+    weather_facade_rain_safe_position: Number(pickSetting(shade, 'weather_facade_rain_safe_position', pickSetting(shade, 'weather_safe_position', 100))),
+    sensors: shade.sensors || {},
   }
   drawTendeEditor()
 }
@@ -2066,57 +2184,53 @@ function ensureTendeMap() {
 function drawTendeEditor() {
   if (!tendeMapObj || !selectedShadeEdit.value || lat.value == null || lon.value == null) return
   ;[tendeCenter, tendeRing, tendePoly, tendeStartMarker, tendeEndMarker].forEach((l) => { if (l) tendeMapObj.removeLayer(l) })
+  for (const l of tendeEditorExtraLayers) tendeMapObj.removeLayer(l)
+  tendeEditorExtraLayers = []
   const s = selectedShadeEdit.value
+  const color = colorFromIndex(tendeMapShades.value.findIndex((x) => x.id === s.id))
   tendeCenter = L.circleMarker([lat.value, lon.value], { radius: 4, color: '#ffd24a', fillColor: '#ffd24a', fillOpacity: 1 }).addTo(tendeMapObj)
   tendeRing = L.circle([lat.value, lon.value], { radius: cfg.value.sectorRadiusM, color: '#7f8a95', weight: 1.2, fillOpacity: 0 }).addTo(tendeMapObj)
-  const color = colorFromIndex(tendeMapShades.value.findIndex((x) => x.id === s.id))
-  tendePoly = L.polygon(buildSectorPolygonPoints(s.azimuth_start_deg, s.azimuth_end_deg, cfg.value.sectorRadiusM), {
-    color,
-    weight: 2.4,
-    fillColor: color,
-    fillOpacity: 0.28,
-  }).addTo(tendeMapObj)
+  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : baseDateAtHour(6)
+  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : baseDateAtHour(20)
+  const srAz = suncalcAzToCompassDeg(SunCalc.getPosition(sunrise, lat.value, lon.value).azimuth)
+  const ssAz = suncalcAzToCompassDeg(SunCalc.getPosition(sunset, lat.value, lon.value).azimuth)
+  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM)
+  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM)
+  tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], srPt], { color: '#f97316', weight: 2.4, opacity: 0.95 }).addTo(tendeMapObj))
+  tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], ssPt], { color: '#facc15', weight: 2.4, opacity: 0.95 }).addTo(tendeMapObj))
+  tendeEditorExtraLayers.push(L.polyline(buildElevationCurvePoints(sunrise, sunset, 96), { color: '#fff1a8', weight: 2.6, opacity: 0.9, dashArray: '8,5' }).addTo(tendeMapObj))
+  tendeEditorExtraLayers.push(L.marker(destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM + 10), { icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunrise">Alba</span>', iconSize: [52, 18], iconAnchor: [26, 9] }), interactive: false }).addTo(tendeMapObj))
+  tendeEditorExtraLayers.push(L.marker(destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM + 10), { icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunset">Tramonto</span>', iconSize: [72, 18], iconAnchor: [36, 9] }), interactive: false }).addTo(tendeMapObj))
+  const hasAltBand = Number.isFinite(Number(s.altitude_min_deg)) && Number.isFinite(Number(s.altitude_max_deg))
+  const rOuter = hasAltBand ? altitudeToRadius(Math.min(Number(s.altitude_min_deg), Number(s.altitude_max_deg))) : cfg.value.sectorRadiusM
+  const rInner = hasAltBand ? altitudeToRadius(Math.max(Number(s.altitude_min_deg), Number(s.altitude_max_deg))) : 0
+  const pts = hasAltBand ? buildSectorBandPolygonPoints(s.azimuth_start_deg, s.azimuth_end_deg, rOuter, rInner) : buildSectorPolygonPoints(s.azimuth_start_deg, s.azimuth_end_deg, cfg.value.sectorRadiusM)
+  tendePoly = L.polygon(pts, { color, weight: 2.6, fillColor: color, fillOpacity: 0.3 }).addTo(tendeMapObj)
+  const windowPt = destinationPoint(lat.value, lon.value, s.window_azimuth, cfg.value.sectorRadiusM)
+  tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], windowPt], { color: '#38bdf8', weight: 2.2, opacity: 0.9, dashArray: '7,5' }).addTo(tendeMapObj))
   const p1 = destinationPoint(lat.value, lon.value, s.azimuth_start_deg, cfg.value.sectorRadiusM)
   const p2 = destinationPoint(lat.value, lon.value, s.azimuth_end_deg, cfg.value.sectorRadiusM)
-  tendeStartMarker = L.marker(p1, {
-    draggable: tendeEditMode.value,
-    icon: L.divIcon({
-      className: 'tende-handle-wrap',
-      html: '<span class="tende-handle tende-handle-start"></span>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    }),
-  }).addTo(tendeMapObj)
-  tendeEndMarker = L.marker(p2, {
-    draggable: tendeEditMode.value,
-    icon: L.divIcon({
-      className: 'tende-handle-wrap',
-      html: '<span class="tende-handle tende-handle-end"></span>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    }),
-  }).addTo(tendeMapObj)
-
+  tendeStartMarker = L.marker(p1, { draggable: tendeEditMode.value, icon: L.divIcon({ className: 'tende-handle-wrap', html: '<span class="tende-handle tende-handle-start"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(tendeMapObj)
+  tendeEndMarker = L.marker(p2, { draggable: tendeEditMode.value, icon: L.divIcon({ className: 'tende-handle-wrap', html: '<span class="tende-handle tende-handle-end"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(tendeMapObj)
+  const liveAz = Number(s.sensors?.sun_azimuth ?? data.value?.sun_position?.azimuth_compass_deg)
+  const liveAlt = Number(s.sensors?.sun_elevation ?? data.value?.sun_position?.altitude_deg)
+  if (Number.isFinite(liveAz)) {
+    const sunPt = destinationPoint(lat.value, lon.value, liveAz, Number.isFinite(liveAlt) ? altitudeToRadius(liveAlt) : cfg.value.sectorRadiusM)
+    tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], sunPt], { color: '#2dd4bf', weight: 2.3, opacity: 0.9, dashArray: '8,6' }).addTo(tendeMapObj))
+    tendeEditorExtraLayers.push(L.circleMarker(sunPt, { radius: 6, color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj))
+  }
   if (tendeEditMode.value) {
     const updatePreview = () => {
       if (!tendePoly || !selectedShadeEdit.value) return
-      const pts = buildSectorPolygonPoints(
-        selectedShadeEdit.value.azimuth_start_deg,
-        selectedShadeEdit.value.azimuth_end_deg,
-        cfg.value.sectorRadiusM
-      )
-      tendePoly.setLatLngs(pts)
+      const band = Number.isFinite(Number(selectedShadeEdit.value.altitude_min_deg)) && Number.isFinite(Number(selectedShadeEdit.value.altitude_max_deg))
+      const outer = band ? altitudeToRadius(Math.min(Number(selectedShadeEdit.value.altitude_min_deg), Number(selectedShadeEdit.value.altitude_max_deg))) : cfg.value.sectorRadiusM
+      const inner = band ? altitudeToRadius(Math.max(Number(selectedShadeEdit.value.altitude_min_deg), Number(selectedShadeEdit.value.altitude_max_deg))) : 0
+      tendePoly.setLatLngs(band ? buildSectorBandPolygonPoints(selectedShadeEdit.value.azimuth_start_deg, selectedShadeEdit.value.azimuth_end_deg, outer, inner) : buildSectorPolygonPoints(selectedShadeEdit.value.azimuth_start_deg, selectedShadeEdit.value.azimuth_end_deg, cfg.value.sectorRadiusM))
     }
     tendeStartMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
     tendeEndMarker.on('dragstart', () => { tendeMapObj.dragging.disable() })
-    tendeStartMarker.on('drag', (e) => {
-      s.azimuth_start_deg = angleFromCenter(e.latlng)
-      updatePreview()
-    })
-    tendeEndMarker.on('drag', (e) => {
-      s.azimuth_end_deg = angleFromCenter(e.latlng)
-      updatePreview()
-    })
+    tendeStartMarker.on('drag', (e) => { s.azimuth_start_deg = angleFromCenter(e.latlng); updatePreview() })
+    tendeEndMarker.on('drag', (e) => { s.azimuth_end_deg = angleFromCenter(e.latlng); updatePreview() })
     tendeStartMarker.on('dragend', () => { tendeMapObj.dragging.enable(); drawTendeEditor() })
     tendeEndMarker.on('dragend', () => { tendeMapObj.dragging.enable(); drawTendeEditor() })
   }
@@ -2131,35 +2245,49 @@ async function saveSelectedShade() {
   if (!selectedShadeEdit.value) return
   tendeSaveStatus.value = 'Salvataggio...'
   try {
-    const payload = {
-      id: selectedShadeEdit.value.id,
-      cover_entity: selectedShadeEdit.value.cover_entity || null,
-      azimuth_start_deg: selectedShadeEdit.value.azimuth_start_deg,
-      azimuth_end_deg: selectedShadeEdit.value.azimuth_end_deg,
-      altitude_min_deg: selectedShadeEdit.value.altitude_min_deg,
-      altitude_max_deg: selectedShadeEdit.value.altitude_max_deg,
+    const e = selectedShadeEdit.value
+    const settings = {
+      enabled: Boolean(e.enabled),
+      open_when_no_sun: Boolean(e.open_when_no_sun),
+      use_start_stop_azimuth: Boolean(e.use_start_stop_azimuth),
+      command_mode: e.command_mode_open_close ? 'open_close' : 'percentage',
+      window_azimuth: Number(e.window_azimuth),
+      azimuth_start_deg: Number(e.azimuth_start_deg),
+      azimuth_end_deg: Number(e.azimuth_end_deg),
+      fov_left: Number(e.fov_left),
+      fov_right: Number(e.fov_right),
+      altitude_min_deg: Number(e.altitude_min_deg),
+      altitude_max_deg: Number(e.altitude_max_deg),
+      default_position: Number(e.default_position),
+      sunset_position: Number(e.sunset_position),
+      min_position: Number(e.min_position),
+      max_position: Number(e.max_position),
+      min_delta: Number(e.min_delta),
+      interval_minutes: Number(e.interval_minutes),
+      open_close_threshold: Number(e.open_close_threshold),
+      sun_probe_threshold: Number(e.sun_probe_threshold),
+      weather_guard_enabled: Boolean(e.weather_guard_enabled),
+      protect_on_wind_alarm: Boolean(e.protect_on_wind_alarm),
+      protect_on_rain_alarm: Boolean(e.protect_on_rain_alarm),
+      protect_on_facade_rain_risk: Boolean(e.protect_on_facade_rain_risk),
+      weather_safe_position: Number(e.weather_safe_position),
+      weather_wind_safe_position: Number(e.weather_wind_safe_position),
+      weather_rain_safe_position: Number(e.weather_rain_safe_position),
+      weather_facade_rain_safe_position: Number(e.weather_facade_rain_safe_position),
     }
     const r = await fetch('/api/tende/map/update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: e.id, cover_entity: e.cover_entity || null, settings }),
     })
     const j = await r.json()
-    if (!r.ok || !j.ok) {
-      const err = new Error(j.error || 'save_failed')
-      err.cause = j
-      throw err
-    }
-    if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Taratura applicata (ACK ricevuto).'
+    if (!r.ok || !j.ok) { const err = new Error(j.error || 'save_failed'); err.cause = j; throw err }
+    if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Configurazione cover applicata (ACK ricevuto).'
     else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
-    else tendeSaveStatus.value = 'Taratura inviata (ACK non ricevuto).'
+    else tendeSaveStatus.value = 'Configurazione inviata (ACK non ricevuto).'
     await loadData()
   } catch (e) {
     let extra = ''
-    try {
-      if (e?.cause?.ack?.error) extra = ` (${e.cause.ack.error})`
-      else if (e?.cause?.error) extra = ` (${e.cause.error})`
-    } catch (_) {}
+    try { if (e?.cause?.ack?.error) extra = ` (${e.cause.ack.error})`; else if (e?.cause?.error) extra = ` (${e.cause.error})` } catch (_) {}
     tendeSaveStatus.value = `Errore: ${e.message}${extra}`
   }
 }
@@ -2886,6 +3014,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .tende-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
+.tende-sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px}
+.tende-sensors span{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;color:#dbe7ff}
 .tende-layout{display:grid;grid-template-columns:320px 1fr;gap:10px}
 .tende-list{padding:10px;display:flex;flex-direction:column;gap:8px;max-height:74vh;overflow:auto}
 .shade-item{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;text-align:left;color:#dbe7ff}

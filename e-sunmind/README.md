@@ -33,6 +33,16 @@ Esempio curl:
 curl -sS http://192.168.3.24:1980/api/sun/live
 ```
 
+### Tende/Cover centralizzate
+
+La pagina `Tende/Cover` usa il payload MQTT di e-Tende per mostrare ogni cover con:
+
+- `settings`: tarature modificabili della cover
+- `sensors`: diagnostica runtime della cover
+- stato reale cover letto da e-Control
+
+Il salvataggio usa `POST /api/tende/map/update`, invia un comando MQTT a e-Tende e considera la modifica applicata solo dopo ACK positivo.
+
 ### Weather guard per e-Tende
 
 Endpoint sicurezza meteo:

@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.30"
+APP_VERSION = "0.3.31"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -365,6 +365,8 @@ def _validate_tende_map_payload(payload: Any) -> dict[str, Any] | None:
                 "azimuth_end_deg": (az_end % 360.0) if isinstance(az_end, float) else None,
                 "altitude_min_deg": float(alt_min) if alt_min is not None else None,
                 "altitude_max_deg": float(alt_max) if alt_max is not None else None,
+                "settings": item.get("settings") if isinstance(item.get("settings"), dict) else {},
+                "sensors": item.get("sensors") if isinstance(item.get("sensors"), dict) else {},
                 "priority": int(item.get("priority")) if item.get("priority") is not None else None,
                 "color": (str(item.get("color")).strip() if item.get("color") else None),
             }
@@ -1189,6 +1191,8 @@ def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
                     "azimuth_end_deg": (az_end % 360.0) if isinstance(az_end, float) else None,
                     "altitude_min_deg": float(alt_min) if alt_min is not None else None,
                     "altitude_max_deg": float(alt_max) if alt_max is not None else None,
+                    "settings": item.get("settings") if isinstance(item.get("settings"), dict) else {},
+                    "sensors": item.get("sensors") if isinstance(item.get("sensors"), dict) else {},
                     "priority": int(item.get("priority")) if item.get("priority") is not None else None,
                     "color": (str(item.get("color")).strip() if item.get("color") else None),
                 }
@@ -1916,11 +1920,24 @@ async def tende_map_update(payload: dict):
     cover_entity = str(payload.get("cover_entity") or "").strip()
     if not shade_id:
         return JSONResponse({"ok": False, "error": "missing_id"}, status_code=400)
-    try:
-        az_start = float(payload.get("azimuth_start_deg"))
-        az_end = float(payload.get("azimuth_end_deg"))
-    except Exception:
-        return JSONResponse({"ok": False, "error": "invalid_azimuth"}, status_code=400)
+
+    settings = payload.get("settings") if isinstance(payload.get("settings"), dict) else {}
+    merged_settings = dict(settings)
+    for key, value in payload.items():
+        if key not in {"settings", "sensors"}:
+            merged_settings[key] = value
+
+    # Backward compatible aliases for existing e-Tende parser and UI.
+    if merged_settings.get("azimuth_start_deg") is not None:
+        try:
+            merged_settings["azimuth_start_deg"] = float(merged_settings["azimuth_start_deg"]) % 360.0
+        except Exception:
+            return JSONResponse({"ok": False, "error": "invalid_azimuth_start"}, status_code=400)
+    if merged_settings.get("azimuth_end_deg") is not None:
+        try:
+            merged_settings["azimuth_end_deg"] = float(merged_settings["azimuth_end_deg"]) % 360.0
+        except Exception:
+            return JSONResponse({"ok": False, "error": "invalid_azimuth_end"}, status_code=400)
 
     cfg = _load_options()
     tm_cfg = (cfg.get("tende_map") or {})
@@ -1937,34 +1954,22 @@ async def tende_map_update(payload: dict):
         "e-tendeintelligenti/cmd/map/shades/update/ack",
     ]
     request_id = uuid.uuid4().hex
+    shade_payload = {
+        "id": shade_id,
+        "cover_entity": cover_entity or None,
+        "settings": merged_settings,
+        **merged_settings,
+    }
     msg = {
         "source": "e-sunmind",
         "request_id": request_id,
         "updated_at": datetime.utcnow().isoformat(),
         "id": shade_id,
         "cover_entity": cover_entity or None,
-        "azimuth_start_deg": az_start % 360.0,
-        "azimuth_end_deg": az_end % 360.0,
-        "altitude_min_deg": payload.get("altitude_min_deg"),
-        "altitude_max_deg": payload.get("altitude_max_deg"),
-        "shade": {
-            "id": shade_id,
-            "cover_entity": cover_entity or None,
-            "azimuth_start_deg": az_start % 360.0,
-            "azimuth_end_deg": az_end % 360.0,
-            "altitude_min_deg": payload.get("altitude_min_deg"),
-            "altitude_max_deg": payload.get("altitude_max_deg"),
-        },
-        "shades": [
-            {
-                "id": shade_id,
-                "cover_entity": cover_entity or None,
-                "azimuth_start_deg": az_start % 360.0,
-                "azimuth_end_deg": az_end % 360.0,
-                "altitude_min_deg": payload.get("altitude_min_deg"),
-                "altitude_max_deg": payload.get("altitude_max_deg"),
-            }
-        ],
+        "settings": merged_settings,
+        **merged_settings,
+        "shade": shade_payload,
+        "shades": [shade_payload],
     }
     client = None
     ack_result: dict[str, Any] | None = None
@@ -2010,75 +2015,6 @@ async def tende_map_update(payload: dict):
                 client.disconnect()
         except Exception:
             pass
-
-
-@app.get("/api/sun/live")
-async def sun_live():
-    if not DATA_FILE.exists():
-        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
-    payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
-    sp = payload.get("sun_position", {}) if isinstance(payload, dict) else {}
-    az = sp.get("azimuth_compass_deg")
-    alt = sp.get("altitude_deg")
-    updated_at = payload.get("timestamp_local") if isinstance(payload, dict) else None
-    if az is None or alt is None or not updated_at:
-        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
-    return JSONResponse(
-        {
-            "ok": True,
-            "azimuth_compass_deg": float(az),
-            "altitude_deg": float(alt),
-            "updated_at": str(updated_at),
-            "source": "e-sunmind",
-        }
-    )
-
-
-@app.get("/api/solar_forecast")
-async def solar_forecast():
-    if not FORECAST_FILE.exists():
-        return JSONResponse({"ok": False, "error": "forecast_not_ready"})
-    payload = json.loads(FORECAST_FILE.read_text(encoding="utf-8"))
-    return JSONResponse(payload)
-
-
-@app.get("/api/health")
-async def health():
-    now_ts = time.time()
-    stale_seconds = int(now_ts - float(WORKER_STATE.get("last_ok_ts", 0.0) or 0.0))
-    return JSONResponse(
-        {
-            "ok": WORKER_STATE.get("last_error") is None,
-            "version": APP_VERSION,
-            "stale_seconds": stale_seconds,
-            "worker_state": WORKER_STATE,
-            "files": {
-                "data_exists": DATA_FILE.exists(),
-                "forecast_exists": FORECAST_FILE.exists(),
-                "state_exists": STATE_FILE.exists(),
-            },
-        }
-    )
-
-
-@app.get("/api/mqtt/status")
-async def mqtt_status():
-    cfg = _load_options()
-    mc = (cfg.get("mqtt") or {})
-    return JSONResponse(
-        {
-            "ok": True,
-            "enabled": bool(mc.get("enabled")),
-            "host": str(mc.get("host") or ""),
-            "port": int(mc.get("port") or 1883),
-            "base_topic": str(mc.get("base_topic") or "e-sunmind"),
-            "discovery_prefix": str(mc.get("discovery_prefix") or "homeassistant"),
-            "client_id": str(mc.get("client_id") or "e-sunmind-addon"),
-            "connected": bool(WORKER_STATE.get("mqtt_connected")),
-            "last_error": WORKER_STATE.get("mqtt_last_error"),
-        }
-    )
-
 
 @app.get("/api/options")
 async def options_get():
