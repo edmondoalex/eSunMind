@@ -419,18 +419,20 @@
           <label>Proteggi stravento facciata
             <input type="checkbox" v-model="selectedShadeEdit.protect_on_facade_rain_risk" />
           </label>
-          <label>Posizione sicurezza meteo
-            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_safe_position" />
-          </label>
-          <label>Posizione sicurezza vento
-            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
-          </label>
-          <label>Posizione sicurezza pioggia
-            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
-          </label>
-          <label>Posizione sicurezza stravento
-            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_facade_rain_safe_position" />
-          </label>
+          <div class="tende-position-row">
+            <label>Posizione sicurezza meteo
+              <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_safe_position" />
+            </label>
+            <label>Posizione sicurezza vento
+              <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
+            </label>
+            <label>Posizione sicurezza pioggia
+              <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
+            </label>
+            <label>Posizione sicurezza stravento
+              <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_facade_rain_safe_position" />
+            </label>
+          </div>
         </div>
         <div class="tende-sensors" v-if="selectedShadeEdit.sensors">
           <span>Sole: {{ fmt(selectedShadeEdit.sensors.sun_azimuth) }}&deg; / {{ fmt(selectedShadeEdit.sensors.sun_elevation) }}&deg;</span>
@@ -3126,6 +3128,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .tende-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
+.tende-position-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}
 .tende-sensors{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:10px}
 .tende-sensors span{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;color:#dbe7ff}
 .tende-layout{display:grid;grid-template-columns:320px 1fr;gap:10px}
@@ -3191,6 +3194,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .tende-layout{
     grid-template-columns:1fr;
+  }
+  .tende-position-row{
+    grid-template-columns:1fr 1fr;
   }
   #tende-map{
     height:56dvh;

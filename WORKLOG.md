@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-06
+- UI Tende/Cover: raggruppati i quattro campi `Posizione sicurezza` sulla stessa riga desktop.
+- Bump versione addon a `0.3.43` con changelog aggiornato.
 - Allineato addon e-SunMind a e-Tende 0.1.72: aggiunti controlli `Usa logica sole` e `Inverti logica sole` nella pagina Tende/Cover.
 - Il salvataggio taratura ora invia anche `sun_logic_enabled` e `invert_sun_logic` verso e-Tende.
 - Bump versione addon a `0.3.42` con changelog aggiornato.
