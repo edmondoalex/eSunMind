@@ -441,10 +441,10 @@
           <div v-if="!tendeMapShades.length" class="note">Nessuna tenda ricevuta.</div>
           <button
             v-for="s in tendeMapShades"
-            :key="s.id"
+            :key="shadeKey(s)"
             class="shade-item"
-            :class="{active: selectedShadeId===s.id}"
-            @click="selectShade(s.id)"
+            :class="{active: selectedShadeId===shadeKey(s)}"
+            @click="selectShade(shadeKey(s))"
           >
             <strong>{{ s.name || s.id }}</strong>
             <span>{{ s.cover_entity || '-' }}</span>
@@ -2151,7 +2151,7 @@ function mergeTendeShades(previous, incoming) {
 
 function selectShade(id) {
   selectedShadeId.value = id
-  const shade = tendeMapShades.value.find((s) => s.id === id)
+  const shade = tendeMapShades.value.find((s) => shadeKey(s) === id || String(s.id || '').trim() === String(id || '').trim())
   if (!shade) return
   selectedShadeEdit.value = {
     id: shade.id,
@@ -2265,6 +2265,29 @@ function toggleTendeEditMode() {
   drawTendeEditor()
 }
 
+function applySavedShadeLocally(editShade, settings) {
+  const key = shadeKey(editShade)
+  if (!key) return
+  const prev = Array.isArray(lastValidTendeShades.value) ? lastValidTendeShades.value : []
+  const idx = prev.findIndex((s) => shadeKey(s) === key)
+  const base = idx >= 0 ? prev[idx] : {}
+  const merged = {
+    ...base,
+    id: editShade.id || base.id || null,
+    name: editShade.name || base.name || editShade.id || editShade.cover_entity || 'cover',
+    cover_entity: editShade.cover_entity || base.cover_entity || null,
+    ...settings,
+    settings: { ...(base.settings || {}), ...settings },
+  }
+  if (idx >= 0) {
+    const copy = prev.slice()
+    copy[idx] = merged
+    lastValidTendeShades.value = copy
+  } else {
+    lastValidTendeShades.value = mergeTendeShades(prev, [merged])
+  }
+}
+
 function valuesEquivalent(expected, actual) {
   if (typeof expected === 'boolean') return Boolean(actual) === expected
   const en = Number(expected)
@@ -2345,13 +2368,15 @@ async function saveSelectedShade() {
     else if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Configurazione cover applicata (ACK ricevuto).'
     else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
     else tendeSaveStatus.value = 'Configurazione inviata (ACK non ricevuto).'
+    applySavedShadeLocally(e, settings)
+    if (selectedShadeId.value) selectShade(selectedShadeId.value)
     if (j.status === 'sent_no_ack') await new Promise((resolve) => setTimeout(resolve, 1500))
     await loadData()
     if (j.status === 'sent_no_ack') {
       const confirmed = shadeConfirmsSettings(findSavedShade(e), settings)
       tendeSaveStatus.value = confirmed
         ? 'Configurazione cover applicata (verificata dalla mappa, ACK non ricevuto).'
-        : 'Configurazione inviata a e-Tende (ACK non ricevuto, attendi prossimo aggiornamento mappa).'
+        : 'Configurazione applicata in pagina. ACK non ricevuto: in attesa conferma mappa automatica.'
     }
   } catch (e) {
     let extra = ''
@@ -2466,10 +2491,10 @@ async function loadData() {
     // no-op
   }
   if (!selectedShadeId.value && tendeMapShades.value.length) {
-    selectShade(tendeMapShades.value[0].id)
+    selectShade(shadeKey(tendeMapShades.value[0]))
   } else if (selectedShadeId.value) {
-    const ex = tendeMapShades.value.find((s) => s.id === selectedShadeId.value)
-    if (ex) selectShade(ex.id)
+    const ex = tendeMapShades.value.find((s) => shadeKey(s) === selectedShadeId.value || String(s.id || '').trim() === String(selectedShadeId.value || '').trim())
+    if (ex) selectShade(shadeKey(ex))
   }
 }
 
@@ -2724,7 +2749,7 @@ watch(tab, async (val) => {
     if (tendeMapObj && lat.value != null && lon.value != null) {
       tendeMapObj.setView([lat.value, lon.value], cfg.value.mapZoom)
       tendeMapObj.invalidateSize()
-      if (!selectedShadeId.value && tendeMapShades.value.length) selectShade(tendeMapShades.value[0].id)
+      if (!selectedShadeId.value && tendeMapShades.value.length) selectShade(shadeKey(tendeMapShades.value[0]))
       else drawTendeEditor()
     }
   } else {
