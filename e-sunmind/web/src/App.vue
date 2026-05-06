@@ -2131,6 +2131,24 @@ function pickSetting(shade, key, fallback = null) {
   return fallback
 }
 
+function shadeKey(shade) {
+  return String(shade?.id || shade?.cover_entity || shade?.name || '').trim()
+}
+
+function mergeTendeShades(previous, incoming) {
+  const merged = new Map()
+  for (const shade of Array.isArray(previous) ? previous : []) {
+    const key = shadeKey(shade)
+    if (key) merged.set(key, shade)
+  }
+  for (const shade of Array.isArray(incoming) ? incoming : []) {
+    const key = shadeKey(shade)
+    if (!key) continue
+    merged.set(key, { ...(merged.get(key) || {}), ...shade })
+  }
+  return Array.from(merged.values())
+}
+
 function selectShade(id) {
   selectedShadeId.value = id
   const shade = tendeMapShades.value.find((s) => s.id === id)
@@ -2348,7 +2366,7 @@ async function loadData() {
   data.value = j
   const incomingShades = j?.tende_map?.shades
   if (Array.isArray(incomingShades) && incomingShades.filter((s) => s).length) {
-    lastValidTendeShades.value = incomingShades.filter((s) => s)
+    lastValidTendeShades.value = mergeTendeShades(lastValidTendeShades.value, incomingShades.filter((s) => s))
   }
   const incomingCoverStates = j?.tende_map?.cover_states
   if (incomingCoverStates && Object.keys(incomingCoverStates).length) {

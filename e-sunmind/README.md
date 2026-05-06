@@ -49,6 +49,7 @@ Da `0.3.35` un ACK negativo duplicato non blocca piu il salvataggio se entro tim
 Da `0.3.36` il comando viene pubblicato su un solo topic primario e, se l'ACK non arriva, il salvataggio viene confermato dal payload mappa aggiornato.
 Da `0.3.37` l'assenza di ACK non genera piu HTTP 504 se il comando e stato pubblicato; la UI segnala `inviato senza ACK` e aggiorna la mappa dopo un breve ritardo.
 Da `0.3.38` la UI mantiene l'ultima lista valida di cover durante refresh temporanei e segnala `applicata` quando i valori ricaricati dalla mappa coincidono.
+Da `0.3.39` la UI fonde i payload mappa parziali con l'ultima lista valida, quindi una cover non viene rimossa solo perche manca in un refresh temporaneo.
 
 ### Weather guard per e-Tende
 
