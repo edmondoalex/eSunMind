@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-06
+- UI Tende/Cover: aggiunta linea mappa `Facciata` per visualizzare l'azimut stravento separato dal sole.
+- Bump versione addon a `0.3.45` con changelog aggiornato.
 - UI Tende/Cover: aggiunto `Azimut facciata stravento` per separare pioggia/vento da `Azimut finestra` usato dal sole.
 - Bump versione addon a `0.3.44` con changelog aggiornato.
 - UI Tende/Cover: raggruppati i quattro campi `Posizione sicurezza` sulla stessa riga desktop.

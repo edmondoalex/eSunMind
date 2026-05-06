@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.45
+
+- UI Tende/Cover: aggiunta linea visibile `Facciata` sulla mappa taratura usando `facade_azimuth_deg`.
+
 ## 0.3.44
 
 - UI Tende/Cover: aggiunto campo `Azimut facciata stravento`, separato da `Azimut finestra`.

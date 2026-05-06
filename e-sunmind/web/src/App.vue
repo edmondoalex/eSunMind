@@ -2247,6 +2247,13 @@ function drawTendeEditor() {
   tendePoly = L.polygon(pts, { color, weight: 2.6, fillColor: color, fillOpacity: 0.3 }).addTo(tendeMapObj)
   const windowPt = destinationPoint(lat.value, lon.value, s.window_azimuth, cfg.value.sectorRadiusM)
   tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], windowPt], { color: '#38bdf8', weight: 2.2, opacity: 0.9, dashArray: '7,5' }).addTo(tendeMapObj))
+  const facadeAz = Number(s.facade_azimuth_deg)
+  if (Number.isFinite(facadeAz) && facadeAz >= 0) {
+    const facadePt = destinationPoint(lat.value, lon.value, facadeAz, cfg.value.sectorRadiusM)
+    tendeEditorExtraLayers.push(L.polyline([[lat.value, lon.value], facadePt], { color: '#f43f5e', weight: 3, opacity: 0.95, dashArray: '10,5' }).addTo(tendeMapObj))
+    tendeEditorExtraLayers.push(L.circleMarker(facadePt, { radius: 5, color: '#fff1f2', fillColor: '#f43f5e', fillOpacity: 1, weight: 2 }).addTo(tendeMapObj))
+    tendeEditorExtraLayers.push(L.marker(destinationPoint(lat.value, lon.value, facadeAz, cfg.value.sectorRadiusM + 16), { icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label facade">Facciata</span>', iconSize: [82, 18], iconAnchor: [41, 9] }), interactive: false }).addTo(tendeMapObj))
+  }
   const p1 = destinationPoint(lat.value, lon.value, s.azimuth_start_deg, cfg.value.sectorRadiusM)
   const p2 = destinationPoint(lat.value, lon.value, s.azimuth_end_deg, cfg.value.sectorRadiusM)
   tendeStartMarker = L.marker(p1, { draggable: tendeEditMode.value, icon: L.divIcon({ className: 'tende-handle-wrap', html: '<span class="tende-handle tende-handle-start"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(tendeMapObj)
@@ -3113,6 +3120,10 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .sun-ref-label.sunset{
   color:#fff3be;
   background:rgba(250,204,21,.30);
+}
+.sun-ref-label.facade{
+  color:#ffe4e6;
+  background:rgba(244,63,94,.42);
 }
 .sun-icon-wrap{
   background:transparent;
