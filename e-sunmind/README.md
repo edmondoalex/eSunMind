@@ -50,6 +50,7 @@ Da `0.3.36` il comando viene pubblicato su un solo topic primario e, se l'ACK no
 Da `0.3.37` l'assenza di ACK non genera piu HTTP 504 se il comando e stato pubblicato; la UI segnala `inviato senza ACK` e aggiorna la mappa dopo un breve ritardo.
 Da `0.3.38` la UI mantiene l'ultima lista valida di cover durante refresh temporanei e segnala `applicata` quando i valori ricaricati dalla mappa coincidono.
 Da `0.3.39` la UI fonde i payload mappa parziali con l'ultima lista valida, quindi una cover non viene rimossa solo perche manca in un refresh temporaneo.
+Da `0.3.40` il salvataggio riprova anche sul topic MQTT fallback storico se il topic primario non produce ACK/conferma mappa, e la UI non rimuove piu cover presenti in cache quando il payload live e parziale.
 
 ### Weather guard per e-Tende
 

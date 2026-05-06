@@ -934,7 +934,7 @@ const tendeMap = computed(() => data.value?.tende_map || null)
 const tendeMapShades = computed(() => {
   const arr = tendeMap.value?.shades
   const live = Array.isArray(arr) ? arr.filter((s) => s) : []
-  return live.length ? live : lastValidTendeShades.value
+  return mergeTendeShades(lastValidTendeShades.value, live)
 })
 const tendeCoverStates = computed(() => {
   const states = tendeMap.value?.cover_states

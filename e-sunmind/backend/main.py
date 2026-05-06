@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.39"
+APP_VERSION = "0.3.40"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -2057,6 +2057,7 @@ async def tende_map_update(payload: dict):
     username = str(tm_cfg.get("mqtt_username") or "").strip()
     password = str(tm_cfg.get("mqtt_password") or "")
     cmd_topics = ["e-tendeintelligenti/cmd/shades/update"]
+    fallback_cmd_topics = ["e-tendeintelligenti/cmd/map/shades/update"]
     ack_topics = [
         "e-tendeintelligenti/cmd/shades/update/ack",
         "e-tendeintelligenti/cmd/map/shades/update/ack",
@@ -2112,38 +2113,57 @@ async def tende_map_update(payload: dict):
         # Give the broker time to register subscriptions before e-Tende can answer.
         # Without this, a very fast ACK can be published before this client is listening.
         time.sleep(0.35)
-        for topic in cmd_topics:
-            client.publish(topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
-        t0 = time.time()
-        while (time.time() - t0) < 6.0 and ack_result is None:
-            time.sleep(0.05)
-        if not ack_result:
+        def _publish_to_topics(topics: list[str]) -> None:
+            encoded = json.dumps(msg, ensure_ascii=False)
+            for topic in topics:
+                info = client.publish(topic, encoded, qos=1, retain=False)
+                try:
+                    info.wait_for_publish(timeout=2.0)
+                except Exception:
+                    pass
+
+        def _wait_for_ack_or_map(timeout_seconds: float) -> dict[str, Any] | None:
+            t_start = time.time()
+            while (time.time() - t_start) < timeout_seconds and ack_result is None:
+                time.sleep(0.05)
+            if ack_result is not None:
+                return {"mode": "ack", "ack": ack_result}
             confirmed = _wait_for_tende_map_confirmation(
                 shade_id,
                 cover_entity,
                 shade_name,
                 merged_settings,
-                timeout_seconds=4.0,
+                timeout_seconds=2.0,
             )
             if confirmed is not None:
-                return JSONResponse(
-                    {
-                        "ok": True,
-                        "status": "confirmed_by_map",
-                        "topics": cmd_topics,
-                        "payload": msg,
-                        "ack": None,
-                        "ack_errors": ack_errors[-5:],
-                        "confirmed_shade": confirmed,
-                    }
-                )
+                return {"mode": "map", "confirmed_shade": confirmed}
+            return None
+
+        _publish_to_topics(cmd_topics)
+        result = _wait_for_ack_or_map(4.0)
+        if result is None:
+            _publish_to_topics(fallback_cmd_topics)
+            result = _wait_for_ack_or_map(4.0)
+        if result is not None and result.get("mode") == "map":
+            return JSONResponse(
+                {
+                    "ok": True,
+                    "status": "confirmed_by_map",
+                    "topics": cmd_topics + fallback_cmd_topics,
+                    "payload": msg,
+                    "ack": None,
+                    "ack_errors": ack_errors[-5:],
+                    "confirmed_shade": result.get("confirmed_shade"),
+                }
+            )
+        if not ack_result:
             if ack_errors:
                 last_error = ack_errors[-1]
                 return JSONResponse(
                     {
                         "ok": False,
                         "error": "ack_negative",
-                        "topics": cmd_topics,
+                        "topics": cmd_topics + fallback_cmd_topics,
                         "payload": msg,
                         "ack": last_error,
                         "ack_errors": ack_errors[-5:],
@@ -2155,7 +2175,7 @@ async def tende_map_update(payload: dict):
                     "ok": True,
                     "status": "sent_no_ack",
                     "warning": "ack_timeout",
-                    "topics": cmd_topics,
+                    "topics": cmd_topics + fallback_cmd_topics,
                     "ack_topics": ack_topics,
                     "payload": msg,
                     "ack": None,
