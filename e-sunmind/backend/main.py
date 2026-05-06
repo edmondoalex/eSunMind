@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.32"
+APP_VERSION = "0.3.33"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1711,9 +1711,20 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
     )
     client.publish(
         f"{base}/state/runtime_json",
-        json.dumps(data, ensure_ascii=False),
+        json.dumps(_slim_runtime_payload(data), ensure_ascii=False),
         retain=True,
     )
+
+
+def _slim_runtime_payload(data: dict[str, Any]) -> dict[str, Any]:
+    """Keep MQTT diagnostic attributes small enough for HA recorder."""
+    slim = json.loads(json.dumps(data, ensure_ascii=False, default=str))
+    for key in ("weather", "weather_open_meteo", "air_quality", "forecast_solar"):
+        block = slim.get(key)
+        if isinstance(block, dict) and "payload" in block:
+            block["payload_omitted_from_mqtt"] = True
+            block.pop("payload", None)
+    return slim
 
 
 async def _worker() -> None:
@@ -1878,6 +1889,29 @@ async def favicon():
 @app.get("/api/status")
 async def status():
     return JSONResponse({"ok": True, "version": APP_VERSION, "state": WORKER_STATE})
+
+
+@app.get("/api/sun/live")
+async def sun_live():
+    if not DATA_FILE.exists():
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    sp = payload.get("sun_position") if isinstance(payload, dict) else None
+    if not isinstance(sp, dict):
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    az = sp.get("azimuth_compass_deg")
+    alt = sp.get("altitude_deg")
+    if az is None or alt is None:
+        return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
+    return JSONResponse(
+        {
+            "ok": True,
+            "azimuth_compass_deg": float(az),
+            "altitude_deg": float(alt),
+            "updated_at": str(payload.get("timestamp_local") or datetime.utcnow().isoformat()),
+            "source": "e-sunmind",
+        }
+    )
 
 
 @app.get("/api/data")
