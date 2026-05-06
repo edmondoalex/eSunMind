@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.29"
+APP_VERSION = "0.3.30"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1101,7 +1101,10 @@ def _read_weather_cache() -> dict[str, Any] | None:
     if not WEATHER_FILE.exists():
         return None
     try:
-        return json.loads(WEATHER_FILE.read_text(encoding="utf-8"))
+        payload = json.loads(WEATHER_FILE.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and payload.get("_fetched_at_ts") is None:
+            payload["_fetched_at_ts"] = WEATHER_FILE.stat().st_mtime
+        return payload
     except Exception:
         return None
 
@@ -1110,9 +1113,28 @@ def _read_weather_open_meteo_cache() -> dict[str, Any] | None:
     if not WEATHER_OPEN_METEO_FILE.exists():
         return None
     try:
-        return json.loads(WEATHER_OPEN_METEO_FILE.read_text(encoding="utf-8"))
+        payload = json.loads(WEATHER_OPEN_METEO_FILE.read_text(encoding="utf-8"))
+        if isinstance(payload, dict) and payload.get("_fetched_at_ts") is None:
+            payload["_fetched_at_ts"] = WEATHER_OPEN_METEO_FILE.stat().st_mtime
+        return payload
     except Exception:
         return None
+
+
+def _attach_weather_cache_for_guard(payload: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        return payload
+    weather = payload.get("weather")
+    if not (isinstance(weather, dict) and weather.get("ok") and _weather_payload_ts(weather) is not None):
+        cached = _read_weather_cache()
+        if isinstance(cached, dict) and cached.get("ok"):
+            payload["weather"] = cached
+    weather_open = payload.get("weather_open_meteo")
+    if not (isinstance(weather_open, dict) and weather_open.get("ok") and _weather_payload_ts(weather_open) is not None):
+        cached_open = _read_weather_open_meteo_cache()
+        if isinstance(cached_open, dict) and cached_open.get("ok"):
+            payload["weather_open_meteo"] = cached_open
+    return payload
 
 
 def _read_air_quality_cache() -> dict[str, Any] | None:
@@ -1859,6 +1881,7 @@ async def data():
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    payload = _attach_weather_cache_for_guard(payload)
     cfg = _load_options()
     payload["tende_map"] = _build_tende_map_snapshot(cfg)
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
@@ -1871,6 +1894,7 @@ async def weather_guard_get():
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"}, status_code=503)
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    payload = _attach_weather_cache_for_guard(payload)
     cfg = _load_options()
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
     return JSONResponse(_build_weather_guard(payload, cfg))

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.30
+
+- Weather guard piu robusto quando il runtime non contiene meteo valido.
+- `/api/weather/guard` e `/api/data` recuperano fallback da cache MET/Open-Meteo.
+- Se la cache meteo non contiene timestamp, viene usato il timestamp del file cache.
+
 ## 0.3.29
 
 - Aggiunta pagina `Setting` con salvataggio unico `Salva tutto`.
