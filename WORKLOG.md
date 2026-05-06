@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-06
+- Allineato addon e-SunMind a e-Tende 0.1.72: aggiunti controlli `Usa logica sole` e `Inverti logica sole` nella pagina Tende/Cover.
+- Il salvataggio taratura ora invia anche `sun_logic_enabled` e `invert_sun_logic` verso e-Tende.
+- Bump versione addon a `0.3.42` con changelog aggiornato.
 - Fix UI integrazione e-SunMind ↔ e-Tende: la cover non sparisce piu dopo salvataggio anche con payload mappa parziale/senza `id` stabile.
 - Aggiornata selezione cover in pagina su chiave robusta (`id|cover_entity|name`).
 - Aggiunto aggiornamento ottimistico locale dopo `POST /api/tende/map/update` per evitare refresh manuale.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.42
+
+- UI Tende/Cover: aggiunti controlli `Usa logica sole` e `Inverti logica sole` per allineamento con e-Tende 0.1.72.
+- Salvataggio Tende/Cover: il payload verso e-Tende include `sun_logic_enabled` e `invert_sun_logic`.
+- Diagnostica Tende/Cover: mostrato lo stato runtime della logica sole quando presente nei sensori mappa.
+
 ## 0.3.41
 
 - UI Tende/Cover: selezione e rendering lista cover ora usano una chiave robusta (`id|cover_entity|name`), evitando sparizioni quando il payload live non contiene `id` stabile.

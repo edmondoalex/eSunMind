@@ -347,6 +347,12 @@
           <label>Automazione
             <input type="checkbox" v-model="selectedShadeEdit.enabled" />
           </label>
+          <label>Usa logica sole
+            <input type="checkbox" v-model="selectedShadeEdit.sun_logic_enabled" />
+          </label>
+          <label>Inverti logica sole
+            <input type="checkbox" v-model="selectedShadeEdit.invert_sun_logic" />
+          </label>
           <label>Apri se sole assente
             <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
           </label>
@@ -430,6 +436,7 @@
           <span>Sole: {{ fmt(selectedShadeEdit.sensors.sun_azimuth) }}&deg; / {{ fmt(selectedShadeEdit.sensors.sun_elevation) }}&deg;</span>
           <span>Sole davanti: {{ boolLabel(selectedShadeEdit.sensors.sun_in_front) }}</span>
           <span>Range elevazione: {{ boolLabel(selectedShadeEdit.sensors.sun_in_elevation_range) }}</span>
+          <span>Logica sole: {{ boolLabel(selectedShadeEdit.sensors.sun_logic_enabled) }} / invertita {{ boolLabel(selectedShadeEdit.sensors.invert_sun_logic) }}</span>
           <span>Allarme meteo: {{ selectedShadeEdit.sensors.weather_active_alarm || 'none' }}</span>
           <span>Target meteo: {{ targetValue(selectedShadeEdit.sensors.weather_target_position) }}</span>
           <span>Rischio facciata: {{ boolLabel(selectedShadeEdit.sensors.weather_cover_facade_rain_risk) }}</span>
@@ -2158,6 +2165,8 @@ function selectShade(id) {
     name: shade.name,
     cover_entity: shade.cover_entity,
     enabled: Boolean(pickSetting(shade, 'enabled', shade.enabled)),
+    sun_logic_enabled: Boolean(pickSetting(shade, 'sun_logic_enabled', true)),
+    invert_sun_logic: Boolean(pickSetting(shade, 'invert_sun_logic', false)),
     open_when_no_sun: Boolean(pickSetting(shade, 'open_when_no_sun', true)),
     use_start_stop_azimuth: Boolean(pickSetting(shade, 'use_start_stop_azimuth', true)),
     command_mode_open_close: String(pickSetting(shade, 'command_mode', 'open_close')) === 'open_close',
@@ -2325,6 +2334,8 @@ async function saveSelectedShade() {
     const e = selectedShadeEdit.value
     const settings = {
       enabled: Boolean(e.enabled),
+      sun_logic_enabled: Boolean(e.sun_logic_enabled),
+      invert_sun_logic: Boolean(e.invert_sun_logic),
       open_when_no_sun: Boolean(e.open_when_no_sun),
       use_start_stop_azimuth: Boolean(e.use_start_stop_azimuth),
       command_mode: e.command_mode_open_close ? 'open_close' : 'percentage',
