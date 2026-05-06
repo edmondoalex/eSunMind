@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.35"
+APP_VERSION = "0.3.36"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1212,6 +1212,82 @@ def _normalize_tende_map_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
+def _lookup_tende_map_shade(
+    payload: dict[str, Any] | None,
+    shade_id: str,
+    cover_entity: str,
+    name: str,
+) -> dict[str, Any] | None:
+    if not isinstance(payload, dict):
+        return None
+    shades = payload.get("shades")
+    if not isinstance(shades, list):
+        return None
+    wanted_id = str(shade_id or "").strip()
+    wanted_cover = str(cover_entity or "").strip().casefold()
+    wanted_name = str(name or "").strip().casefold()
+    for shade in shades:
+        if not isinstance(shade, dict):
+            continue
+        if wanted_id and str(shade.get("id") or "").strip() == wanted_id:
+            return shade
+        if wanted_cover and str(shade.get("cover_entity") or "").strip().casefold() == wanted_cover:
+            return shade
+        if wanted_name and str(shade.get("name") or "").strip().casefold() == wanted_name:
+            return shade
+    return None
+
+
+def _values_equivalent(expected: Any, actual: Any) -> bool:
+    if isinstance(expected, bool):
+        return bool(actual) is expected
+    exp_num = _coerce_float(expected)
+    act_num = _coerce_float(actual)
+    if exp_num is not None and act_num is not None:
+        return abs(exp_num - act_num) <= 0.05
+    return str(expected).strip() == str(actual).strip()
+
+
+def _shade_settings_confirm(shade: dict[str, Any] | None, expected_settings: dict[str, Any]) -> bool:
+    if not isinstance(shade, dict) or not isinstance(expected_settings, dict):
+        return False
+    shade_settings = shade.get("settings") if isinstance(shade.get("settings"), dict) else {}
+    checked = 0
+    for key, expected in expected_settings.items():
+        if key in {"id", "name", "cover_entity", "settings", "sensors"} or expected is None:
+            continue
+        actual = shade_settings.get(key, shade.get(key))
+        if actual is None and key == "azimuth_start":
+            actual = shade_settings.get("azimuth_start_deg", shade.get("azimuth_start_deg"))
+        if actual is None and key == "azimuth_stop":
+            actual = shade_settings.get("azimuth_end_deg", shade.get("azimuth_end_deg"))
+        if actual is None:
+            continue
+        checked += 1
+        if not _values_equivalent(expected, actual):
+            return False
+    return checked > 0
+
+
+def _wait_for_tende_map_confirmation(
+    shade_id: str,
+    cover_entity: str,
+    name: str,
+    expected_settings: dict[str, Any],
+    timeout_seconds: float = 4.0,
+) -> dict[str, Any] | None:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        raw = _read_tende_map_cache()
+        if isinstance(raw, dict):
+            norm = _normalize_tende_map_payload(raw)
+            shade = _lookup_tende_map_shade(norm, shade_id, cover_entity, name)
+            if _shade_settings_confirm(shade, expected_settings):
+                return shade
+        time.sleep(0.2)
+    return None
+
+
 def _tende_map_mqtt_start_or_refresh(cfg: dict[str, Any]) -> None:
     tc = (cfg.get("tende_map") or {})
     if not tc.get("enabled", True):
@@ -1952,6 +2028,7 @@ async def tende_map_update(payload: dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
     shade_id = str(payload.get("id") or "").strip()
     cover_entity = str(payload.get("cover_entity") or "").strip()
+    shade_name = str(payload.get("name") or payload.get("profile_name") or "").strip()
     if not shade_id and not cover_entity:
         return JSONResponse({"ok": False, "error": "missing_target"}, status_code=400)
 
@@ -1979,10 +2056,7 @@ async def tende_map_update(payload: dict):
     port = int(tm_cfg.get("mqtt_port") or 1883)
     username = str(tm_cfg.get("mqtt_username") or "").strip()
     password = str(tm_cfg.get("mqtt_password") or "")
-    cmd_topics = [
-        "e-tendeintelligenti/cmd/shades/update",
-        "e-tendeintelligenti/cmd/map/shades/update",
-    ]
+    cmd_topics = ["e-tendeintelligenti/cmd/shades/update"]
     ack_topics = [
         "e-tendeintelligenti/cmd/shades/update/ack",
         "e-tendeintelligenti/cmd/map/shades/update/ack",
@@ -2044,6 +2118,25 @@ async def tende_map_update(payload: dict):
         while (time.time() - t0) < 6.0 and ack_result is None:
             time.sleep(0.05)
         if not ack_result:
+            confirmed = _wait_for_tende_map_confirmation(
+                shade_id,
+                cover_entity,
+                shade_name,
+                merged_settings,
+                timeout_seconds=4.0,
+            )
+            if confirmed is not None:
+                return JSONResponse(
+                    {
+                        "ok": True,
+                        "status": "confirmed_by_map",
+                        "topics": cmd_topics,
+                        "payload": msg,
+                        "ack": None,
+                        "ack_errors": ack_errors[-5:],
+                        "confirmed_shade": confirmed,
+                    }
+                )
             if ack_errors:
                 last_error = ack_errors[-1]
                 return JSONResponse(
