@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.32
+
+- Fix salvataggio Tende/Cover: e-SunMind ora attende la connessione MQTT e registra le subscribe ACK prima di pubblicare il comando verso e-Tende.
+- Migliorata diagnostica errore quando il broker MQTT non risponde in fase di comando.
+
 ## 0.3.31
 
 - Pagina `Tende/Cover`: editor completo della cover selezionata con tarature, protezioni meteo e diagnostica runtime.

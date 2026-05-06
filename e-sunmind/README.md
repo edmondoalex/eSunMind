@@ -42,6 +42,7 @@ La pagina `Tende/Cover` usa il payload MQTT di e-Tende per mostrare ogni cover c
 - stato reale cover letto da e-Control
 
 Il salvataggio usa `POST /api/tende/map/update`, invia un comando MQTT a e-Tende e considera la modifica applicata solo dopo ACK positivo.
+Da `0.3.32` il comando attende la connessione MQTT e la registrazione delle subscribe ACK prima del publish, evitando timeout causati da ACK troppo veloci.
 
 ### Weather guard per e-Tende
 

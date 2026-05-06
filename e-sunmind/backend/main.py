@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.31"
+APP_VERSION = "0.3.32"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1974,9 +1974,13 @@ async def tende_map_update(payload: dict):
     client = None
     ack_result: dict[str, Any] | None = None
     try:
+        connected = threading.Event()
         client = mqtt.Client(client_id=f"e-sunmind-cmd-{int(time.time())}")
         if username:
             client.username_pw_set(username, password)
+        def _on_connect(_c: mqtt.Client, _u: Any, _flags: Any, rc: int) -> None:
+            if rc == 0:
+                connected.set()
         def _on_message(_c: mqtt.Client, _u: Any, m: mqtt.MQTTMessage) -> None:
             nonlocal ack_result
             try:
@@ -1985,11 +1989,17 @@ async def tende_map_update(payload: dict):
                     ack_result = parsed
             except Exception:
                 pass
+        client.on_connect = _on_connect
         client.on_message = _on_message
         client.connect(host, port, 60)
         client.loop_start()
+        if not connected.wait(3.0):
+            return JSONResponse({"ok": False, "error": "mqtt_connect_timeout", "host": host, "port": port}, status_code=504)
         for at in ack_topics:
             client.subscribe(at, qos=1)
+        # Give the broker time to register subscriptions before e-Tende can answer.
+        # Without this, a very fast ACK can be published before this client is listening.
+        time.sleep(0.35)
         for topic in cmd_topics:
             client.publish(topic, json.dumps(msg, ensure_ascii=False), qos=1, retain=False)
         t0 = time.time()
