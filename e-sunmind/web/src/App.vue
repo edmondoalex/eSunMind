@@ -365,6 +365,9 @@
           <label>Azimut finestra
             <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.window_azimuth" @change="drawTendeEditor" />
           </label>
+          <label>Azimut facciata stravento
+            <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.facade_azimuth_deg" />
+          </label>
           <label>Azimuth start
             <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_start_deg" @change="drawTendeEditor" />
           </label>
@@ -2173,6 +2176,7 @@ function selectShade(id) {
     use_start_stop_azimuth: Boolean(pickSetting(shade, 'use_start_stop_azimuth', true)),
     command_mode_open_close: String(pickSetting(shade, 'command_mode', 'open_close')) === 'open_close',
     window_azimuth: Number(pickSetting(shade, 'window_azimuth', 0)),
+    facade_azimuth_deg: Number(pickSetting(shade, 'facade_azimuth_deg', pickSetting(shade, 'window_azimuth', 0))),
     azimuth_start_deg: Number.isFinite(Number(pickSetting(shade, 'azimuth_start_deg', shade.azimuth_start_deg))) ? Number(pickSetting(shade, 'azimuth_start_deg', shade.azimuth_start_deg)) : 0,
     azimuth_end_deg: Number.isFinite(Number(pickSetting(shade, 'azimuth_end_deg', shade.azimuth_end_deg))) ? Number(pickSetting(shade, 'azimuth_end_deg', shade.azimuth_end_deg)) : 0,
     fov_left: Number(pickSetting(shade, 'fov_left', 70)),
@@ -2342,6 +2346,7 @@ async function saveSelectedShade() {
       use_start_stop_azimuth: Boolean(e.use_start_stop_azimuth),
       command_mode: e.command_mode_open_close ? 'open_close' : 'percentage',
       window_azimuth: Number(e.window_azimuth),
+      facade_azimuth_deg: Number(e.facade_azimuth_deg),
       azimuth_start_deg: Number(e.azimuth_start_deg),
       azimuth_end_deg: Number(e.azimuth_end_deg),
       fov_left: Number(e.fov_left),
