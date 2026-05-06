@@ -45,6 +45,7 @@ Il salvataggio usa `POST /api/tende/map/update`, invia un comando MQTT a e-Tende
 Da `0.3.32` il comando attende la connessione MQTT e la registrazione delle subscribe ACK prima del publish, evitando timeout causati da ACK troppo veloci.
 Da `0.3.33` `/api/sun/live` e reale nel backend e il `runtime_json` MQTT resta compatto: i payload raw completi rimangono disponibili in API/UI tecnica ma non come attributi MQTT.
 Da `0.3.34` il comando invia anche il nome cover e accetta target senza `id` quando e presente `cover_entity`, per allinearsi al lookup robusto di e-Tende 0.1.69.
+Da `0.3.35` un ACK negativo duplicato non blocca piu il salvataggio se entro timeout arriva anche l'ACK positivo.
 
 ### Weather guard per e-Tende
 

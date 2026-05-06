@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.35
+
+- Fix gestione ACK salvataggio Tende/Cover: e-SunMind ora attende un ACK positivo e non fallisce subito se riceve prima un ACK negativo duplicato.
+- La risposta `/api/tende/map/update` include eventuali ACK negativi secondari in `ack_errors` solo come diagnostica.
+
 ## 0.3.34
 
 - Salvataggio Tende/Cover piu robusto: il comando verso e-Tende include anche il nome cover.

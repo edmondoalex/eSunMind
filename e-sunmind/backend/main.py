@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.34"
+APP_VERSION = "0.3.35"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -2007,6 +2007,7 @@ async def tende_map_update(payload: dict):
     }
     client = None
     ack_result: dict[str, Any] | None = None
+    ack_errors: list[dict[str, Any]] = []
     try:
         connected = threading.Event()
         client = mqtt.Client(client_id=f"e-sunmind-cmd-{int(time.time())}")
@@ -2016,11 +2017,14 @@ async def tende_map_update(payload: dict):
             if rc == 0:
                 connected.set()
         def _on_message(_c: mqtt.Client, _u: Any, m: mqtt.MQTTMessage) -> None:
-            nonlocal ack_result
+            nonlocal ack_result, ack_errors
             try:
                 parsed = json.loads(m.payload.decode("utf-8", errors="ignore"))
                 if isinstance(parsed, dict) and str(parsed.get("request_id") or "") == request_id:
-                    ack_result = parsed
+                    if parsed.get("ok") is True or str(parsed.get("status") or "").lower() == "ok":
+                        ack_result = parsed
+                    else:
+                        ack_errors.append(parsed)
             except Exception:
                 pass
         client.on_connect = _on_connect
@@ -2040,16 +2044,24 @@ async def tende_map_update(payload: dict):
         while (time.time() - t0) < 6.0 and ack_result is None:
             time.sleep(0.05)
         if not ack_result:
+            if ack_errors:
+                last_error = ack_errors[-1]
+                return JSONResponse(
+                    {
+                        "ok": False,
+                        "error": "ack_negative",
+                        "topics": cmd_topics,
+                        "payload": msg,
+                        "ack": last_error,
+                        "ack_errors": ack_errors[-5:],
+                    },
+                    status_code=502,
+                )
             return JSONResponse(
                 {"ok": False, "error": "ack_timeout", "topics": cmd_topics, "ack_topics": ack_topics, "payload": msg},
                 status_code=504,
             )
-        if not (ack_result.get("ok") is True or str(ack_result.get("status") or "").lower() == "ok"):
-            return JSONResponse(
-                {"ok": False, "error": "ack_negative", "topics": cmd_topics, "payload": msg, "ack": ack_result},
-                status_code=502,
-            )
-        return JSONResponse({"ok": True, "topics": cmd_topics, "payload": msg, "ack": ack_result})
+        return JSONResponse({"ok": True, "topics": cmd_topics, "payload": msg, "ack": ack_result, "ack_errors": ack_errors[-5:]})
     except Exception as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
     finally:
