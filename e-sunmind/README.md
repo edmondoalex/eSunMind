@@ -48,6 +48,7 @@ Da `0.3.34` il comando invia anche il nome cover e accetta target senza `id` qua
 Da `0.3.35` un ACK negativo duplicato non blocca piu il salvataggio se entro timeout arriva anche l'ACK positivo.
 Da `0.3.36` il comando viene pubblicato su un solo topic primario e, se l'ACK non arriva, il salvataggio viene confermato dal payload mappa aggiornato.
 Da `0.3.37` l'assenza di ACK non genera piu HTTP 504 se il comando e stato pubblicato; la UI segnala `inviato senza ACK` e aggiorna la mappa dopo un breve ritardo.
+Da `0.3.38` la UI mantiene l'ultima lista valida di cover durante refresh temporanei e segnala `applicata` quando i valori ricaricati dalla mappa coincidono.
 
 ### Weather guard per e-Tende
 

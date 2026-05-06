@@ -808,6 +808,8 @@ const tendeEditMode = ref(false)
 const selectedShadeId = ref('')
 const selectedShadeEdit = ref(null)
 const tendeSaveStatus = ref('')
+const lastValidTendeShades = ref([])
+const lastValidTendeCoverStates = ref({})
 const pvAzimuthDeg = ref(0)
 const selectedForecastDate = ref('')
 const hoverHourBar = ref(null)
@@ -931,9 +933,13 @@ const airqNorm = computed(() => data.value?.air_quality?.normalized || null)
 const tendeMap = computed(() => data.value?.tende_map || null)
 const tendeMapShades = computed(() => {
   const arr = tendeMap.value?.shades
-  return Array.isArray(arr) ? arr.filter((s) => s) : []
+  const live = Array.isArray(arr) ? arr.filter((s) => s) : []
+  return live.length ? live : lastValidTendeShades.value
 })
-const tendeCoverStates = computed(() => tendeMap.value?.cover_states || {})
+const tendeCoverStates = computed(() => {
+  const states = tendeMap.value?.cover_states
+  return states && Object.keys(states).length ? states : lastValidTendeCoverStates.value
+})
 const coordinatesSourceLabel = computed(() => {
   const raw = String(data.value?.coordinates_source || '').trim().toLowerCase()
   if (raw === 'e-tendeintelligenti') return 'e-Tende Intelligenti'
@@ -2241,6 +2247,36 @@ function toggleTendeEditMode() {
   drawTendeEditor()
 }
 
+function valuesEquivalent(expected, actual) {
+  if (typeof expected === 'boolean') return Boolean(actual) === expected
+  const en = Number(expected)
+  const an = Number(actual)
+  if (Number.isFinite(en) && Number.isFinite(an)) return Math.abs(en - an) <= 0.05
+  return String(expected ?? '').trim() === String(actual ?? '').trim()
+}
+
+function findSavedShade(target) {
+  return tendeMapShades.value.find((s) => {
+    if (target.id && s.id === target.id) return true
+    if (target.cover_entity && String(s.cover_entity || '').trim() === String(target.cover_entity).trim()) return true
+    if (target.name && String(s.name || '').trim() === String(target.name).trim()) return true
+    return false
+  }) || null
+}
+
+function shadeConfirmsSettings(shade, settings) {
+  if (!shade || !settings) return false
+  const st = shade.settings || {}
+  let checked = 0
+  for (const [key, expected] of Object.entries(settings)) {
+    const actual = st[key] ?? shade[key]
+    if (actual === undefined || actual === null) continue
+    checked += 1
+    if (!valuesEquivalent(expected, actual)) return false
+  }
+  return checked > 0
+}
+
 async function saveSelectedShade() {
   if (!selectedShadeEdit.value) return
   tendeSaveStatus.value = 'Salvataggio...'
@@ -2287,12 +2323,18 @@ async function saveSelectedShade() {
     const j = await r.json()
     if (!r.ok || !j.ok) { const err = new Error(j.error || 'save_failed'); err.cause = j; throw err }
     if (j.status === 'confirmed_by_map') tendeSaveStatus.value = 'Configurazione cover applicata (confermata dalla mappa).'
-    else if (j.status === 'sent_no_ack') tendeSaveStatus.value = 'Configurazione inviata a e-Tende (ACK non ricevuto, aggiornamento in corso).'
+    else if (j.status === 'sent_no_ack') tendeSaveStatus.value = 'Configurazione inviata a e-Tende (verifica applicazione...).'
     else if (j.ack && (j.ack.status === 'ok' || j.ack.ok === true)) tendeSaveStatus.value = 'Configurazione cover applicata (ACK ricevuto).'
     else if (j.ack) tendeSaveStatus.value = `ACK: ${j.ack.status || 'ricevuto'}`
     else tendeSaveStatus.value = 'Configurazione inviata (ACK non ricevuto).'
     if (j.status === 'sent_no_ack') await new Promise((resolve) => setTimeout(resolve, 1500))
     await loadData()
+    if (j.status === 'sent_no_ack') {
+      const confirmed = shadeConfirmsSettings(findSavedShade(e), settings)
+      tendeSaveStatus.value = confirmed
+        ? 'Configurazione cover applicata (verificata dalla mappa, ACK non ricevuto).'
+        : 'Configurazione inviata a e-Tende (ACK non ricevuto, attendi prossimo aggiornamento mappa).'
+    }
   } catch (e) {
     let extra = ''
     try { if (e?.cause?.ack?.error) extra = ` (${e.cause.ack.error})`; else if (e?.cause?.error) extra = ` (${e.cause.error})` } catch (_) {}
@@ -2304,6 +2346,14 @@ async function loadData() {
   const r = await fetch('/api/data', { cache: 'no-store' })
   const j = await r.json()
   data.value = j
+  const incomingShades = j?.tende_map?.shades
+  if (Array.isArray(incomingShades) && incomingShades.filter((s) => s).length) {
+    lastValidTendeShades.value = incomingShades.filter((s) => s)
+  }
+  const incomingCoverStates = j?.tende_map?.cover_states
+  if (incomingCoverStates && Object.keys(incomingCoverStates).length) {
+    lastValidTendeCoverStates.value = incomingCoverStates
+  }
   lat.value = Number(j?.coordinates?.latitude)
   lon.value = Number(j?.coordinates?.longitude)
 
