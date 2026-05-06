@@ -2277,7 +2277,12 @@ async function saveSelectedShade() {
     }
     const r = await fetch('/api/tende/map/update', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: e.id, cover_entity: e.cover_entity || null, settings }),
+      body: JSON.stringify({
+        id: e.id,
+        name: e.name || null,
+        cover_entity: e.cover_entity || null,
+        settings,
+      }),
     })
     const j = await r.json()
     if (!r.ok || !j.ok) { const err = new Error(j.error || 'save_failed'); err.cause = j; throw err }

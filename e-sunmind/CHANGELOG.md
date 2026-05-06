@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.34
+
+- Salvataggio Tende/Cover piu robusto: il comando verso e-Tende include anche il nome cover.
+- `/api/tende/map/update` accetta come target anche `cover_entity` quando manca l'ID, mantenendo retrocompatibilita.
+- Migliorata compatibilita con e-Tende 0.1.69 per evitare `ack_negative shade_not_found` quando l'ID runtime non e allineato.
+
 ## 0.3.33
 
 - Aggiunto endpoint stabile `GET /api/sun/live` usato da e-Tende per azimut/elevazione sole.
