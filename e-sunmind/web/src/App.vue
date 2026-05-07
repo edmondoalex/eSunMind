@@ -1065,6 +1065,7 @@ let annualElevationBand = null
 let annualElevationBandLayers = []
 let compassMarkers = []
 let tendeSectorLayers = []
+let windLayerRetryTimer = 0
 const weatherAnimEnabled = ref(false)
 const weatherCanvasEl = ref(null)
 let weatherRafId = 0
@@ -2353,7 +2354,7 @@ function interpAltByAz(samples, azTarget) {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, sunriseLabel, sunsetLabel, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, windDirLine, windDirMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, sunriseLabel, sunsetLabel, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
   for (const l of annualElevationBandLayers) map.removeLayer(l)
   annualElevationBandLayers = []
   for (const m of compassMarkers) map.removeLayer(m)
@@ -2656,35 +2657,59 @@ function mergeTendeShades(previous, incoming) {
     if (key) merged.set(key, shade)
   }
 
-  if (showWindDirectionOnMap.value) {
-    const dir = Number.isFinite(Number(mapWindDirDeg.value)) ? Number(mapWindDirDeg.value) : Number(lastKnownWindDirDeg.value)
-    if (Number.isFinite(dir)) {
-      lastKnownWindDirDeg.value = dir
-      const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
-      windDirLine = L.polyline([[lat.value, lon.value], windPt], {
-        color: '#36d5ff',
-        weight: 2.8,
-        opacity: 0.95,
-        dashArray: '5,5',
-        lineCap: 'round',
-      }).addTo(map)
-      windDirMarker = L.marker(windPt, {
-        icon: L.divIcon({
-          className: 'wind-map-icon-wrap',
-          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt((() => { const s = Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : Number(lastKnownWindMs.value); if (Number.isFinite(s)) lastKnownWindMs.value = s; return s })())} m/s</span>`,
-          iconSize: [92, 20],
-          iconAnchor: [10, 10],
-        }),
-        interactive: false,
-      }).addTo(map)
-    }
-  }
+  ensureWindDirectionLayer()
   for (const shade of Array.isArray(incoming) ? incoming : []) {
     const key = shadeKey(shade)
     if (!key) continue
     merged.set(key, { ...(merged.get(key) || {}), ...shade })
   }
   return Array.from(merged.values())
+}
+
+function ensureWindDirectionLayer() {
+  if (windLayerRetryTimer) {
+    clearTimeout(windLayerRetryTimer)
+    windLayerRetryTimer = 0
+  }
+  if (windDirLine && map) {
+    try { map.removeLayer(windDirLine) } catch (_) {}
+  }
+  if (windDirMarker && map) {
+    try { map.removeLayer(windDirMarker) } catch (_) {}
+  }
+  windDirLine = null
+  windDirMarker = null
+  if (!showWindDirectionOnMap.value) return
+  if (!map || lat.value == null || lon.value == null) {
+    windLayerRetryTimer = setTimeout(() => ensureWindDirectionLayer(), 150)
+    return
+  }
+  const dirRaw = Number.isFinite(Number(mapWindDirDeg.value)) ? Number(mapWindDirDeg.value) : Number(lastKnownWindDirDeg.value)
+  if (!Number.isFinite(dirRaw)) {
+    windLayerRetryTimer = setTimeout(() => ensureWindDirectionLayer(), 500)
+    return
+  }
+  const dir = ((Number(dirRaw) % 360) + 360) % 360
+  lastKnownWindDirDeg.value = dir
+  const speedRaw = Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : Number(lastKnownWindMs.value)
+  if (Number.isFinite(speedRaw)) lastKnownWindMs.value = Number(speedRaw)
+  const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
+  windDirLine = L.polyline([[lat.value, lon.value], windPt], {
+    color: '#36d5ff',
+    weight: 2.8,
+    opacity: 0.95,
+    dashArray: '5,5',
+    lineCap: 'round',
+  }).addTo(map)
+  windDirMarker = L.marker(windPt, {
+    icon: L.divIcon({
+      className: 'wind-map-icon-wrap',
+      html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(lastKnownWindMs.value)} m/s</span>`,
+      iconSize: [92, 20],
+      iconAnchor: [10, 10],
+    }),
+    interactive: false,
+  }).addTo(map)
 }
 
 function selectShade(id) {
@@ -3395,6 +3420,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
   if (tendeMapObj) { tendeMapObj.remove(); tendeMapObj = null }
+  if (windLayerRetryTimer) {
+    clearTimeout(windLayerRetryTimer)
+    windLayerRetryTimer = 0
+  }
   stopWeatherAnimation()
   window.removeEventListener('resize', resizeWeatherCanvas)
 })
@@ -3432,11 +3461,15 @@ watch([mapWindDirDeg, mapWindMs], ([dir, speed]) => {
 watch(showWindDirectionOnMap, async () => {
   if (tab.value !== 'user') return
   await nextTick()
-  drawSolarOverlay()
-  // Second pass to absorb transient nulls from async map/data refresh.
+  ensureWindDirectionLayer()
   setTimeout(() => {
-    if (tab.value === 'user') drawSolarOverlay()
+    if (tab.value === 'user') ensureWindDirectionLayer()
   }, 120)
+})
+watch([mapWindDirDeg, mapWindMs], async () => {
+  if (tab.value !== 'user') return
+  await nextTick()
+  ensureWindDirectionLayer()
 })
 </script>
 

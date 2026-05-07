@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.66
+
+- Completata fix toggle vento mappa: render del layer vento reso indipendente da `drawSolarOverlay` con `ensureWindDirectionLayer()`.
+- Aggiunto cleanup/retry timer dedicato e watcher diretto su vento (`mapWindDirDeg/mapWindMs`) per ri-disegno affidabile dopo OFF/ON.
+- Corretto caso residuo in cui la linea non tornava nonostante il ri-enable del flag.
+
 ## 0.3.65
 
 - User UI mappa vento: fix definitivo toggle OFF/ON con inizializzazione immediata cache vento (`watch ... immediate`) e doppio redraw anti-race al ri-enable.
