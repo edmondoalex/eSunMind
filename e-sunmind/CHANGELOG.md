@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.71
+
+- User UI: aggiunto auto-refresh periodico dati (polling ogni 15 secondi) quando la tab attiva e `User UI`.
+- Eliminata necessità di refresh manuale continuo per aggiornare meteo/sonde/stazione/FV.
+
 ## 0.3.70
 
 - User UI chiarezza sorgenti: testi stato WG/stazione resi espliciti (`fallback`, `stazione disponibile SI/NO`, allarmi meteo leggibili).

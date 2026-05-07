@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI: introdotto auto-refresh dati ogni 15s sulla tab utente per evitare refresh manuale.
+- Bump versione addon a `0.3.71` con changelog aggiornato.
 - User UI: chiariti testi stato sorgenti meteo e Weather Guard (niente piu diciture ambigue tipo "Spento" per stato qualità).
 - Aggiunti valori meteo importanti Ecowitt in mapping/visualizzazione: Dew Point, Feels Like, Solar Lux, Solar Radiation, VPD.
 - Bump versione addon a `0.3.70` con changelog aggiornato.

@@ -1085,6 +1085,8 @@ let tendePoly = null
 let tendeStartMarker = null
 let tendeEndMarker = null
 let tendeEditorExtraLayers = []
+let userAutoRefreshTimer = 0
+const userAutoRefreshMs = 15000
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -3504,6 +3506,9 @@ onMounted(() => {
     window.addEventListener('resize', resizeWeatherCanvas)
     startWeatherAnimation()
     initBlockToggles()
+    userAutoRefreshTimer = setInterval(() => {
+      if (tab.value === 'user') loadData()
+    }, userAutoRefreshMs)
   } catch (e) {
     console.error('onMounted init error', e)
     showSplash.value = false
@@ -3515,6 +3520,10 @@ onBeforeUnmount(() => {
   if (windLayerRetryTimer) {
     clearTimeout(windLayerRetryTimer)
     windLayerRetryTimer = 0
+  }
+  if (userAutoRefreshTimer) {
+    clearInterval(userAutoRefreshTimer)
+    userAutoRefreshTimer = 0
   }
   stopWeatherAnimation()
   window.removeEventListener('resize', resizeWeatherCanvas)
