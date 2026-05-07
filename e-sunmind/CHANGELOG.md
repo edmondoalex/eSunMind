@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.80
+
+- UI Admin: unificato accesso `UI User` in un solo elemento (rimosso duplicato tasto+link).
+- UI User: sostituito logo con asset ufficiale e-Tende (`logo-etende.png`) dal componente.
+- Corretto rendering caratteri speciali in UI (`°`, `°C`).
+
 ## 0.3.79
 
 - Aggiunto link dedicato alla `UI User`: `/?view=user`.

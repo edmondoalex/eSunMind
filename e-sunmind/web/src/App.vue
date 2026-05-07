@@ -13,8 +13,7 @@
       </div>
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
-        <button class="btn ghost" :class="{active: tab==='user_public'}" @click="tab='user_public'">UI User</button>
-        <a class="btn ghost" href="/?view=user">Link UI User</a>
+        <a class="btn ghost" href="/?view=user">UI User</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -26,7 +25,7 @@
       <div class="user-public-head">
         <div class="up-brand">
           <img src="/logo-etende.png" alt="e-Tende Intelligenti" class="up-logo" />
-          <div class="up-brand-text">e-SunMind <span>User</span></div>
+          
         </div>
         <div class="up-nav">
           <span>PANORAMICA</span>
@@ -64,9 +63,9 @@
       </div>
 
       <div class="up-bottom">
-        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}Â°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}Â°</strong></div></div>
+        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}°</strong></div></div>
         <div class="up-card"><h4>Weather Guard</h4><div>Stato: <strong>{{ weatherGuardOk ? 'ATTIVO' : 'OFF' }}</strong></div><div>Vento: <strong>{{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }}</strong></div><div>Pioggia: <strong>{{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }}</strong></div></div>
-        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}Â°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
+        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
         <div class="up-card"><h4>Fotovoltaico</h4><div>Reale: <strong>{{ fmt0(pvMeasuredW) }} W</strong></div><div>Atteso: <strong>{{ fmt0(pvForecastNowW) }} W</strong></div><div>Rapporto: <strong>{{ fmt2(pvLiveRatio) }}</strong></div></div>
       </div>
     </div>
@@ -100,7 +99,7 @@
             <input type="range" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @input="drawSolarOverlay" />
           </label>
           <input class="pv-az-input" type="number" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @change="drawSolarOverlay" />
-          <span class="pv-az-value">{{ pvAzimuthDeg }}Â°</span>
+          <span class="pv-az-value">{{ pvAzimuthDeg }}°</span>
         </div>
       </div>
 
@@ -116,7 +115,7 @@
         ></canvas>
         <div v-if="weatherAnimEnabled" class="wind-compass-chip">
           <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">â†‘</span>
-          <span>Vento da {{ fmt(weatherWindDirDeg) }}Â° ({{ weatherWindCardinal }})</span>
+          <span>Vento da {{ fmt(weatherWindDirDeg) }}° ({{ weatherWindCardinal }})</span>
         </div>
       </div>
       </div>
@@ -124,10 +123,10 @@
       <div class="panel" v-show="userExpanded">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
         <div class="kpi">Sorgente coordinate: {{ coordinatesSourceLabel }}</div>
-        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}Â°</div>
-        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}Â°</div>
-        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}Â°</div>
-        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}Â°</div>
+        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}°</div>
+        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div>
+        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}°</div>
+        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}°</div>
         <div class="kpi">Data locale: {{ localTimestampLabel }}</div>
       </div>
 
@@ -149,9 +148,9 @@
         <div class="source-card source-card--probe">
           <h4>Reali Sonde</h4>
           <div class="metric-grid">
-            <div class="metric-row"><span class="metric-key">Temperatura reale</span><span class="metric-val">{{ fmt(externalTempC) }}Â°C</span></div>
+            <div class="metric-row"><span class="metric-key">Temperatura reale</span><span class="metric-val">{{ fmt(externalTempC) }}°C</span></div>
             <div class="metric-row"><span class="metric-key">Umidita reale</span><span class="metric-val">{{ fmt(externalHumidityPct) }} %</span></div>
-            <div class="metric-row"><span class="metric-key">Delta T (sonda - web)</span><span class="metric-val">{{ fmt(tempDeltaC) }}Â°C</span></div>
+            <div class="metric-row"><span class="metric-key">Delta T (sonda - web)</span><span class="metric-val">{{ fmt(tempDeltaC) }}°C</span></div>
           </div>
         </div>
 
@@ -233,16 +232,16 @@
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
               <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="250" height="82" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
-              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}Â°C</text>
+              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}°C</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
               <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
-              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Ã‚Â°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Ã‚Â°C</text>
+              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Ã‚°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Ã‚°C</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
             <text v-for="t in weatherRainTicks" :key="`wrl-${t}`" x="876" :y="weatherYFromRain(t) + 3" class="axis-label-y axis-label-y-right-rain">{{ fmt1(t) }}</text>
             <text v-for="t in weatherWindTicks" :key="`wwl-${t}`" x="836" :y="weatherYFromWind(t) + 3" class="axis-label-y axis-label-y-right-wind">{{ fmt1(t) }}</text>
-            <text x="18" y="20" class="axis-title">Â°C</text>
+            <text x="18" y="20" class="axis-title">°C</text>
             <text x="876" y="20" class="axis-title">mm/h</text>
             <text x="836" y="20" class="axis-title axis-title-wind">m/s</text>
             <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
@@ -252,7 +251,7 @@
             <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
           </div>
           <div class="chart-meta">
-            Linea gialla: temp meteo | Magenta: temp reale | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}Â°C
+            Linea gialla: temp meteo | Magenta: temp reale | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}°C
           </div>
         </div>
       </div>
@@ -498,8 +497,8 @@
                 <small>Ampiezza a destra dell'azimut finestra, se non usi Start/Stop.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('sun_fov')">
-                <strong>Usa campo visivo Â±70Â°</strong>
-                <small>Disattiva Start/Stop e usa una finestra angolare larga 140Â°.</small>
+                <strong>Usa campo visivo Â±70°</strong>
+                <small>Disattiva Start/Stop e usa una finestra angolare larga 140°.</small>
               </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'positions'" class="wizard-grid">
@@ -559,7 +558,7 @@
                 <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
                 <small>PuÃ² essere lo stesso climate per piÃ¹ cover della stessa zona.</small>
               </label>
-              <label>Isteresi termica Â°C
+              <label>Isteresi termica °C
                 <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
                 <small>Margine intorno al setpoint per evitare rimbalzi.</small>
               </label>
@@ -573,7 +572,7 @@
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('thermal_conservative')">
                 <strong>Preset termico conservativo</strong>
-                <small>Isteresi 0.5Â°C, guadagno calore 70%, blocco calore come posizione sole.</small>
+                <small>Isteresi 0.5°C, guadagno calore 70%, blocco calore come posizione sole.</small>
               </button>
             </div>
             <div v-else class="wizard-review">
@@ -689,7 +688,7 @@
           <label>Termostato ambiente
             <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
           </label>
-          <label>Isteresi termica Â°C
+          <label>Isteresi termica °C
             <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
           </label>
           <label>Posizione guadagno calore
@@ -743,7 +742,7 @@
           <span>Anti-loop: {{ boolLabel(selectedShadeEdit.sensors.command_blocked) }} - {{ targetValue(selectedShadeEdit.sensors.command_blocked_reason) }}</span>
           <span>Rate limit residuo: {{ targetValue(selectedShadeEdit.sensors.command_blocked_remaining_seconds) }} s / target {{ targetValue(selectedShadeEdit.sensors.command_blocked_target_position) }}</span>
           <span>Termostato: {{ targetValue(selectedShadeEdit.sensors.thermal_climate_entity) }} / {{ targetValue(selectedShadeEdit.sensors.thermal_mode) }}</span>
-          <span>Temperatura interna: {{ targetValue(selectedShadeEdit.sensors.thermal_temperature) }} Â°C / set {{ targetValue(selectedShadeEdit.sensors.thermal_setpoint) }} Â°C</span>
+          <span>Temperatura interna: {{ targetValue(selectedShadeEdit.sensors.thermal_temperature) }} °C / set {{ targetValue(selectedShadeEdit.sensors.thermal_setpoint) }} °C</span>
           <span>Decisione termica: {{ targetValue(selectedShadeEdit.sensors.thermal_decision) }} / attiva {{ boolLabel(selectedShadeEdit.sensors.thermal_active) }}</span>
         </div>
       </div>
@@ -760,7 +759,7 @@
           >
             <strong>{{ s.name || s.id }}</strong>
             <span>{{ s.cover_entity || '-' }}</span>
-            <span>Az {{ fmt(s.azimuth_start_deg) }}Â° â†’ {{ fmt(s.azimuth_end_deg) }}Â°</span>
+            <span>Az {{ fmt(s.azimuth_start_deg) }}° â†’ {{ fmt(s.azimuth_end_deg) }}°</span>
             <span>Stato: {{ coverStateLabel(s.cover_entity) }}</span>
           </button>
         </div>
@@ -1527,17 +1526,17 @@ const weatherMetricLabelMap = {
   time: 'Timestamp',
 }
 function metricUnitForKey(key) {
-  if (key.includes('temperature')) return 'Â°C'
+  if (key.includes('temperature')) return '°C'
   if (key.includes('humidity')) return '%'
   if (key.includes('wind_speed') || key.includes('wind_gust')) return 'm/s'
-  if (key.includes('wind_from_direction')) return 'Â°'
+  if (key.includes('wind_from_direction')) return '°'
   if (key.includes('pressure')) return 'hPa'
   if (key.includes('cloud_area_fraction')) return '%'
   if (key.includes('uv_index')) return ''
   if (key.includes('precipitation') || key.includes('rain_1h')) return 'mm'
   if (key.includes('rain_rate')) return 'mm/h'
-  if (key.includes('dew_point')) return 'Â°C'
-  if (key.includes('feels_like')) return 'Â°C'
+  if (key.includes('dew_point')) return '°C'
+  if (key.includes('feels_like')) return '°C'
   if (key.includes('solar_lux')) return 'lx'
   if (key.includes('solar_radiation')) return 'W/mÂ²'
   if (key.includes('vapour_pressure_deficit')) return 'hPa'
@@ -2771,7 +2770,7 @@ function drawSolarOverlay() {
     altitudeGuideLabel = L.marker(mid, {
       icon: L.divIcon({
         className: 'altitude-label-wrap',
-        html: `<span class="altitude-label">Elev ${fmt(Math.max(0, alt))}Â°</span>`,
+        html: `<span class="altitude-label">Elev ${fmt(Math.max(0, alt))}°</span>`,
         iconSize: [86, 18],
         iconAnchor: [43, 9],
       }),
@@ -2841,7 +2840,7 @@ function drawSolarOverlay() {
         fillColor: color,
         fillOpacity: opacity,
       }).addTo(map)
-      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}Â° â†’ ${fmt(azEnd)}Â°<br>Active: ${active ? 'yes' : 'no'}`
+      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° â†’ ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
       poly.bindTooltip(tip)
       tendeSectorLayers.push(poly)
     })
@@ -3018,7 +3017,7 @@ function ensureWindDirectionLayer() {
   windDirMarker = L.marker(windPt, {
     icon: L.divIcon({
       className: 'wind-map-icon-wrap',
-      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}Â° Â· ${fmt(lastKnownWindMs.value)} m/s</span>`,
+      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}° Â· ${fmt(lastKnownWindMs.value)} m/s</span>`,
       iconSize: [170, 20],
       iconAnchor: [0, 10],
     }),

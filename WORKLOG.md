@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User/UI Admin: rimosso doppio accesso, lasciato unico link dedicato `UI User`.
+- UI User: aggiornato logo e-Tende con file del componente e corretti simboli grado/temperatura (`°`, `°C`).
+- Bump versione addon a `0.3.80` con changelog aggiornato.
 - UI User: aggiunto link diretto dedicato `/?view=user` e apertura automatica pagina user via query param.
 - UI User: sostituito logo con asset `e-Tende Intelligenti` (`logo-etende.png`).
 - Bump versione addon a `0.3.79` con changelog aggiornato.
