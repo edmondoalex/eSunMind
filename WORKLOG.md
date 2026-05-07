@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: redesign forte per avvicinamento al mock (header dedicato, sidebar legenda, mappa con overlay alba/tramonto/arco solare/settori).
+- Bump versione addon a `0.3.78` con changelog aggiornato.
 - Nuova esperienza UI: introdotta pagina separata `UI User` (standalone, senza link a sezioni tecniche) con look dashboard stile e-Tende.
 - Rinominata UI corrente in `UI Admin` e aggiunto link di ingresso a `UI User`.
 - Bump versione addon a `0.3.77` con changelog aggiornato.

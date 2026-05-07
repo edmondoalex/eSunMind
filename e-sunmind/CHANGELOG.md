@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.78
+
+- `UI User` resa molto piu vicina al layout di riferimento: pagina standalone senza barra admin, top header dedicato, sidebar legenda colori per tende e vento.
+- Mappa `UI User` potenziata con overlay grafici (raggi alba/tramonto, arco solare, etichette `Alba`/`Tramonto`, settori tende).
+- Migliorata gerarchia visiva della schermata utente (proporzioni titolo/ora, blocchi laterali e card stato).
+
 ## 0.3.77
 
 - Aggiunta nuova pagina `UI User` dedicata, senza pulsanti/link verso le altre sezioni.

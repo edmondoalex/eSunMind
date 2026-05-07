@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="wrap">
     <transition name="splash-fade">
       <div v-if="showSplash" class="splash-screen">
@@ -6,12 +6,12 @@
       </div>
     </transition>
 
-    <header class="topbar">
+    <header class="topbar" v-if="tab!=='user_public'">
       <div class="brand">
         <img src="/logo.png" alt="e-SunMind logo" class="brand-logo" />
         <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
       </div>
-      <div class="actions" v-if="tab!=='user_public'">
+      <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
         <button class="btn ghost" :class="{active: tab==='user_public'}" @click="tab='user_public'">UI User</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
@@ -42,13 +42,19 @@
 
       <div class="user-public-main">
         <aside class="up-side">
-          <h3>Mappa Meteo</h3>
-          <div class="up-side-item"><span>Temperatura</span><strong>{{ fmt(weatherStationNorm?.air_temperature_c ?? weatherNorm?.air_temperature_c) }} °C</strong></div>
-          <div class="up-side-item"><span>Umidita</span><strong>{{ fmt(weatherStationNorm?.relative_humidity_pct ?? weatherNorm?.relative_humidity_pct) }} %</strong></div>
-          <div class="up-side-item"><span>Vento</span><strong>{{ fmt(mapWindMs) }} m/s</strong></div>
-          <div class="up-side-item"><span>Direzione vento</span><strong>{{ fmt(mapWindDirDeg) }} °</strong></div>
-          <div class="up-side-item"><span>Pioggia 1h</span><strong>{{ fmt(weatherStationNorm?.rain_1h_mm ?? weatherNorm?.precipitation_next_1h_mm) }} mm</strong></div>
-          <div class="up-side-item"><span>Pressione</span><strong>{{ fmt(weatherStationNorm?.air_pressure_hpa ?? weatherNorm?.air_pressure_hpa) }} hPa</strong></div>
+          <h3>Mappa taratura tenda</h3>
+          <div class="up-legend-item" v-for="item in publicLegendItems" :key="item.key">
+            <span class="dot" :style="{ background: item.color }"></span>
+            <div class="up-legend-body">
+              <strong>{{ item.title }}</strong>
+              <span>{{ item.subtitle }}</span>
+              <small>Stato: {{ item.state }}</small>
+            </div>
+          </div>
+          <div class="up-wind">
+            <strong>Vento</strong>
+            <span>{{ fmt(mapWindDirDeg) }}° - {{ fmt(mapWindMs) }} m/s</span>
+          </div>
         </aside>
 
         <section class="up-map-wrap">
@@ -57,9 +63,9 @@
       </div>
 
       <div class="up-bottom">
-        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}°</strong></div></div>
+        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}Â°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}Â°</strong></div></div>
         <div class="up-card"><h4>Weather Guard</h4><div>Stato: <strong>{{ weatherGuardOk ? 'ATTIVO' : 'OFF' }}</strong></div><div>Vento: <strong>{{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }}</strong></div><div>Pioggia: <strong>{{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }}</strong></div></div>
-        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
+        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}Â°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
         <div class="up-card"><h4>Fotovoltaico</h4><div>Reale: <strong>{{ fmt0(pvMeasuredW) }} W</strong></div><div>Atteso: <strong>{{ fmt0(pvForecastNowW) }} W</strong></div><div>Rapporto: <strong>{{ fmt2(pvLiveRatio) }}</strong></div></div>
       </div>
     </div>
@@ -93,7 +99,7 @@
             <input type="range" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @input="drawSolarOverlay" />
           </label>
           <input class="pv-az-input" type="number" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @change="drawSolarOverlay" />
-          <span class="pv-az-value">{{ pvAzimuthDeg }}°</span>
+          <span class="pv-az-value">{{ pvAzimuthDeg }}Â°</span>
         </div>
       </div>
 
@@ -108,8 +114,8 @@
           aria-hidden="true"
         ></canvas>
         <div v-if="weatherAnimEnabled" class="wind-compass-chip">
-          <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">↑</span>
-          <span>Vento da {{ fmt(weatherWindDirDeg) }}° ({{ weatherWindCardinal }})</span>
+          <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">â†‘</span>
+          <span>Vento da {{ fmt(weatherWindDirDeg) }}Â° ({{ weatherWindCardinal }})</span>
         </div>
       </div>
       </div>
@@ -117,10 +123,10 @@
       <div class="panel" v-show="userExpanded">
         <div class="kpi">Lat/Lon: {{ lat?.toFixed(5) }} , {{ lon?.toFixed(5) }}</div>
         <div class="kpi">Sorgente coordinate: {{ coordinatesSourceLabel }}</div>
-        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}°</div>
-        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</div>
-        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}°</div>
-        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}°</div>
+        <div class="kpi">Sun Altitude LIVE (reale): {{ fmt(data?.sun_position?.altitude_deg) }}Â°</div>
+        <div class="kpi">Sun Azimuth LIVE (reale): {{ fmt(data?.sun_position?.azimuth_compass_deg) }}Â°</div>
+        <div class="kpi">Sun Altitude SIM: {{ fmt(currentSun.altitudeDeg) }}Â°</div>
+        <div class="kpi">Sun Azimuth SIM: {{ fmt(currentSun.azimuthDeg) }}Â°</div>
         <div class="kpi">Data locale: {{ localTimestampLabel }}</div>
       </div>
 
@@ -142,9 +148,9 @@
         <div class="source-card source-card--probe">
           <h4>Reali Sonde</h4>
           <div class="metric-grid">
-            <div class="metric-row"><span class="metric-key">Temperatura reale</span><span class="metric-val">{{ fmt(externalTempC) }}°C</span></div>
+            <div class="metric-row"><span class="metric-key">Temperatura reale</span><span class="metric-val">{{ fmt(externalTempC) }}Â°C</span></div>
             <div class="metric-row"><span class="metric-key">Umidita reale</span><span class="metric-val">{{ fmt(externalHumidityPct) }} %</span></div>
-            <div class="metric-row"><span class="metric-key">Delta T (sonda - web)</span><span class="metric-val">{{ fmt(tempDeltaC) }}°C</span></div>
+            <div class="metric-row"><span class="metric-key">Delta T (sonda - web)</span><span class="metric-val">{{ fmt(tempDeltaC) }}Â°C</span></div>
           </div>
         </div>
 
@@ -226,16 +232,16 @@
             <g v-if="weatherHoverPoint" :transform="`translate(${weatherHoverTooltipX},${weatherHoverTooltipY})`">
               <rect class="chart-tip-bg" x="0" y="0" rx="6" ry="6" width="250" height="82" />
               <text x="8" y="15" class="chart-tip-t1">{{ weatherHoverPoint.label }}</text>
-              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}°C</text>
+              <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}Â°C</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
               <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
-              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Â°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Â°C</text>
+              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Ã‚Â°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Ã‚Â°C</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
             <text v-for="t in weatherRainTicks" :key="`wrl-${t}`" x="876" :y="weatherYFromRain(t) + 3" class="axis-label-y axis-label-y-right-rain">{{ fmt1(t) }}</text>
             <text v-for="t in weatherWindTicks" :key="`wwl-${t}`" x="836" :y="weatherYFromWind(t) + 3" class="axis-label-y axis-label-y-right-wind">{{ fmt1(t) }}</text>
-            <text x="18" y="20" class="axis-title">°C</text>
+            <text x="18" y="20" class="axis-title">Â°C</text>
             <text x="876" y="20" class="axis-title">mm/h</text>
             <text x="836" y="20" class="axis-title axis-title-wind">m/s</text>
             <text v-for="(p, i) in weatherSeries" v-if="i % 3 === 0 || i === weatherSeries.length - 1" :key="`wxl-${i}`" :x="weatherXFromIdx(i)" y="206" class="axis-label-x axis-label-x-strong">{{ p.hhmm }}</text>
@@ -245,7 +251,7 @@
             <span v-for="p in weatherXAxisHours" :key="`wxh-${p.time}`">{{ p.hhmm }}</span>
           </div>
           <div class="chart-meta">
-            Linea gialla: temp meteo | Magenta: temp reale | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}°C
+            Linea gialla: temp meteo | Magenta: temp reale | Barre azzurre: pioggia | Ciano: vento | Verde: umidita | Viola: pressione | Range temp: {{ fmt(weatherTempMin) }}..{{ fmt(weatherTempMax) }}Â°C
           </div>
         </div>
       </div>
@@ -270,7 +276,7 @@
             viewBox="0 0 900 250"
             preserveAspectRatio="none"
             role="img"
-            aria-label="Grafico qualità aria 24 ore"
+            aria-label="Grafico qualitÃ  aria 24 ore"
             @mousemove="onAirqChartMove"
             @mouseleave="onAirqChartLeave"
           >
@@ -352,7 +358,7 @@
             <text x="672" y="184" class="axis-title-x">Ora</text>
           </svg>
           <div class="chart-meta">
-            0:00 → 23:59 | picco: {{ fmt0(fvPeakSelectedW) }} W
+            0:00 â†’ 23:59 | picco: {{ fmt0(fvPeakSelectedW) }} W
             <span v-if="hoverPoint"> | punto: {{ hoverPoint.time }} -> {{ fmt0(hoverPoint.w) }} W</span>
           </div>
         </div>
@@ -458,7 +464,7 @@
               </label>
               <label>Apri se sole assente
                 <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
-                <small>Quando il sole non è più utile, torna alla posizione di riposo.</small>
+                <small>Quando il sole non Ã¨ piÃ¹ utile, torna alla posizione di riposo.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('base_safe')">
                 <strong>Preset base sicuro</strong>
@@ -491,8 +497,8 @@
                 <small>Ampiezza a destra dell'azimut finestra, se non usi Start/Stop.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('sun_fov')">
-                <strong>Usa campo visivo ±70°</strong>
-                <small>Disattiva Start/Stop e usa una finestra angolare larga 140°.</small>
+                <strong>Usa campo visivo Â±70Â°</strong>
+                <small>Disattiva Start/Stop e usa una finestra angolare larga 140Â°.</small>
               </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'positions'" class="wizard-grid">
@@ -506,11 +512,11 @@
               </label>
               <label>Posizione minima sole
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_position" />
-                <small>Posizione di protezione quando il sole è utile e va schermato.</small>
+                <small>Posizione di protezione quando il sole Ã¨ utile e va schermato.</small>
               </label>
               <label>Delta minimo
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_delta" />
-                <small>Evita micro-movimenti se la differenza posizione è troppo piccola.</small>
+                <small>Evita micro-movimenti se la differenza posizione Ã¨ troppo piccola.</small>
               </label>
               <label>Anti-loop comandi sec.
                 <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
@@ -524,7 +530,7 @@
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'weather'" class="wizard-grid">
               <label>Protezione Meteo Guard
                 <input type="checkbox" v-model="selectedShadeEdit.weather_guard_enabled" />
-                <small>Abilita priorità sicurezza da vento, pioggia e stravento.</small>
+                <small>Abilita prioritÃ  sicurezza da vento, pioggia e stravento.</small>
               </label>
               <label>Azimut facciata stravento
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.facade_azimuth_deg" @change="drawTendeEditor" />
@@ -532,11 +538,11 @@
               </label>
               <label>Posizione sicurezza vento
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
-                <small>Posizione comandata quando c'è allarme vento.</small>
+                <small>Posizione comandata quando c'Ã¨ allarme vento.</small>
               </label>
               <label>Posizione sicurezza pioggia
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
-                <small>Posizione comandata quando c'è allarme pioggia.</small>
+                <small>Posizione comandata quando c'Ã¨ allarme pioggia.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('weather_safe')">
                 <strong>Preset sicurezza meteo</strong>
@@ -546,27 +552,27 @@
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'thermal'" class="wizard-grid">
               <label>Strategia termica
                 <input type="checkbox" v-model="selectedShadeEdit.thermal_enabled" />
-                <small>Usa il termostato per rifinire la decisione quando il sole è utile.</small>
+                <small>Usa il termostato per rifinire la decisione quando il sole Ã¨ utile.</small>
               </label>
               <label>Termostato ambiente
                 <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
-                <small>Può essere lo stesso climate per più cover della stessa zona.</small>
+                <small>PuÃ² essere lo stesso climate per piÃ¹ cover della stessa zona.</small>
               </label>
-              <label>Isteresi termica °C
+              <label>Isteresi termica Â°C
                 <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
                 <small>Margine intorno al setpoint per evitare rimbalzi.</small>
               </label>
               <label>Posizione guadagno calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_heat_gain_position" />
-                <small>In modalità heat, sotto setpoint, lascia entrare sole fino a questa posizione.</small>
+                <small>In modalitÃ  heat, sotto setpoint, lascia entrare sole fino a questa posizione.</small>
               </label>
               <label>Posizione blocco calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_cool_block_position" />
-                <small>In modalità cool, sopra setpoint, scherma il sole fino a questa posizione.</small>
+                <small>In modalitÃ  cool, sopra setpoint, scherma il sole fino a questa posizione.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('thermal_conservative')">
                 <strong>Preset termico conservativo</strong>
-                <small>Isteresi 0.5°C, guadagno calore 70%, blocco calore come posizione sole.</small>
+                <small>Isteresi 0.5Â°C, guadagno calore 70%, blocco calore come posizione sole.</small>
               </button>
             </div>
             <div v-else class="wizard-review">
@@ -682,7 +688,7 @@
           <label>Termostato ambiente
             <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
           </label>
-          <label>Isteresi termica °C
+          <label>Isteresi termica Â°C
             <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
           </label>
           <label>Posizione guadagno calore
@@ -736,7 +742,7 @@
           <span>Anti-loop: {{ boolLabel(selectedShadeEdit.sensors.command_blocked) }} - {{ targetValue(selectedShadeEdit.sensors.command_blocked_reason) }}</span>
           <span>Rate limit residuo: {{ targetValue(selectedShadeEdit.sensors.command_blocked_remaining_seconds) }} s / target {{ targetValue(selectedShadeEdit.sensors.command_blocked_target_position) }}</span>
           <span>Termostato: {{ targetValue(selectedShadeEdit.sensors.thermal_climate_entity) }} / {{ targetValue(selectedShadeEdit.sensors.thermal_mode) }}</span>
-          <span>Temperatura interna: {{ targetValue(selectedShadeEdit.sensors.thermal_temperature) }} °C / set {{ targetValue(selectedShadeEdit.sensors.thermal_setpoint) }} °C</span>
+          <span>Temperatura interna: {{ targetValue(selectedShadeEdit.sensors.thermal_temperature) }} Â°C / set {{ targetValue(selectedShadeEdit.sensors.thermal_setpoint) }} Â°C</span>
           <span>Decisione termica: {{ targetValue(selectedShadeEdit.sensors.thermal_decision) }} / attiva {{ boolLabel(selectedShadeEdit.sensors.thermal_active) }}</span>
         </div>
       </div>
@@ -753,7 +759,7 @@
           >
             <strong>{{ s.name || s.id }}</strong>
             <span>{{ s.cover_entity || '-' }}</span>
-            <span>Az {{ fmt(s.azimuth_start_deg) }}° → {{ fmt(s.azimuth_end_deg) }}°</span>
+            <span>Az {{ fmt(s.azimuth_start_deg) }}Â° â†’ {{ fmt(s.azimuth_end_deg) }}Â°</span>
             <span>Stato: {{ coverStateLabel(s.cover_entity) }}</span>
           </button>
         </div>
@@ -1139,6 +1145,7 @@ let publicSunLine = null
 let publicSunMarker = null
 let publicWindLine = null
 let publicWindMarker = null
+let publicOverlayLayers = []
 let centerMarker = null
 let pathLine = null
 let horizonCircle = null
@@ -1358,6 +1365,20 @@ const tendeMapWarning = computed(() => {
   if (tm.stale) return 'Dati tende non aggiornati'
   return ''
 })
+const publicLegendItems = computed(() => {
+  const items = []
+  const shades = tendeMapShades.value.slice(0, 4)
+  shades.forEach((s, idx) => {
+    items.push({
+      key: shadeKey(s) || `shade-${idx}`,
+      title: s.name || `Tenda ${idx + 1}`,
+      subtitle: `Az ${fmt(s.azimuth_start_deg)}° - ${fmt(s.azimuth_end_deg)}°`,
+      state: (s.sensors?.calculated_command || s.sensors?.sun_state || '-'),
+      color: String(s.color || colorFromIndex(idx)),
+    })
+  })
+  return items
+})
 const sunWindowHeatmap = computed(() => buildSunWindowHeatmap())
 const whatIfPreview = computed(() => buildWhatIfPreview())
 const wizardSteps = [
@@ -1505,19 +1526,19 @@ const weatherMetricLabelMap = {
   time: 'Timestamp',
 }
 function metricUnitForKey(key) {
-  if (key.includes('temperature')) return '°C'
+  if (key.includes('temperature')) return 'Â°C'
   if (key.includes('humidity')) return '%'
   if (key.includes('wind_speed') || key.includes('wind_gust')) return 'm/s'
-  if (key.includes('wind_from_direction')) return '°'
+  if (key.includes('wind_from_direction')) return 'Â°'
   if (key.includes('pressure')) return 'hPa'
   if (key.includes('cloud_area_fraction')) return '%'
   if (key.includes('uv_index')) return ''
   if (key.includes('precipitation') || key.includes('rain_1h')) return 'mm'
   if (key.includes('rain_rate')) return 'mm/h'
-  if (key.includes('dew_point')) return '°C'
-  if (key.includes('feels_like')) return '°C'
+  if (key.includes('dew_point')) return 'Â°C'
+  if (key.includes('feels_like')) return 'Â°C'
   if (key.includes('solar_lux')) return 'lx'
-  if (key.includes('solar_radiation')) return 'W/m²'
+  if (key.includes('solar_radiation')) return 'W/mÂ²'
   if (key.includes('vapour_pressure_deficit')) return 'hPa'
   return ''
 }
@@ -2749,7 +2770,7 @@ function drawSolarOverlay() {
     altitudeGuideLabel = L.marker(mid, {
       icon: L.divIcon({
         className: 'altitude-label-wrap',
-        html: `<span class="altitude-label">Elev ${fmt(Math.max(0, alt))}°</span>`,
+        html: `<span class="altitude-label">Elev ${fmt(Math.max(0, alt))}Â°</span>`,
         iconSize: [86, 18],
         iconAnchor: [43, 9],
       }),
@@ -2819,7 +2840,7 @@ function drawSolarOverlay() {
         fillColor: color,
         fillOpacity: opacity,
       }).addTo(map)
-      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° → ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
+      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}Â° â†’ ${fmt(azEnd)}Â°<br>Active: ${active ? 'yes' : 'no'}`
       poly.bindTooltip(tip)
       tendeSectorLayers.push(poly)
     })
@@ -2849,9 +2870,51 @@ function drawPublicUserMap() {
   const center = [lat.value, lon.value]
   const sunAz = Number(data.value?.sun_position?.azimuth_compass_deg)
   const windAz = Number(mapWindDirDeg.value)
+  const times = data.value?.sun_times || {}
+  const sunrise = times?.sunrise ? new Date(times.sunrise) : baseDateAtHour(6)
+  const sunset = times?.sunset ? new Date(times.sunset) : baseDateAtHour(20)
+  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
+  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
+  const srAz = suncalcAzToCompassDeg(srPos.azimuth)
+  const ssAz = suncalcAzToCompassDeg(ssPos.azimuth)
+
+  for (const l of publicOverlayLayers) {
+    try { publicMap.removeLayer(l) } catch (_) {}
+  }
+  publicOverlayLayers = []
 
   if (!publicCenterMarker) publicCenterMarker = L.circleMarker(center, { radius: 5, color: '#ffd46a', fillColor: '#ffd46a', fillOpacity: 1 }).addTo(publicMap)
   else publicCenterMarker.setLatLng(center)
+
+  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM * 0.98)
+  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM * 0.98)
+  const srRay = L.polyline([center, srPt], { color: '#ff8b24', weight: 3, opacity: 0.96 }).addTo(publicMap)
+  const ssRay = L.polyline([center, ssPt], { color: '#f7cf2b', weight: 3, opacity: 0.96 }).addTo(publicMap)
+  const arc = L.polyline(buildElevationCurvePoints(sunrise, sunset, 96), { color: '#f8dc7a', weight: 3, dashArray: '10,6', opacity: 0.92 }).addTo(publicMap)
+  const srLbl = L.marker(destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM + 14), {
+    icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunrise">Alba</span>', iconSize: [56, 20], iconAnchor: [28, 10] }),
+    interactive: false,
+  }).addTo(publicMap)
+  const ssLbl = L.marker(destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM + 14), {
+    icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunset">Tramonto</span>', iconSize: [82, 20], iconAnchor: [41, 10] }),
+    interactive: false,
+  }).addTo(publicMap)
+  publicOverlayLayers.push(srRay, ssRay, arc, srLbl, ssLbl)
+
+  tendeMapShades.value.slice(0, 4).forEach((shade, idx) => {
+    const a0 = Number(shade.azimuth_start_deg)
+    const a1 = Number(shade.azimuth_end_deg)
+    if (!Number.isFinite(a0) || !Number.isFinite(a1)) return
+    const color = String(shade.color || colorFromIndex(idx))
+    const poly = L.polygon(buildSectorPolygonPoints(a0, a1, cfg.value.sectorRadiusM), {
+      color,
+      weight: 2,
+      opacity: 0.9,
+      fillColor: color,
+      fillOpacity: 0.22,
+    }).addTo(publicMap)
+    publicOverlayLayers.push(poly)
+  })
 
   const sunPt = Number.isFinite(sunAz) ? destinationPoint(lat.value, lon.value, sunAz, cfg.value.sectorRadiusM) : null
   if (sunPt) {
@@ -2875,7 +2938,7 @@ function ensurePublicMap() {
   if (!publicMap) {
     publicMap = L.map('solar-map-public', { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles © Esri',
+      attribution: 'Tiles Â© Esri',
       maxZoom: 20,
     }).addTo(publicMap)
   } else {
@@ -2954,7 +3017,7 @@ function ensureWindDirectionLayer() {
   windDirMarker = L.marker(windPt, {
     icon: L.divIcon({
       className: 'wind-map-icon-wrap',
-      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}° · ${fmt(lastKnownWindMs.value)} m/s</span>`,
+      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}Â° Â· ${fmt(lastKnownWindMs.value)} m/s</span>`,
       iconSize: [170, 20],
       iconAnchor: [0, 10],
     }),
@@ -3023,7 +3086,7 @@ function ensureTendeMap() {
   if (tendeMapObj || lat.value == null || lon.value == null) return
   tendeMapObj = L.map('tende-map', { zoomControl: true, attributionControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri',
+    attribution: 'Tiles Â© Esri',
     maxZoom: 20,
   }).addTo(tendeMapObj)
 }
@@ -3287,7 +3350,7 @@ async function loadData() {
     if (!map) {
       map = L.map('solar-map', { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles © Esri',
+        attribution: 'Tiles Â© Esri',
         maxZoom: 20,
       }).addTo(map)
     } else {
@@ -3941,22 +4004,29 @@ input[type='range']{width:100%}
   font-weight:700;
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
-.user-public{padding:10px;background:radial-gradient(circle at top,#0f2238 0%,#07111d 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
-.user-public-head{display:grid;grid-template-columns:220px 1fr 130px;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.2);border-radius:14px;padding:10px 12px;background:rgba(4,12,20,.7)}
+.user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
+.user-public-head{display:grid;grid-template-columns:260px 1fr 130px;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88))}
 .up-brand{display:flex;align-items:center;gap:8px}
 .up-logo{width:34px;height:34px}
-.up-brand-text{font-size:28px;font-weight:700;color:#e8f2ff;line-height:1}
+.up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
-.up-nav{display:flex;gap:20px;justify-content:center;color:#9eb4cc;font-size:13px;font-weight:700}
+.up-nav{display:flex;gap:24px;justify-content:center;color:#9eb4cc;font-size:14px;font-weight:700}
 .up-nav .active{color:#ffc840;border-bottom:2px solid #ffc840;padding-bottom:4px}
 .up-clock{text-align:right}
-.up-time{font-size:26px;color:#ffd66c;font-weight:700}
+.up-time{font-size:46px;color:#ffd66c;font-weight:700;line-height:.9}
 .up-date{font-size:12px;color:#a9bfd8}
 .user-public-main{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-top:10px}
-.up-side{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:10px;display:grid;gap:8px;align-content:start}
+.up-side{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;display:grid;gap:10px;align-content:start}
 .up-side h3{margin:0;color:#e8f2ff}
-.up-side-item{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.07);padding:6px 0;color:#9fbbd8}
-.up-side-item strong{color:#f8fcff}
+.up-legend-item{display:grid;grid-template-columns:12px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+.dot{width:12px;height:12px;border-radius:999px;align-self:start;box-shadow:0 0 10px rgba(255,255,255,.25)}
+.up-legend-body{display:grid;gap:2px}
+.up-legend-body strong{color:#f7fbff}
+.up-legend-body span{color:#9fbbd8;font-size:13px}
+.up-legend-body small{color:#8aa2bb;font-size:12px}
+.up-wind{margin-top:6px;padding:10px;border-radius:10px;border:1px solid rgba(74,188,255,.34);background:rgba(8,24,38,.55);display:grid;gap:2px}
+.up-wind strong{color:#66d2ff}
+.up-wind span{color:#b8dcff}
 .up-map-wrap{border:1px solid rgba(133,175,220,.22);border-radius:12px;overflow:hidden;background:rgba(4,12,22,.8);min-height:520px}
 #solar-map-public{height:100%;min-height:520px}
 .up-bottom{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;margin-top:10px}
@@ -4373,5 +4443,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
+
 
 
