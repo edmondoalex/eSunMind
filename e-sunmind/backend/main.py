@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.71"
+APP_VERSION = "0.3.72"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -793,6 +793,7 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "source": "e-Control",
         "normalized": {},
         "entities": {},
+        "entities_all": [],
         "error": None,
     }
     if not enabled:
@@ -801,6 +802,17 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
 
     auto_mapped = _auto_map_weather_station_entities(str(ws_cfg.get("device_id") or ""))
     out["auto_mapped_entities"] = auto_mapped
+    did = str(ws_cfg.get("device_id") or "").strip()
+    if did:
+        all_entities = _fetch_ha_device_entities(did)
+        all_states: list[dict[str, Any]] = []
+        for ent in all_entities:
+            st = _fetch_ha_entity_state(ent)
+            if isinstance(st, dict):
+                all_states.append(st)
+            else:
+                all_states.append({"ok": False, "entity_id": ent, "error": "read_failed"})
+        out["entities_all"] = all_states
 
     fields = {
         "wind_speed_ms": ("wind_speed_entity_id", _normalize_wind_to_ms),
@@ -1200,6 +1212,32 @@ def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
     mapped["vpd_entity_id"] = _pick(
         lambda i: ("vapour pressure deficit" in _txt(i)) or ("vapor pressure deficit" in _txt(i)) or ("vpd" in _txt(i))
     )
+
+    # Fallbacks to reduce empty fields with integrations that do not expose "outdoor" in entity names.
+    if not mapped.get("outdoor_temp_entity_id"):
+        mapped["outdoor_temp_entity_id"] = _pick(
+            lambda i: _dclass(i) == "temperature"
+            and ("indoor" not in _txt(i) and "internal" not in _txt(i) and "inside" not in _txt(i))
+        )
+    if not mapped.get("outdoor_humidity_entity_id"):
+        mapped["outdoor_humidity_entity_id"] = _pick(
+            lambda i: _dclass(i) == "humidity"
+            and ("indoor" not in _txt(i) and "internal" not in _txt(i) and "inside" not in _txt(i))
+        )
+    if not mapped.get("solar_radiation_entity_id"):
+        mapped["solar_radiation_entity_id"] = _pick(
+            lambda i: ("solar" in _txt(i) and "radiation" in _txt(i))
+            or ("w/m" in _unit(i))
+            or ("irradiance" in _txt(i))
+        )
+    if not mapped.get("solar_lux_entity_id"):
+        mapped["solar_lux_entity_id"] = _pick(
+            lambda i: ("lux" in _txt(i)) or (_unit(i) == "lx")
+        )
+    if not mapped.get("feels_like_entity_id"):
+        mapped["feels_like_entity_id"] = _pick(
+            lambda i: ("feelslike" in _txt(i)) or ("percepita" in _txt(i))
+        )
 
     return {k: v for k, v in mapped.items() if v}
 

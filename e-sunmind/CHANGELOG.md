@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.72
+
+- Weather Station auto-discovery migliorato: fallback piu robusti per evitare campi vuoti (in particolare temperatura/umidita esterna quando i nomi entita non contengono `outdoor`).
+- Estesa configurazione Weather Station in Setting con campi completi: `Dew Point`, `Feels Like`, `Solar Lux`, `Solar Radiation`, `VPD`.
+- User UI: sezione `Reali Stazione Meteo` ora mostra anche l'elenco completo delle entita rilevate dalla stazione con valore e unita.
+- Migliorata lettura dati reali stazione/web mantenendo fallback automatico Weather Guard.
+
 ## 0.3.71
 
 - User UI: aggiunto auto-refresh periodico dati (polling ogni 15 secondi) quando la tab attiva e `User UI`.

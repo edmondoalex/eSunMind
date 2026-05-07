@@ -101,6 +101,11 @@
           <div class="kpi"><strong>Stazione disponibile:</strong> {{ weatherStationOk ? 'SI' : 'NO' }}</div>
           <div class="kpi" v-for="m in weatherStationMetrics" :key="`wsta-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
           <div class="kpi"><strong>Weather Guard:</strong> {{ weatherGuardOk ? 'ATTIVO' : 'NON ATTIVO' }} | Vento {{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }} | Pioggia {{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }} | Facciata {{ weatherGuardFacadeRisk ? 'RISCHIO' : 'ok' }}</div>
+          <div class="kpi"><strong>Entita stazione rilevate:</strong> {{ weatherStationAllEntities.length }}</div>
+          <div class="kpi" v-for="ent in weatherStationAllEntities" :key="`wraw-${ent.entity_id}`">
+            <strong>{{ ent.friendly_name || ent.entity_id }}:</strong>
+            {{ ent.value_text }}
+          </div>
         </div>
 
         <div class="source-card">
@@ -872,6 +877,21 @@
             <label>UV index entity id
               <input type="text" v-model="weatherStationForm.uv_index_entity_id" />
             </label>
+            <label>Dew point entity id
+              <input type="text" v-model="weatherStationForm.dewpoint_entity_id" />
+            </label>
+            <label>Feels like entity id
+              <input type="text" v-model="weatherStationForm.feels_like_entity_id" />
+            </label>
+            <label>Solar lux entity id
+              <input type="text" v-model="weatherStationForm.solar_lux_entity_id" />
+            </label>
+            <label>Solar radiation entity id
+              <input type="text" v-model="weatherStationForm.solar_radiation_entity_id" />
+            </label>
+            <label>VPD entity id
+              <input type="text" v-model="weatherStationForm.vpd_entity_id" />
+            </label>
           </div>
         </section>
 
@@ -1127,6 +1147,11 @@ const weatherStationForm = ref({
   outdoor_humidity_entity_id: '',
   pressure_entity_id: '',
   uv_index_entity_id: '',
+  dewpoint_entity_id: '',
+  feels_like_entity_id: '',
+  solar_lux_entity_id: '',
+  solar_radiation_entity_id: '',
+  vpd_entity_id: '',
 })
 const weatherGuardForm = ref({
   enabled: true,
@@ -1341,6 +1366,19 @@ const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
 const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
 const weatherStation = computed(() => data.value?.weather_station || null)
 const weatherStationNorm = computed(() => weatherStation.value?.normalized || null)
+const weatherStationAllEntities = computed(() => {
+  const rows = Array.isArray(weatherStation.value?.entities_all) ? weatherStation.value.entities_all : []
+  return rows
+    .map((e) => {
+      const entityId = String(e?.entity_id || '')
+      const friendlyName = String(e?.friendly_name || '')
+      const raw = e?.value
+      const unit = String(e?.unit || '').trim()
+      const valueText = raw === null || raw === undefined || raw === '' ? '-' : `${String(raw)}${unit ? ` ${unit}` : ''}`
+      return { entity_id: entityId, friendly_name: friendlyName, value_text: valueText }
+    })
+    .sort((a, b) => a.entity_id.localeCompare(b.entity_id))
+})
 const weatherStationOk = computed(() => Boolean(weatherStation.value?.ok))
 const weatherStationUsed = computed(() => Boolean(data.value?.weather_guard?.station?.used))
 const weatherStationTempC = computed(() => weatherStationNorm.value?.air_temperature_c)
@@ -1421,6 +1459,8 @@ function buildMetricsFromNormalized(norm) {
   if (!norm || typeof norm !== 'object') return []
   const preferredOrder = [
     'air_temperature_c',
+    'feels_like_temperature_c',
+    'dew_point_c',
     'relative_humidity_pct',
     'wind_speed_ms',
     'wind_gust_ms',
@@ -1431,6 +1471,9 @@ function buildMetricsFromNormalized(norm) {
     'rain_rate_mm_h',
     'rain_1h_mm',
     'uv_index',
+    'solar_lux_lx',
+    'solar_radiation_w_m2',
+    'vapour_pressure_deficit_hpa',
     'symbol_code',
     'time',
   ]
@@ -3180,6 +3223,11 @@ async function loadData() {
       outdoor_humidity_entity_id: String(wso.outdoor_humidity_entity_id || ''),
       pressure_entity_id: String(wso.pressure_entity_id || ''),
       uv_index_entity_id: String(wso.uv_index_entity_id || ''),
+      dewpoint_entity_id: String(wso.dewpoint_entity_id || ''),
+      feels_like_entity_id: String(wso.feels_like_entity_id || ''),
+      solar_lux_entity_id: String(wso.solar_lux_entity_id || ''),
+      solar_radiation_entity_id: String(wso.solar_radiation_entity_id || ''),
+      vpd_entity_id: String(wso.vpd_entity_id || ''),
     }
     if (String(weatherStationForm.value.device_id || '').trim()) {
       await autofillWeatherStationFromDevice()
@@ -3259,6 +3307,11 @@ async function autofillWeatherStationFromDevice() {
       'outdoor_humidity_entity_id',
       'pressure_entity_id',
       'uv_index_entity_id',
+      'dewpoint_entity_id',
+      'feels_like_entity_id',
+      'solar_lux_entity_id',
+      'solar_radiation_entity_id',
+      'vpd_entity_id',
     ]
     let filled = 0
     for (const k of keys) {
@@ -3306,6 +3359,11 @@ async function saveBaseSettings() {
         outdoor_humidity_entity_id: String(weatherStationForm.value.outdoor_humidity_entity_id || ''),
         pressure_entity_id: String(weatherStationForm.value.pressure_entity_id || ''),
         uv_index_entity_id: String(weatherStationForm.value.uv_index_entity_id || ''),
+        dewpoint_entity_id: String(weatherStationForm.value.dewpoint_entity_id || ''),
+        feels_like_entity_id: String(weatherStationForm.value.feels_like_entity_id || ''),
+        solar_lux_entity_id: String(weatherStationForm.value.solar_lux_entity_id || ''),
+        solar_radiation_entity_id: String(weatherStationForm.value.solar_radiation_entity_id || ''),
+        vpd_entity_id: String(weatherStationForm.value.vpd_entity_id || ''),
       },
       weather_guard: {
         enabled: Boolean(weatherGuardForm.value.enabled),
@@ -3380,6 +3438,11 @@ async function saveAllSettings() {
         outdoor_humidity_entity_id: String(weatherStationForm.value.outdoor_humidity_entity_id || ''),
         pressure_entity_id: String(weatherStationForm.value.pressure_entity_id || ''),
         uv_index_entity_id: String(weatherStationForm.value.uv_index_entity_id || ''),
+        dewpoint_entity_id: String(weatherStationForm.value.dewpoint_entity_id || ''),
+        feels_like_entity_id: String(weatherStationForm.value.feels_like_entity_id || ''),
+        solar_lux_entity_id: String(weatherStationForm.value.solar_lux_entity_id || ''),
+        solar_radiation_entity_id: String(weatherStationForm.value.solar_radiation_entity_id || ''),
+        vpd_entity_id: String(weatherStationForm.value.vpd_entity_id || ''),
       },
       weather_guard: {
         enabled: Boolean(weatherGuardForm.value.enabled),

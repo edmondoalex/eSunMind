@@ -1,6 +1,10 @@
 # WORKLOG
 
 ## 2026-05-07
+- Weather Station: aggiunti fallback auto-mapping per ridurre entita vuote (outdoor temp/umidita e sensori solar/vpd in naming non standard).
+- Setting Weather Station esteso con tutti i campi entita reali (dew point, feels like, solar lux, solar radiation, vpd) anche in salvataggio/autofill.
+- User UI: aggiunta lista completa `Entita stazione rilevate` con tutti i valori disponibili da `device_id`.
+- Bump versione addon a `0.3.72` con changelog aggiornato.
 - User UI: introdotto auto-refresh dati ogni 15s sulla tab utente per evitare refresh manuale.
 - Bump versione addon a `0.3.71` con changelog aggiornato.
 - User UI: chiariti testi stato sorgenti meteo e Weather Guard (niente piu diciture ambigue tipo "Spento" per stato qualità).
