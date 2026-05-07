@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.74"
+APP_VERSION = "0.3.75"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -924,6 +924,7 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
     stale_seconds = int(wg_cfg.get("stale_seconds", 180) or 180)
     selected = None
     weather_ts = None
+    candidates: list[tuple[dict[str, Any], float]] = []
     # Priority rule: use real weather station when available and fresh, otherwise use web APIs.
     if isinstance(weather_station, dict) and weather_station.get("ok"):
         station_ts = _weather_payload_ts(weather_station)
@@ -931,7 +932,6 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
             selected = weather_station
             weather_ts = station_ts
     if selected is None:
-        candidates: list[tuple[dict[str, Any], float]] = []
         for candidate in (weather, weather_open):
             if not (isinstance(candidate, dict) and candidate.get("ok")):
                 continue

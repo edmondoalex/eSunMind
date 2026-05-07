@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.75
+
+- Fix backend `api/data` 500: risolto `UnboundLocalError` in `_build_weather_guard` quando la stazione meteo reale risulta gia selezionata e la lista candidati web non veniva inizializzata.
+
 ## 0.3.74
 
 - Restyling User UI meteo con layout piu pulito e leggibile: metriche allineate in righe chiave/valore.

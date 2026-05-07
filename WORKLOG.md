@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix urgente runtime backend: risolto crash `api/data` (`UnboundLocalError: candidates`) in weather guard.
+- Bump versione addon a `0.3.75` con changelog aggiornato.
 - User UI: restyling completo pannello meteo/sensori con righe metrica piu leggibili, badge stato e sezione entita stazione collassabile.
 - Bump versione addon a `0.3.74` con changelog aggiornato.
 - Fix stale Weather Station: freschezza calcolata su timestamp piu recente (`max`) invece del piu vecchio (`min`) per evitare falsi `Stazione disponibile: NO`.
