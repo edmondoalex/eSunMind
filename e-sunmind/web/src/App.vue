@@ -24,15 +24,7 @@
     <div v-show="tab==='user_public'" class="user-public">
       <div class="user-public-head">
         <div class="up-brand">
-          <img src="/logo-etende.png" alt="e-Tende Intelligenti" class="up-logo" />
-          
-        </div>
-        <div class="up-nav">
-          <span>PANORAMICA</span>
-          <span>TENDE</span>
-          <span class="active">MAPPA</span>
-          <span>CLIMA</span>
-          <span>METEO</span>
+          <img :src="logoEtende" alt="e-Tende Intelligenti" class="up-logo" />
         </div>
         <div class="up-clock">
           <div class="up-time">{{ localTimestampLabel.slice(11,16) }}</div>
@@ -1104,6 +1096,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import SunCalc from 'suncalc'
+import logoEtende from './assets/logo-etende.png'
 
 // Guard against transient null map targets during UI race conditions.
 const _leafletLayerAddTo = L.Layer.prototype.addTo
@@ -4012,13 +4005,11 @@ input[type='range']{width:100%}
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
 .user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
-.user-public-head{display:grid;grid-template-columns:260px 1fr 130px;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88))}
+.user-public-head{display:grid;grid-template-columns:260px 1fr;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88))}
 .up-brand{display:flex;align-items:center;gap:8px}
 .up-logo{width:180px;height:52px;object-fit:contain}
 .up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
-.up-nav{display:flex;gap:24px;justify-content:center;color:#9eb4cc;font-size:14px;font-weight:700}
-.up-nav .active{color:#ffc840;border-bottom:2px solid #ffc840;padding-bottom:4px}
 .up-clock{text-align:right}
 .up-time{font-size:46px;color:#ffd66c;font-weight:700;line-height:.9}
 .up-date{font-size:12px;color:#a9bfd8}
@@ -4437,7 +4428,6 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     font-size:10px;
   }
   .user-public-head{grid-template-columns:1fr;text-align:left}
-  .up-nav{justify-content:flex-start;overflow:auto}
   .user-public-main{grid-template-columns:1fr}
   .up-bottom{grid-template-columns:1fr}
   #solar-map-public,.up-map-wrap{min-height:360px}
@@ -4450,6 +4440,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
 
 
 

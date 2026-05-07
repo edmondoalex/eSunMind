@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: fix definitivo logo e-Tende con asset bundlato (`src/assets/logo-etende.png`) e rimozione menu top `PANORAMICA/TENDE/CLIMA/METEO`.
+- UI Admin: accesso a UI User unificato in singolo link.
+- Bump versione addon a `0.3.81` con changelog aggiornato.
 - UI User/UI Admin: rimosso doppio accesso, lasciato unico link dedicato `UI User`.
 - UI User: aggiornato logo e-Tende con file del componente e corretti simboli grado/temperatura (`°`, `°C`).
 - Bump versione addon a `0.3.80` con changelog aggiornato.

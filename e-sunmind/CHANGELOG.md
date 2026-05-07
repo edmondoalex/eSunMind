@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.81
+
+- UI User: risolto logo e-Tende usando import asset compilato (`src/assets/logo-etende.png`).
+- UI User: rimosso il menu superiore (`PANORAMICA/TENDE/...`) come richiesto.
+- UI Admin: mantenuto un solo accesso a UI User (`/?view=user`).
+
 ## 0.3.80
 
 - UI Admin: unificato accesso `UI User` in un solo elemento (rimosso duplicato tasto+link).
