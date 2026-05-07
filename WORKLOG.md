@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Wizard Tende/Cover: aggiunto simulatore `What-if` nello step Verifica.
+- Bump versione addon a `0.3.54` con changelog aggiornato.
 - UI Wizard Tende/Cover: nascosto `Avanti` nello step finale.
 - Bump versione addon a `0.3.53` con changelog aggiornato.
 - UI Wizard Tende/Cover: aggiunte descrizioni per parametri e preset.

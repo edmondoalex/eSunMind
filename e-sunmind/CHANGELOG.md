@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.54
+
+- UI Wizard Tende/Cover: aggiunto simulatore `What-if` nello step Verifica per confrontare configurazione attuale e proposta prima del salvataggio.
+
 ## 0.3.53
 
 - UI Wizard Tende/Cover: nascosto il pulsante `Avanti` nell'ultimo step.

@@ -484,6 +484,37 @@
               </button>
             </div>
             <div v-else class="wizard-review">
+              <div class="what-if-panel">
+                <div class="what-if-head">
+                  <strong>Simulatore What-if</strong>
+                  <span>Confronta configurazione attuale e proposta prima di salvare.</span>
+                </div>
+                <div class="what-if-grid">
+                  <div class="what-if-card">
+                    <h4>Attuale</h4>
+                    <span>Sole utile: {{ whatIfPreview.current.usefulLabel }}</span>
+                    <span>Picco: {{ whatIfPreview.current.peakLabel }}</span>
+                    <span>Posizione sole: {{ whatIfPreview.current.sunPositionLabel }}</span>
+                    <span>Riposo: {{ whatIfPreview.current.defaultPositionLabel }}</span>
+                    <span>Termico: {{ whatIfPreview.current.thermalLabel }}</span>
+                  </div>
+                  <div class="what-if-card proposed">
+                    <h4>Proposta</h4>
+                    <span>Sole utile: {{ whatIfPreview.proposed.usefulLabel }}</span>
+                    <span>Picco: {{ whatIfPreview.proposed.peakLabel }}</span>
+                    <span>Posizione sole: {{ whatIfPreview.proposed.sunPositionLabel }}</span>
+                    <span>Riposo: {{ whatIfPreview.proposed.defaultPositionLabel }}</span>
+                    <span>Termico: {{ whatIfPreview.proposed.thermalLabel }}</span>
+                  </div>
+                  <div class="what-if-card delta">
+                    <h4>Differenza</h4>
+                    <span>{{ whatIfPreview.deltaUsefulLabel }}</span>
+                    <span>{{ whatIfPreview.deltaSunPositionLabel }}</span>
+                    <span>{{ whatIfPreview.deltaDefaultPositionLabel }}</span>
+                    <span>{{ whatIfPreview.thermalDeltaLabel }}</span>
+                  </div>
+                </div>
+              </div>
               <span>Heatmap: verifica le ore di sole utile sotto la mappa.</span>
               <span>Se `Decisione termica` resta `missing_climate`, controlla il nome `climate.xxx`.</span>
               <span>Se il motore si muove troppo spesso, aumenta `Anti-loop comandi sec.`.</span>
@@ -1178,6 +1209,7 @@ const tendeMapWarning = computed(() => {
   return ''
 })
 const sunWindowHeatmap = computed(() => buildSunWindowHeatmap())
+const whatIfPreview = computed(() => buildWhatIfPreview())
 const wizardSteps = [
   { key: 'base', label: 'Base', hint: 'Abilita automazione e scegli il comportamento quando il sole non e utile.' },
   { key: 'sun', label: 'Sole', hint: 'Allinea finestra, campo visivo e Start/Stop guardando mappa e heatmap.' },
@@ -2054,6 +2086,12 @@ function fmtDuration(totalMinutes) {
   return `${h}h ${m}m`
 }
 
+function fmtDeltaDuration(totalMinutes) {
+  const raw = Math.round(Number(totalMinutes) || 0)
+  const sign = raw > 0 ? '+' : raw < 0 ? '-' : ''
+  return `${sign}${fmtDuration(Math.abs(raw))}`
+}
+
 function heatColor(score) {
   const s = Math.max(0, Math.min(100, Number(score) || 0))
   if (s <= 0) return 'linear-gradient(180deg,#172033,#0b1220)'
@@ -2063,17 +2101,18 @@ function heatColor(score) {
   return 'linear-gradient(180deg,#ef4444,#7f1d1d)'
 }
 
-function buildSunWindowHeatmap() {
+function buildSunWindowHeatmap(shadeArg = null) {
   const empty = {
     slots: [],
     subtitle: '',
     usefulLabel: '0 min',
+    usefulMinutes: 0,
     peakLabel: '-',
     nextLabel: '-',
     startLabel: '-',
     endLabel: '-',
   }
-  const shade = selectedShadeEdit.value
+  const shade = shadeArg || selectedShadeEdit.value
   if (!shade || lat.value == null || lon.value == null) return empty
   const base = data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()
   const times = SunCalc.getTimes(base, lat.value, lon.value)
@@ -2120,10 +2159,65 @@ function buildSunWindowHeatmap() {
     slots,
     subtitle: `${fmtTime(sunrise)} - ${fmtTime(sunset)} | ${invert ? 'logica sole invertita' : 'logica sole diretta'}`,
     usefulLabel: `Sole utile ${fmtDuration(usefulMinutes)}`,
+    usefulMinutes,
     peakLabel: peak && peak.score > 0 ? `${fmtTime(peak.time)} (${peak.score}%)` : '-',
     nextLabel: next ? fmtTime(next) : '-',
     startLabel: fmtTime(sunrise),
     endLabel: fmtTime(sunset),
+  }
+}
+
+function simulationShadeFromRaw(shade) {
+  if (!shade) return null
+  return {
+    use_start_stop_azimuth: Boolean(pickSetting(shade, 'use_start_stop_azimuth', true)),
+    invert_sun_logic: Boolean(pickSetting(shade, 'invert_sun_logic', false)),
+    window_azimuth: Number(pickSetting(shade, 'window_azimuth', 0)),
+    azimuth_start_deg: Number(pickSetting(shade, 'azimuth_start_deg', shade.azimuth_start_deg ?? 0)),
+    azimuth_end_deg: Number(pickSetting(shade, 'azimuth_end_deg', shade.azimuth_end_deg ?? 0)),
+    fov_left: Number(pickSetting(shade, 'fov_left', 70)),
+    fov_right: Number(pickSetting(shade, 'fov_right', 70)),
+    altitude_min_deg: Number(pickSetting(shade, 'altitude_min_deg', shade.altitude_min_deg ?? 8)),
+    altitude_max_deg: Number(pickSetting(shade, 'altitude_max_deg', shade.altitude_max_deg ?? 80)),
+    default_position: Number(pickSetting(shade, 'default_position', 100)),
+    min_position: Number(pickSetting(shade, 'min_position', 0)),
+    thermal_enabled: Boolean(pickSetting(shade, 'thermal_enabled', false)),
+    thermal_climate_entity: String(pickSetting(shade, 'thermal_climate_entity', '') || ''),
+  }
+}
+
+function simulationSummary(shade) {
+  const hm = buildSunWindowHeatmap(shade)
+  return {
+    usefulLabel: hm.usefulLabel || 'Sole utile 0 min',
+    usefulMinutes: Number(hm.usefulMinutes || 0),
+    peakLabel: hm.peakLabel || '-',
+    sunPosition: Number(shade?.min_position ?? 0),
+    defaultPosition: Number(shade?.default_position ?? 100),
+    sunPositionLabel: `${targetValue(shade?.min_position)} %`,
+    defaultPositionLabel: `${targetValue(shade?.default_position)} %`,
+    thermalEnabled: Boolean(shade?.thermal_enabled),
+    thermalLabel: shade?.thermal_enabled ? `ON ${shade?.thermal_climate_entity || '(climate mancante)'}` : 'OFF',
+  }
+}
+
+function buildWhatIfPreview() {
+  const currentRaw = tendeMapShades.value.find((s) => shadeKey(s) === selectedShadeId.value || String(s.id || '').trim() === String(selectedShadeId.value || '').trim())
+  const currentShade = simulationShadeFromRaw(currentRaw) || simulationShadeFromRaw(selectedShadeEdit.value)
+  const proposedShade = selectedShadeEdit.value || currentShade || {}
+  const current = simulationSummary(currentShade || {})
+  const proposed = simulationSummary(proposedShade || {})
+  const deltaMin = proposed.usefulMinutes - current.usefulMinutes
+  const deltaSun = proposed.sunPosition - current.sunPosition
+  const deltaDefault = proposed.defaultPosition - current.defaultPosition
+  const sign = (n) => (n > 0 ? '+' : '')
+  return {
+    current,
+    proposed,
+    deltaUsefulLabel: `Sole utile: ${fmtDeltaDuration(deltaMin)}`,
+    deltaSunPositionLabel: `Posizione sole: ${sign(deltaSun)}${deltaSun} %`,
+    deltaDefaultPositionLabel: `Riposo: ${sign(deltaDefault)}${deltaDefault} %`,
+    thermalDeltaLabel: current.thermalEnabled === proposed.thermalEnabled ? 'Termico: invariato' : `Termico: ${current.thermalEnabled ? 'ON' : 'OFF'} -> ${proposed.thermalEnabled ? 'ON' : 'OFF'}`,
   }
 }
 
@@ -3551,6 +3645,15 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .wizard-preset small{color:#9fb0c8;font-size:11px;line-height:1.25;font-weight:600}
 .wizard-review{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;align-items:center}
 .wizard-review span{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;color:#dbe7ff;font-size:13px}
+.what-if-panel{grid-column:1/-1;border:1px solid rgba(250,204,21,.24);border-radius:14px;padding:12px;background:linear-gradient(135deg,rgba(24,18,8,.78),rgba(8,14,22,.92))}
+.what-if-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.what-if-head span{background:transparent;border:none;padding:0;color:#9fb0c8}
+.what-if-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+.what-if-card{display:flex;flex-direction:column;gap:6px;background:#0c1524;border:1px solid var(--border);border-radius:12px;padding:10px}
+.what-if-card h4{margin:0;color:#fde68a}
+.what-if-card span{border:none;background:transparent;padding:0;color:#dbe7ff}
+.what-if-card.proposed{border-color:rgba(87,227,214,.38)}
+.what-if-card.delta{border-color:rgba(250,204,21,.38)}
 .wizard-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
