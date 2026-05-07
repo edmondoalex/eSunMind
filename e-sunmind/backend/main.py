@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.69"
+APP_VERSION = "0.3.70"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -166,6 +166,11 @@ def _load_options() -> dict[str, Any]:
             "outdoor_humidity_entity_id": "",
             "pressure_entity_id": "",
             "uv_index_entity_id": "",
+            "dewpoint_entity_id": "",
+            "feels_like_entity_id": "",
+            "solar_lux_entity_id": "",
+            "solar_radiation_entity_id": "",
+            "vpd_entity_id": "",
         },
         "weather_guard": {
             "enabled": True,
@@ -807,6 +812,11 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "relative_humidity_pct": ("outdoor_humidity_entity_id", lambda v, _u: _to_float_or_none(v)),
         "air_pressure_hpa": ("pressure_entity_id", _normalize_pressure_to_hpa),
         "uv_index": ("uv_index_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "dew_point_c": ("dewpoint_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "feels_like_temperature_c": ("feels_like_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "solar_lux_lx": ("solar_lux_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "solar_radiation_w_m2": ("solar_radiation_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "vapour_pressure_deficit_hpa": ("vpd_entity_id", lambda v, _u: _to_float_or_none(v)),
     }
     normalized: dict[str, Any] = {}
     timestamps: list[float] = []
@@ -1174,6 +1184,21 @@ def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
     )
     mapped["uv_index_entity_id"] = _pick(
         lambda i: ("uv" in _txt(i))
+    )
+    mapped["dewpoint_entity_id"] = _pick(
+        lambda i: ("dewpoint" in _txt(i)) or ("dew point" in _txt(i))
+    )
+    mapped["feels_like_entity_id"] = _pick(
+        lambda i: ("feels like" in _txt(i)) or ("apparent" in _txt(i))
+    )
+    mapped["solar_lux_entity_id"] = _pick(
+        lambda i: ("solar lux" in _txt(i)) or ("illuminance" in _txt(i)) or ("lux" in _txt(i) and "solar" in _txt(i))
+    )
+    mapped["solar_radiation_entity_id"] = _pick(
+        lambda i: ("solar radiation" in _txt(i)) or ("irradiance" in _txt(i))
+    )
+    mapped["vpd_entity_id"] = _pick(
+        lambda i: ("vapour pressure deficit" in _txt(i)) or ("vapor pressure deficit" in _txt(i)) or ("vpd" in _txt(i))
     )
 
     return {k: v for k, v in mapped.items() if v}

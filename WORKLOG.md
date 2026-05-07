@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI: chiariti testi stato sorgenti meteo e Weather Guard (niente piu diciture ambigue tipo "Spento" per stato qualità).
+- Aggiunti valori meteo importanti Ecowitt in mapping/visualizzazione: Dew Point, Feels Like, Solar Lux, Solar Radiation, VPD.
+- Bump versione addon a `0.3.70` con changelog aggiornato.
 - User UI meteo: resa completa la visualizzazione valori Web/Stazione mostrando tutti i campi `normalized` con label e unità coerenti.
 - Bump versione addon a `0.3.69` con changelog aggiornato.
 - User UI mappa vento: linea resa auto-esplicativa con testo `VENTO DA` e marker testa direzione, senza legenda aggiuntiva.

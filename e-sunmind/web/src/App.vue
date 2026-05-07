@@ -97,10 +97,10 @@
 
         <div class="source-card">
           <h4>Reali Stazione Meteo</h4>
-          <div class="kpi"><strong>Sorgente attiva WG:</strong> {{ weatherStationUsed ? 'STAZIONE REALE' : 'METEO WEB' }}</div>
-          <div class="kpi"><strong>Stazione OK:</strong> {{ boolLabel(weatherStationOk) }}</div>
+          <div class="kpi"><strong>Sorgente protezione meteo (WG):</strong> {{ weatherStationUsed ? 'STAZIONE REALE' : 'METEO WEB (fallback)' }}</div>
+          <div class="kpi"><strong>Stazione disponibile:</strong> {{ weatherStationOk ? 'SI' : 'NO' }}</div>
           <div class="kpi" v-for="m in weatherStationMetrics" :key="`wsta-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
-          <div class="kpi"><strong>Weather Guard:</strong> {{ boolLabel(weatherGuardOk) }} | W {{ boolLabel(weatherGuardWindAlarm) }} R {{ boolLabel(weatherGuardRainAlarm) }} F {{ boolLabel(weatherGuardFacadeRisk) }}</div>
+          <div class="kpi"><strong>Weather Guard:</strong> {{ weatherGuardOk ? 'ATTIVO' : 'NON ATTIVO' }} | Vento {{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }} | Pioggia {{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }} | Facciata {{ weatherGuardFacadeRisk ? 'RISCHIO' : 'ok' }}</div>
         </div>
 
         <div class="source-card">
@@ -1383,6 +1383,11 @@ const weatherMetricLabelMap = {
   precipitation_next_1h_mm: 'Pioggia prossima 1h',
   rain_rate_mm_h: 'Pioggia (rate)',
   rain_1h_mm: 'Pioggia 1h',
+  dew_point_c: 'Dew Point',
+  feels_like_temperature_c: 'Temperatura percepita',
+  solar_lux_lx: 'Solar Lux',
+  solar_radiation_w_m2: 'Solar Radiation',
+  vapour_pressure_deficit_hpa: 'VPD',
   time: 'Timestamp',
 }
 function metricUnitForKey(key) {
@@ -1395,6 +1400,11 @@ function metricUnitForKey(key) {
   if (key.includes('uv_index')) return ''
   if (key.includes('precipitation') || key.includes('rain_1h')) return 'mm'
   if (key.includes('rain_rate')) return 'mm/h'
+  if (key.includes('dew_point')) return '°C'
+  if (key.includes('feels_like')) return '°C'
+  if (key.includes('solar_lux')) return 'lx'
+  if (key.includes('solar_radiation')) return 'W/m²'
+  if (key.includes('vapour_pressure_deficit')) return 'hPa'
   return ''
 }
 function metricToDisplayValue(key, raw) {
