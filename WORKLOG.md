@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix UX Weather Station: auto-fill da `device_id` ora parte anche al load della pagina Settings, senza richiedere modifica manuale del campo.
+- Bump versione addon a `0.3.58` con changelog aggiornato.
 - Weather Station: aggiunto endpoint `GET /api/weather_station/autofill` per mappatura automatica entita da `device_id`.
 - Weather Station UI: auto-fill campi sensori al cambio `device_id`, con preservazione override manuali.
 - Auto-mapping Ecowitt reso piu robusto usando anche `device_class` e unita.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.58
+
+- Weather Station UI: auto-fill da `device_id` eseguito anche al caricamento della pagina Settings quando il campo e gia valorizzato.
+- Risolto caso in cui i campi restavano vuoti finche l'utente non modificava manualmente il campo `device_id`.
+
 ## 0.3.57
 
 - Weather Station UI: auto-compilazione campi sensori quando viene impostato `device_id` (auto-discovery), senza sovrascrivere valori manuali gia presenti.

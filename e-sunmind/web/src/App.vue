@@ -2981,6 +2981,9 @@ async function loadData() {
       pressure_entity_id: String(wso.pressure_entity_id || ''),
       uv_index_entity_id: String(wso.uv_index_entity_id || ''),
     }
+    if (String(weatherStationForm.value.device_id || '').trim()) {
+      await autofillWeatherStationFromDevice()
+    }
     const wgo = oj?.weather_guard || {}
     weatherGuardForm.value = {
       enabled: Boolean(wgo.enabled ?? true),
