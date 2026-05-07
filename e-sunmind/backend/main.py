@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.72"
+APP_VERSION = "0.3.73"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -861,9 +861,9 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         normalized["precipitation_next_1h_mm"] = normalized["rain_1h_mm"]
 
     stale_seconds = int(ws_cfg.get("stale_seconds", 180) or 180)
-    oldest_ts = min(timestamps) if timestamps else None
-    age = None if oldest_ts is None else time.time() - oldest_ts
-    stale = oldest_ts is None or age > stale_seconds
+    latest_ts = max(timestamps) if timestamps else None
+    age = None if latest_ts is None else time.time() - latest_ts
+    stale = latest_ts is None or age > stale_seconds
     out["normalized"] = normalized
     out["stale"] = stale
     out["age_seconds"] = None if age is None else round(age, 1)
@@ -871,7 +871,7 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
     out["ok"] = bool(normalized) and not stale
     if out["ok"]:
         out["provider"] = "weather_station"
-        out["_fetched_at_ts"] = oldest_ts
+        out["_fetched_at_ts"] = latest_ts
         out["error"] = None
     else:
         out["error"] = "station_stale_or_empty" if stale else "station_fields_missing"

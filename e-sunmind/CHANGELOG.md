@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.73
+
+- Fix disponibilita stazione meteo: il calcolo freschezza ora usa il timestamp piu recente tra le entita lette, non il piu vecchio.
+- Risolto falso `Stazione disponibile: NO` quando alcuni sensori (tipicamente pioggia a zero) non aggiornano spesso il `last_updated`.
+
 ## 0.3.72
 
 - Weather Station auto-discovery migliorato: fallback piu robusti per evitare campi vuoti (in particolare temperatura/umidita esterna quando i nomi entita non contengono `outdoor`).

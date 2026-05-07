@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix stale Weather Station: freschezza calcolata su timestamp piu recente (`max`) invece del piu vecchio (`min`) per evitare falsi `Stazione disponibile: NO`.
+- Bump versione addon a `0.3.73` con changelog aggiornato.
 - Weather Station: aggiunti fallback auto-mapping per ridurre entita vuote (outdoor temp/umidita e sensori solar/vpd in naming non standard).
 - Setting Weather Station esteso con tutti i campi entita reali (dew point, feels like, solar lux, solar radiation, vpd) anche in salvataggio/autofill.
 - User UI: aggiunta lista completa `Entita stazione rilevate` con tutti i valori disponibili da `device_id`.
