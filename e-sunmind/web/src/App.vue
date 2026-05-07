@@ -2672,6 +2672,10 @@ function ensureWindDirectionLayer() {
     windLayerRetryTimer = 0
   }
   if (windDirLine && map) {
+    try {
+      const head = (windDirLine)._windDirHead
+      if (head) map.removeLayer(head)
+    } catch (_) {}
     try { map.removeLayer(windDirLine) } catch (_) {}
   }
   if (windDirMarker && map) {
@@ -2694,6 +2698,7 @@ function ensureWindDirectionLayer() {
   const speedRaw = Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : Number(lastKnownWindMs.value)
   if (Number.isFinite(speedRaw)) lastKnownWindMs.value = Number(speedRaw)
   const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
+  const headPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.98)
   windDirLine = L.polyline([[lat.value, lon.value], windPt], {
     color: '#36d5ff',
     weight: 2.8,
@@ -2701,15 +2706,23 @@ function ensureWindDirectionLayer() {
     dashArray: '5,5',
     lineCap: 'round',
   }).addTo(map)
+  const dirMarker = L.circleMarker(headPt, {
+    radius: 3.5,
+    color: '#c8f3ff',
+    fillColor: '#36d5ff',
+    fillOpacity: 1,
+    weight: 1.6,
+  }).addTo(map)
   windDirMarker = L.marker(windPt, {
     icon: L.divIcon({
       className: 'wind-map-icon-wrap',
-      html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(lastKnownWindMs.value)} m/s</span>`,
-      iconSize: [92, 20],
-      iconAnchor: [10, 10],
+      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}° · ${fmt(lastKnownWindMs.value)} m/s</span>`,
+      iconSize: [170, 20],
+      iconAnchor: [0, 10],
     }),
     interactive: false,
   }).addTo(map)
+  ;(windDirLine)._windDirHead = dirMarker
 }
 
 function selectShade(id) {

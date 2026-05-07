@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI mappa vento: linea resa auto-esplicativa con testo `VENTO DA` e marker testa direzione, senza legenda aggiuntiva.
+- Bump versione addon a `0.3.67` con changelog aggiornato.
 - Fix toggle vento mappa (final): separato rendering layer vento con funzione dedicata e watcher diretti su direzione/velocita.
 - Aggiunto cleanup timer retry su unmount per evitare stati incoerenti dopo toggle e cambi tab.
 - Bump versione addon a `0.3.66` con changelog aggiornato.
