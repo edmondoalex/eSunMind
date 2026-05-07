@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.48
+
+- Fix versione UI/API: allineato `APP_VERSION` backend a `0.3.48`, così il titolo mostra la release reale invece di `0.3.40`.
+
 ## 0.3.47
 
 - UI Tende/Cover: aggiunto campo `Anti-loop comandi sec.` e diagnostica blocco/rate-limit ricevuta da e-Tende.

@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix versione pannello addon: allineato `APP_VERSION` backend alla release `0.3.48`.
+- Bump versione addon a `0.3.48` con changelog aggiornato.
 - UI Tende/Cover: aggiunto controllo `Anti-loop comandi sec.` per configurare `min_command_interval_seconds` di e-Tende.
 - UI Tende/Cover: mostrata diagnostica anti-loop/rate-limit nei sensori cover.
 - Bump versione addon a `0.3.47` con changelog aggiornato.
