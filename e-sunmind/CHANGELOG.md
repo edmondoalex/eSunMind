@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.74
+
+- Restyling User UI meteo con layout piu pulito e leggibile: metriche allineate in righe chiave/valore.
+- Migliorata sezione `Reali Stazione Meteo` con badge stato chiari (`WG`, `Stazione SI/NO`) e pannello Weather Guard separato.
+- Elenco completo entita stazione spostato in blocco espandibile, per ridurre rumore visivo mantenendo tutti i dati disponibili.
+
 ## 0.3.73
 
 - Fix disponibilita stazione meteo: il calcolo freschezza ora usa il timestamp piu recente tra le entita lette, non il piu vecchio.

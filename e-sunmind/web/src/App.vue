@@ -81,38 +81,62 @@
       </div>
 
       <div class="panel source-panel" v-show="userExpanded">
-        <div class="source-card">
+        <div class="source-card source-card--web">
           <h4>Meteo Web</h4>
-          <div class="kpi"><strong>Provider:</strong> {{ weatherProvider || '-' }}</div>
-          <div class="kpi"><strong>Aggiornamento:</strong> {{ weatherTime || '-' }}</div>
-          <div class="kpi" v-for="m in weatherWebMetrics" :key="`wweb-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
-        </div>
-
-        <div class="source-card">
-          <h4>Reali Sonde</h4>
-          <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
-          <div class="kpi"><strong>Umidita reale:</strong> {{ fmt(externalHumidityPct) }} %</div>
-          <div class="kpi"><strong>Delta T (sonda - web):</strong> {{ fmt(tempDeltaC) }}°C</div>
-        </div>
-
-        <div class="source-card">
-          <h4>Reali Stazione Meteo</h4>
-          <div class="kpi"><strong>Sorgente protezione meteo (WG):</strong> {{ weatherStationUsed ? 'STAZIONE REALE' : 'METEO WEB (fallback)' }}</div>
-          <div class="kpi"><strong>Stazione disponibile:</strong> {{ weatherStationOk ? 'SI' : 'NO' }}</div>
-          <div class="kpi" v-for="m in weatherStationMetrics" :key="`wsta-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
-          <div class="kpi"><strong>Weather Guard:</strong> {{ weatherGuardOk ? 'ATTIVO' : 'NON ATTIVO' }} | Vento {{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }} | Pioggia {{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }} | Facciata {{ weatherGuardFacadeRisk ? 'RISCHIO' : 'ok' }}</div>
-          <div class="kpi"><strong>Entita stazione rilevate:</strong> {{ weatherStationAllEntities.length }}</div>
-          <div class="kpi" v-for="ent in weatherStationAllEntities" :key="`wraw-${ent.entity_id}`">
-            <strong>{{ ent.friendly_name || ent.entity_id }}:</strong>
-            {{ ent.value_text }}
+          <div class="source-head">
+            <span class="chip">Provider: {{ weatherProvider || '-' }}</span>
+            <span class="chip">Aggiornamento: {{ weatherTime || '-' }}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-row" v-for="m in weatherWebMetrics" :key="`wweb-${m.key}`">
+              <span class="metric-key">{{ m.label }}</span>
+              <span class="metric-val">{{ m.value }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="source-card">
+        <div class="source-card source-card--probe">
+          <h4>Reali Sonde</h4>
+          <div class="metric-grid">
+            <div class="metric-row"><span class="metric-key">Temperatura reale</span><span class="metric-val">{{ fmt(externalTempC) }}°C</span></div>
+            <div class="metric-row"><span class="metric-key">Umidita reale</span><span class="metric-val">{{ fmt(externalHumidityPct) }} %</span></div>
+            <div class="metric-row"><span class="metric-key">Delta T (sonda - web)</span><span class="metric-val">{{ fmt(tempDeltaC) }}°C</span></div>
+          </div>
+        </div>
+
+        <div class="source-card source-card--station">
+          <h4>Reali Stazione Meteo</h4>
+          <div class="source-head">
+            <span class="chip">WG: {{ weatherStationUsed ? 'STAZIONE REALE' : 'METEO WEB (fallback)' }}</span>
+            <span class="chip" :class="weatherStationOk ? 'chip-ok' : 'chip-bad'">Stazione: {{ weatherStationOk ? 'SI' : 'NO' }}</span>
+          </div>
+          <div class="metric-grid">
+            <div class="metric-row" v-for="m in weatherStationMetrics" :key="`wsta-${m.key}`">
+              <span class="metric-key">{{ m.label }}</span>
+              <span class="metric-val">{{ m.value }}</span>
+            </div>
+          </div>
+          <div class="guard-line">
+            Weather Guard: {{ weatherGuardOk ? 'ATTIVO' : 'NON ATTIVO' }} | Vento {{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }} | Pioggia {{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }} | Facciata {{ weatherGuardFacadeRisk ? 'RISCHIO' : 'ok' }}
+          </div>
+          <details class="station-all-details">
+            <summary>Entita stazione rilevate ({{ weatherStationAllEntities.length }})</summary>
+            <div class="metric-grid metric-grid--compact">
+              <div class="metric-row" v-for="ent in weatherStationAllEntities" :key="`wraw-${ent.entity_id}`">
+                <span class="metric-key">{{ ent.friendly_name || ent.entity_id }}</span>
+                <span class="metric-val">{{ ent.value_text }}</span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="source-card source-card--pv">
           <h4>Fotovoltaico</h4>
-          <div class="kpi"><strong>FV reale e-Control:</strong> {{ fmt0(pvMeasuredW) }} W</div>
-          <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
-          <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
+          <div class="metric-grid">
+            <div class="metric-row"><span class="metric-key">FV reale e-Control</span><span class="metric-val">{{ fmt0(pvMeasuredW) }} W</span></div>
+            <div class="metric-row"><span class="metric-key">FV atteso (ora)</span><span class="metric-val">{{ fmt0(pvForecastNowW) }} W</span></div>
+            <div class="metric-row"><span class="metric-key">Rapporto reale/atteso</span><span class="metric-val">{{ fmt2(pvLiveRatio) }}</span></div>
+          </div>
         </div>
       </div>
       <div class="panel" v-show="userExpanded">
@@ -3818,6 +3842,18 @@ input[type='range']{width:100%}
 .source-panel{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:10px}
 .source-card{border:1px solid var(--border);border-radius:12px;background:rgba(8,13,20,.72);padding:8px;display:grid;gap:7px}
 .source-card h4{margin:0 0 2px 0;color:#cbe6ff;font-size:14px;letter-spacing:.2px}
+.source-head{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid rgba(175,210,255,.28);background:rgba(20,30,45,.55);font-size:12px;color:#dbeeff}
+.chip-ok{border-color:rgba(90,220,160,.45);color:#c8ffe3}
+.chip-bad{border-color:rgba(255,115,115,.45);color:#ffd4d4}
+.metric-grid{display:grid;grid-template-columns:1fr;gap:6px}
+.metric-grid--compact{max-height:260px;overflow:auto;padding-right:4px}
+.metric-row{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(10,15,22,.58)}
+.metric-key{color:#a9bed6;font-size:12px}
+.metric-val{color:#f0f7ff;font-weight:600;font-size:13px;text-align:right}
+.guard-line{padding:8px 10px;border:1px dashed rgba(130,180,235,.35);border-radius:9px;background:rgba(18,28,40,.4);font-size:12px;color:#d8e8f8}
+.station-all-details summary{cursor:pointer;color:#cde5ff;font-size:12px}
+.station-all-details[open] summary{margin-bottom:6px}
 .tech-main{padding:14px;display:grid;gap:12px}
 .card{border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(10,15,22,.75)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
@@ -4197,5 +4233,14 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     min-width:38px;
     font-size:10px;
   }
+  .metric-row{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .metric-val{
+    text-align:left;
+  }
 }
 </style>
+
+

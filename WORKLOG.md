@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI: restyling completo pannello meteo/sensori con righe metrica piu leggibili, badge stato e sezione entita stazione collassabile.
+- Bump versione addon a `0.3.74` con changelog aggiornato.
 - Fix stale Weather Station: freschezza calcolata su timestamp piu recente (`max`) invece del piu vecchio (`min`) per evitare falsi `Stazione disponibile: NO`.
 - Bump versione addon a `0.3.73` con changelog aggiornato.
 - Weather Station: aggiunti fallback auto-mapping per ridurre entita vuote (outdoor temp/umidita e sensori solar/vpd in naming non standard).
