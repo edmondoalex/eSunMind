@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Wizard Tende/Cover: nascosto `Avanti` nello step finale.
+- Bump versione addon a `0.3.53` con changelog aggiornato.
 - UI Wizard Tende/Cover: aggiunte descrizioni per parametri e preset.
 - Bump versione addon a `0.3.52` con changelog aggiornato.
 - UI Tende/Cover: aggiunto wizard guidato per taratura cover selezionata.

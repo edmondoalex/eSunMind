@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.53
+
+- UI Wizard Tende/Cover: nascosto il pulsante `Avanti` nell'ultimo step.
+
 ## 0.3.52
 
 - UI Wizard Tende/Cover: aggiunte spiegazioni brevi per ogni parametro e per i preset guidati.

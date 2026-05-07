@@ -492,7 +492,7 @@
           </div>
           <div class="wizard-actions">
             <button class="btn ghost" @click="prevWizardStep" :disabled="tendeWizardStep <= 0">Indietro</button>
-            <button class="btn ghost" @click="nextWizardStep" :disabled="tendeWizardStep >= wizardSteps.length - 1">Avanti</button>
+            <button v-if="tendeWizardStep < wizardSteps.length - 1" class="btn ghost" @click="nextWizardStep">Avanti</button>
           </div>
         </div>
         <div class="tende-cal-grid">
