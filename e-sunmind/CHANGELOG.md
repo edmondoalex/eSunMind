@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.69
+
+- User UI dati meteo: visualizzazione completa di tutti i campi `normalized` disponibili per `Meteo Web` e `Stazione Meteo`, non piu solo subset fisso.
+- Aggiunte etichette leggibili, unita automatiche e ordinamento coerente dei campi per migliorare chiarezza origine dati.
+
+## 0.3.68
+
+- User UI: riorganizzata sezione dati in blocchi chiari per sorgente (`Meteo Web`, `Reali Sonde`, `Reali Stazione Meteo`, `Fotovoltaico`).
+- Migliorata leggibilita origine dati con etichette esplicite e stato sorgente attiva per Weather Guard.
+
 ## 0.3.67
 
 - User UI mappa vento: migliorata chiarezza visiva della linea con label esplicita `VENTO DA ...` e testa linea evidenziata.

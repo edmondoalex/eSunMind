@@ -80,31 +80,35 @@
         <div class="kpi">Data locale: {{ localTimestampLabel }}</div>
       </div>
 
-      <div class="panel" v-show="userExpanded">
-        <div class="kpi"><strong>Meteo provider:</strong> {{ weatherProvider || '-' }}</div>
-        <div class="kpi"><strong>Meteo aggiornamento:</strong> {{ weatherTime || '-' }}</div>
-        <div class="kpi"><strong>Temperatura:</strong> {{ fmt(weatherTempC) }}°C</div>
-        <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
-        <div class="kpi"><strong>Delta T reale-meteo:</strong> {{ fmt(tempDeltaC) }}°C</div>
-        <div class="kpi"><strong>Umidita reale:</strong> {{ fmt(externalHumidityPct) }} %</div>
-        <div class="kpi"><strong>Umidita meteo:</strong> {{ fmt(weatherHumidityPct) }} %</div>
-        <div class="kpi"><strong>Vento:</strong> {{ fmt(weatherWindMs) }} m/s ({{ fmt(weatherWindDirDeg) }}°)</div>
-        <div class="kpi"><strong>Pressione:</strong> {{ fmt(weatherPressureHpa) }} hPa</div>
-        <div class="kpi"><strong>Nuvolosita:</strong> {{ fmt(weatherCloudPct) }} %</div>
-        <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
-        <div class="kpi"><strong>UV index:</strong> {{ fmt(weatherUvIndex) }}</div>
-        <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
-        <div class="kpi"><strong>WS:</strong> {{ weatherStationUsed ? 'REALE' : 'WEB' }} (ok: {{ boolLabel(weatherStationOk) }})</div>
-        <div class="kpi"><strong>WS Temperatura esterna:</strong> {{ fmt(weatherStationTempC) }}°C</div>
-        <div class="kpi"><strong>WS Umidita esterna:</strong> {{ fmt(weatherStationHumidityPct) }} %</div>
-        <div class="kpi"><strong>WS Pressione:</strong> {{ fmt(weatherStationPressureHpa) }} hPa</div>
-        <div class="kpi"><strong>WS Indice UV:</strong> {{ fmt(weatherStationUvIndex) }}</div>
-        <div class="kpi"><strong>WS Pioggia (rate):</strong> {{ fmt(weatherStationRainRateMmH) }} mm/h</div>
-        <div class="kpi"><strong>WS Vento:</strong> {{ fmt(weatherStationWindMs) }} m/s</div>
-        <div class="kpi"><strong>WG:</strong> {{ boolLabel(weatherGuardOk) }} | W {{ boolLabel(weatherGuardWindAlarm) }} R {{ boolLabel(weatherGuardRainAlarm) }} F {{ boolLabel(weatherGuardFacadeRisk) }}</div>
-        <div class="kpi"><strong>FV reale e-Control:</strong> {{ fmt0(pvMeasuredW) }} W</div>
-        <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
-        <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
+      <div class="panel source-panel" v-show="userExpanded">
+        <div class="source-card">
+          <h4>Meteo Web</h4>
+          <div class="kpi"><strong>Provider:</strong> {{ weatherProvider || '-' }}</div>
+          <div class="kpi"><strong>Aggiornamento:</strong> {{ weatherTime || '-' }}</div>
+          <div class="kpi" v-for="m in weatherWebMetrics" :key="`wweb-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
+        </div>
+
+        <div class="source-card">
+          <h4>Reali Sonde</h4>
+          <div class="kpi"><strong>Temperatura reale:</strong> {{ fmt(externalTempC) }}°C</div>
+          <div class="kpi"><strong>Umidita reale:</strong> {{ fmt(externalHumidityPct) }} %</div>
+          <div class="kpi"><strong>Delta T (sonda - web):</strong> {{ fmt(tempDeltaC) }}°C</div>
+        </div>
+
+        <div class="source-card">
+          <h4>Reali Stazione Meteo</h4>
+          <div class="kpi"><strong>Sorgente attiva WG:</strong> {{ weatherStationUsed ? 'STAZIONE REALE' : 'METEO WEB' }}</div>
+          <div class="kpi"><strong>Stazione OK:</strong> {{ boolLabel(weatherStationOk) }}</div>
+          <div class="kpi" v-for="m in weatherStationMetrics" :key="`wsta-${m.key}`"><strong>{{ m.label }}:</strong> {{ m.value }}</div>
+          <div class="kpi"><strong>Weather Guard:</strong> {{ boolLabel(weatherGuardOk) }} | W {{ boolLabel(weatherGuardWindAlarm) }} R {{ boolLabel(weatherGuardRainAlarm) }} F {{ boolLabel(weatherGuardFacadeRisk) }}</div>
+        </div>
+
+        <div class="source-card">
+          <h4>Fotovoltaico</h4>
+          <div class="kpi"><strong>FV reale e-Control:</strong> {{ fmt0(pvMeasuredW) }} W</div>
+          <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
+          <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
+        </div>
       </div>
       <div class="panel" v-show="userExpanded">
         <div class="kpi chart-kpi">
@@ -1366,6 +1370,71 @@ const weatherGuardOk = computed(() => Boolean(weatherGuard.value?.ok))
 const weatherGuardWindAlarm = computed(() => Boolean(weatherGuard.value?.wind_alarm))
 const weatherGuardRainAlarm = computed(() => Boolean(weatherGuard.value?.rain_alarm))
 const weatherGuardFacadeRisk = computed(() => Boolean(weatherGuard.value?.facade_rain_risk))
+const weatherMetricLabelMap = {
+  air_temperature_c: 'Temperatura',
+  relative_humidity_pct: 'Umidita',
+  wind_speed_ms: 'Vento',
+  wind_gust_ms: 'Raffica vento',
+  wind_from_direction_deg: 'Direzione vento',
+  air_pressure_hpa: 'Pressione',
+  cloud_area_fraction_pct: 'Nuvolosita',
+  uv_index: 'Indice UV',
+  symbol_code: 'Condizione',
+  precipitation_next_1h_mm: 'Pioggia prossima 1h',
+  rain_rate_mm_h: 'Pioggia (rate)',
+  rain_1h_mm: 'Pioggia 1h',
+  time: 'Timestamp',
+}
+function metricUnitForKey(key) {
+  if (key.includes('temperature')) return '°C'
+  if (key.includes('humidity')) return '%'
+  if (key.includes('wind_speed') || key.includes('wind_gust')) return 'm/s'
+  if (key.includes('wind_from_direction')) return '°'
+  if (key.includes('pressure')) return 'hPa'
+  if (key.includes('cloud_area_fraction')) return '%'
+  if (key.includes('uv_index')) return ''
+  if (key.includes('precipitation') || key.includes('rain_1h')) return 'mm'
+  if (key.includes('rain_rate')) return 'mm/h'
+  return ''
+}
+function metricToDisplayValue(key, raw) {
+  if (raw === null || raw === undefined || raw === '') return '-'
+  if (key === 'symbol_code' || key === 'time') return String(raw)
+  const n = Number(raw)
+  if (!Number.isFinite(n)) return String(raw)
+  const unit = metricUnitForKey(key)
+  return `${fmt(n)}${unit ? ` ${unit}` : ''}`
+}
+function buildMetricsFromNormalized(norm) {
+  if (!norm || typeof norm !== 'object') return []
+  const preferredOrder = [
+    'air_temperature_c',
+    'relative_humidity_pct',
+    'wind_speed_ms',
+    'wind_gust_ms',
+    'wind_from_direction_deg',
+    'air_pressure_hpa',
+    'cloud_area_fraction_pct',
+    'precipitation_next_1h_mm',
+    'rain_rate_mm_h',
+    'rain_1h_mm',
+    'uv_index',
+    'symbol_code',
+    'time',
+  ]
+  const keys = Object.keys(norm)
+  const ordered = [
+    ...preferredOrder.filter((k) => keys.includes(k)),
+    ...keys.filter((k) => !preferredOrder.includes(k)),
+  ]
+  return ordered.map((key) => ({
+    key,
+    label: weatherMetricLabelMap[key] || key,
+    value: metricToDisplayValue(key, norm[key]),
+  }))
+}
+const weatherWebMetrics = computed(() => buildMetricsFromNormalized(weatherNorm.value))
+const weatherStationMetrics = computed(() => buildMetricsFromNormalized(weatherStationNorm.value))
 const externalTempC = computed(() => {
   const v = Number(data.value?.external_temp_live?.state)
   return Number.isFinite(v) ? v : null
@@ -3664,6 +3733,9 @@ input[type='range']{width:100%}
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
+.source-panel{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:10px}
+.source-card{border:1px solid var(--border);border-radius:12px;background:rgba(8,13,20,.72);padding:8px;display:grid;gap:7px}
+.source-card h4{margin:0 0 2px 0;color:#cbe6ff;font-size:14px;letter-spacing:.2px}
 .tech-main{padding:14px;display:grid;gap:12px}
 .card{border:1px solid var(--border);border-radius:14px;padding:12px;background:rgba(10,15,22,.75)}
 .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
