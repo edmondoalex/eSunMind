@@ -3839,16 +3839,16 @@ input[type='range']{width:100%}
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
-.source-panel{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:10px}
-.source-card{border:1px solid var(--border);border-radius:12px;background:rgba(8,13,20,.72);padding:8px;display:grid;gap:7px}
-.source-card h4{margin:0 0 2px 0;color:#cbe6ff;font-size:14px;letter-spacing:.2px}
-.source-head{display:flex;flex-wrap:wrap;gap:8px}
+.source-panel{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px;align-items:start}
+.source-card{border:1px solid var(--border);border-radius:12px;background:linear-gradient(180deg,rgba(10,16,24,.86),rgba(7,12,19,.82));padding:10px;display:grid;gap:8px;align-content:start}
+.source-card h4{margin:0;color:#d8ecff;font-size:15px;letter-spacing:.2px;border-bottom:1px solid rgba(146,196,255,.18);padding-bottom:6px}
+.source-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .chip{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;border:1px solid rgba(175,210,255,.28);background:rgba(20,30,45,.55);font-size:12px;color:#dbeeff}
 .chip-ok{border-color:rgba(90,220,160,.45);color:#c8ffe3}
 .chip-bad{border-color:rgba(255,115,115,.45);color:#ffd4d4}
-.metric-grid{display:grid;grid-template-columns:1fr;gap:6px}
+.metric-grid{display:grid;grid-template-columns:1fr;gap:6px;align-content:start}
 .metric-grid--compact{max-height:260px;overflow:auto;padding-right:4px}
-.metric-row{display:flex;justify-content:space-between;gap:10px;padding:7px 9px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(10,15,22,.58)}
+.metric-row{display:flex;justify-content:space-between;gap:10px;padding:8px 10px;border:1px solid rgba(255,255,255,.08);border-radius:9px;background:rgba(11,18,28,.64)}
 .metric-key{color:#a9bed6;font-size:12px}
 .metric-val{color:#f0f7ff;font-weight:600;font-size:13px;text-align:right}
 .guard-line{padding:8px 10px;border:1px dashed rgba(130,180,235,.35);border-radius:9px;background:rgba(18,28,40,.4);font-size:12px;color:#d8e8f8}

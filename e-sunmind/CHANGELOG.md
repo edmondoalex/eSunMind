@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.76
+
+- User UI meteo: migliorato layout dashboard con cards compatte e allineamento `start` per eliminare i grandi vuoti verticali.
+- Corretto stretch dei badge in header card (`source-head`) e resa leggibile uniforme delle metriche.
+- Rifinita gerarchia visiva (titoli card, sfondi, separatori) per una lettura molto piu chiara.
+
 ## 0.3.75
 
 - Fix backend `api/data` 500: risolto `UnboundLocalError` in `_build_weather_guard` quando la stazione meteo reale risulta gia selezionata e la lista candidati web non veniva inizializzata.

@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI meteo: migliorata fortemente la leggibilita con cards compatte, niente stretch verticale e badge stato non deformati.
+- Bump versione addon a `0.3.76` con changelog aggiornato.
 - Fix urgente runtime backend: risolto crash `api/data` (`UnboundLocalError: candidates`) in weather guard.
 - Bump versione addon a `0.3.75` con changelog aggiornato.
 - User UI: restyling completo pannello meteo/sensori con righe metrica piu leggibili, badge stato e sezione entita stazione collassabile.
