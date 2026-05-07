@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Tende/Cover: aggiunti campi strategia termica per termostato `climate` condivisibile tra piu cover.
+- UI Tende/Cover: mostrata diagnostica termica con temperatura interna, setpoint e decisione.
+- Bump versione addon a `0.3.49` con changelog aggiornato.
 - Fix versione pannello addon: allineato `APP_VERSION` backend alla release `0.3.48`.
 - Bump versione addon a `0.3.48` con changelog aggiornato.
 - UI Tende/Cover: aggiunto controllo `Anti-loop comandi sec.` per configurare `min_command_interval_seconds` di e-Tende.

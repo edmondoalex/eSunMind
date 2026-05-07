@@ -407,6 +407,21 @@
           <label>Anti-loop comandi sec.
             <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
           </label>
+          <label>Strategia termica
+            <input type="checkbox" v-model="selectedShadeEdit.thermal_enabled" />
+          </label>
+          <label>Termostato ambiente
+            <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
+          </label>
+          <label>Isteresi termica °C
+            <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
+          </label>
+          <label>Posizione guadagno calore
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_heat_gain_position" />
+          </label>
+          <label>Posizione blocco calore
+            <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_cool_block_position" />
+          </label>
           <label>Soglia Open/Close
             <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.open_close_threshold" />
           </label>
@@ -451,6 +466,9 @@
           <span>Ultimo comando: {{ targetValue(selectedShadeEdit.sensors.last_command_at) }} / {{ targetValue(selectedShadeEdit.sensors.last_command_reason) }}</span>
           <span>Anti-loop: {{ boolLabel(selectedShadeEdit.sensors.command_blocked) }} - {{ targetValue(selectedShadeEdit.sensors.command_blocked_reason) }}</span>
           <span>Rate limit residuo: {{ targetValue(selectedShadeEdit.sensors.command_blocked_remaining_seconds) }} s / target {{ targetValue(selectedShadeEdit.sensors.command_blocked_target_position) }}</span>
+          <span>Termostato: {{ targetValue(selectedShadeEdit.sensors.thermal_climate_entity) }} / {{ targetValue(selectedShadeEdit.sensors.thermal_mode) }}</span>
+          <span>Temperatura interna: {{ targetValue(selectedShadeEdit.sensors.thermal_temperature) }} °C / set {{ targetValue(selectedShadeEdit.sensors.thermal_setpoint) }} °C</span>
+          <span>Decisione termica: {{ targetValue(selectedShadeEdit.sensors.thermal_decision) }} / attiva {{ boolLabel(selectedShadeEdit.sensors.thermal_active) }}</span>
         </div>
       </div>
       <div class="tende-layout">
@@ -2342,6 +2360,11 @@ function selectShade(id) {
     min_delta: Number(pickSetting(shade, 'min_delta', 3)),
     interval_minutes: Number(pickSetting(shade, 'interval_minutes', 5)),
     min_command_interval_seconds: Number(pickSetting(shade, 'min_command_interval_seconds', 120)),
+    thermal_enabled: Boolean(pickSetting(shade, 'thermal_enabled', false)),
+    thermal_climate_entity: String(pickSetting(shade, 'thermal_climate_entity', '') || ''),
+    thermal_hysteresis: Number(pickSetting(shade, 'thermal_hysteresis', 0.5)),
+    thermal_heat_gain_position: Number(pickSetting(shade, 'thermal_heat_gain_position', pickSetting(shade, 'default_position', 100))),
+    thermal_cool_block_position: Number(pickSetting(shade, 'thermal_cool_block_position', pickSetting(shade, 'min_position', 0))),
     open_close_threshold: Number(pickSetting(shade, 'open_close_threshold', 50)),
     sun_probe_threshold: Number(pickSetting(shade, 'sun_probe_threshold', 300)),
     weather_guard_enabled: Boolean(pickSetting(shade, 'weather_guard_enabled', false)),
@@ -2520,6 +2543,11 @@ async function saveSelectedShade() {
       min_delta: Number(e.min_delta),
       interval_minutes: Number(e.interval_minutes),
       min_command_interval_seconds: Number(e.min_command_interval_seconds),
+      thermal_enabled: Boolean(e.thermal_enabled),
+      thermal_climate_entity: String(e.thermal_climate_entity || '').trim(),
+      thermal_hysteresis: Number(e.thermal_hysteresis),
+      thermal_heat_gain_position: Number(e.thermal_heat_gain_position),
+      thermal_cool_block_position: Number(e.thermal_cool_block_position),
       open_close_threshold: Number(e.open_close_threshold),
       sun_probe_threshold: Number(e.sun_probe_threshold),
       weather_guard_enabled: Boolean(e.weather_guard_enabled),

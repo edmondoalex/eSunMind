@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.49
+
+- UI Tende/Cover: aggiunta configurazione strategia termica da termostato climate condivisibile tra piu cover.
+- Diagnostica Tende/Cover: mostrati termostato, modalita, temperatura interna, setpoint e decisione termica.
+
 ## 0.3.48
 
 - Fix versione UI/API: allineato `APP_VERSION` backend a `0.3.48`, così il titolo mostra la release reale invece di `0.3.40`.
