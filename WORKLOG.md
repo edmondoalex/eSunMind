@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Nuova esperienza UI: introdotta pagina separata `UI User` (standalone, senza link a sezioni tecniche) con look dashboard stile e-Tende.
+- Rinominata UI corrente in `UI Admin` e aggiunto link di ingresso a `UI User`.
+- Bump versione addon a `0.3.77` con changelog aggiornato.
 - User UI meteo: migliorata fortemente la leggibilita con cards compatte, niente stretch verticale e badge stato non deformati.
 - Bump versione addon a `0.3.76` con changelog aggiornato.
 - Fix urgente runtime backend: risolto crash `api/data` (`UnboundLocalError: candidates`) in weather guard.

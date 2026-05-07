@@ -11,14 +11,58 @@
         <img src="/logo.png" alt="e-SunMind logo" class="brand-logo" />
         <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
       </div>
-      <div class="actions">
-        <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">User UI</button>
+      <div class="actions" v-if="tab!=='user_public'">
+        <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
+        <button class="btn ghost" :class="{active: tab==='user_public'}" @click="tab='user_public'">UI User</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
         <button class="btn" @click="loadData">Aggiorna</button>
       </div>
     </header>
+
+    <div v-show="tab==='user_public'" class="user-public">
+      <div class="user-public-head">
+        <div class="up-brand">
+          <img src="/logo.png" alt="logo" class="up-logo" />
+          <div class="up-brand-text">e-SunMind <span>User</span></div>
+        </div>
+        <div class="up-nav">
+          <span>PANORAMICA</span>
+          <span>TENDE</span>
+          <span class="active">MAPPA</span>
+          <span>CLIMA</span>
+          <span>METEO</span>
+        </div>
+        <div class="up-clock">
+          <div class="up-time">{{ localTimestampLabel.slice(11,16) }}</div>
+          <div class="up-date">{{ localTimestampLabel.slice(0,10) }}</div>
+        </div>
+      </div>
+
+      <div class="user-public-main">
+        <aside class="up-side">
+          <h3>Mappa Meteo</h3>
+          <div class="up-side-item"><span>Temperatura</span><strong>{{ fmt(weatherStationNorm?.air_temperature_c ?? weatherNorm?.air_temperature_c) }} °C</strong></div>
+          <div class="up-side-item"><span>Umidita</span><strong>{{ fmt(weatherStationNorm?.relative_humidity_pct ?? weatherNorm?.relative_humidity_pct) }} %</strong></div>
+          <div class="up-side-item"><span>Vento</span><strong>{{ fmt(mapWindMs) }} m/s</strong></div>
+          <div class="up-side-item"><span>Direzione vento</span><strong>{{ fmt(mapWindDirDeg) }} °</strong></div>
+          <div class="up-side-item"><span>Pioggia 1h</span><strong>{{ fmt(weatherStationNorm?.rain_1h_mm ?? weatherNorm?.precipitation_next_1h_mm) }} mm</strong></div>
+          <div class="up-side-item"><span>Pressione</span><strong>{{ fmt(weatherStationNorm?.air_pressure_hpa ?? weatherNorm?.air_pressure_hpa) }} hPa</strong></div>
+        </aside>
+
+        <section class="up-map-wrap">
+          <div id="solar-map-public"></div>
+        </section>
+      </div>
+
+      <div class="up-bottom">
+        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}°</strong></div></div>
+        <div class="up-card"><h4>Weather Guard</h4><div>Stato: <strong>{{ weatherGuardOk ? 'ATTIVO' : 'OFF' }}</strong></div><div>Vento: <strong>{{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }}</strong></div><div>Pioggia: <strong>{{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }}</strong></div></div>
+        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
+        <div class="up-card"><h4>Fotovoltaico</h4><div>Reale: <strong>{{ fmt0(pvMeasuredW) }} W</strong></div><div>Atteso: <strong>{{ fmt0(pvForecastNowW) }} W</strong></div><div>Rapporto: <strong>{{ fmt2(pvLiveRatio) }}</strong></div></div>
+      </div>
+    </div>
 
     <div v-show="tab==='user'">
       <div class="view-tools">
@@ -1089,6 +1133,12 @@ const cfg = ref({
 })
 
 let map = null
+let publicMap = null
+let publicCenterMarker = null
+let publicSunLine = null
+let publicSunMarker = null
+let publicWindLine = null
+let publicWindMarker = null
 let centerMarker = null
 let pathLine = null
 let horizonCircle = null
@@ -2794,6 +2844,46 @@ function pickSetting(shade, key, fallback = null) {
   return fallback
 }
 
+function drawPublicUserMap() {
+  if (!publicMap || lat.value == null || lon.value == null) return
+  const center = [lat.value, lon.value]
+  const sunAz = Number(data.value?.sun_position?.azimuth_compass_deg)
+  const windAz = Number(mapWindDirDeg.value)
+
+  if (!publicCenterMarker) publicCenterMarker = L.circleMarker(center, { radius: 5, color: '#ffd46a', fillColor: '#ffd46a', fillOpacity: 1 }).addTo(publicMap)
+  else publicCenterMarker.setLatLng(center)
+
+  const sunPt = Number.isFinite(sunAz) ? destinationPoint(lat.value, lon.value, sunAz, cfg.value.sectorRadiusM) : null
+  if (sunPt) {
+    if (publicSunLine) publicSunLine.remove()
+    if (publicSunMarker) publicSunMarker.remove()
+    publicSunLine = L.polyline([center, sunPt], { color: '#f7b500', weight: 3, opacity: 0.95 }).addTo(publicMap)
+    publicSunMarker = L.circleMarker(sunPt, { radius: 5, color: '#f7b500', fillColor: '#f7b500', fillOpacity: 1 }).addTo(publicMap)
+  }
+
+  const windPt = Number.isFinite(windAz) ? destinationPoint(lat.value, lon.value, windAz, cfg.value.sectorRadiusM * 0.9) : null
+  if (windPt) {
+    if (publicWindLine) publicWindLine.remove()
+    if (publicWindMarker) publicWindMarker.remove()
+    publicWindLine = L.polyline([center, windPt], { color: '#3ec9ff', weight: 3, dashArray: '8 6', opacity: 0.95 }).addTo(publicMap)
+    publicWindMarker = L.circleMarker(windPt, { radius: 5, color: '#3ec9ff', fillColor: '#3ec9ff', fillOpacity: 1 }).addTo(publicMap)
+  }
+}
+
+function ensurePublicMap() {
+  if (lat.value == null || lon.value == null) return
+  if (!publicMap) {
+    publicMap = L.map('solar-map-public', { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles © Esri',
+      maxZoom: 20,
+    }).addTo(publicMap)
+  } else {
+    publicMap.setView([lat.value, lon.value], cfg.value.mapZoom)
+  }
+  drawPublicUserMap()
+}
+
 function shadeKey(shade) {
   return String(shade?.id || shade?.cover_entity || shade?.name || '').trim()
 }
@@ -3204,6 +3294,10 @@ async function loadData() {
       map.setView([lat.value, lon.value], cfg.value.mapZoom)
     }
     drawSolarOverlay()
+    if (tab.value === 'user_public') {
+      await nextTick()
+      ensurePublicMap()
+    }
   }
   // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
@@ -3594,7 +3688,7 @@ onMounted(() => {
     startWeatherAnimation()
     initBlockToggles()
     userAutoRefreshTimer = setInterval(() => {
-      if (tab.value === 'user') loadData()
+      if (tab.value === 'user' || tab.value === 'user_public') loadData()
     }, userAutoRefreshMs)
   } catch (e) {
     console.error('onMounted init error', e)
@@ -3603,6 +3697,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
+  if (publicMap) { publicMap.remove(); publicMap = null }
   if (tendeMapObj) { tendeMapObj.remove(); tendeMapObj = null }
   if (windLayerRetryTimer) {
     clearTimeout(windLayerRetryTimer)
@@ -3633,6 +3728,10 @@ watch(tab, async (val) => {
       if (!selectedShadeId.value && tendeMapShades.value.length) selectShade(shadeKey(tendeMapShades.value[0]))
       else drawTendeEditor()
     }
+  } else if (val === 'user_public') {
+    await nextTick()
+    ensurePublicMap()
+    if (publicMap) publicMap.invalidateSize()
   } else {
     stopWeatherAnimation()
   }
@@ -3658,6 +3757,11 @@ watch([mapWindDirDeg, mapWindMs], async () => {
   if (tab.value !== 'user') return
   await nextTick()
   ensureWindDirectionLayer()
+})
+watch([mapWindDirDeg, mapWindMs, () => data.value?.sun_position?.azimuth_compass_deg], async () => {
+  if (tab.value !== 'user_public') return
+  await nextTick()
+  drawPublicUserMap()
 })
 </script>
 
@@ -3837,6 +3941,28 @@ input[type='range']{width:100%}
   font-weight:700;
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
+.user-public{padding:10px;background:radial-gradient(circle at top,#0f2238 0%,#07111d 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
+.user-public-head{display:grid;grid-template-columns:220px 1fr 130px;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.2);border-radius:14px;padding:10px 12px;background:rgba(4,12,20,.7)}
+.up-brand{display:flex;align-items:center;gap:8px}
+.up-logo{width:34px;height:34px}
+.up-brand-text{font-size:28px;font-weight:700;color:#e8f2ff;line-height:1}
+.up-brand-text span{color:#ffc840}
+.up-nav{display:flex;gap:20px;justify-content:center;color:#9eb4cc;font-size:13px;font-weight:700}
+.up-nav .active{color:#ffc840;border-bottom:2px solid #ffc840;padding-bottom:4px}
+.up-clock{text-align:right}
+.up-time{font-size:26px;color:#ffd66c;font-weight:700}
+.up-date{font-size:12px;color:#a9bfd8}
+.user-public-main{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-top:10px}
+.up-side{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:10px;display:grid;gap:8px;align-content:start}
+.up-side h3{margin:0;color:#e8f2ff}
+.up-side-item{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid rgba(255,255,255,.07);padding:6px 0;color:#9fbbd8}
+.up-side-item strong{color:#f8fcff}
+.up-map-wrap{border:1px solid rgba(133,175,220,.22);border-radius:12px;overflow:hidden;background:rgba(4,12,22,.8);min-height:520px}
+#solar-map-public{height:100%;min-height:520px}
+.up-bottom{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;margin-top:10px}
+.up-card{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;color:#b8cce3;display:grid;gap:6px}
+.up-card h4{margin:0 0 4px 0;color:#e8f2ff}
+.up-card strong{color:#fff}
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
 .source-panel{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px;align-items:start}
@@ -4233,6 +4359,11 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     min-width:38px;
     font-size:10px;
   }
+  .user-public-head{grid-template-columns:1fr;text-align:left}
+  .up-nav{justify-content:flex-start;overflow:auto}
+  .user-public-main{grid-template-columns:1fr}
+  .up-bottom{grid-template-columns:1fr}
+  #solar-map-public,.up-map-wrap{min-height:360px}
   .metric-row{
     flex-direction:column;
     align-items:flex-start;

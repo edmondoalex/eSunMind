@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.77
+
+- Aggiunta nuova pagina `UI User` dedicata, senza pulsanti/link verso le altre sezioni.
+- Rinominata pagina esistente in `UI Admin` e aggiunto accesso a `UI User` dalla barra admin.
+- Nuova `UI User` con layout dashboard ispirato al mock richiesto: header dedicato, sidebar meteo, mappa grande e cards stato in basso.
+
 ## 0.3.76
 
 - User UI meteo: migliorato layout dashboard con cards compatte e allineamento `start` per eliminare i grandi vuoti verticali.
