@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Hardening frontend boot: aggiunto fail-safe globale in `web/src/main.js` per intercettare crash iniziali e mostrare errore a schermo.
+- Eliminata condizione "pagina blu vuota" senza diagnostica: ora la UI espone direttamente stack/message runtime.
+- Bump versione addon a `0.3.61` con changelog aggiornato.
 - Fix runtime User UI: aggiunto failsafe splash (chiusura garantita) e `try/catch` su init `onMounted` per evitare schermata blu vuota.
 - Bump versione addon a `0.3.60` con changelog aggiornato.
 - User UI Meteo: rinominate le metriche WS con etichette estese e piu chiare.
