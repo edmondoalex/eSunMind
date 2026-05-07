@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.59
+
+- User UI Meteo: etichette stazione reale rese esplicite (`WS Temperatura esterna`, `WS Umidita esterna`, `WS Pressione`, `WS Indice UV`, `WS Pioggia`, `WS Vento`).
+- User UI Mappa: aggiunto flag `Direzione vento su mappa` per mostrare/nascondere freccia vento con velocita.
+- Rendering vento su mappa: priorita ai dati stazione reale, fallback ai dati meteo web.
+
 ## 0.3.58
 
 - Weather Station UI: auto-fill da `device_id` eseguito anche al caricamento della pagina Settings quando il campo e gia valorizzato.

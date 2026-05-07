@@ -1,6 +1,10 @@
 # WORKLOG
 
 ## 2026-05-07
+- User UI Meteo: rinominate le metriche WS con etichette estese e piu chiare.
+- User UI Mappa: aggiunto toggle `Direzione vento su mappa` con freccia/velocita vento visualizzabile e disattivabile.
+- Vento mappa: sorgente prioritaria da stazione reale, fallback meteo web.
+- Bump versione addon a `0.3.59` con changelog aggiornato.
 - Fix UX Weather Station: auto-fill da `device_id` ora parte anche al load della pagina Settings, senza richiedere modifica manuale del campo.
 - Bump versione addon a `0.3.58` con changelog aggiornato.
 - Weather Station: aggiunto endpoint `GET /api/weather_station/autofill` per mappatura automatica entita da `device_id`.

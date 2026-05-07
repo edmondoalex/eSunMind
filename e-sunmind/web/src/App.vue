@@ -41,6 +41,7 @@
           <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
           <label><input type="checkbox" v-model="showAnnualElevationBand" @change="drawSolarOverlay" /> Fascia elevazione annua</label>
           <label><input type="checkbox" v-model="showTendeSectors" @change="drawSolarOverlay" /> Spicchi Cover (e_Tende Intelligenti)</label>
+          <label><input type="checkbox" v-model="showWindDirectionOnMap" @change="drawSolarOverlay" /> Direzione vento su mappa</label>
           <label><input type="checkbox" v-model="weatherAnimEnabled" /> Animazione meteo</label>
         </div>
         <div class="pv-az-controls" v-if="showPvAzLine">
@@ -93,6 +94,14 @@
         <div class="kpi"><strong>Pioggia prossima 1h:</strong> {{ fmt(weatherNext1hMm) }} mm</div>
         <div class="kpi"><strong>UV index:</strong> {{ fmt(weatherUvIndex) }}</div>
         <div class="kpi"><strong>Condizione:</strong> {{ weatherSymbol || '-' }}</div>
+        <div class="kpi"><strong>WS:</strong> {{ weatherStationUsed ? 'REALE' : 'WEB' }} (ok: {{ boolLabel(weatherStationOk) }})</div>
+        <div class="kpi"><strong>WS Temperatura esterna:</strong> {{ fmt(weatherStationTempC) }}°C</div>
+        <div class="kpi"><strong>WS Umidita esterna:</strong> {{ fmt(weatherStationHumidityPct) }} %</div>
+        <div class="kpi"><strong>WS Pressione:</strong> {{ fmt(weatherStationPressureHpa) }} hPa</div>
+        <div class="kpi"><strong>WS Indice UV:</strong> {{ fmt(weatherStationUvIndex) }}</div>
+        <div class="kpi"><strong>WS Pioggia (rate):</strong> {{ fmt(weatherStationRainRateMmH) }} mm/h</div>
+        <div class="kpi"><strong>WS Vento:</strong> {{ fmt(weatherStationWindMs) }} m/s</div>
+        <div class="kpi"><strong>WG:</strong> {{ boolLabel(weatherGuardOk) }} | W {{ boolLabel(weatherGuardWindAlarm) }} R {{ boolLabel(weatherGuardRainAlarm) }} F {{ boolLabel(weatherGuardFacadeRisk) }}</div>
         <div class="kpi"><strong>FV reale e-Control:</strong> {{ fmt0(pvMeasuredW) }} W</div>
         <div class="kpi"><strong>FV atteso (ora):</strong> {{ fmt0(pvForecastNowW) }} W</div>
         <div class="kpi"><strong>Rapporto reale/atteso:</strong> {{ fmt2(pvLiveRatio) }}</div>
@@ -1038,6 +1047,8 @@ let axisNS = null
 let axisWE = null
 let pvAzLine = null
 let pvAzMarker = null
+let windDirLine = null
+let windDirMarker = null
 let annualElevationBand = null
 let annualElevationBandLayers = []
 let compassMarkers = []
@@ -1069,6 +1080,7 @@ const showSunRefs = ref(true)
 const showPvAzLine = ref(false)
 const showAnnualElevationBand = ref(true)
 const showTendeSectors = ref(true)
+const showWindDirectionOnMap = ref(true)
 const tendeEditMode = ref(false)
 const selectedShadeId = ref('')
 const selectedShadeEdit = ref(null)
@@ -1308,6 +1320,33 @@ const weatherNext1hMm = computed(() => weatherNorm.value?.precipitation_next_1h_
 const weatherSymbol = computed(() => weatherNorm.value?.symbol_code)
 const weatherPressureHpa = computed(() => weatherNorm.value?.air_pressure_hpa)
 const weatherUvIndex = computed(() => weatherNorm.value?.uv_index)
+const weatherStation = computed(() => data.value?.weather_station || null)
+const weatherStationNorm = computed(() => weatherStation.value?.normalized || null)
+const weatherStationOk = computed(() => Boolean(weatherStation.value?.ok))
+const weatherStationUsed = computed(() => Boolean(data.value?.weather_guard?.station?.used))
+const weatherStationTempC = computed(() => weatherStationNorm.value?.air_temperature_c)
+const weatherStationHumidityPct = computed(() => weatherStationNorm.value?.relative_humidity_pct)
+const weatherStationPressureHpa = computed(() => weatherStationNorm.value?.air_pressure_hpa)
+const weatherStationUvIndex = computed(() => weatherStationNorm.value?.uv_index)
+const weatherStationRainRateMmH = computed(() => weatherStationNorm.value?.rain_rate_mm_h)
+const weatherStationWindMs = computed(() => weatherStationNorm.value?.wind_speed_ms)
+const mapWindDirDeg = computed(() => {
+  const ws = Number(weatherStationNorm.value?.wind_from_direction_deg)
+  if (Number.isFinite(ws)) return ws
+  const w = Number(weatherWindDirDeg.value)
+  return Number.isFinite(w) ? w : null
+})
+const mapWindMs = computed(() => {
+  const ws = Number(weatherStationNorm.value?.wind_speed_ms)
+  if (Number.isFinite(ws)) return ws
+  const w = Number(weatherWindMs.value)
+  return Number.isFinite(w) ? w : null
+})
+const weatherGuard = computed(() => data.value?.weather_guard || null)
+const weatherGuardOk = computed(() => Boolean(weatherGuard.value?.ok))
+const weatherGuardWindAlarm = computed(() => Boolean(weatherGuard.value?.wind_alarm))
+const weatherGuardRainAlarm = computed(() => Boolean(weatherGuard.value?.rain_alarm))
+const weatherGuardFacadeRisk = computed(() => Boolean(weatherGuard.value?.facade_rain_risk))
 const externalTempC = computed(() => {
   const v = Number(data.value?.external_temp_live?.state)
   return Number.isFinite(v) ? v : null
@@ -2296,7 +2335,7 @@ function interpAltByAz(samples, azTarget) {
 
 function drawSolarOverlay() {
   if (!map || lat.value == null || lon.value == null) return
-  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, sunriseLabel, sunsetLabel, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
+  ;[centerMarker, pathLine, horizonCircle, sunLine, sunMarker, sunLineLive, sunMarkerLive, sunriseRay, sunsetRay, sunriseLabel, sunsetLabel, altitudeRing, altitudeGuideLine, altitudeGuideLabel, axisNS, axisWE, pvAzLine, pvAzMarker, windDirLine, windDirMarker, annualElevationBand].forEach((l) => { if (l) map.removeLayer(l) })
   for (const l of annualElevationBandLayers) map.removeLayer(l)
   annualElevationBandLayers = []
   for (const m of compassMarkers) map.removeLayer(m)
@@ -2597,6 +2636,29 @@ function mergeTendeShades(previous, incoming) {
   for (const shade of Array.isArray(previous) ? previous : []) {
     const key = shadeKey(shade)
     if (key) merged.set(key, shade)
+  }
+
+  if (showWindDirectionOnMap.value) {
+    const dir = Number(mapWindDirDeg.value)
+    if (Number.isFinite(dir)) {
+      const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
+      windDirLine = L.polyline([[lat.value, lon.value], windPt], {
+        color: '#36d5ff',
+        weight: 2.8,
+        opacity: 0.95,
+        dashArray: '5,5',
+        lineCap: 'round',
+      }).addTo(map)
+      windDirMarker = L.marker(windPt, {
+        icon: L.divIcon({
+          className: 'wind-map-icon-wrap',
+          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(mapWindMs.value)} m/s</span>`,
+          iconSize: [92, 20],
+          iconAnchor: [10, 10],
+        }),
+        interactive: false,
+      }).addTo(map)
+    }
   }
   for (const shade of Array.isArray(incoming) ? incoming : []) {
     const key = shadeKey(shade)
@@ -3500,6 +3562,21 @@ input[type='range']{width:100%}
   text-align:center;
   color:#5ee7ff;
   text-shadow:0 0 8px rgba(94,231,255,.55);
+}
+.wind-map-icon-wrap{background:transparent;border:none}
+.wind-map-icon{
+  display:inline-block;
+  color:#5ee7ff;
+  font-size:14px;
+  font-weight:800;
+  text-shadow:0 0 8px rgba(94,231,255,.6);
+  margin-right:4px;
+}
+.wind-map-label{
+  color:#d7ecff;
+  font-size:11px;
+  font-weight:700;
+  text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
