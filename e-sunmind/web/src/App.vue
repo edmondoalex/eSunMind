@@ -26,10 +26,6 @@
         <div class="up-brand">
           <img :src="logoEtende" alt="e-Tende Intelligenti" class="up-logo" />
         </div>
-        <div class="up-clock">
-          <div class="up-time">{{ localTimestampLabel.slice(11,16) }}</div>
-          <div class="up-date">{{ localTimestampLabel.slice(0,10) }}</div>
-        </div>
       </div>
 
       <div class="user-public-main">
@@ -4005,14 +4001,11 @@ input[type='range']{width:100%}
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
 .user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
-.user-public-head{display:grid;grid-template-columns:260px 1fr;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88))}
-.up-brand{display:flex;align-items:center;gap:8px}
-.up-logo{width:180px;height:52px;object-fit:contain}
+.user-public-head{display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88));min-height:74px}
+.up-brand{display:flex;align-items:center;justify-content:center;width:100%}
+.up-logo{width:320px;max-width:80vw;height:58px;object-fit:contain;display:block}
 .up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
-.up-clock{text-align:right}
-.up-time{font-size:46px;color:#ffd66c;font-weight:700;line-height:.9}
-.up-date{font-size:12px;color:#a9bfd8}
 .user-public-main{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-top:10px}
 .up-side{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;display:grid;gap:10px;align-content:start}
 .up-side h3{margin:0;color:#e8f2ff}

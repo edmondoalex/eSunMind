@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.82
+
+- UI User header: logo e-Tende centrato.
+- Rimossi ora e data dalla UI User.
+- Corrette proporzioni header per evitare taglio elementi.
+
 ## 0.3.81
 
 - UI User: risolto logo e-Tende usando import asset compilato (`src/assets/logo-etende.png`).
