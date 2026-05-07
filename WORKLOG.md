@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix toggle vento mappa User UI: la linea direzione ora riappare correttamente dopo OFF/ON grazie a fallback su `weather_guard` + ultimo valore valido.
+- Aggiunti watcher reattivi per ridisegno immediato overlay vento al cambio flag.
+- Bump versione addon a `0.3.64` con changelog aggiornato.
 - Fix runtime mappa User UI: aggiunto guard anche su `Leaflet.Control.addTo` per race condition con target null.
 - Bump versione addon a `0.3.63` con changelog aggiornato.
 - Fix crash Leaflet User UI: patch globale su `Layer.addTo` per ignorare target mappa null temporanei, eliminando il bootstrap error `reading 'addLayer'`.

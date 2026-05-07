@@ -1342,15 +1342,21 @@ const weatherStationPressureHpa = computed(() => weatherStationNorm.value?.air_p
 const weatherStationUvIndex = computed(() => weatherStationNorm.value?.uv_index)
 const weatherStationRainRateMmH = computed(() => weatherStationNorm.value?.rain_rate_mm_h)
 const weatherStationWindMs = computed(() => weatherStationNorm.value?.wind_speed_ms)
+const lastKnownWindDirDeg = ref(null)
+const lastKnownWindMs = ref(null)
 const mapWindDirDeg = computed(() => {
   const ws = Number(weatherStationNorm.value?.wind_from_direction_deg)
   if (Number.isFinite(ws)) return ws
+  const wg = Number(data.value?.weather_guard?.wind_dir_deg)
+  if (Number.isFinite(wg)) return wg
   const w = Number(weatherWindDirDeg.value)
   return Number.isFinite(w) ? w : null
 })
 const mapWindMs = computed(() => {
   const ws = Number(weatherStationNorm.value?.wind_speed_ms)
   if (Number.isFinite(ws)) return ws
+  const wg = Number(data.value?.weather_guard?.wind_speed_ms)
+  if (Number.isFinite(wg)) return wg
   const w = Number(weatherWindMs.value)
   return Number.isFinite(w) ? w : null
 })
@@ -2651,7 +2657,7 @@ function mergeTendeShades(previous, incoming) {
   }
 
   if (showWindDirectionOnMap.value) {
-    const dir = Number(mapWindDirDeg.value)
+    const dir = Number.isFinite(Number(mapWindDirDeg.value)) ? Number(mapWindDirDeg.value) : Number(lastKnownWindDirDeg.value)
     if (Number.isFinite(dir)) {
       const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
       windDirLine = L.polyline([[lat.value, lon.value], windPt], {
@@ -2664,7 +2670,7 @@ function mergeTendeShades(previous, incoming) {
       windDirMarker = L.marker(windPt, {
         icon: L.divIcon({
           className: 'wind-map-icon-wrap',
-          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(mapWindMs.value)} m/s</span>`,
+          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : lastKnownWindMs.value)} m/s</span>`,
           iconSize: [92, 20],
           iconAnchor: [10, 10],
         }),
@@ -3417,6 +3423,15 @@ watch(tab, async (val) => {
 watch(weatherAnimEnabled, (enabled) => {
   if (enabled && tab.value === 'user') startWeatherAnimation()
   else stopWeatherAnimation()
+})
+watch([mapWindDirDeg, mapWindMs], ([dir, speed]) => {
+  if (Number.isFinite(Number(dir))) lastKnownWindDirDeg.value = Number(dir)
+  if (Number.isFinite(Number(speed))) lastKnownWindMs.value = Number(speed)
+})
+watch(showWindDirectionOnMap, async () => {
+  if (tab.value !== 'user') return
+  await nextTick()
+  drawSolarOverlay()
 })
 </script>
 
