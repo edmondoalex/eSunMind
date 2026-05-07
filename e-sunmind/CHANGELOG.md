@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.47
+
+- UI Tende/Cover: aggiunto campo `Anti-loop comandi sec.` e diagnostica blocco/rate-limit ricevuta da e-Tende.
+
 ## 0.3.46
 
 - UI Tende/Cover: aggiunta heatmap `sole-finestra` sotto la mappa taratura con fasce orarie, durata utile, picco e prossima esposizione.

@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Tende/Cover: aggiunto controllo `Anti-loop comandi sec.` per configurare `min_command_interval_seconds` di e-Tende.
+- UI Tende/Cover: mostrata diagnostica anti-loop/rate-limit nei sensori cover.
+- Bump versione addon a `0.3.47` con changelog aggiornato.
 - UI Tende/Cover: aggiunta heatmap `sole-finestra` giornaliera sotto la mappa taratura.
 - La heatmap mostra durata sole utile, picco, prossima esposizione e tooltip per slot con azimut/elevazione.
 - Bump versione addon a `0.3.46` con changelog aggiornato.

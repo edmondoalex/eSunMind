@@ -404,6 +404,9 @@
           <label>Intervallo minuti
             <input type="number" min="1" max="120" step="1" v-model.number="selectedShadeEdit.interval_minutes" />
           </label>
+          <label>Anti-loop comandi sec.
+            <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
+          </label>
           <label>Soglia Open/Close
             <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.open_close_threshold" />
           </label>
@@ -445,6 +448,9 @@
           <span>Allarme meteo: {{ selectedShadeEdit.sensors.weather_active_alarm || 'none' }}</span>
           <span>Target meteo: {{ targetValue(selectedShadeEdit.sensors.weather_target_position) }}</span>
           <span>Rischio facciata: {{ boolLabel(selectedShadeEdit.sensors.weather_cover_facade_rain_risk) }}</span>
+          <span>Ultimo comando: {{ targetValue(selectedShadeEdit.sensors.last_command_at) }} / {{ targetValue(selectedShadeEdit.sensors.last_command_reason) }}</span>
+          <span>Anti-loop: {{ boolLabel(selectedShadeEdit.sensors.command_blocked) }} - {{ targetValue(selectedShadeEdit.sensors.command_blocked_reason) }}</span>
+          <span>Rate limit residuo: {{ targetValue(selectedShadeEdit.sensors.command_blocked_remaining_seconds) }} s / target {{ targetValue(selectedShadeEdit.sensors.command_blocked_target_position) }}</span>
         </div>
       </div>
       <div class="tende-layout">
@@ -2335,6 +2341,7 @@ function selectShade(id) {
     max_position: Number(pickSetting(shade, 'max_position', 100)),
     min_delta: Number(pickSetting(shade, 'min_delta', 3)),
     interval_minutes: Number(pickSetting(shade, 'interval_minutes', 5)),
+    min_command_interval_seconds: Number(pickSetting(shade, 'min_command_interval_seconds', 120)),
     open_close_threshold: Number(pickSetting(shade, 'open_close_threshold', 50)),
     sun_probe_threshold: Number(pickSetting(shade, 'sun_probe_threshold', 300)),
     weather_guard_enabled: Boolean(pickSetting(shade, 'weather_guard_enabled', false)),
@@ -2512,6 +2519,7 @@ async function saveSelectedShade() {
       max_position: Number(e.max_position),
       min_delta: Number(e.min_delta),
       interval_minutes: Number(e.interval_minutes),
+      min_command_interval_seconds: Number(e.min_command_interval_seconds),
       open_close_threshold: Number(e.open_close_threshold),
       sun_probe_threshold: Number(e.sun_probe_threshold),
       weather_guard_enabled: Boolean(e.weather_guard_enabled),
