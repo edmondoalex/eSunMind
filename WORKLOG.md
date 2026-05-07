@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: logo e-Tende ulteriormente ingrandito in header.
+- Bump versione addon a `0.3.83` con changelog aggiornato.
 - UI User: logo e-Tende centrato in testata, rimossi ora/data, fix proporzioni header per eliminare tagli.
 - Bump versione addon a `0.3.82` con changelog aggiornato.
 - UI User: fix definitivo logo e-Tende con asset bundlato (`src/assets/logo-etende.png`) e rimozione menu top `PANORAMICA/TENDE/CLIMA/METEO`.

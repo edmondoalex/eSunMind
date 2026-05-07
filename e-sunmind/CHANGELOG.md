@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.83
+
+- UI User: logo e-Tende ingrandito in testata.
+
 ## 0.3.82
 
 - UI User header: logo e-Tende centrato.

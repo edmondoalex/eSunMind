@@ -4003,7 +4003,7 @@ input[type='range']{width:100%}
 .user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
 .user-public-head{display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88));min-height:74px}
 .up-brand{display:flex;align-items:center;justify-content:center;width:100%}
-.up-logo{width:320px;max-width:80vw;height:58px;object-fit:contain;display:block}
+.up-logo{width:520px;max-width:92vw;height:84px;object-fit:contain;display:block}
 .up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
 .user-public-main{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-top:10px}
