@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI grafici: ridotta dimensione font SVG per evitare label troppo grandi su pannelli larghi.
+- Bump versione addon a `0.3.50` con changelog aggiornato.
 - UI Tende/Cover: aggiunti campi strategia termica per termostato `climate` condivisibile tra piu cover.
 - UI Tende/Cover: mostrata diagnostica termica con temperatura interna, setpoint e decisione.
 - Bump versione addon a `0.3.49` con changelog aggiornato.

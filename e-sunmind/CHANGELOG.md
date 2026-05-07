@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.50
+
+- UI grafici: ridotta la dimensione dei font SVG per assi, titoli asse e tooltip su grafici aria/FV/meteo.
+
 ## 0.3.49
 
 - UI Tende/Cover: aggiunta configurazione strategia termica da termostato climate condivisibile tra piu cover.
