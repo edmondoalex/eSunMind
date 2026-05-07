@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.55
+
+- UI Wizard Tende/Cover: rinominato titolo in `Wizard taratura cover`.
+
 ## 0.3.54
 
 - UI Wizard Tende/Cover: aggiunto simulatore `What-if` nello step Verifica per confrontare configurazione attuale e proposta prima del salvataggio.

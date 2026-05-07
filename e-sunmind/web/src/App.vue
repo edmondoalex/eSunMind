@@ -346,7 +346,7 @@
         <div class="tende-wizard">
           <div class="wizard-head">
             <div>
-              <strong>Wizard taratura tapparella</strong>
+              <strong>Wizard taratura cover</strong>
               <p>{{ wizardSteps[tendeWizardStep]?.hint }}</p>
             </div>
             <div class="wizard-step-count">Step {{ tendeWizardStep + 1 }} / {{ wizardSteps.length }}</div>

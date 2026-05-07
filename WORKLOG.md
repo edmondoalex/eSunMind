@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Wizard Tende/Cover: rinominato titolo in `Wizard taratura cover`.
+- Bump versione addon a `0.3.55` con changelog aggiornato.
 - UI Wizard Tende/Cover: aggiunto simulatore `What-if` nello step Verifica.
 - Bump versione addon a `0.3.54` con changelog aggiornato.
 - UI Wizard Tende/Cover: nascosto `Avanti` nello step finale.
