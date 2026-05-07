@@ -1,6 +1,10 @@
 # WORKLOG
 
 ## 2026-05-07
+- Integrazione stazione reale Ecowitt/e-Control: aggiunto `weather_station.device_id` con auto-discovery entita da Home Assistant.
+- Estesa configurazione Weather Station con sensori extra: temperatura esterna, umidita esterna, pressione, UV index.
+- Regola sorgente meteo resa esplicita: usa stazione reale se valida/fresca, altrimenti fallback API web.
+- Bump versione addon a `0.3.56` con changelog aggiornato.
 - UI Wizard Tende/Cover: rinominato titolo in `Wizard taratura cover`.
 - Bump versione addon a `0.3.55` con changelog aggiornato.
 - UI Wizard Tende/Cover: aggiunto simulatore `What-if` nello step Verifica.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.56
+
+- Weather Station: aggiunto supporto `device_id` con auto-discovery entita meteo da Home Assistant (`device_entities`), mantenendo priorita ai campi `entity_id` manuali quando compilati.
+- Weather Station: aggiunti campi opzionali extra per Ecowitt (`outdoor_temp_entity_id`, `outdoor_humidity_entity_id`, `pressure_entity_id`, `uv_index_entity_id`).
+- Weather Guard: priorita esplicita ai dati stazione reale quando validi e freschi; fallback API web (MET/Open-Meteo) solo se stazione assente/non valida/stale.
+- UI Settings: estesa sezione `Weather Station e-Control` con `device_id` e campi sensori extra.
+
 ## 0.3.55
 
 - UI Wizard Tende/Cover: rinominato titolo in `Wizard taratura cover`.

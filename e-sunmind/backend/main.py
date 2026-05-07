@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.55"
+APP_VERSION = "0.3.56"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -156,11 +156,16 @@ def _load_options() -> dict[str, Any]:
             "enabled": False,
             "provider": "e_control",
             "stale_seconds": 180,
+            "device_id": "",
             "wind_speed_entity_id": "",
             "wind_gust_entity_id": "",
             "wind_direction_entity_id": "",
             "rain_rate_entity_id": "",
             "rain_1h_entity_id": "",
+            "outdoor_temp_entity_id": "",
+            "outdoor_humidity_entity_id": "",
+            "pressure_entity_id": "",
+            "uv_index_entity_id": "",
         },
         "weather_guard": {
             "enabled": True,
@@ -741,6 +746,22 @@ def _normalize_rain_to_mm(value: Any, unit: Any) -> float | None:
     return v
 
 
+def _normalize_pressure_to_hpa(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"pa", "pascal", "pascals"}:
+        return v / 100.0
+    if u in {"kpa"}:
+        return v * 10.0
+    if u in {"inhg", "in hg", "in_hg"}:
+        return v * 33.8638866667
+    if u in {"mmhg", "mm hg"}:
+        return v * 1.3332236842
+    return v
+
+
 def _weather_payload_ts(payload: dict[str, Any] | None) -> float | None:
     if not isinstance(payload, dict):
         return None
@@ -773,18 +794,27 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         out["error"] = "disabled"
         return out
 
+    auto_mapped = _auto_map_weather_station_entities(str(ws_cfg.get("device_id") or ""))
+    out["auto_mapped_entities"] = auto_mapped
+
     fields = {
         "wind_speed_ms": ("wind_speed_entity_id", _normalize_wind_to_ms),
         "wind_gust_ms": ("wind_gust_entity_id", _normalize_wind_to_ms),
         "wind_from_direction_deg": ("wind_direction_entity_id", lambda v, _u: _to_float_or_none(v)),
         "rain_rate_mm_h": ("rain_rate_entity_id", _normalize_rain_rate_to_mm_h),
         "rain_1h_mm": ("rain_1h_entity_id", _normalize_rain_to_mm),
+        "air_temperature_c": ("outdoor_temp_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "relative_humidity_pct": ("outdoor_humidity_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "air_pressure_hpa": ("pressure_entity_id", _normalize_pressure_to_hpa),
+        "uv_index": ("uv_index_entity_id", lambda v, _u: _to_float_or_none(v)),
     }
     normalized: dict[str, Any] = {}
     timestamps: list[float] = []
     errors: dict[str, Any] = {}
     for target_key, (cfg_key, normalizer) in fields.items():
         entity_id = str(ws_cfg.get(cfg_key) or "").strip()
+        if not entity_id:
+            entity_id = str(auto_mapped.get(cfg_key) or "").strip()
         if not entity_id:
             continue
         st = _fetch_ha_entity_state(entity_id)
@@ -870,23 +900,30 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
     weather = data.get("weather") if isinstance(data.get("weather"), dict) else None
     weather_open = data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None
     stale_seconds = int(wg_cfg.get("stale_seconds", 180) or 180)
-    candidates: list[tuple[dict[str, Any], float]] = []
-    for candidate in (weather_station, weather, weather_open):
-        if not (isinstance(candidate, dict) and candidate.get("ok")):
-            continue
-        candidate_ts = _weather_payload_ts(candidate)
-        if candidate_ts is not None:
-            candidates.append((candidate, candidate_ts))
-    candidates.sort(key=lambda item: item[1], reverse=True)
     selected = None
     weather_ts = None
-    for candidate, candidate_ts in candidates:
-        if (now - candidate_ts) <= stale_seconds:
-            selected = candidate
-            weather_ts = candidate_ts
-            break
-    if selected is None and candidates:
-        selected, weather_ts = candidates[0]
+    # Priority rule: use real weather station when available and fresh, otherwise use web APIs.
+    if isinstance(weather_station, dict) and weather_station.get("ok"):
+        station_ts = _weather_payload_ts(weather_station)
+        if station_ts is not None and (now - station_ts) <= stale_seconds:
+            selected = weather_station
+            weather_ts = station_ts
+    if selected is None:
+        candidates: list[tuple[dict[str, Any], float]] = []
+        for candidate in (weather, weather_open):
+            if not (isinstance(candidate, dict) and candidate.get("ok")):
+                continue
+            candidate_ts = _weather_payload_ts(candidate)
+            if candidate_ts is not None:
+                candidates.append((candidate, candidate_ts))
+        candidates.sort(key=lambda item: item[1], reverse=True)
+        for candidate, candidate_ts in candidates:
+            if (now - candidate_ts) <= stale_seconds:
+                selected = candidate
+                weather_ts = candidate_ts
+                break
+        if selected is None and candidates:
+            selected, weather_ts = candidates[0]
     if weather_ts is None or (now - weather_ts) > stale_seconds:
         base["error"] = "weather_stale_or_missing"
         base["stale"] = True
@@ -1016,6 +1053,80 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
         "friendly_name": attrs.get("friendly_name"),
         "last_updated": payload.get("last_updated"),
     }
+
+
+def _get_supervisor_token() -> str:
+    token = os.environ.get("SUPERVISOR_TOKEN", "").strip() or os.environ.get("HASSIO_TOKEN", "").strip()
+    if not token:
+        for path in (
+            "/run/s6/container_environment/SUPERVISOR_TOKEN",
+            "/var/run/s6/container_environment/SUPERVISOR_TOKEN",
+        ):
+            try:
+                token = Path(path).read_text(encoding="utf-8").strip()
+            except Exception:
+                token = token or ""
+            if token:
+                break
+    return token or ""
+
+
+def _fetch_ha_device_entities(device_id: str) -> list[str]:
+    did = str(device_id or "").strip()
+    if not did:
+        return []
+    token = _get_supervisor_token()
+    if not token:
+        return []
+    url = "http://supervisor/core/api/template"
+    template = "{{ device_entities('" + did.replace("'", "\\'") + "') | join('\\n') }}"
+    req = Request(
+        url,
+        data=json.dumps({"template": template}).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urlopen(req, timeout=10) as resp:
+            body = resp.read().decode("utf-8")
+    except Exception:
+        return []
+    out: list[str] = []
+    for line in body.splitlines():
+        ent = line.strip()
+        if ent and "." in ent:
+            out.append(ent)
+    return out
+
+
+def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
+    ents = _fetch_ha_device_entities(device_id)
+    if not ents:
+        return {}
+    rules: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
+        ("wind_gust_entity_id", ("wind", "gust"), ()),
+        ("wind_speed_entity_id", ("wind", "speed"), ("gust",)),
+        ("wind_direction_entity_id", ("wind", "direction"), ()),
+        ("rain_rate_entity_id", ("rain", "rate"), ()),
+        ("rain_1h_entity_id", ("rain", "hour"), ("rate",)),
+        ("outdoor_temp_entity_id", ("outdoor", "temp"), ("indoor",)),
+        ("outdoor_humidity_entity_id", ("outdoor", "humid"), ("indoor",)),
+        ("pressure_entity_id", ("pressure",), ()),
+        ("uv_index_entity_id", ("uv",), ()),
+    ]
+    mapped: dict[str, str] = {}
+    for field, req_tokens, ban_tokens in rules:
+        for ent in ents:
+            s = ent.lower()
+            if any(bt in s for bt in ban_tokens):
+                continue
+            if all(rt in s for rt in req_tokens):
+                mapped[field] = ent
+                break
+    return mapped
 
 
 def _fetch_ha_core_config() -> dict[str, Any] | None:

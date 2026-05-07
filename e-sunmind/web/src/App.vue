@@ -829,6 +829,9 @@
             <label>Stale seconds
               <input type="number" min="30" max="86400" v-model.number="weatherStationForm.stale_seconds" />
             </label>
+            <label>Device id (auto-discovery)
+              <input type="text" v-model="weatherStationForm.device_id" />
+            </label>
             <label>Wind speed entity id
               <input type="text" v-model="weatherStationForm.wind_speed_entity_id" />
             </label>
@@ -843,6 +846,18 @@
             </label>
             <label>Rain 1h entity id
               <input type="text" v-model="weatherStationForm.rain_1h_entity_id" />
+            </label>
+            <label>Outdoor temperature entity id
+              <input type="text" v-model="weatherStationForm.outdoor_temp_entity_id" />
+            </label>
+            <label>Outdoor humidity entity id
+              <input type="text" v-model="weatherStationForm.outdoor_humidity_entity_id" />
+            </label>
+            <label>Pressure entity id
+              <input type="text" v-model="weatherStationForm.pressure_entity_id" />
+            </label>
+            <label>UV index entity id
+              <input type="text" v-model="weatherStationForm.uv_index_entity_id" />
             </label>
           </div>
         </section>
@@ -1071,11 +1086,16 @@ const weatherForm = ref({ enabled: true, provider: 'met' })
 const weatherStationForm = ref({
   enabled: false,
   stale_seconds: 180,
+  device_id: '',
   wind_speed_entity_id: '',
   wind_gust_entity_id: '',
   wind_direction_entity_id: '',
   rain_rate_entity_id: '',
   rain_1h_entity_id: '',
+  outdoor_temp_entity_id: '',
+  outdoor_humidity_entity_id: '',
+  pressure_entity_id: '',
+  uv_index_entity_id: '',
 })
 const weatherGuardForm = ref({
   enabled: true,
@@ -2950,11 +2970,16 @@ async function loadData() {
     weatherStationForm.value = {
       enabled: Boolean(wso.enabled),
       stale_seconds: Number(wso.stale_seconds ?? 180),
+      device_id: String(wso.device_id || ''),
       wind_speed_entity_id: String(wso.wind_speed_entity_id || ''),
       wind_gust_entity_id: String(wso.wind_gust_entity_id || ''),
       wind_direction_entity_id: String(wso.wind_direction_entity_id || ''),
       rain_rate_entity_id: String(wso.rain_rate_entity_id || ''),
       rain_1h_entity_id: String(wso.rain_1h_entity_id || ''),
+      outdoor_temp_entity_id: String(wso.outdoor_temp_entity_id || ''),
+      outdoor_humidity_entity_id: String(wso.outdoor_humidity_entity_id || ''),
+      pressure_entity_id: String(wso.pressure_entity_id || ''),
+      uv_index_entity_id: String(wso.uv_index_entity_id || ''),
     }
     const wgo = oj?.weather_guard || {}
     weatherGuardForm.value = {
@@ -3034,11 +3059,16 @@ async function saveBaseSettings() {
         enabled: Boolean(weatherStationForm.value.enabled),
         provider: 'e_control',
         stale_seconds: Number(weatherStationForm.value.stale_seconds ?? 180),
+        device_id: String(weatherStationForm.value.device_id || ''),
         wind_speed_entity_id: String(weatherStationForm.value.wind_speed_entity_id || ''),
         wind_gust_entity_id: String(weatherStationForm.value.wind_gust_entity_id || ''),
         wind_direction_entity_id: String(weatherStationForm.value.wind_direction_entity_id || ''),
         rain_rate_entity_id: String(weatherStationForm.value.rain_rate_entity_id || ''),
         rain_1h_entity_id: String(weatherStationForm.value.rain_1h_entity_id || ''),
+        outdoor_temp_entity_id: String(weatherStationForm.value.outdoor_temp_entity_id || ''),
+        outdoor_humidity_entity_id: String(weatherStationForm.value.outdoor_humidity_entity_id || ''),
+        pressure_entity_id: String(weatherStationForm.value.pressure_entity_id || ''),
+        uv_index_entity_id: String(weatherStationForm.value.uv_index_entity_id || ''),
       },
       weather_guard: {
         enabled: Boolean(weatherGuardForm.value.enabled),
@@ -3103,11 +3133,16 @@ async function saveAllSettings() {
         enabled: Boolean(weatherStationForm.value.enabled),
         provider: 'e_control',
         stale_seconds: Number(weatherStationForm.value.stale_seconds ?? 180),
+        device_id: String(weatherStationForm.value.device_id || ''),
         wind_speed_entity_id: String(weatherStationForm.value.wind_speed_entity_id || ''),
         wind_gust_entity_id: String(weatherStationForm.value.wind_gust_entity_id || ''),
         wind_direction_entity_id: String(weatherStationForm.value.wind_direction_entity_id || ''),
         rain_rate_entity_id: String(weatherStationForm.value.rain_rate_entity_id || ''),
         rain_1h_entity_id: String(weatherStationForm.value.rain_1h_entity_id || ''),
+        outdoor_temp_entity_id: String(weatherStationForm.value.outdoor_temp_entity_id || ''),
+        outdoor_humidity_entity_id: String(weatherStationForm.value.outdoor_humidity_entity_id || ''),
+        pressure_entity_id: String(weatherStationForm.value.pressure_entity_id || ''),
+        uv_index_entity_id: String(weatherStationForm.value.uv_index_entity_id || ''),
       },
       weather_guard: {
         enabled: Boolean(weatherGuardForm.value.enabled),
