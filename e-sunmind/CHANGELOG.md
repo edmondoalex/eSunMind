@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.63
+
+- Fix runtime Leaflet: esteso guard anti-race anche a `Control.addTo(...)` (non solo `Layer.addTo(...)`) per evitare crash su target mappa/control temporaneamente null.
+- Stabilizzata User UI nei toggle/refresh rapidi della mappa.
+
 ## 0.3.62
 
 - Fix runtime User UI: introdotto guard globale Leaflet su `Layer.addTo(...)` per evitare crash quando il target mappa risulta temporaneamente `null` durante race di rendering/tab switch.

@@ -1013,6 +1013,11 @@ L.Layer.prototype.addTo = function patchedAddTo(target) {
   if (!target || typeof target.addLayer !== 'function') return this
   return _leafletLayerAddTo.call(this, target)
 }
+const _leafletControlAddTo = L.Control.prototype.addTo
+L.Control.prototype.addTo = function patchedControlAddTo(target) {
+  if (!target || typeof target.addControl !== 'function') return this
+  return _leafletControlAddTo.call(this, target)
+}
 
 const tab = ref('user')
 const showSplash = ref(true)

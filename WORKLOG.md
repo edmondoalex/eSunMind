@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix runtime mappa User UI: aggiunto guard anche su `Leaflet.Control.addTo` per race condition con target null.
+- Bump versione addon a `0.3.63` con changelog aggiornato.
 - Fix crash Leaflet User UI: patch globale su `Layer.addTo` per ignorare target mappa null temporanei, eliminando il bootstrap error `reading 'addLayer'`.
 - Bump versione addon a `0.3.62` con changelog aggiornato.
 - Hardening frontend boot: aggiunto fail-safe globale in `web/src/main.js` per intercettare crash iniziali e mostrare errore a schermo.
