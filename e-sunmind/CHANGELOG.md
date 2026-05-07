@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.51
+
+- UI Tende/Cover: aggiunto wizard guidato per taratura cover con step Base, Sole, Posizioni, Meteo, Termico e Verifica.
+
 ## 0.3.50
 
 - UI grafici: ridotta la dimensione dei font SVG per assi, titoli asse e tooltip su grafici aria/FV/meteo.

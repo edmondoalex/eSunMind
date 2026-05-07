@@ -343,6 +343,120 @@
       </div>
       <div class="card" v-if="selectedShadeEdit">
         <h3>Taratura {{ selectedShadeEdit.name || selectedShadeEdit.id }}</h3>
+        <div class="tende-wizard">
+          <div class="wizard-head">
+            <div>
+              <strong>Wizard taratura tapparella</strong>
+              <p>{{ wizardSteps[tendeWizardStep]?.hint }}</p>
+            </div>
+            <div class="wizard-step-count">Step {{ tendeWizardStep + 1 }} / {{ wizardSteps.length }}</div>
+          </div>
+          <div class="wizard-tabs">
+            <button
+              v-for="(step, idx) in wizardSteps"
+              :key="step.key"
+              class="wizard-tab"
+              :class="{active: idx === tendeWizardStep}"
+              @click="tendeWizardStep = idx"
+            >{{ step.label }}</button>
+          </div>
+          <div class="wizard-body">
+            <div v-if="wizardSteps[tendeWizardStep]?.key === 'base'" class="wizard-grid">
+              <label>Automazione
+                <input type="checkbox" v-model="selectedShadeEdit.enabled" />
+              </label>
+              <label>Logica sole
+                <input type="checkbox" v-model="selectedShadeEdit.sun_logic_enabled" />
+              </label>
+              <label>Apri se sole assente
+                <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
+              </label>
+              <button class="btn ghost" @click="applyWizardPreset('base_safe')">Preset base sicuro</button>
+            </div>
+            <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'sun'" class="wizard-grid">
+              <label>Azimut finestra
+                <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.window_azimuth" @change="drawTendeEditor" />
+              </label>
+              <label>Modalita Start/Stop
+                <input type="checkbox" v-model="selectedShadeEdit.use_start_stop_azimuth" @change="drawTendeEditor" />
+              </label>
+              <label>Azimuth start
+                <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_start_deg" @change="drawTendeEditor" />
+              </label>
+              <label>Azimuth end
+                <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_end_deg" @change="drawTendeEditor" />
+              </label>
+              <label>Campo visivo sinistro
+                <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_left" @change="drawTendeEditor" />
+              </label>
+              <label>Campo visivo destro
+                <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_right" @change="drawTendeEditor" />
+              </label>
+              <button class="btn ghost" @click="applyWizardPreset('sun_fov')">Usa campo visivo ±70°</button>
+            </div>
+            <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'positions'" class="wizard-grid">
+              <label>Posizione riposo
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.default_position" />
+              </label>
+              <label>Posizione notte
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.sunset_position" />
+              </label>
+              <label>Posizione minima sole
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_position" />
+              </label>
+              <label>Delta minimo
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_delta" />
+              </label>
+              <label>Anti-loop comandi sec.
+                <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
+              </label>
+              <button class="btn ghost" @click="applyWizardPreset('positions_balanced')">Preset bilanciato</button>
+            </div>
+            <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'weather'" class="wizard-grid">
+              <label>Protezione Meteo Guard
+                <input type="checkbox" v-model="selectedShadeEdit.weather_guard_enabled" />
+              </label>
+              <label>Azimut facciata stravento
+                <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.facade_azimuth_deg" @change="drawTendeEditor" />
+              </label>
+              <label>Posizione sicurezza vento
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
+              </label>
+              <label>Posizione sicurezza pioggia
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
+              </label>
+              <button class="btn ghost" @click="applyWizardPreset('weather_safe')">Preset sicurezza meteo</button>
+            </div>
+            <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'thermal'" class="wizard-grid">
+              <label>Strategia termica
+                <input type="checkbox" v-model="selectedShadeEdit.thermal_enabled" />
+              </label>
+              <label>Termostato ambiente
+                <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
+              </label>
+              <label>Isteresi termica °C
+                <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
+              </label>
+              <label>Posizione guadagno calore
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_heat_gain_position" />
+              </label>
+              <label>Posizione blocco calore
+                <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_cool_block_position" />
+              </label>
+              <button class="btn ghost" @click="applyWizardPreset('thermal_conservative')">Preset termico conservativo</button>
+            </div>
+            <div v-else class="wizard-review">
+              <span>Heatmap: verifica le ore di sole utile sotto la mappa.</span>
+              <span>Se `Decisione termica` resta `missing_climate`, controlla il nome `climate.xxx`.</span>
+              <span>Se il motore si muove troppo spesso, aumenta `Anti-loop comandi sec.`.</span>
+              <button class="btn" @click="saveSelectedShade">Salva taratura</button>
+            </div>
+          </div>
+          <div class="wizard-actions">
+            <button class="btn ghost" @click="prevWizardStep" :disabled="tendeWizardStep <= 0">Indietro</button>
+            <button class="btn ghost" @click="nextWizardStep" :disabled="tendeWizardStep >= wizardSteps.length - 1">Avanti</button>
+          </div>
+        </div>
         <div class="tende-cal-grid">
           <label>Automazione
             <input type="checkbox" v-model="selectedShadeEdit.enabled" />
@@ -875,6 +989,7 @@ const tendeEditMode = ref(false)
 const selectedShadeId = ref('')
 const selectedShadeEdit = ref(null)
 const tendeSaveStatus = ref('')
+const tendeWizardStep = ref(0)
 const lastValidTendeShades = ref([])
 const lastValidTendeCoverStates = ref({})
 const pvAzimuthDeg = ref(0)
@@ -1025,6 +1140,14 @@ const tendeMapWarning = computed(() => {
   return ''
 })
 const sunWindowHeatmap = computed(() => buildSunWindowHeatmap())
+const wizardSteps = [
+  { key: 'base', label: 'Base', hint: 'Abilita automazione e scegli il comportamento quando il sole non e utile.' },
+  { key: 'sun', label: 'Sole', hint: 'Allinea finestra, campo visivo e Start/Stop guardando mappa e heatmap.' },
+  { key: 'positions', label: 'Posizioni', hint: 'Definisci riposo, notte, protezione sole e anti-loop motore.' },
+  { key: 'weather', label: 'Meteo', hint: 'Configura facciata e posizioni di sicurezza per vento/pioggia.' },
+  { key: 'thermal', label: 'Termico', hint: 'Associa il termostato climate; puo essere condiviso tra piu cover.' },
+  { key: 'review', label: 'Verifica', hint: 'Controlla diagnostica, heatmap e salva la taratura.' },
+]
 const airqProvider = computed(() => data.value?.air_quality?.provider || null)
 const airqEu = computed(() => airqNorm.value?.european_aqi)
 const airqUs = computed(() => airqNorm.value?.us_aqi)
@@ -2463,6 +2586,49 @@ function toggleTendeEditMode() {
   drawTendeEditor()
 }
 
+function nextWizardStep() {
+  tendeWizardStep.value = Math.min(wizardSteps.length - 1, tendeWizardStep.value + 1)
+}
+
+function prevWizardStep() {
+  tendeWizardStep.value = Math.max(0, tendeWizardStep.value - 1)
+}
+
+function applyWizardPreset(kind) {
+  const e = selectedShadeEdit.value
+  if (!e) return
+  if (kind === 'base_safe') {
+    e.enabled = true
+    e.sun_logic_enabled = true
+    e.open_when_no_sun = true
+    e.command_mode_open_close = true
+  } else if (kind === 'sun_fov') {
+    e.use_start_stop_azimuth = false
+    e.fov_left = 70
+    e.fov_right = 70
+  } else if (kind === 'positions_balanced') {
+    e.default_position = 100
+    e.sunset_position = 0
+    e.min_position = 10
+    e.min_delta = 3
+    e.min_command_interval_seconds = 120
+  } else if (kind === 'weather_safe') {
+    e.weather_guard_enabled = true
+    e.protect_on_wind_alarm = true
+    e.protect_on_rain_alarm = true
+    e.protect_on_facade_rain_risk = true
+    e.weather_wind_safe_position = 0
+    e.weather_rain_safe_position = 0
+    e.weather_facade_rain_safe_position = 0
+  } else if (kind === 'thermal_conservative') {
+    e.thermal_enabled = true
+    e.thermal_hysteresis = 0.5
+    e.thermal_heat_gain_position = 70
+    e.thermal_cool_block_position = Number(e.min_position ?? 10)
+  }
+  drawTendeEditor()
+}
+
 function applySavedShadeLocally(editShade, settings) {
   const key = shadeKey(editShade)
   if (!key) return
@@ -3324,6 +3490,27 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .tende-page{padding:10px}
 .tende-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tende-wizard{
+  border:1px solid rgba(87,227,214,.28);
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:12px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(87,227,214,.14), transparent 34%),
+    linear-gradient(135deg, rgba(12,21,36,.96), rgba(9,14,22,.92));
+}
+.wizard-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.wizard-head p{margin:4px 0 0;color:#9fb0c8;font-size:12px}
+.wizard-step-count{color:#fde68a;font-size:12px;font-weight:700;white-space:nowrap}
+.wizard-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.wizard-tab{border:1px solid var(--border);background:#0c1524;color:#cfe0f8;border-radius:999px;padding:6px 10px;font-weight:700;font-size:12px;cursor:pointer}
+.wizard-tab.active{background:#57e3d6;color:#041016;border-color:#57e3d6}
+.wizard-body{border-top:1px solid var(--border);padding-top:10px}
+.wizard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.wizard-grid label{display:flex;flex-direction:column;gap:4px;color:#dbe7ff;font-size:13px}
+.wizard-review{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;align-items:center}
+.wizard-review span{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;color:#dbe7ff;font-size:13px}
+.wizard-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
 .tende-position-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}

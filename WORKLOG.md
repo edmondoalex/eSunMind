@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI Tende/Cover: aggiunto wizard guidato per taratura cover selezionata.
+- Bump versione addon a `0.3.51` con changelog aggiornato.
 - UI grafici: ridotta dimensione font SVG per evitare label troppo grandi su pannelli larghi.
 - Bump versione addon a `0.3.50` con changelog aggiornato.
 - UI Tende/Cover: aggiunti campi strategia termica per termostato `climate` condivisibile tra piu cover.
