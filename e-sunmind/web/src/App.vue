@@ -830,7 +830,7 @@
               <input type="number" min="30" max="86400" v-model.number="weatherStationForm.stale_seconds" />
             </label>
             <label>Device id (auto-discovery)
-              <input type="text" v-model="weatherStationForm.device_id" />
+              <input type="text" v-model="weatherStationForm.device_id" @change="autofillWeatherStationFromDevice" />
             </label>
             <label>Wind speed entity id
               <input type="text" v-model="weatherStationForm.wind_speed_entity_id" />
@@ -3035,6 +3035,40 @@ async function loadStatusVersion() {
     if (j?.version) appVersion.value = String(j.version)
   } catch (_) {
     // keep fallback
+  }
+}
+
+async function autofillWeatherStationFromDevice() {
+  const did = String(weatherStationForm.value.device_id || '').trim()
+  if (!did) return
+  try {
+    const r = await fetch(`/api/weather_station/autofill?device_id=${encodeURIComponent(did)}`, { cache: 'no-store' })
+    const j = await r.json()
+    if (!r.ok || !j?.mapped) throw new Error(j?.error || 'autofill_failed')
+    const mapped = j.mapped || {}
+    const keys = [
+      'wind_speed_entity_id',
+      'wind_gust_entity_id',
+      'wind_direction_entity_id',
+      'rain_rate_entity_id',
+      'rain_1h_entity_id',
+      'outdoor_temp_entity_id',
+      'outdoor_humidity_entity_id',
+      'pressure_entity_id',
+      'uv_index_entity_id',
+    ]
+    let filled = 0
+    for (const k of keys) {
+      const v = String(mapped[k] || '').trim()
+      if (v && !String(weatherStationForm.value[k] || '').trim()) {
+        weatherStationForm.value[k] = v
+        filled += 1
+      }
+    }
+    if (filled > 0) baseSaveStatus.value = `Auto-fill device completato: ${filled} campi compilati.`
+    else baseSaveStatus.value = 'Auto-fill device: nessun nuovo campo compilato.'
+  } catch (e) {
+    baseSaveStatus.value = `Auto-fill device errore: ${e.message}`
   }
 }
 

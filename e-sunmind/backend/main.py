@@ -33,7 +33,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.56"
+APP_VERSION = "0.3.57"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 
@@ -1049,6 +1049,8 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
         "state": state_raw,
         "value": numeric_value,
         "unit": attrs.get("unit_of_measurement"),
+        "device_class": attrs.get("device_class"),
+        "state_class": attrs.get("state_class"),
         "watts": numeric_value,
         "friendly_name": attrs.get("friendly_name"),
         "last_updated": payload.get("last_updated"),
@@ -1106,27 +1108,75 @@ def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
     ents = _fetch_ha_device_entities(device_id)
     if not ents:
         return {}
-    rules: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
-        ("wind_gust_entity_id", ("wind", "gust"), ()),
-        ("wind_speed_entity_id", ("wind", "speed"), ("gust",)),
-        ("wind_direction_entity_id", ("wind", "direction"), ()),
-        ("rain_rate_entity_id", ("rain", "rate"), ()),
-        ("rain_1h_entity_id", ("rain", "hour"), ("rate",)),
-        ("outdoor_temp_entity_id", ("outdoor", "temp"), ("indoor",)),
-        ("outdoor_humidity_entity_id", ("outdoor", "humid"), ("indoor",)),
-        ("pressure_entity_id", ("pressure",), ()),
-        ("uv_index_entity_id", ("uv",), ()),
-    ]
+    infos: list[dict[str, Any]] = []
+    for ent in ents:
+        st = _fetch_ha_entity_state(ent)
+        if isinstance(st, dict) and st.get("ok"):
+            infos.append(st)
+
+    def _txt(info: dict[str, Any]) -> str:
+        return f"{str(info.get('entity_id') or '').lower()} {str(info.get('friendly_name') or '').lower()}"
+
+    def _unit(info: dict[str, Any]) -> str:
+        return str(info.get("unit") or "").strip().lower()
+
+    def _dclass(info: dict[str, Any]) -> str:
+        return str(info.get("device_class") or "").strip().lower()
+
+    def _pick(pred) -> str:
+        for info in infos:
+            if pred(info):
+                return str(info.get("entity_id") or "")
+        return ""
+
     mapped: dict[str, str] = {}
-    for field, req_tokens, ban_tokens in rules:
-        for ent in ents:
-            s = ent.lower()
-            if any(bt in s for bt in ban_tokens):
-                continue
-            if all(rt in s for rt in req_tokens):
-                mapped[field] = ent
-                break
-    return mapped
+
+    # Wind
+    mapped["wind_gust_entity_id"] = _pick(
+        lambda i: ("gust" in _txt(i)) or ("raffica" in _txt(i))
+    )
+    mapped["wind_speed_entity_id"] = _pick(
+        lambda i: ("wind" in _txt(i) or "vento" in _txt(i))
+        and ("speed" in _txt(i) or "veloc" in _txt(i))
+        and ("gust" not in _txt(i) and "raffica" not in _txt(i))
+    ) or _pick(
+        lambda i: _dclass(i) == "wind_speed"
+        and ("gust" not in _txt(i) and "raffica" not in _txt(i))
+    )
+    mapped["wind_direction_entity_id"] = _pick(
+        lambda i: ("wind" in _txt(i) or "vento" in _txt(i))
+        and ("direction" in _txt(i) or "dir" in _txt(i) or "direzione" in _txt(i))
+    )
+
+    # Rain
+    mapped["rain_rate_entity_id"] = _pick(
+        lambda i: ("rain" in _txt(i) or "pioggia" in _txt(i))
+        and ("rate" in _txt(i) or "/h" in _unit(i) or "mm/h" in _unit(i))
+    )
+    mapped["rain_1h_entity_id"] = _pick(
+        lambda i: ("rain" in _txt(i) or "pioggia" in _txt(i))
+        and ("hour" in _txt(i) or "1h" in _txt(i) or "hourly" in _txt(i) or "oraria" in _txt(i))
+        and ("rate" not in _txt(i))
+    )
+
+    # Extra
+    mapped["outdoor_temp_entity_id"] = _pick(
+        lambda i: _dclass(i) == "temperature"
+        and ("outdoor" in _txt(i) or "esterna" in _txt(i) or "outside" in _txt(i))
+    )
+    mapped["outdoor_humidity_entity_id"] = _pick(
+        lambda i: _dclass(i) == "humidity"
+        and ("outdoor" in _txt(i) or "esterna" in _txt(i) or "outside" in _txt(i))
+    )
+    mapped["pressure_entity_id"] = _pick(
+        lambda i: _dclass(i) in {"atmospheric_pressure", "pressure"}
+        or ("pressure" in _txt(i) or "pressione" in _txt(i))
+    )
+    mapped["uv_index_entity_id"] = _pick(
+        lambda i: ("uv" in _txt(i))
+    )
+
+    return {k: v for k, v in mapped.items() if v}
 
 
 def _fetch_ha_core_config() -> dict[str, Any] | None:
@@ -2123,6 +2173,15 @@ async def weather_guard_get():
     cfg = _load_options()
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
     return JSONResponse(_build_weather_guard(payload, cfg))
+
+
+@app.get("/api/weather_station/autofill")
+async def weather_station_autofill(device_id: str = ""):
+    did = str(device_id or "").strip()
+    if not did:
+        return JSONResponse({"ok": False, "error": "missing_device_id"}, status_code=400)
+    mapped = _auto_map_weather_station_entities(did)
+    return JSONResponse({"ok": bool(mapped), "device_id": did, "mapped": mapped})
 
 
 @app.get("/api/tende/map")

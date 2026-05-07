@@ -1,6 +1,10 @@
 # WORKLOG
 
 ## 2026-05-07
+- Weather Station: aggiunto endpoint `GET /api/weather_station/autofill` per mappatura automatica entita da `device_id`.
+- Weather Station UI: auto-fill campi sensori al cambio `device_id`, con preservazione override manuali.
+- Auto-mapping Ecowitt reso piu robusto usando anche `device_class` e unita.
+- Bump versione addon a `0.3.57` con changelog aggiornato.
 - Integrazione stazione reale Ecowitt/e-Control: aggiunto `weather_station.device_id` con auto-discovery entita da Home Assistant.
 - Estesa configurazione Weather Station con sensori extra: temperatura esterna, umidita esterna, pressione, UV index.
 - Regola sorgente meteo resa esplicita: usa stazione reale se valida/fresca, altrimenti fallback API web.
