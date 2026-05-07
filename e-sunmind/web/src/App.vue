@@ -364,86 +364,124 @@
             <div v-if="wizardSteps[tendeWizardStep]?.key === 'base'" class="wizard-grid">
               <label>Automazione
                 <input type="checkbox" v-model="selectedShadeEdit.enabled" />
+                <small>Abilita o disabilita i comandi automatici per questa cover.</small>
               </label>
               <label>Logica sole
                 <input type="checkbox" v-model="selectedShadeEdit.sun_logic_enabled" />
+                <small>Usa azimut/elevazione sole per decidere la posizione.</small>
               </label>
               <label>Apri se sole assente
                 <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
+                <small>Quando il sole non è più utile, torna alla posizione di riposo.</small>
               </label>
-              <button class="btn ghost" @click="applyWizardPreset('base_safe')">Preset base sicuro</button>
+              <button class="btn ghost wizard-preset" @click="applyWizardPreset('base_safe')">
+                <strong>Preset base sicuro</strong>
+                <small>Automazione ON, logica sole ON, apertura se sole assente e comando Open/Close.</small>
+              </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'sun'" class="wizard-grid">
               <label>Azimut finestra
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.window_azimuth" @change="drawTendeEditor" />
+                <small>Direzione perpendicolare alla finestra: guida la logica sole.</small>
               </label>
               <label>Modalita Start/Stop
                 <input type="checkbox" v-model="selectedShadeEdit.use_start_stop_azimuth" @change="drawTendeEditor" />
+                <small>Se attiva, usa due angoli netti di ingresso/uscita sole.</small>
               </label>
               <label>Azimuth start
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_start_deg" @change="drawTendeEditor" />
+                <small>Angolo in cui il sole inizia a colpire la finestra.</small>
               </label>
               <label>Azimuth end
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.azimuth_end_deg" @change="drawTendeEditor" />
+                <small>Angolo in cui il sole esce dalla finestra.</small>
               </label>
               <label>Campo visivo sinistro
                 <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_left" @change="drawTendeEditor" />
+                <small>Ampiezza a sinistra dell'azimut finestra, se non usi Start/Stop.</small>
               </label>
               <label>Campo visivo destro
                 <input type="number" min="0" max="180" step="0.1" v-model.number="selectedShadeEdit.fov_right" @change="drawTendeEditor" />
+                <small>Ampiezza a destra dell'azimut finestra, se non usi Start/Stop.</small>
               </label>
-              <button class="btn ghost" @click="applyWizardPreset('sun_fov')">Usa campo visivo ±70°</button>
+              <button class="btn ghost wizard-preset" @click="applyWizardPreset('sun_fov')">
+                <strong>Usa campo visivo ±70°</strong>
+                <small>Disattiva Start/Stop e usa una finestra angolare larga 140°.</small>
+              </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'positions'" class="wizard-grid">
               <label>Posizione riposo
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.default_position" />
+                <small>Posizione usata quando il sole non richiede protezione.</small>
               </label>
               <label>Posizione notte
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.sunset_position" />
+                <small>Posizione dopo tramonto, se la cover deve chiudere o aprire di notte.</small>
               </label>
               <label>Posizione minima sole
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_position" />
+                <small>Posizione di protezione quando il sole è utile e va schermato.</small>
               </label>
               <label>Delta minimo
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_delta" />
+                <small>Evita micro-movimenti se la differenza posizione è troppo piccola.</small>
               </label>
               <label>Anti-loop comandi sec.
                 <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
+                <small>Blocca comandi motore troppo ravvicinati.</small>
               </label>
-              <button class="btn ghost" @click="applyWizardPreset('positions_balanced')">Preset bilanciato</button>
+              <button class="btn ghost wizard-preset" @click="applyWizardPreset('positions_balanced')">
+                <strong>Preset bilanciato</strong>
+                <small>Riposo 100%, notte 0%, sole 10%, delta 3%, anti-loop 120s.</small>
+              </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'weather'" class="wizard-grid">
               <label>Protezione Meteo Guard
                 <input type="checkbox" v-model="selectedShadeEdit.weather_guard_enabled" />
+                <small>Abilita priorità sicurezza da vento, pioggia e stravento.</small>
               </label>
               <label>Azimut facciata stravento
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.facade_azimuth_deg" @change="drawTendeEditor" />
+                <small>Direzione reale della facciata per rischio pioggia spinta dal vento.</small>
               </label>
               <label>Posizione sicurezza vento
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
+                <small>Posizione comandata quando c'è allarme vento.</small>
               </label>
               <label>Posizione sicurezza pioggia
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
+                <small>Posizione comandata quando c'è allarme pioggia.</small>
               </label>
-              <button class="btn ghost" @click="applyWizardPreset('weather_safe')">Preset sicurezza meteo</button>
+              <button class="btn ghost wizard-preset" @click="applyWizardPreset('weather_safe')">
+                <strong>Preset sicurezza meteo</strong>
+                <small>Attiva tutte le protezioni meteo e porta le posizioni sicurezza a 0%.</small>
+              </button>
             </div>
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'thermal'" class="wizard-grid">
               <label>Strategia termica
                 <input type="checkbox" v-model="selectedShadeEdit.thermal_enabled" />
+                <small>Usa il termostato per rifinire la decisione quando il sole è utile.</small>
               </label>
               <label>Termostato ambiente
                 <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
+                <small>Può essere lo stesso climate per più cover della stessa zona.</small>
               </label>
               <label>Isteresi termica °C
                 <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
+                <small>Margine intorno al setpoint per evitare rimbalzi.</small>
               </label>
               <label>Posizione guadagno calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_heat_gain_position" />
+                <small>In modalità heat, sotto setpoint, lascia entrare sole fino a questa posizione.</small>
               </label>
               <label>Posizione blocco calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_cool_block_position" />
+                <small>In modalità cool, sopra setpoint, scherma il sole fino a questa posizione.</small>
               </label>
-              <button class="btn ghost" @click="applyWizardPreset('thermal_conservative')">Preset termico conservativo</button>
+              <button class="btn ghost wizard-preset" @click="applyWizardPreset('thermal_conservative')">
+                <strong>Preset termico conservativo</strong>
+                <small>Isteresi 0.5°C, guadagno calore 70%, blocco calore come posizione sole.</small>
+              </button>
             </div>
             <div v-else class="wizard-review">
               <span>Heatmap: verifica le ore di sole utile sotto la mappa.</span>
@@ -3508,6 +3546,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .wizard-body{border-top:1px solid var(--border);padding-top:10px}
 .wizard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .wizard-grid label{display:flex;flex-direction:column;gap:4px;color:#dbe7ff;font-size:13px}
+.wizard-grid label small{color:#9fb0c8;font-size:11px;line-height:1.25}
+.wizard-preset{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:58px;text-align:left}
+.wizard-preset small{color:#9fb0c8;font-size:11px;line-height:1.25;font-weight:600}
 .wizard-review{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px;align-items:center}
 .wizard-review span{background:#0c1524;border:1px solid var(--border);border-radius:10px;padding:8px;color:#dbe7ff;font-size:13px}
 .wizard-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}

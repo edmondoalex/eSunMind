@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.52
+
+- UI Wizard Tende/Cover: aggiunte spiegazioni brevi per ogni parametro e per i preset guidati.
+
 ## 0.3.51
 
 - UI Tende/Cover: aggiunto wizard guidato per taratura cover con step Base, Sole, Posizioni, Meteo, Termico e Verifica.
