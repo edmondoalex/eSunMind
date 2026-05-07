@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix crash Leaflet User UI: patch globale su `Layer.addTo` per ignorare target mappa null temporanei, eliminando il bootstrap error `reading 'addLayer'`.
+- Bump versione addon a `0.3.62` con changelog aggiornato.
 - Hardening frontend boot: aggiunto fail-safe globale in `web/src/main.js` per intercettare crash iniziali e mostrare errore a schermo.
 - Eliminata condizione "pagina blu vuota" senza diagnostica: ora la UI espone direttamente stack/message runtime.
 - Bump versione addon a `0.3.61` con changelog aggiornato.

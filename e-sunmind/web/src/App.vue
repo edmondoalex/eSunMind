@@ -1007,6 +1007,13 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import SunCalc from 'suncalc'
 
+// Guard against transient null map targets during UI race conditions.
+const _leafletLayerAddTo = L.Layer.prototype.addTo
+L.Layer.prototype.addTo = function patchedAddTo(target) {
+  if (!target || typeof target.addLayer !== 'function') return this
+  return _leafletLayerAddTo.call(this, target)
+}
+
 const tab = ref('user')
 const showSplash = ref(true)
 const userExpanded = ref(true)

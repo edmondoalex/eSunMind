@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.62
+
+- Fix runtime User UI: introdotto guard globale Leaflet su `Layer.addTo(...)` per evitare crash quando il target mappa risulta temporaneamente `null` durante race di rendering/tab switch.
+- Risolto errore bootstrap: `TypeError: Cannot read properties of null (reading 'addLayer')`.
+
 ## 0.3.61
 
 - Frontend bootstrap hardening: aggiunto fail-safe in `main.js` con gestione errori globali (`error` e `unhandledrejection`) e pannello errore a schermo.
