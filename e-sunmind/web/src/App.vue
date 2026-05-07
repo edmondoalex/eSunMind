@@ -3351,21 +3351,27 @@ async function saveOverlaySettings() {
 }
 
 onMounted(() => {
-  const now = new Date()
-  const total = (now.getHours() * 60) + now.getMinutes()
-  const base = 3 * 60
-  const clamped = Math.max(base, Math.min(21 * 60, total))
-  const rounded = Math.round((clamped - base) / 15)
-  const idx = rounded
-  if (idx >= 0) timeIndex.value = idx
-  loadData()
-  loadStatusVersion()
-  window.addEventListener('resize', resizeWeatherCanvas)
-  startWeatherAnimation()
-  initBlockToggles()
+  // Failsafe: never keep splash forever on runtime/init errors.
   setTimeout(() => {
     showSplash.value = false
-  }, 3000)
+  }, 1200)
+  try {
+    const now = new Date()
+    const total = (now.getHours() * 60) + now.getMinutes()
+    const base = 3 * 60
+    const clamped = Math.max(base, Math.min(21 * 60, total))
+    const rounded = Math.round((clamped - base) / 15)
+    const idx = rounded
+    if (idx >= 0) timeIndex.value = idx
+    loadData()
+    loadStatusVersion()
+    window.addEventListener('resize', resizeWeatherCanvas)
+    startWeatherAnimation()
+    initBlockToggles()
+  } catch (e) {
+    console.error('onMounted init error', e)
+    showSplash.value = false
+  }
 })
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }

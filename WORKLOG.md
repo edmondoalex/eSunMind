@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix runtime User UI: aggiunto failsafe splash (chiusura garantita) e `try/catch` su init `onMounted` per evitare schermata blu vuota.
+- Bump versione addon a `0.3.60` con changelog aggiornato.
 - User UI Meteo: rinominate le metriche WS con etichette estese e piu chiare.
 - User UI Mappa: aggiunto toggle `Direzione vento su mappa` con freccia/velocita vento visualizzabile e disattivabile.
 - Vento mappa: sorgente prioritaria da stazione reale, fallback meteo web.

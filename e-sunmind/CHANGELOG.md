@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.60
+
+- Fix User UI: aggiunto failsafe splash screen per evitare pagina blu vuota in caso di errore JS durante init (`onMounted`).
+- La splash viene chiusa comunque dopo timeout breve e l'init e protetto con `try/catch`.
+
 ## 0.3.59
 
 - User UI Meteo: etichette stazione reale rese esplicite (`WS Temperatura esterna`, `WS Umidita esterna`, `WS Pressione`, `WS Indice UV`, `WS Pioggia`, `WS Vento`).
