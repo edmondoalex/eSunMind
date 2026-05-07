@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.79
+
+- Aggiunto link dedicato alla `UI User`: `/?view=user`.
+- `UI User` ora apre direttamente via query string (`view=user`, `view=ui-user`, `view=user_public`).
+- Integrato logo `e-Tende Intelligenti` nella `UI User` (`/logo-etende.png`).
+
 ## 0.3.78
 
 - `UI User` resa molto piu vicina al layout di riferimento: pagina standalone senza barra admin, top header dedicato, sidebar legenda colori per tende e vento.

@@ -14,6 +14,7 @@
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
         <button class="btn ghost" :class="{active: tab==='user_public'}" @click="tab='user_public'">UI User</button>
+        <a class="btn ghost" href="/?view=user">Link UI User</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -24,7 +25,7 @@
     <div v-show="tab==='user_public'" class="user-public">
       <div class="user-public-head">
         <div class="up-brand">
-          <img src="/logo.png" alt="logo" class="up-logo" />
+          <img src="/logo-etende.png" alt="e-Tende Intelligenti" class="up-logo" />
           <div class="up-brand-text">e-SunMind <span>User</span></div>
         </div>
         <div class="up-nav">
@@ -3733,6 +3734,13 @@ async function saveOverlaySettings() {
 }
 
 onMounted(() => {
+  try {
+    const qp = new URLSearchParams(window.location.search || '')
+    const view = String(qp.get('view') || '').trim().toLowerCase()
+    if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
+  } catch (_) {
+    // no-op
+  }
   // Failsafe: never keep splash forever on runtime/init errors.
   setTimeout(() => {
     showSplash.value = false
@@ -4007,7 +4015,7 @@ input[type='range']{width:100%}
 .user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
 .user-public-head{display:grid;grid-template-columns:260px 1fr 130px;gap:10px;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88))}
 .up-brand{display:flex;align-items:center;gap:8px}
-.up-logo{width:34px;height:34px}
+.up-logo{width:180px;height:52px;object-fit:contain}
 .up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
 .up-nav{display:flex;gap:24px;justify-content:center;color:#9eb4cc;font-size:14px;font-weight:700}
@@ -4443,6 +4451,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
 
 
 

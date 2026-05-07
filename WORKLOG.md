@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: aggiunto link diretto dedicato `/?view=user` e apertura automatica pagina user via query param.
+- UI User: sostituito logo con asset `e-Tende Intelligenti` (`logo-etende.png`).
+- Bump versione addon a `0.3.79` con changelog aggiornato.
 - UI User: redesign forte per avvicinamento al mock (header dedicato, sidebar legenda, mappa con overlay alba/tramonto/arco solare/settori).
 - Bump versione addon a `0.3.78` con changelog aggiornato.
 - Nuova esperienza UI: introdotta pagina separata `UI User` (standalone, senza link a sezioni tecniche) con look dashboard stile e-Tende.
