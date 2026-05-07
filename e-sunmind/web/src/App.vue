@@ -467,6 +467,37 @@
         <div class="tende-map-wrap card">
           <h3>Mappa taratura tenda</h3>
           <div id="tende-map"></div>
+          <div class="sun-window-heatmap" v-if="sunWindowHeatmap.slots.length">
+            <div class="heatmap-head">
+              <div>
+                <h3>Heatmap sole-finestra oggi</h3>
+                <p>{{ sunWindowHeatmap.subtitle }}</p>
+              </div>
+              <div class="heatmap-summary">
+                <strong>{{ sunWindowHeatmap.usefulLabel }}</strong>
+                <span>Picco {{ sunWindowHeatmap.peakLabel }}</span>
+                <span>Prossima {{ sunWindowHeatmap.nextLabel }}</span>
+              </div>
+            </div>
+            <div class="heatmap-strip" :style="{ gridTemplateColumns: `repeat(${sunWindowHeatmap.slots.length}, minmax(3px, 1fr))` }">
+              <span
+                v-for="slot in sunWindowHeatmap.slots"
+                :key="slot.key"
+                class="heatmap-cell"
+                :class="{now: slot.isNow}"
+                :style="{ background: slot.color }"
+                :title="slot.title"
+              ></span>
+            </div>
+            <div class="heatmap-axis">
+              <span>{{ sunWindowHeatmap.startLabel }}</span>
+              <span>Ora</span>
+              <span>{{ sunWindowHeatmap.endLabel }}</span>
+            </div>
+          </div>
+          <div class="sun-window-heatmap empty" v-else>
+            Heatmap sole-finestra non disponibile: servono coordinate e una cover selezionata.
+          </div>
         </div>
       </div>
     </div>
@@ -969,6 +1000,7 @@ const tendeMapWarning = computed(() => {
   if (tm.stale) return 'Dati tende non aggiornati'
   return ''
 })
+const sunWindowHeatmap = computed(() => buildSunWindowHeatmap())
 const airqProvider = computed(() => data.value?.air_quality?.provider || null)
 const airqEu = computed(() => airqNorm.value?.european_aqi)
 const airqUs = computed(() => airqNorm.value?.us_aqi)
@@ -1794,6 +1826,120 @@ function buildElevationCurveForDate(baseDate, steps = 96) {
 
 function norm360(v) {
   return ((Number(v) % 360) + 360) % 360
+}
+
+function angleDeltaDeg(a, b) {
+  return Math.abs((((Number(a) - Number(b) + 540) % 360) + 360) % 360 - 180)
+}
+
+function isAzimuthInRange(az, start, end) {
+  const a = norm360(az)
+  const s = norm360(start)
+  const e = norm360(end)
+  if (s <= e) return a >= s && a <= e
+  return a >= s || a <= e
+}
+
+function shadeSunSector(shade) {
+  if (!shade) return { start: 0, end: 0, center: 0 }
+  if (shade.use_start_stop_azimuth) {
+    const start = Number(shade.azimuth_start_deg)
+    const end = Number(shade.azimuth_end_deg)
+    const s = Number.isFinite(start) ? start : 0
+    const e = Number.isFinite(end) ? end : s
+    return { start: s, end: e, center: norm360(s + (((norm360(e) - norm360(s) + 360) % 360) / 2)) }
+  }
+  const center = Number.isFinite(Number(shade.window_azimuth)) ? Number(shade.window_azimuth) : 0
+  const left = Number.isFinite(Number(shade.fov_left)) ? Number(shade.fov_left) : 0
+  const right = Number.isFinite(Number(shade.fov_right)) ? Number(shade.fov_right) : left
+  return { start: center - left, end: center + right, center: norm360(center) }
+}
+
+function fmtTime(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '-'
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function fmtDuration(totalMinutes) {
+  const min = Math.max(0, Math.round(Number(totalMinutes) || 0))
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h <= 0) return `${m} min`
+  if (m <= 0) return `${h}h`
+  return `${h}h ${m}m`
+}
+
+function heatColor(score) {
+  const s = Math.max(0, Math.min(100, Number(score) || 0))
+  if (s <= 0) return 'linear-gradient(180deg,#172033,#0b1220)'
+  if (s < 25) return 'linear-gradient(180deg,#164e63,#083344)'
+  if (s < 50) return 'linear-gradient(180deg,#ca8a04,#713f12)'
+  if (s < 75) return 'linear-gradient(180deg,#f97316,#9a3412)'
+  return 'linear-gradient(180deg,#ef4444,#7f1d1d)'
+}
+
+function buildSunWindowHeatmap() {
+  const empty = {
+    slots: [],
+    subtitle: '',
+    usefulLabel: '0 min',
+    peakLabel: '-',
+    nextLabel: '-',
+    startLabel: '-',
+    endLabel: '-',
+  }
+  const shade = selectedShadeEdit.value
+  if (!shade || lat.value == null || lon.value == null) return empty
+  const base = data.value?.timestamp_local ? new Date(data.value.timestamp_local) : new Date()
+  const times = SunCalc.getTimes(base, lat.value, lon.value)
+  const sunrise = data.value?.sun_times?.sunrise ? new Date(data.value.sun_times.sunrise) : times.sunrise
+  const sunset = data.value?.sun_times?.sunset ? new Date(data.value.sun_times.sunset) : times.sunset
+  if (!(sunrise instanceof Date) || !(sunset instanceof Date) || Number.isNaN(sunrise.getTime()) || Number.isNaN(sunset.getTime()) || sunset <= sunrise) return empty
+
+  const sector = shadeSunSector(shade)
+  const altMin = Number.isFinite(Number(shade.altitude_min_deg)) ? Number(shade.altitude_min_deg) : -10
+  const altMax = Number.isFinite(Number(shade.altitude_max_deg)) ? Number(shade.altitude_max_deg) : 90
+  const low = Math.min(altMin, altMax)
+  const high = Math.max(altMin, altMax)
+  const invert = Boolean(shade.invert_sun_logic)
+  const now = new Date()
+  const stepMin = 10
+  const slots = []
+  let usefulMinutes = 0
+  let peak = null
+  let next = null
+  for (let t = sunrise.getTime(); t <= sunset.getTime(); t += stepMin * 60000) {
+    const dt = new Date(t)
+    const pos = SunCalc.getPosition(dt, lat.value, lon.value)
+    const az = suncalcAzToCompassDeg(pos.azimuth)
+    const alt = toDeg(pos.altitude)
+    const inAz = isAzimuthInRange(az, sector.start, sector.end)
+    const inAlt = alt >= low && alt <= high
+    const rawActive = inAz && inAlt
+    const active = invert ? !rawActive : rawActive
+    const centerFactor = Math.max(0, 1 - angleDeltaDeg(az, sector.center) / 90)
+    const altFactor = Math.max(0, Math.min(1, (alt - low) / Math.max(1, high - low)))
+    const score = active ? Math.round(30 + (altFactor * 45) + (centerFactor * 25)) : 0
+    if (score > 0) usefulMinutes += stepMin
+    if (!peak || score > peak.score) peak = { score, time: dt }
+    if (score > 0 && !next && dt >= now) next = dt
+    slots.push({
+      key: `${dt.getHours()}-${dt.getMinutes()}`,
+      score,
+      color: heatColor(score),
+      isNow: Math.abs(dt.getTime() - now.getTime()) < stepMin * 60000,
+      title: `${fmtTime(dt)} - Az ${az.toFixed(1)} deg - Elev ${alt.toFixed(1)} deg - utile ${score}%${invert ? ' - logica invertita' : ''}`,
+    })
+  }
+  return {
+    slots,
+    subtitle: `${fmtTime(sunrise)} - ${fmtTime(sunset)} | ${invert ? 'logica sole invertita' : 'logica sole diretta'}`,
+    usefulLabel: `Sole utile ${fmtDuration(usefulMinutes)}`,
+    peakLabel: peak && peak.score > 0 ? `${fmtTime(peak.time)} (${peak.score}%)` : '-',
+    nextLabel: next ? fmtTime(next) : '-',
+    startLabel: fmtTime(sunrise),
+    endLabel: fmtTime(sunset),
+  }
 }
 
 function unwrapAzimuthSeries(arr) {
@@ -3153,6 +3299,75 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .shade-item.active{outline:2px solid #41d6c3}
 .tende-map-wrap{padding:10px}
 #tende-map{height:68vh;min-height:420px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sun-window-heatmap{
+  margin-top:12px;
+  padding:12px;
+  border:1px solid rgba(125,211,252,.24);
+  border-radius:14px;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(250,204,21,.18), transparent 34%),
+    linear-gradient(135deg, rgba(8,14,22,.98), rgba(15,23,42,.94));
+}
+.sun-window-heatmap.empty{
+  color:#9fb0c8;
+  font-size:13px;
+}
+.heatmap-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+.heatmap-head h3{
+  margin:0;
+  color:#fff7d6;
+}
+.heatmap-head p{
+  margin:3px 0 0;
+  color:#9fb0c8;
+  font-size:12px;
+}
+.heatmap-summary{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:7px;
+  color:#dbe7ff;
+  font-size:12px;
+}
+.heatmap-summary strong,
+.heatmap-summary span{
+  background:rgba(12,21,36,.86);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:999px;
+  padding:5px 8px;
+}
+.heatmap-summary strong{
+  color:#fde68a;
+}
+.heatmap-strip{
+  display:grid;
+  gap:2px;
+  min-height:34px;
+  align-items:stretch;
+}
+.heatmap-cell{
+  min-width:3px;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16);
+}
+.heatmap-cell.now{
+  outline:2px solid #e0f2fe;
+  outline-offset:1px;
+}
+.heatmap-axis{
+  display:flex;
+  justify-content:space-between;
+  margin-top:7px;
+  color:#9fb0c8;
+  font-size:11px;
+}
 .tende-handle{
   display:block;
   width:16px;
@@ -3213,6 +3428,12 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .tende-position-row{
     grid-template-columns:1fr 1fr;
+  }
+  .heatmap-head{
+    flex-direction:column;
+  }
+  .heatmap-summary{
+    justify-content:flex-start;
   }
   #tende-map{
     height:56dvh;

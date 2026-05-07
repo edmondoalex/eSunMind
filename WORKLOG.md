@@ -1,5 +1,10 @@
 # WORKLOG
 
+## 2026-05-07
+- UI Tende/Cover: aggiunta heatmap `sole-finestra` giornaliera sotto la mappa taratura.
+- La heatmap mostra durata sole utile, picco, prossima esposizione e tooltip per slot con azimut/elevazione.
+- Bump versione addon a `0.3.46` con changelog aggiornato.
+
 ## 2026-05-06
 - UI Tende/Cover: aggiunta linea mappa `Facciata` per visualizzare l'azimut stravento separato dal sole.
 - Bump versione addon a `0.3.45` con changelog aggiornato.

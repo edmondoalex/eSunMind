@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.46
+
+- UI Tende/Cover: aggiunta heatmap `sole-finestra` sotto la mappa taratura con fasce orarie, durata utile, picco e prossima esposizione.
+
 ## 0.3.45
 
 - UI Tende/Cover: aggiunta linea visibile `Facciata` sulla mappa taratura usando `facade_azimuth_deg`.
