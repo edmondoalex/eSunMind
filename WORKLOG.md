@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix toggle vento mappa (secondo step): inizializzazione cache immediata + doppio redraw al ri-enable per assorbire race data/map.
+- Bump versione addon a `0.3.65` con changelog aggiornato.
 - Fix toggle vento mappa User UI: la linea direzione ora riappare correttamente dopo OFF/ON grazie a fallback su `weather_guard` + ultimo valore valido.
 - Aggiunti watcher reattivi per ridisegno immediato overlay vento al cambio flag.
 - Bump versione addon a `0.3.64` con changelog aggiornato.

@@ -2659,6 +2659,7 @@ function mergeTendeShades(previous, incoming) {
   if (showWindDirectionOnMap.value) {
     const dir = Number.isFinite(Number(mapWindDirDeg.value)) ? Number(mapWindDirDeg.value) : Number(lastKnownWindDirDeg.value)
     if (Number.isFinite(dir)) {
+      lastKnownWindDirDeg.value = dir
       const windPt = destinationPoint(lat.value, lon.value, dir, cfg.value.sectorRadiusM * 0.92)
       windDirLine = L.polyline([[lat.value, lon.value], windPt], {
         color: '#36d5ff',
@@ -2670,7 +2671,7 @@ function mergeTendeShades(previous, incoming) {
       windDirMarker = L.marker(windPt, {
         icon: L.divIcon({
           className: 'wind-map-icon-wrap',
-          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt(Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : lastKnownWindMs.value)} m/s</span>`,
+          html: `<span class="wind-map-icon" style="transform:rotate(${dir}deg)">↑</span><span class="wind-map-label">${fmt((() => { const s = Number.isFinite(Number(mapWindMs.value)) ? Number(mapWindMs.value) : Number(lastKnownWindMs.value); if (Number.isFinite(s)) lastKnownWindMs.value = s; return s })())} m/s</span>`,
           iconSize: [92, 20],
           iconAnchor: [10, 10],
         }),
@@ -3427,11 +3428,15 @@ watch(weatherAnimEnabled, (enabled) => {
 watch([mapWindDirDeg, mapWindMs], ([dir, speed]) => {
   if (Number.isFinite(Number(dir))) lastKnownWindDirDeg.value = Number(dir)
   if (Number.isFinite(Number(speed))) lastKnownWindMs.value = Number(speed)
-})
+}, { immediate: true })
 watch(showWindDirectionOnMap, async () => {
   if (tab.value !== 'user') return
   await nextTick()
   drawSolarOverlay()
+  // Second pass to absorb transient nulls from async map/data refresh.
+  setTimeout(() => {
+    if (tab.value === 'user') drawSolarOverlay()
+  }, 120)
 })
 </script>
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.65
+
+- User UI mappa vento: fix definitivo toggle OFF/ON con inizializzazione immediata cache vento (`watch ... immediate`) e doppio redraw anti-race al ri-enable.
+- Migliorata persistenza visiva della linea vento usando ultimo valore valido direzione/velocita.
+
 ## 0.3.64
 
 - User UI mappa vento: fix toggle OFF/ON della direzione vento con fallback robusto su `weather_guard` e ultimo valore valido noto.
