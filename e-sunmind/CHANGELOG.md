@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.89
+
+- Bump versione correttivo: riallineata release dopo numerazione gia in uso.
+- Confermato fix accesso ingress/sidebar Home Assistant (`ingress_entry: true`).
+
 ## 0.3.88
 
 - Addon: aggiunto `ingress_entry: true` in configurazione per rendere stabile l'apertura da sidebar Home Assistant (ingress).

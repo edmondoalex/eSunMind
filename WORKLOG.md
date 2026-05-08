@@ -1,6 +1,7 @@
 # WORKLOG
 
 ## 2026-05-07
+- Bump versione addon a `0.3.89` per riallineamento numerazione release (fix ingress gia incluso).
 - Fix accesso addon da Home Assistant: aggiunto `ingress_entry: true` a `config.yaml` per voce sidebar/pannello ingress.
 - Bump versione addon a `0.3.88` con changelog aggiornato.
 - UI User: aumentato il distacco verticale tra mappa e controlli orari/flag per migliorare leggibilita e usabilita.
