@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.87
+
+- UI User: aumentata la spaziatura tra mappa e controlli orari (simulazione/flag) per evitare elementi troppo a ridosso della mappa.
+- UI User: aggiunto contenitore visivo dedicato ai controlli mappa sotto la vista Leaflet per separazione piu chiara.
+
 ## 0.3.86
 
 - UI User: aggiunto slider simulazione oraria (stesso `timeIndex` della UI Admin) con orario simulato visibile.

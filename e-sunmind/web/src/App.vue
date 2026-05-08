@@ -3974,6 +3974,8 @@ input[type='range']{width:100%}
 .up-wind span{color:#b8dcff}
 .up-map-wrap{border:1px solid rgba(133,175,220,.22);border-radius:12px;overflow:hidden;background:rgba(4,12,22,.8);min-height:520px}
 #solar-map-public{height:100%;min-height:520px}
+.up-map-controls{margin-top:14px;padding:10px 12px;border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72)}
+.up-time-sim{margin-bottom:8px}
 .up-bottom{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;margin-top:10px}
 .up-card{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;color:#b8cce3;display:grid;gap:6px}
 .up-card h4{margin:0 0 4px 0;color:#e8f2ff}

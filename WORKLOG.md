@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: aumentato il distacco verticale tra mappa e controlli orari/flag per migliorare leggibilita e usabilita.
+- UI User: aggiunto box dedicato ai controlli mappa (`up-map-controls`) con padding e bordo.
+- Bump versione addon a `0.3.87` con changelog aggiornato.
 - UI User: resi visibili i flag mappa e aggiunto slider simulazione con orario simulato.
 - Bump versione addon a `0.3.86` con changelog aggiornato.
 - UI User: mappa portata sullo stesso renderer della UI Admin (stesse linee/cerchi/overlay e medesimo comportamento grafico).
