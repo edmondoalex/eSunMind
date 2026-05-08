@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.96
+
+- Hardening WebView: build frontend non minificata (`minify: false`, `cssMinify: false`) per ridurre rischi di parse-error su ambienti embedded/proxy.
+- Compatibilita runtime: bootstrap app con retry mount (fino a 3 tentativi) prima di mostrare errore bloccante.
+- Target build impostato a `es2018` per maggiore compatibilita con WebView legacy.
+
 ## 0.3.95
 
 - WebView hardening: `loadData()` ora gestisce errori fetch (`ERR_EMPTY_RESPONSE`) senza eccezioni non catturate.

@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Hardening ulteriore per WebView/Control4: build frontend senza minify + target `es2018` e mount app con retry per avvio robusto.
+- Bump versione addon a `0.3.96` con changelog aggiornato.
 - Fix WebView/proxy: gestito `ERR_EMPTY_RESPONSE` su `api/data` con fallback non bloccante (no unhandled promise).
 - Mappa: retry non piu rilanciato in modo aggressivo dal polling periodico; retry conservato solo su init/tab switch.
 - Bump versione addon a `0.3.95` con changelog aggiornato.

@@ -23,8 +23,21 @@ window.addEventListener('unhandledrejection', (evt) => {
   renderBootError(evt?.reason || 'unhandled_promise_rejection')
 })
 
-try {
-  createApp(App).mount('#app')
-} catch (err) {
-  renderBootError(err)
+function mountWithRetry(maxTry = 3, delayMs = 250) {
+  let attempt = 0
+  const run = () => {
+    attempt += 1
+    try {
+      createApp(App).mount('#app')
+    } catch (err) {
+      if (attempt < maxTry) {
+        setTimeout(run, delayMs)
+        return
+      }
+      renderBootError(err)
+    }
+  }
+  run()
 }
+
+mountWithRetry()
