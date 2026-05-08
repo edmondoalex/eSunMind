@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.86
+
+- UI User: aggiunto slider simulazione oraria (stesso `timeIndex` della UI Admin) con orario simulato visibile.
+- UI User: aggiunti toggle flag mappa visibili in pagina user (allineati ai controlli Admin).
+
 ## 0.3.85
 
 - UI User mappa: ora usa lo stesso renderer della UI Admin (`drawSolarOverlay`) con stessi overlay e stessa geometria (linee, cerchi, settori, assi, arco solare, vento).

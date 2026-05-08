@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: resi visibili i flag mappa e aggiunto slider simulazione con orario simulato.
+- Bump versione addon a `0.3.86` con changelog aggiornato.
 - UI User: mappa portata sullo stesso renderer della UI Admin (stesse linee/cerchi/overlay e medesimo comportamento grafico).
 - Bump versione addon a `0.3.85` con changelog aggiornato.
 - UI User: logo e-Tende aumentato 2x e fix altezza testata per evitare clipping.

@@ -49,6 +49,33 @@
           <div id="solar-map-public"></div>
         </section>
       </div>
+      <div class="up-map-controls">
+        <div class="up-time-sim">
+          <div class="time-labels">
+            <span v-for="(h, i) in hours" :key="`uph-${i}`">{{ `${String(h).padStart(2,'0')}:00` }}</span>
+          </div>
+          <input type="range" :min="0" :max="timeSteps.length - 1" step="1" v-model.number="timeIndex" @input="drawSolarOverlay" />
+          <div class="time-meta">Orario simulato: <strong>{{ selectedTimeLabel }}</strong></div>
+        </div>
+        <div class="toggles">
+          <label><input type="checkbox" v-model="showLiveLine" @change="drawSolarOverlay" /> Linea LIVE (reale)</label>
+          <label><input type="checkbox" v-model="showSimLine" @change="drawSolarOverlay" /> Linea SIMULATA</label>
+          <label><input type="checkbox" v-model="showAxisNS" @change="drawSolarOverlay" /> Asse N-S</label>
+          <label><input type="checkbox" v-model="showAxisWE" @change="drawSolarOverlay" /> Asse W-E</label>
+          <label><input type="checkbox" v-model="showSunRefs" @change="drawSolarOverlay" /> Label Alba/Tramonto</label>
+          <label><input type="checkbox" v-model="showPvAzLine" @change="drawSolarOverlay" /> Linea Azimut FV</label>
+          <label><input type="checkbox" v-model="showAnnualElevationBand" @change="drawSolarOverlay" /> Fascia elevazione annua</label>
+          <label><input type="checkbox" v-model="showTendeSectors" @change="drawSolarOverlay" /> Spicchi Cover</label>
+          <label><input type="checkbox" v-model="showWindDirectionOnMap" @change="drawSolarOverlay" /> Direzione vento</label>
+        </div>
+        <div class="pv-az-controls" v-if="showPvAzLine">
+          <label>Azimut FV:
+            <input type="range" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @input="drawSolarOverlay" />
+          </label>
+          <input class="pv-az-input" type="number" min="-180" max="180" step="1" v-model.number="pvAzimuthDeg" @change="drawSolarOverlay" />
+          <span class="pv-az-value">{{ pvAzimuthDeg }}°</span>
+        </div>
+      </div>
 
       <div class="up-bottom">
         <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}°</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}°</strong></div></div>
