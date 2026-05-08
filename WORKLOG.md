@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix accesso addon da Home Assistant: aggiunto `ingress_entry: true` a `config.yaml` per voce sidebar/pannello ingress.
+- Bump versione addon a `0.3.88` con changelog aggiornato.
 - UI User: aumentato il distacco verticale tra mappa e controlli orari/flag per migliorare leggibilita e usabilita.
 - UI User: aggiunto box dedicato ai controlli mappa (`up-map-controls`) con padding e bordo.
 - Bump versione addon a `0.3.87` con changelog aggiornato.

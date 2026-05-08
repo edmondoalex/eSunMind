@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.88
+
+- Addon: aggiunto `ingress_entry: true` in configurazione per rendere stabile l'apertura da sidebar Home Assistant (ingress).
+- Fix accesso UI da Home Assistant: allineata configurazione ingresso pannello addon.
+
 ## 0.3.87
 
 - UI User: aumentata la spaziatura tra mappa e controlli orari (simulazione/flag) per evitare elementi troppo a ridosso della mappa.
