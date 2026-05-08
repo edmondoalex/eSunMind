@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.90
+
+- Fix compatibilita manifest addon: rimosso `ingress_entry` da `config.yaml` (chiave non supportata su alcune installazioni Home Assistant).
+- Ripristinata visibilita addon nella raccolta/repository.
+
 ## 0.3.89
 
 - Bump versione correttivo: riallineata release dopo numerazione gia in uso.

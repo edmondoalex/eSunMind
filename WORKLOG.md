@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Hotfix addon store: rimosso `ingress_entry` da `config.yaml` (incompatibile su alcune versioni HA, causava scomparsa addon dalla raccolta).
+- Bump versione addon a `0.3.90` con changelog aggiornato.
 - Bump versione addon a `0.3.89` per riallineamento numerazione release (fix ingress gia incluso).
 - Fix accesso addon da Home Assistant: aggiunto `ingress_entry: true` a `config.yaml` per voce sidebar/pannello ingress.
 - Bump versione addon a `0.3.88` con changelog aggiornato.
