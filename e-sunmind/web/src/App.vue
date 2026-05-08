@@ -2,7 +2,7 @@
   <div class="wrap">
     <transition name="splash-fade">
       <div v-if="showSplash" class="splash-screen">
-        <img src="/logo.png" alt="e-SunMind splash logo" class="splash-logo" />
+        <img :src="tab==='user_public' ? logoEtende : '/logo.png'" alt="Splash logo" class="splash-logo" />
       </div>
     </transition>
 
@@ -3729,10 +3729,10 @@ onMounted(() => {
   } catch (_) {
     // no-op
   }
-  // Failsafe: never keep splash forever on runtime/init errors.
+  // Failsafe splash: 3s on UI User, 1.2s elsewhere.
   setTimeout(() => {
     showSplash.value = false
-  }, 1200)
+  }, tab.value === 'user_public' ? 3000 : 1200)
   try {
     const now = new Date()
     const total = (now.getHours() * 60) + now.getMinutes()
@@ -4001,9 +4001,9 @@ input[type='range']{width:100%}
   text-shadow:0 1px 2px rgba(0,0,0,.8);
 }
 .user-public{padding:10px;background:radial-gradient(circle at top,#0d2035 0%,#081422 42%,#060d17 100%);min-height:calc(100dvh - 56px)}
-.user-public-head{display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88));min-height:74px}
+.user-public-head{display:flex;justify-content:center;align-items:center;border:1px solid rgba(255,210,80,.25);border-radius:14px;padding:12px 16px;background:linear-gradient(90deg,rgba(3,10,18,.9),rgba(6,18,31,.88));min-height:190px}
 .up-brand{display:flex;align-items:center;justify-content:center;width:100%}
-.up-logo{width:520px;max-width:92vw;height:84px;object-fit:contain;display:block}
+.up-logo{width:1040px;max-width:96vw;height:168px;object-fit:contain;display:block}
 .up-brand-text{font-size:42px;font-weight:700;color:#e8f2ff;line-height:.95}
 .up-brand-text span{color:#ffc840}
 .user-public-main{display:grid;grid-template-columns:270px 1fr;gap:10px;margin-top:10px}

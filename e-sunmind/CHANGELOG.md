@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.84
+
+- UI User: logo e-Tende portato al doppio delle dimensioni.
+- UI User: splash iniziale con logo e-Tende per 3 secondi su apertura pagina user (`/?view=user`).
+- UI User: alzata l'altezza header per evitare taglio logo.
+
 ## 0.3.83
 
 - UI User: logo e-Tende ingrandito in testata.

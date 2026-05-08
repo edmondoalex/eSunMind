@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- UI User: logo e-Tende aumentato 2x e fix altezza testata per evitare clipping.
+- UI User: splash d'ingresso 3s con logo e-Tende quando si apre da link dedicato.
+- Bump versione addon a `0.3.84` con changelog aggiornato.
 - UI User: logo e-Tende ulteriormente ingrandito in header.
 - Bump versione addon a `0.3.83` con changelog aggiornato.
 - UI User: logo e-Tende centrato in testata, rimossi ora/data, fix proporzioni header per eliminare tagli.
