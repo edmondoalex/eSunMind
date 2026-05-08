@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.99
+
+- Rimossa la vista `user-lite`: ripristinata `UI User` standard con mappa come configurazione principale.
+- Test stabilita WebView: disattivato splash su `view=user` (delay 0) per eliminare possibili race iniziali overlay/render.
+
 ## 0.3.98
 
 - Aggiunta nuova vista `UI User Lite` senza mappa/Leaflet per ambienti WebView instabili.

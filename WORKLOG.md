@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Rollback `user-lite`: ripristinata UI User con mappa come default.
+- Test ipotesi splash: disattivato delay splash su `view=user` per evitare race WebView in bootstrap.
+- Bump versione addon a `0.3.99` con changelog aggiornato.
 - Aggiunta `UI User Lite` (`?view=user-lite`) senza mappa/Leaflet per bypass definitivo crash WebView su parsing/bootstrap mappa.
 - Bump versione addon a `0.3.98` con changelog aggiornato.
 - Diagnostica anti-proxy/truncation: aggiunti endpoint hash statici (`/api/diag/static_hashes`, `/api/diag/static_hash`) per confronto upstream vs proxy.

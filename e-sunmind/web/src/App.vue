@@ -2,11 +2,11 @@
   <div class="wrap">
     <transition name="splash-fade">
       <div v-if="showSplash" class="splash-screen">
-        <img :src="(tab==='user_public' || tab==='user_public_lite') ? logoEtende : logoMain" alt="Splash logo" class="splash-logo" />
+        <img :src="tab==='user_public' ? logoEtende : logoMain" alt="Splash logo" class="splash-logo" />
       </div>
     </transition>
 
-    <header class="topbar" v-if="tab!=='user_public' && tab!=='user_public_lite'">
+    <header class="topbar" v-if="tab!=='user_public'">
       <div class="brand">
         <img :src="logoMain" alt="e-SunMind logo" class="brand-logo" />
         <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
@@ -86,40 +86,6 @@
     </div>
 
 
-
-    <div v-show="tab==='user_public_lite'" class="user-public">
-      <div class="user-public-head">
-        <div class="up-brand">
-          <img :src="logoEtende" alt="e-Tende Intelligenti" class="up-logo" />
-        </div>
-      </div>
-      <div class="up-bottom">
-        <div class="up-card"><h4>Sole attuale</h4><div>Azimut: <strong>{{ fmt(data?.sun_position?.azimuth_compass_deg) }}?</strong></div><div>Elevazione: <strong>{{ fmt(data?.sun_position?.altitude_deg) }}?</strong></div></div>
-        <div class="up-card"><h4>Weather Guard</h4><div>Stato: <strong>{{ weatherGuardOk ? 'ATTIVO' : 'OFF' }}</strong></div><div>Vento: <strong>{{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }}</strong></div><div>Pioggia: <strong>{{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }}</strong></div></div>
-        <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}?C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
-        <div class="up-card"><h4>Fotovoltaico</h4><div>Reale: <strong>{{ fmt0(pvMeasuredW) }} W</strong></div><div>Atteso: <strong>{{ fmt0(pvForecastNowW) }} W</strong></div><div>Rapporto: <strong>{{ fmt2(pvLiveRatio) }}</strong></div></div>
-      </div>
-      <div class="panel source-panel" style="margin-top:10px">
-        <div class="source-card source-card--web">
-          <h4>Meteo Web</h4>
-          <div class="metric-grid">
-            <div class="metric-row" v-for="m in weatherWebMetrics" :key="`wweb-lite-${m.key}`">
-              <span class="metric-key">{{ m.label }}</span>
-              <span class="metric-val">{{ m.value }}</span>
-            </div>
-          </div>
-        </div>
-        <div class="source-card source-card--station">
-          <h4>Reali Stazione Meteo</h4>
-          <div class="metric-grid">
-            <div class="metric-row" v-for="m in weatherStationMetrics" :key="`wsta-lite-${m.key}`">
-              <span class="metric-key">{{ m.label }}</span>
-              <span class="metric-val">{{ m.value }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
     <div v-show="tab==='user'">
       <div class="view-tools">
@@ -3804,15 +3770,14 @@ onMounted(() => {
   try {
     const qp = new URLSearchParams(window.location.search || '')
     const view = String(qp.get('view') || '').trim().toLowerCase()
-    if (view === 'user-lite' || view === 'ui-user-lite' || view === 'user_public_lite') tab.value = 'user_public_lite'
-    else if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
+    if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
   } catch (_) {
     // no-op
   }
-  // Failsafe splash: 3s on UI User, 1.2s elsewhere.
+  // Failsafe splash: disabled on UI User for WebView stability.
   setTimeout(() => {
     showSplash.value = false
-  }, (tab.value === 'user_public' || tab.value === 'user_public_lite') ? 3000 : 1200)
+  }, tab.value === 'user_public' ? 0 : 1200)
   try {
     const now = new Date()
     const total = (now.getHours() * 60) + now.getMinutes()
