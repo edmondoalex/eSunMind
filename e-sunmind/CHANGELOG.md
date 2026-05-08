@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.94
+
+- Fix bootstrap mappa (WebView/Control4/Android): inizializzazione resa lazy e solo su viste `user`/`user_public`.
+- Aggiunte guardie robuste su container DOM mappa con retry controllato (max 20 tentativi, 100ms) senza crash globale UI.
+- Aggiunta protezione idempotente (`dataset.mapInit`) contro doppia inizializzazione e race su tab switch.
+- Migliorata gestione tab switch: `invalidateSize()` e redraw solo quando mappa realmente pronta.
+- Fallback non bloccante: in assenza container la UI continua ad avviarsi e logga warning.
+
 ## 0.3.93
 
 - Fix encoding UI: corretti caratteri corrotti/mojibake in tutte le schermate (`Â°`, `Ã`, frecce, simboli unita).

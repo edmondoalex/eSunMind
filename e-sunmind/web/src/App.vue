@@ -1198,6 +1198,10 @@ let tendeEndMarker = null
 let tendeEditorExtraLayers = []
 let userAutoRefreshTimer = 0
 const userAutoRefreshMs = 15000
+let mapInitRetryTimer = 0
+let mapInitAttempts = 0
+const MAP_INIT_MAX_RETRIES = 20
+const MAP_INIT_RETRY_MS = 100
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -2875,24 +2879,80 @@ function pickSetting(shade, key, fallback = null) {
   return fallback
 }
 
-function ensurePublicMap() {
-  if (lat.value == null || lon.value == null) return
-  const targetId = 'solar-map-public'
+function activeMainMapId() {
+  if (tab.value === 'user_public') return 'solar-map-public'
+  if (tab.value === 'user') return 'solar-map'
+  return null
+}
+
+function findMapContainerById(id) {
+  return document.getElementById(id) || document.querySelector(`[data-map-container="${id}"]`)
+}
+
+function clearMainMapRetry() {
+  if (!mapInitRetryTimer) return
+  clearTimeout(mapInitRetryTimer)
+  mapInitRetryTimer = 0
+}
+
+function scheduleMainMapRetry(reason = 'container_missing') {
+  if (mapInitAttempts >= MAP_INIT_MAX_RETRIES) {
+    console.warn(`[e-SunMind] map init skipped after ${MAP_INIT_MAX_RETRIES} retries (${reason})`)
+    return
+  }
+  clearMainMapRetry()
+  mapInitAttempts += 1
+  mapInitRetryTimer = setTimeout(async () => {
+    mapInitRetryTimer = 0
+    await ensureMainMapReady('retry')
+  }, MAP_INIT_RETRY_MS)
+}
+
+async function ensureMainMapReady(source = 'unknown') {
+  if (!Number.isFinite(lat.value) || !Number.isFinite(lon.value)) return false
+  const targetId = activeMainMapId()
+  if (!targetId) return false
+  await nextTick()
+  const el = findMapContainerById(targetId)
+  if (!el) {
+    scheduleMainMapRetry(`no_dom_${targetId}_${source}`)
+    return false
+  }
   const currentId = map && map.getContainer ? (map.getContainer()?.id || '') : ''
   if (map && currentId !== targetId) {
-    try { map.remove() } catch (_) {}
+    try {
+      const oldEl = map.getContainer?.()
+      if (oldEl?.dataset) oldEl.dataset.mapInit = '0'
+      map.remove()
+    } catch (_) {}
     map = null
   }
   if (!map) {
-    map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles © Esri',
-      maxZoom: 20,
-    }).addTo(map)
-  } else {
-    map.setView([lat.value, lon.value], cfg.value.mapZoom)
+    if (el.dataset.mapInit === '1') {
+      scheduleMainMapRetry(`init_in_progress_${targetId}_${source}`)
+      return false
+    }
+    el.dataset.mapInit = '1'
+    try {
+      map = L.map(el, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles (C) Esri',
+        maxZoom: 20,
+      }).addTo(map)
+    } catch (e) {
+      el.dataset.mapInit = '0'
+      map = null
+      console.warn('[e-SunMind] map bootstrap deferred:', e?.message || e)
+      scheduleMainMapRetry(`leaflet_init_failed_${targetId}_${source}`)
+      return false
+    }
   }
+  clearMainMapRetry()
+  mapInitAttempts = 0
+  try { map.invalidateSize() } catch (_) {}
+  map.setView([lat.value, lon.value], cfg.value.mapZoom)
   drawSolarOverlay()
+  return true
 }
 
 function shadeKey(shade) {
@@ -3293,24 +3353,8 @@ async function loadData() {
   lat.value = Number(j?.coordinates?.latitude)
   lon.value = Number(j?.coordinates?.longitude)
 
-    if (Number.isFinite(lat.value) && Number.isFinite(lon.value)) {
-    await nextTick()
-    const targetId = tab.value === 'user_public' ? 'solar-map-public' : 'solar-map'
-    const currentId = map && map.getContainer ? (map.getContainer()?.id || '') : ''
-    if (map && currentId !== targetId) {
-      try { map.remove() } catch (_) {}
-      map = null
-    }
-    if (!map) {
-      map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles © Esri',
-        maxZoom: 20,
-      }).addTo(map)
-    } else {
-      map.setView([lat.value, lon.value], cfg.value.mapZoom)
-    }
-    drawSolarOverlay()
+    if (Number.isFinite(lat.value) && Number.isFinite(lon.value) && (tab.value === 'user' || tab.value === 'user_public')) {
+    await ensureMainMapReady('loadData')
   }
   // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
@@ -3718,6 +3762,7 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
   if (tendeMapObj) { tendeMapObj.remove(); tendeMapObj = null }
+  clearMainMapRetry()
   if (windLayerRetryTimer) {
     clearTimeout(windLayerRetryTimer)
     windLayerRetryTimer = 0
@@ -3731,10 +3776,11 @@ onBeforeUnmount(() => {
 })
 
 watch(tab, async (val) => {
-  if (val === 'user' && map) {
-    await nextTick()
+  if (val === 'user') {
+    await ensureMainMapReady('tab_user')
+    if (!map) return
     initBlockToggles()
-    map.invalidateSize()
+    try { map.invalidateSize() } catch (_) {}
     drawSolarOverlay()
     resizeWeatherCanvas()
     if (weatherAnimEnabled.value) startWeatherAnimation()
@@ -3748,10 +3794,12 @@ watch(tab, async (val) => {
       else drawTendeEditor()
     }
   } else if (val === 'user_public') {
-    await nextTick()
-    ensurePublicMap()
-    if (map) map.invalidateSize()
+    await ensureMainMapReady('tab_user_public')
+    if (map) {
+      try { map.invalidateSize() } catch (_) {}
+    }
   } else {
+    clearMainMapRetry()
     stopWeatherAnimation()
   }
 })
@@ -4390,6 +4438,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
 
 
 

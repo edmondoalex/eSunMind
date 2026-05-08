@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix robusto bootstrap mappa su WebView/Ingress: init lazy su tab attiva, guardia container DOM, idempotenza `dataset.mapInit`, retry limitato e fallback senza crash.
+- Bump versione addon a `0.3.94` con changelog aggiornato.
 - Fix encoding globale UI/backend: rimossi simboli corrotti (mojibake) da mappe, tooltip, labels e unita (`Â°`, `Ã`, `Âµg/mÂ³`).
 - Bump versione addon a `0.3.93` con changelog aggiornato.
 - Hotfix logo Ingress: logo UI Admin spostato su asset bundlato `src/assets/logo-main.png` per rimuovere 404 su `/logo.png`.
