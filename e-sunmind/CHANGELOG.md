@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.98
+
+- Aggiunta nuova vista `UI User Lite` senza mappa/Leaflet per ambienti WebView instabili.
+- Accesso via query string: `?view=user-lite` (alias: `ui-user-lite`, `user_public_lite`).
+- Vista lite mantiene KPI e dati meteo/stazione principali ma evita completamente bootstrap mappa.
+
 ## 0.3.97
 
 - Aggiunti endpoint diagnostici static asset per validazione proxy/WebView:
