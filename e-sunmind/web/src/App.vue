@@ -2,13 +2,13 @@
   <div class="wrap">
     <transition name="splash-fade">
       <div v-if="showSplash" class="splash-screen">
-        <img :src="tab==='user_public' ? logoEtende : '/logo.png'" alt="Splash logo" class="splash-logo" />
+        <img :src="tab==='user_public' ? logoEtende : logoMain" alt="Splash logo" class="splash-logo" />
       </div>
     </transition>
 
     <header class="topbar" v-if="tab!=='user_public'">
       <div class="brand">
-        <img src="/logo.png" alt="e-SunMind logo" class="brand-logo" />
+        <img :src="logoMain" alt="e-SunMind logo" class="brand-logo" />
         <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
       </div>
       <div class="actions">
@@ -1120,6 +1120,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import L from 'leaflet'
 import SunCalc from 'suncalc'
 import logoEtende from './assets/logo-etende.png'
+import logoMain from './assets/logo-main.png'
 
 // Guard against transient null map targets during UI race conditions.
 const _leafletLayerAddTo = L.Layer.prototype.addTo
@@ -4389,6 +4390,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
+
 
 
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.92
+
+- Fix logo UI Admin in Ingress: il logo principale ora e bundlato da `src/assets/logo-main.png` (niente richiesta `GET /logo.png` su root Home Assistant).
+- Eliminato errore browser `logo.png 404` in apertura da Ingress.
+
 ## 0.3.91
 
 - Fix Ingress Home Assistant: build frontend con path relativi (`base: './'`) per evitare richieste errate a `/assets/...` su root HA.

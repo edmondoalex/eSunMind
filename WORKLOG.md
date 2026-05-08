@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Hotfix logo Ingress: logo UI Admin spostato su asset bundlato `src/assets/logo-main.png` per rimuovere 404 su `/logo.png`.
+- Bump versione addon a `0.3.92` con changelog aggiornato.
 - Hotfix Ingress web UI: risolti path assoluti frontend (`/assets` e `/api`) che sotto HA Ingress causavano 404/MIME error e pagina non caricata.
 - Vite configurato con `base: './'` e chiamate API rese relative (`api/...`) per compatibilita con prefisso ingress.
 - Bump versione addon a `0.3.91` con changelog aggiornato.
