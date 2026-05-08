@@ -1,5 +1,11 @@
 # WORKLOG
 
+## 2026-05-08
+- Mitigazione errori proxy `502 Bad Gateway` su `api/data` in UI: introdotto lock `loadDataInFlight` per evitare richieste concorrenti.
+- Aggiunto backoff esponenziale automatico su errori fetch/http (2s -> max 60s) per non saturare proxy/WebView in condizioni degradate.
+- Mantenuto comportamento non bloccante: UI resta avviata anche con errori temporanei di rete/API.
+- Bump versione addon a `0.3.100` con changelog aggiornato.
+
 ## 2026-05-07
 - Rollback `user-lite`: ripristinata UI User con mappa come default.
 - Test ipotesi splash: disattivato delay splash su `view=user` per evitare race WebView in bootstrap.

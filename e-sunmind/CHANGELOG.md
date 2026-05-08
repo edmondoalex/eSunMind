@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.100
+
+- Hardening polling UI User/Admin su proxy instabile: `loadData()` ora evita richieste concorrenti a `api/data`.
+- Aggiunto backoff esponenziale (fino a 60s) dopo errori HTTP/fetch su `api/data` per ridurre 502 ripetuti e stabilizzare la UI.
+- Nessun crash UI: in caso di errore dati, la pagina resta attiva e riprova automaticamente con ritmo degradato.
+
 ## 0.3.99
 
 - Rimossa la vista `user-lite`: ripristinata `UI User` standard con mappa come configurazione principale.

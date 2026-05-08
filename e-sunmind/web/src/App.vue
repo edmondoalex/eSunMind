@@ -1200,6 +1200,9 @@ let tendeEndMarker = null
 let tendeEditorExtraLayers = []
 let userAutoRefreshTimer = 0
 const userAutoRefreshMs = 15000
+let loadDataInFlight = false
+let loadDataFailStreak = 0
+let loadDataBackoffUntilTs = 0
 let mapInitRetryTimer = 0
 let mapInitAttempts = 0
 const MAP_INIT_MAX_RETRIES = 20
@@ -3371,126 +3374,141 @@ async function saveSelectedShade() {
 }
 
 async function loadData() {
+  const nowTs = Date.now()
+  if (loadDataInFlight) return
+  if (nowTs < loadDataBackoffUntilTs) return
+  loadDataInFlight = true
   let j = null
   try {
     const r = await fetch('api/data', { cache: 'no-store' })
     if (!r.ok) throw new Error(`api_data_http_${r.status}`)
     j = await r.json()
+    loadDataFailStreak = 0
+    loadDataBackoffUntilTs = 0
   } catch (e) {
     console.warn('[e-SunMind] loadData failed:', e?.message || e)
+    loadDataFailStreak = Math.min(loadDataFailStreak + 1, 6)
+    // Exponential backoff to avoid hammering proxy/gateway on transient 5xx.
+    const backoffMs = Math.min(60000, 2000 * (2 ** (loadDataFailStreak - 1)))
+    loadDataBackoffUntilTs = Date.now() + backoffMs
+    loadDataInFlight = false
     return
   }
-  data.value = j
-  const incomingShades = j?.tende_map?.shades
-  if (Array.isArray(incomingShades) && incomingShades.filter((s) => s).length) {
-    lastValidTendeShades.value = mergeTendeShades(lastValidTendeShades.value, incomingShades.filter((s) => s))
-  }
-  const incomingCoverStates = j?.tende_map?.cover_states
-  if (incomingCoverStates && Object.keys(incomingCoverStates).length) {
-    lastValidTendeCoverStates.value = incomingCoverStates
-  }
-  lat.value = Number(j?.coordinates?.latitude)
-  lon.value = Number(j?.coordinates?.longitude)
-
-  if (Number.isFinite(lat.value) && Number.isFinite(lon.value) && (tab.value === 'user' || tab.value === 'user_public')) {
-    // Polling refresh should not start aggressive retry loops on missing containers.
-    await ensureMainMapReady('loadData', { retryOnMissing: false })
-  }
-  // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
-    const ro = await fetch('api/options', { cache: 'no-store' })
-    const oj = await ro.json()
-    const fso = oj?.forecast_solar || {}
-    fsForm.value = {
-      enabled: Boolean(fso.enabled),
-      api_key: String(fso.api_key || ''),
-      declination: Number(fso.declination ?? 30),
-      azimuth: Number(fso.azimuth ?? 0),
-      kwp: Number(fso.kwp ?? 6.0),
+    data.value = j
+    const incomingShades = j?.tende_map?.shades
+    if (Array.isArray(incomingShades) && incomingShades.filter((s) => s).length) {
+      lastValidTendeShades.value = mergeTendeShades(lastValidTendeShades.value, incomingShades.filter((s) => s))
     }
-    baseForm.value = {
-      latitude: Number(oj?.latitude ?? 44.6973),
-      longitude: Number(oj?.longitude ?? 7.8683),
-      timezone: String(oj?.timezone || 'Europe/Rome'),
-      coordinates_source_mode: String(oj?.coordinates_source_mode || 'e_tende'),
-      interval_minutes: Number(oj?.interval_minutes ?? 15),
-      location_query: String(oj?.location_query || ''),
-      pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
-      external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
-      external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
+    const incomingCoverStates = j?.tende_map?.cover_states
+    if (incomingCoverStates && Object.keys(incomingCoverStates).length) {
+      lastValidTendeCoverStates.value = incomingCoverStates
     }
-    const wo = oj?.weather || {}
-    weatherForm.value = {
-      enabled: Boolean(wo.enabled ?? true),
-      provider: String(wo.provider || 'met'),
+    lat.value = Number(j?.coordinates?.latitude)
+    lon.value = Number(j?.coordinates?.longitude)
+
+    if (Number.isFinite(lat.value) && Number.isFinite(lon.value) && (tab.value === 'user' || tab.value === 'user_public')) {
+      // Polling refresh should not start aggressive retry loops on missing containers.
+      await ensureMainMapReady('loadData', { retryOnMissing: false })
     }
-    const wso = oj?.weather_station || {}
-    weatherStationForm.value = {
-      enabled: Boolean(wso.enabled),
-      stale_seconds: Number(wso.stale_seconds ?? 180),
-      device_id: String(wso.device_id || ''),
-      wind_speed_entity_id: String(wso.wind_speed_entity_id || ''),
-      wind_gust_entity_id: String(wso.wind_gust_entity_id || ''),
-      wind_direction_entity_id: String(wso.wind_direction_entity_id || ''),
-      rain_rate_entity_id: String(wso.rain_rate_entity_id || ''),
-      rain_1h_entity_id: String(wso.rain_1h_entity_id || ''),
-      outdoor_temp_entity_id: String(wso.outdoor_temp_entity_id || ''),
-      outdoor_humidity_entity_id: String(wso.outdoor_humidity_entity_id || ''),
-      pressure_entity_id: String(wso.pressure_entity_id || ''),
-      uv_index_entity_id: String(wso.uv_index_entity_id || ''),
-      dewpoint_entity_id: String(wso.dewpoint_entity_id || ''),
-      feels_like_entity_id: String(wso.feels_like_entity_id || ''),
-      solar_lux_entity_id: String(wso.solar_lux_entity_id || ''),
-      solar_radiation_entity_id: String(wso.solar_radiation_entity_id || ''),
-      vpd_entity_id: String(wso.vpd_entity_id || ''),
+    // Keep forms in sync with current persisted options, independent from forecast availability.
+    try {
+      const ro = await fetch('api/options', { cache: 'no-store' })
+      const oj = await ro.json()
+      const fso = oj?.forecast_solar || {}
+      fsForm.value = {
+        enabled: Boolean(fso.enabled),
+        api_key: String(fso.api_key || ''),
+        declination: Number(fso.declination ?? 30),
+        azimuth: Number(fso.azimuth ?? 0),
+        kwp: Number(fso.kwp ?? 6.0),
+      }
+      baseForm.value = {
+        latitude: Number(oj?.latitude ?? 44.6973),
+        longitude: Number(oj?.longitude ?? 7.8683),
+        timezone: String(oj?.timezone || 'Europe/Rome'),
+        coordinates_source_mode: String(oj?.coordinates_source_mode || 'e_tende'),
+        interval_minutes: Number(oj?.interval_minutes ?? 15),
+        location_query: String(oj?.location_query || ''),
+        pv_actual_entity_id: String(oj?.pv_actual_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+        external_temp_entity_id: String(oj?.external_temp_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_temperature'),
+        external_humidity_entity_id: String(oj?.external_humidity_entity_id || 'sensor.temperature_and_humidity_sensor_lite_eterna_terrazzo_humidity'),
+      }
+      const wo = oj?.weather || {}
+      weatherForm.value = {
+        enabled: Boolean(wo.enabled ?? true),
+        provider: String(wo.provider || 'met'),
+      }
+      const wso = oj?.weather_station || {}
+      weatherStationForm.value = {
+        enabled: Boolean(wso.enabled),
+        stale_seconds: Number(wso.stale_seconds ?? 180),
+        device_id: String(wso.device_id || ''),
+        wind_speed_entity_id: String(wso.wind_speed_entity_id || ''),
+        wind_gust_entity_id: String(wso.wind_gust_entity_id || ''),
+        wind_direction_entity_id: String(wso.wind_direction_entity_id || ''),
+        rain_rate_entity_id: String(wso.rain_rate_entity_id || ''),
+        rain_1h_entity_id: String(wso.rain_1h_entity_id || ''),
+        outdoor_temp_entity_id: String(wso.outdoor_temp_entity_id || ''),
+        outdoor_humidity_entity_id: String(wso.outdoor_humidity_entity_id || ''),
+        pressure_entity_id: String(wso.pressure_entity_id || ''),
+        uv_index_entity_id: String(wso.uv_index_entity_id || ''),
+        dewpoint_entity_id: String(wso.dewpoint_entity_id || ''),
+        feels_like_entity_id: String(wso.feels_like_entity_id || ''),
+        solar_lux_entity_id: String(wso.solar_lux_entity_id || ''),
+        solar_radiation_entity_id: String(wso.solar_radiation_entity_id || ''),
+        vpd_entity_id: String(wso.vpd_entity_id || ''),
+      }
+      if (String(weatherStationForm.value.device_id || '').trim()) {
+        await autofillWeatherStationFromDevice()
+      }
+      const wgo = oj?.weather_guard || {}
+      weatherGuardForm.value = {
+        enabled: Boolean(wgo.enabled ?? true),
+        wind_alarm_ms: Number(wgo.wind_alarm_ms ?? 12.0),
+        rain_alarm_mm_h: Number(wgo.rain_alarm_mm_h ?? 1.5),
+        facade_rain_min_wind_ms: Number(wgo.facade_rain_min_wind_ms ?? 6.0),
+        facade_rain_min_mm_h: Number(wgo.facade_rain_min_mm_h ?? 0.8),
+        facade_azimuth_deg: Number(wgo.facade_azimuth_deg ?? -1.0),
+        facade_half_fov_deg: Number(wgo.facade_half_fov_deg ?? 60.0),
+        stale_seconds: Number(wgo.stale_seconds ?? 180),
+      }
+      const aqo = oj?.air_quality || {}
+      airQualityForm.value = {
+        enabled: Boolean(aqo.enabled ?? true),
+        provider: String(aqo.provider || 'open_meteo'),
+      }
+      const tmo = oj?.tende_map || {}
+      tendeMapForm.value = {
+        enabled: Boolean(tmo.enabled ?? true),
+        mqtt_host: String(tmo.mqtt_host || '192.168.3.13'),
+        mqtt_port: Number(tmo.mqtt_port ?? 1883),
+        mqtt_username: String(tmo.mqtt_username || ''),
+        mqtt_password: String(tmo.mqtt_password || ''),
+        topic_state: String(tmo.topic_state || 'e-tendeintelligenti/map/shades'),
+        topic_availability: String(tmo.topic_availability || 'e-tendeintelligenti/availability'),
+        stale_seconds: Number(tmo.stale_seconds ?? 180),
+      }
+      const ov = oj?.overlay || {}
+      cfg.value = {
+        pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
+        sectorRadiusM: Number(ov?.sectorRadiusM ?? cfg.value.sectorRadiusM ?? 110),
+        sunRadiusM: Number(ov?.sunRadiusM ?? cfg.value.sunRadiusM ?? 95),
+        mapZoom: Number(ov?.mapZoom ?? cfg.value.mapZoom ?? 18),
+      }
+      if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
+      if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
+    } catch (_) {
+      // no-op
     }
-    if (String(weatherStationForm.value.device_id || '').trim()) {
-      await autofillWeatherStationFromDevice()
+    if (!selectedShadeId.value && tendeMapShades.value.length) {
+      selectShade(shadeKey(tendeMapShades.value[0]))
+    } else if (selectedShadeId.value) {
+      const ex = tendeMapShades.value.find((s) => shadeKey(s) === selectedShadeId.value || String(s.id || '').trim() === String(selectedShadeId.value || '').trim())
+      if (ex) selectShade(shadeKey(ex))
     }
-    const wgo = oj?.weather_guard || {}
-    weatherGuardForm.value = {
-      enabled: Boolean(wgo.enabled ?? true),
-      wind_alarm_ms: Number(wgo.wind_alarm_ms ?? 12.0),
-      rain_alarm_mm_h: Number(wgo.rain_alarm_mm_h ?? 1.5),
-      facade_rain_min_wind_ms: Number(wgo.facade_rain_min_wind_ms ?? 6.0),
-      facade_rain_min_mm_h: Number(wgo.facade_rain_min_mm_h ?? 0.8),
-      facade_azimuth_deg: Number(wgo.facade_azimuth_deg ?? -1.0),
-      facade_half_fov_deg: Number(wgo.facade_half_fov_deg ?? 60.0),
-      stale_seconds: Number(wgo.stale_seconds ?? 180),
-    }
-    const aqo = oj?.air_quality || {}
-    airQualityForm.value = {
-      enabled: Boolean(aqo.enabled ?? true),
-      provider: String(aqo.provider || 'open_meteo'),
-    }
-    const tmo = oj?.tende_map || {}
-    tendeMapForm.value = {
-      enabled: Boolean(tmo.enabled ?? true),
-      mqtt_host: String(tmo.mqtt_host || '192.168.3.13'),
-      mqtt_port: Number(tmo.mqtt_port ?? 1883),
-      mqtt_username: String(tmo.mqtt_username || ''),
-      mqtt_password: String(tmo.mqtt_password || ''),
-      topic_state: String(tmo.topic_state || 'e-tendeintelligenti/map/shades'),
-      topic_availability: String(tmo.topic_availability || 'e-tendeintelligenti/availability'),
-      stale_seconds: Number(tmo.stale_seconds ?? 180),
-    }
-    const ov = oj?.overlay || {}
-    cfg.value = {
-      pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
-      sectorRadiusM: Number(ov?.sectorRadiusM ?? cfg.value.sectorRadiusM ?? 110),
-      sunRadiusM: Number(ov?.sunRadiusM ?? cfg.value.sunRadiusM ?? 95),
-      mapZoom: Number(ov?.mapZoom ?? cfg.value.mapZoom ?? 18),
-    }
-    if (Number.isFinite(fsForm.value.azimuth)) pvAzimuthDeg.value = fsForm.value.azimuth
-    if (!selectedForecastDate.value && fvDayRows.value.length) selectedForecastDate.value = fvDayRows.value[0].date
-  } catch (_) {
-    // no-op
-  }
-  if (!selectedShadeId.value && tendeMapShades.value.length) {
-    selectShade(shadeKey(tendeMapShades.value[0]))
-  } else if (selectedShadeId.value) {
-    const ex = tendeMapShades.value.find((s) => shadeKey(s) === selectedShadeId.value || String(s.id || '').trim() === String(selectedShadeId.value || '').trim())
-    if (ex) selectShade(shadeKey(ex))
+  } finally {
+    loadDataInFlight = false
   }
 }
 

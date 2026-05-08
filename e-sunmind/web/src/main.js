@@ -3,6 +3,10 @@ import App from './App.vue'
 import '@mdi/font/css/materialdesignicons.min.css'
 import 'leaflet/dist/leaflet.css'
 
+let appMounted = false
+const BOOT_GUARD_MS = 8000
+let bootGuardTimer = 0
+
 function renderBootError(err) {
   const root = document.getElementById('app')
   if (!root) return
@@ -16,12 +20,38 @@ function renderBootError(err) {
   `
 }
 
-window.addEventListener('error', (evt) => {
-  if (evt?.error) renderBootError(evt.error)
-})
-window.addEventListener('unhandledrejection', (evt) => {
+function isLikelySunMindError(evtOrReason) {
+  const text = String(
+    evtOrReason?.stack ||
+    evtOrReason?.message ||
+    evtOrReason?.reason?.stack ||
+    evtOrReason?.reason?.message ||
+    evtOrReason?.filename ||
+    evtOrReason ||
+    ''
+  )
+  if (!text) return false
+  return (
+    text.includes('/ext/e-SunMind/') ||
+    text.includes('/assets/index-') ||
+    text.includes('e-SunMind')
+  )
+}
+
+function onWindowError(evt) {
+  if (appMounted) return
+  if (!isLikelySunMindError(evt)) return
+  renderBootError(evt?.error || evt)
+}
+
+function onUnhandledRejection(evt) {
+  if (appMounted) return
+  if (!isLikelySunMindError(evt)) return
   renderBootError(evt?.reason || 'unhandled_promise_rejection')
-})
+}
+
+window.addEventListener('error', onWindowError)
+window.addEventListener('unhandledrejection', onUnhandledRejection)
 
 function mountWithRetry(maxTry = 3, delayMs = 250) {
   let attempt = 0
@@ -29,6 +59,13 @@ function mountWithRetry(maxTry = 3, delayMs = 250) {
     attempt += 1
     try {
       createApp(App).mount('#app')
+      appMounted = true
+      if (bootGuardTimer) {
+        clearTimeout(bootGuardTimer)
+        bootGuardTimer = 0
+      }
+      window.removeEventListener('error', onWindowError)
+      window.removeEventListener('unhandledrejection', onUnhandledRejection)
     } catch (err) {
       if (attempt < maxTry) {
         setTimeout(run, delayMs)
@@ -39,5 +76,11 @@ function mountWithRetry(maxTry = 3, delayMs = 250) {
   }
   run()
 }
+
+bootGuardTimer = setTimeout(() => {
+  appMounted = true
+  window.removeEventListener('error', onWindowError)
+  window.removeEventListener('unhandledrejection', onUnhandledRejection)
+}, BOOT_GUARD_MS)
 
 mountWithRetry()
