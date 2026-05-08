@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix WebView/proxy: gestito `ERR_EMPTY_RESPONSE` su `api/data` con fallback non bloccante (no unhandled promise).
+- Mappa: retry non piu rilanciato in modo aggressivo dal polling periodico; retry conservato solo su init/tab switch.
+- Bump versione addon a `0.3.95` con changelog aggiornato.
 - Fix robusto bootstrap mappa su WebView/Ingress: init lazy su tab attiva, guardia container DOM, idempotenza `dataset.mapInit`, retry limitato e fallback senza crash.
 - Bump versione addon a `0.3.94` con changelog aggiornato.
 - Fix encoding globale UI/backend: rimossi simboli corrotti (mojibake) da mappe, tooltip, labels e unita (`Â°`, `Ã`, `Âµg/mÂ³`).

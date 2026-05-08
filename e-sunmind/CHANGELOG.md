@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.95
+
+- WebView hardening: `loadData()` ora gestisce errori fetch (`ERR_EMPTY_RESPONSE`) senza eccezioni non catturate.
+- Ridotto rumore/retry mappa durante polling: su refresh periodico non parte piu la catena retry aggressiva se container non presente.
+- Retry mappa resta attivo su mount/cambio vista, ma con fallback non bloccante.
+
 ## 0.3.94
 
 - Fix bootstrap mappa (WebView/Control4/Android): inizializzazione resa lazy e solo su viste `user`/`user_public`.

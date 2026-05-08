@@ -46,7 +46,7 @@
         </aside>
 
         <section class="up-map-wrap">
-          <div id="solar-map-public"></div>
+          <div id="solar-map-public" data-map-container="solar-map-public"></div>
         </section>
       </div>
       <div class="up-map-controls">
@@ -120,7 +120,7 @@
 
       <div class="map-wrap">
         <div class="map-block-title">Mappa Sole/Meteo</div>
-        <div id="solar-map"></div>
+        <div id="solar-map" data-map-container="solar-map"></div>
         <div v-if="tendeMapWarning" class="tende-badge">{{ tendeMapWarning }}</div>
         <canvas
           v-show="weatherAnimEnabled"
@@ -780,7 +780,7 @@
         </div>
         <div class="tende-map-wrap card">
           <h3>Mappa taratura tenda</h3>
-          <div id="tende-map"></div>
+          <div id="tende-map" data-map-container="tende-map"></div>
           <div class="sun-window-heatmap" v-if="sunWindowHeatmap.slots.length">
             <div class="heatmap-head">
               <div>
@@ -1202,6 +1202,7 @@ let mapInitRetryTimer = 0
 let mapInitAttempts = 0
 const MAP_INIT_MAX_RETRIES = 20
 const MAP_INIT_RETRY_MS = 100
+const MAP_CONTAINER_SELECTOR = '[data-map-container]'
 
 const selectedTime = computed(() => timeSteps[timeIndex.value] ?? { h: 12, m: 0 })
 const selectedTimeLabel = computed(() => `${String(selectedTime.value.h).padStart(2, '0')}:${String(selectedTime.value.m).padStart(2, '0')}`)
@@ -2889,6 +2890,17 @@ function findMapContainerById(id) {
   return document.getElementById(id) || document.querySelector(`[data-map-container="${id}"]`)
 }
 
+async function waitForMapEl({ id = null, maxTry = MAP_INIT_MAX_RETRIES, delay = MAP_INIT_RETRY_MS } = {}) {
+  for (let i = 0; i < maxTry; i += 1) {
+    const scoped = id ? document.getElementById(id) || document.querySelector(`[data-map-container="${id}"]`) : null
+    const generic = document.getElementById('map') || document.querySelector(MAP_CONTAINER_SELECTOR)
+    const el = scoped || generic
+    if (el) return el
+    await new Promise((resolve) => setTimeout(resolve, delay))
+  }
+  return null
+}
+
 function clearMainMapRetry() {
   if (!mapInitRetryTimer) return
   clearTimeout(mapInitRetryTimer)
@@ -2908,14 +2920,16 @@ function scheduleMainMapRetry(reason = 'container_missing') {
   }, MAP_INIT_RETRY_MS)
 }
 
-async function ensureMainMapReady(source = 'unknown') {
+async function ensureMainMapReady(source = 'unknown', opts = {}) {
+  const retryOnMissing = opts.retryOnMissing !== false
   if (!Number.isFinite(lat.value) || !Number.isFinite(lon.value)) return false
   const targetId = activeMainMapId()
   if (!targetId) return false
   await nextTick()
-  const el = findMapContainerById(targetId)
+  const el = await waitForMapEl({ id: targetId })
   if (!el) {
-    scheduleMainMapRetry(`no_dom_${targetId}_${source}`)
+    console.warn(`[e-SunMind] main map container not found (${targetId}) from ${source}`)
+    if (retryOnMissing) scheduleMainMapRetry(`no_dom_${targetId}_${source}`)
     return false
   }
   const currentId = map && map.getContainer ? (map.getContainer()?.id || '') : ''
@@ -2929,7 +2943,7 @@ async function ensureMainMapReady(source = 'unknown') {
   }
   if (!map) {
     if (el.dataset.mapInit === '1') {
-      scheduleMainMapRetry(`init_in_progress_${targetId}_${source}`)
+      if (retryOnMissing) scheduleMainMapRetry(`init_in_progress_${targetId}_${source}`)
       return false
     }
     el.dataset.mapInit = '1'
@@ -2943,7 +2957,7 @@ async function ensureMainMapReady(source = 'unknown') {
       el.dataset.mapInit = '0'
       map = null
       console.warn('[e-SunMind] map bootstrap deferred:', e?.message || e)
-      scheduleMainMapRetry(`leaflet_init_failed_${targetId}_${source}`)
+      if (retryOnMissing) scheduleMainMapRetry(`leaflet_init_failed_${targetId}_${source}`)
       return false
     }
   }
@@ -3092,11 +3106,27 @@ function angleFromCenter(latlng) {
 
 function ensureTendeMap() {
   if (tendeMapObj || lat.value == null || lon.value == null) return
-  tendeMapObj = L.map('tende-map', { zoomControl: true, attributionControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles © Esri',
-    maxZoom: 20,
-  }).addTo(tendeMapObj)
+  waitForMapEl({ id: 'tende-map' }).then((el) => {
+    if (!el) {
+      console.warn('[e-SunMind] tende map container not found; skip init')
+      return
+    }
+    if (el.dataset.mapInit === '1') return
+    el.dataset.mapInit = '1'
+    try {
+      tendeMapObj = L.map(el, { zoomControl: true, attributionControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles (C) Esri',
+        maxZoom: 20,
+      }).addTo(tendeMapObj)
+    } catch (e) {
+      el.dataset.mapInit = '0'
+      tendeMapObj = null
+      console.warn('[e-SunMind] tende map init deferred:', e?.message || e)
+    }
+  }).catch((e) => {
+    console.warn('[e-SunMind] tende map wait aborted:', e?.message || e)
+  })
 }
 
 function drawTendeEditor() {
@@ -3339,8 +3369,15 @@ async function saveSelectedShade() {
 }
 
 async function loadData() {
-  const r = await fetch('api/data', { cache: 'no-store' })
-  const j = await r.json()
+  let j = null
+  try {
+    const r = await fetch('api/data', { cache: 'no-store' })
+    if (!r.ok) throw new Error(`api_data_http_${r.status}`)
+    j = await r.json()
+  } catch (e) {
+    console.warn('[e-SunMind] loadData failed:', e?.message || e)
+    return
+  }
   data.value = j
   const incomingShades = j?.tende_map?.shades
   if (Array.isArray(incomingShades) && incomingShades.filter((s) => s).length) {
@@ -3353,8 +3390,9 @@ async function loadData() {
   lat.value = Number(j?.coordinates?.latitude)
   lon.value = Number(j?.coordinates?.longitude)
 
-    if (Number.isFinite(lat.value) && Number.isFinite(lon.value) && (tab.value === 'user' || tab.value === 'user_public')) {
-    await ensureMainMapReady('loadData')
+  if (Number.isFinite(lat.value) && Number.isFinite(lon.value) && (tab.value === 'user' || tab.value === 'user_public')) {
+    // Polling refresh should not start aggressive retry loops on missing containers.
+    await ensureMainMapReady('loadData', { retryOnMissing: false })
   }
   // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
