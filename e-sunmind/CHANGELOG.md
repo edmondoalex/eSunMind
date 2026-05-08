@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.85
+
+- UI User mappa: ora usa lo stesso renderer della UI Admin (`drawSolarOverlay`) con stessi overlay e stessa geometria (linee, cerchi, settori, assi, arco solare, vento).
+- Uniformato il comportamento tra `UI Admin` e `UI User` passando sul medesimo motore grafico.
+
 ## 0.3.84
 
 - UI User: logo e-Tende portato al doppio delle dimensioni.

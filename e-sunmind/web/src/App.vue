@@ -1128,13 +1128,6 @@ const cfg = ref({
 })
 
 let map = null
-let publicMap = null
-let publicCenterMarker = null
-let publicSunLine = null
-let publicSunMarker = null
-let publicWindLine = null
-let publicWindMarker = null
-let publicOverlayLayers = []
 let centerMarker = null
 let pathLine = null
 let horizonCircle = null
@@ -2854,86 +2847,24 @@ function pickSetting(shade, key, fallback = null) {
   return fallback
 }
 
-function drawPublicUserMap() {
-  if (!publicMap || lat.value == null || lon.value == null) return
-  const center = [lat.value, lon.value]
-  const sunAz = Number(data.value?.sun_position?.azimuth_compass_deg)
-  const windAz = Number(mapWindDirDeg.value)
-  const times = data.value?.sun_times || {}
-  const sunrise = times?.sunrise ? new Date(times.sunrise) : baseDateAtHour(6)
-  const sunset = times?.sunset ? new Date(times.sunset) : baseDateAtHour(20)
-  const srPos = SunCalc.getPosition(sunrise, lat.value, lon.value)
-  const ssPos = SunCalc.getPosition(sunset, lat.value, lon.value)
-  const srAz = suncalcAzToCompassDeg(srPos.azimuth)
-  const ssAz = suncalcAzToCompassDeg(ssPos.azimuth)
-
-  for (const l of publicOverlayLayers) {
-    try { publicMap.removeLayer(l) } catch (_) {}
-  }
-  publicOverlayLayers = []
-
-  if (!publicCenterMarker) publicCenterMarker = L.circleMarker(center, { radius: 5, color: '#ffd46a', fillColor: '#ffd46a', fillOpacity: 1 }).addTo(publicMap)
-  else publicCenterMarker.setLatLng(center)
-
-  const srPt = destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM * 0.98)
-  const ssPt = destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM * 0.98)
-  const srRay = L.polyline([center, srPt], { color: '#ff8b24', weight: 3, opacity: 0.96 }).addTo(publicMap)
-  const ssRay = L.polyline([center, ssPt], { color: '#f7cf2b', weight: 3, opacity: 0.96 }).addTo(publicMap)
-  const arc = L.polyline(buildElevationCurvePoints(sunrise, sunset, 96), { color: '#f8dc7a', weight: 3, dashArray: '10,6', opacity: 0.92 }).addTo(publicMap)
-  const srLbl = L.marker(destinationPoint(lat.value, lon.value, srAz, cfg.value.sectorRadiusM + 14), {
-    icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunrise">Alba</span>', iconSize: [56, 20], iconAnchor: [28, 10] }),
-    interactive: false,
-  }).addTo(publicMap)
-  const ssLbl = L.marker(destinationPoint(lat.value, lon.value, ssAz, cfg.value.sectorRadiusM + 14), {
-    icon: L.divIcon({ className: 'sun-ref-label-wrap', html: '<span class="sun-ref-label sunset">Tramonto</span>', iconSize: [82, 20], iconAnchor: [41, 10] }),
-    interactive: false,
-  }).addTo(publicMap)
-  publicOverlayLayers.push(srRay, ssRay, arc, srLbl, ssLbl)
-
-  tendeMapShades.value.slice(0, 4).forEach((shade, idx) => {
-    const a0 = Number(shade.azimuth_start_deg)
-    const a1 = Number(shade.azimuth_end_deg)
-    if (!Number.isFinite(a0) || !Number.isFinite(a1)) return
-    const color = String(shade.color || colorFromIndex(idx))
-    const poly = L.polygon(buildSectorPolygonPoints(a0, a1, cfg.value.sectorRadiusM), {
-      color,
-      weight: 2,
-      opacity: 0.9,
-      fillColor: color,
-      fillOpacity: 0.22,
-    }).addTo(publicMap)
-    publicOverlayLayers.push(poly)
-  })
-
-  const sunPt = Number.isFinite(sunAz) ? destinationPoint(lat.value, lon.value, sunAz, cfg.value.sectorRadiusM) : null
-  if (sunPt) {
-    if (publicSunLine) publicSunLine.remove()
-    if (publicSunMarker) publicSunMarker.remove()
-    publicSunLine = L.polyline([center, sunPt], { color: '#f7b500', weight: 3, opacity: 0.95 }).addTo(publicMap)
-    publicSunMarker = L.circleMarker(sunPt, { radius: 5, color: '#f7b500', fillColor: '#f7b500', fillOpacity: 1 }).addTo(publicMap)
-  }
-
-  const windPt = Number.isFinite(windAz) ? destinationPoint(lat.value, lon.value, windAz, cfg.value.sectorRadiusM * 0.9) : null
-  if (windPt) {
-    if (publicWindLine) publicWindLine.remove()
-    if (publicWindMarker) publicWindMarker.remove()
-    publicWindLine = L.polyline([center, windPt], { color: '#3ec9ff', weight: 3, dashArray: '8 6', opacity: 0.95 }).addTo(publicMap)
-    publicWindMarker = L.circleMarker(windPt, { radius: 5, color: '#3ec9ff', fillColor: '#3ec9ff', fillOpacity: 1 }).addTo(publicMap)
-  }
-}
-
 function ensurePublicMap() {
   if (lat.value == null || lon.value == null) return
-  if (!publicMap) {
-    publicMap = L.map('solar-map-public', { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+  const targetId = 'solar-map-public'
+  const currentId = map && map.getContainer ? (map.getContainer()?.id || '') : ''
+  if (map && currentId !== targetId) {
+    try { map.remove() } catch (_) {}
+    map = null
+  }
+  if (!map) {
+    map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       attribution: 'Tiles Â© Esri',
       maxZoom: 20,
-    }).addTo(publicMap)
+    }).addTo(map)
   } else {
-    publicMap.setView([lat.value, lon.value], cfg.value.mapZoom)
+    map.setView([lat.value, lon.value], cfg.value.mapZoom)
   }
-  drawPublicUserMap()
+  drawSolarOverlay()
 }
 
 function shadeKey(shade) {
@@ -3334,10 +3265,16 @@ async function loadData() {
   lat.value = Number(j?.coordinates?.latitude)
   lon.value = Number(j?.coordinates?.longitude)
 
-  if (Number.isFinite(lat.value) && Number.isFinite(lon.value)) {
+    if (Number.isFinite(lat.value) && Number.isFinite(lon.value)) {
     await nextTick()
+    const targetId = tab.value === 'user_public' ? 'solar-map-public' : 'solar-map'
+    const currentId = map && map.getContainer ? (map.getContainer()?.id || '') : ''
+    if (map && currentId !== targetId) {
+      try { map.remove() } catch (_) {}
+      map = null
+    }
     if (!map) {
-      map = L.map('solar-map', { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
+      map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Tiles Â© Esri',
         maxZoom: 20,
@@ -3346,10 +3283,6 @@ async function loadData() {
       map.setView([lat.value, lon.value], cfg.value.mapZoom)
     }
     drawSolarOverlay()
-    if (tab.value === 'user_public') {
-      await nextTick()
-      ensurePublicMap()
-    }
   }
   // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
@@ -3756,7 +3689,6 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (map) { map.remove(); map = null }
-  if (publicMap) { publicMap.remove(); publicMap = null }
   if (tendeMapObj) { tendeMapObj.remove(); tendeMapObj = null }
   if (windLayerRetryTimer) {
     clearTimeout(windLayerRetryTimer)
@@ -3790,7 +3722,7 @@ watch(tab, async (val) => {
   } else if (val === 'user_public') {
     await nextTick()
     ensurePublicMap()
-    if (publicMap) publicMap.invalidateSize()
+    if (map) map.invalidateSize()
   } else {
     stopWeatherAnimation()
   }
@@ -3816,11 +3748,6 @@ watch([mapWindDirDeg, mapWindMs], async () => {
   if (tab.value !== 'user') return
   await nextTick()
   ensureWindDirectionLayer()
-})
-watch([mapWindDirDeg, mapWindMs, () => data.value?.sun_position?.azimuth_compass_deg], async () => {
-  if (tab.value !== 'user_public') return
-  await nextTick()
-  drawPublicUserMap()
 })
 </script>
 
