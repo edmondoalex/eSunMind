@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.93
+
+- Fix encoding UI: corretti caratteri corrotti/mojibake in tutte le schermate (`Â°`, `Ã`, frecce, simboli unita).
+- Tooltip mappa e testi meteo ripuliti (es. `Az ... -> ...`, `°C`, `W/m²`, `Tiles © Esri`).
+- Corrette anche le unita MQTT diagnostiche backend (`°`, `°C`, `µg/m³`).
+
 ## 0.3.92
 
 - Fix logo UI Admin in Ingress: il logo principale ora e bundlato da `src/assets/logo-main.png` (niente richiesta `GET /logo.png` su root Home Assistant).

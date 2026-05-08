@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Fix encoding globale UI/backend: rimossi simboli corrotti (mojibake) da mappe, tooltip, labels e unita (`Â°`, `Ã`, `Âµg/mÂ³`).
+- Bump versione addon a `0.3.93` con changelog aggiornato.
 - Hotfix logo Ingress: logo UI Admin spostato su asset bundlato `src/assets/logo-main.png` per rimuovere 404 su `/logo.png`.
 - Bump versione addon a `0.3.92` con changelog aggiornato.
 - Hotfix Ingress web UI: risolti path assoluti frontend (`/assets` e `/api`) che sotto HA Ingress causavano 404/MIME error e pagina non caricata.

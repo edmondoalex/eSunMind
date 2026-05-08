@@ -129,7 +129,7 @@
           aria-hidden="true"
         ></canvas>
         <div v-if="weatherAnimEnabled" class="wind-compass-chip">
-          <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">â†‘</span>
+          <span class="wind-compass-arrow" :style="{ transform: `rotate(${weatherWindDirDeg || 0}deg)` }">↑</span>
           <span>Vento da {{ fmt(weatherWindDirDeg) }}° ({{ weatherWindCardinal }})</span>
         </div>
       </div>
@@ -250,7 +250,7 @@
               <text x="8" y="30" class="chart-tip-t2">Temp: {{ fmt(weatherHoverPoint.temp) }}°C</text>
               <text x="8" y="45" class="chart-tip-t2">Pioggia: {{ fmt(weatherHoverPoint.rain) }} mm/h | Vento: {{ fmt(weatherHoverPoint.wind) }} m/s</text>
               <text x="8" y="60" class="chart-tip-t2">Umid: {{ fmt(weatherHoverPoint.humidity) }} % | Press: {{ fmt(weatherHoverPoint.pressure) }} hPa</text>
-              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}Ã‚°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}Ã‚°C</text>
+              <text x="8" y="74" class="chart-tip-t2">T reale: {{ fmt(externalTempC) }}°C | Delta: {{ fmt(weatherHoverPoint.deltaRealTemp) }}°C</text>
             </g>
 
             <text v-for="t in weatherTempTicks" :key="`wl-${t}`" x="42" :y="weatherYFromTemp(t) + 3" class="axis-label-y">{{ fmt0(t) }}</text>
@@ -291,7 +291,7 @@
             viewBox="0 0 900 250"
             preserveAspectRatio="none"
             role="img"
-            aria-label="Grafico qualitÃ  aria 24 ore"
+            aria-label="Grafico qualita aria 24 ore"
             @mousemove="onAirqChartMove"
             @mouseleave="onAirqChartLeave"
           >
@@ -373,7 +373,7 @@
             <text x="672" y="184" class="axis-title-x">Ora</text>
           </svg>
           <div class="chart-meta">
-            0:00 â†’ 23:59 | picco: {{ fmt0(fvPeakSelectedW) }} W
+            0:00 -> 23:59 | picco: {{ fmt0(fvPeakSelectedW) }} W
             <span v-if="hoverPoint"> | punto: {{ hoverPoint.time }} -> {{ fmt0(hoverPoint.w) }} W</span>
           </div>
         </div>
@@ -479,7 +479,7 @@
               </label>
               <label>Apri se sole assente
                 <input type="checkbox" v-model="selectedShadeEdit.open_when_no_sun" />
-                <small>Quando il sole non Ã¨ piÃ¹ utile, torna alla posizione di riposo.</small>
+                <small>Quando il sole non e piu utile, torna alla posizione di riposo.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('base_safe')">
                 <strong>Preset base sicuro</strong>
@@ -512,7 +512,7 @@
                 <small>Ampiezza a destra dell'azimut finestra, se non usi Start/Stop.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('sun_fov')">
-                <strong>Usa campo visivo Â±70°</strong>
+                <strong>Usa campo visivo ±70°</strong>
                 <small>Disattiva Start/Stop e usa una finestra angolare larga 140°.</small>
               </button>
             </div>
@@ -527,11 +527,11 @@
               </label>
               <label>Posizione minima sole
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_position" />
-                <small>Posizione di protezione quando il sole Ã¨ utile e va schermato.</small>
+                <small>Posizione di protezione quando il sole e utile e va schermato.</small>
               </label>
               <label>Delta minimo
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.min_delta" />
-                <small>Evita micro-movimenti se la differenza posizione Ã¨ troppo piccola.</small>
+                <small>Evita micro-movimenti se la differenza posizione e troppo piccola.</small>
               </label>
               <label>Anti-loop comandi sec.
                 <input type="number" min="0" max="3600" step="10" v-model.number="selectedShadeEdit.min_command_interval_seconds" />
@@ -545,7 +545,7 @@
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'weather'" class="wizard-grid">
               <label>Protezione Meteo Guard
                 <input type="checkbox" v-model="selectedShadeEdit.weather_guard_enabled" />
-                <small>Abilita prioritÃ  sicurezza da vento, pioggia e stravento.</small>
+                <small>Abilita priorita sicurezza da vento, pioggia e stravento.</small>
               </label>
               <label>Azimut facciata stravento
                 <input type="number" min="0" max="360" step="0.1" v-model.number="selectedShadeEdit.facade_azimuth_deg" @change="drawTendeEditor" />
@@ -553,11 +553,11 @@
               </label>
               <label>Posizione sicurezza vento
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_wind_safe_position" />
-                <small>Posizione comandata quando c'Ã¨ allarme vento.</small>
+                <small>Posizione comandata quando c'e allarme vento.</small>
               </label>
               <label>Posizione sicurezza pioggia
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.weather_rain_safe_position" />
-                <small>Posizione comandata quando c'Ã¨ allarme pioggia.</small>
+                <small>Posizione comandata quando c'e allarme pioggia.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('weather_safe')">
                 <strong>Preset sicurezza meteo</strong>
@@ -567,11 +567,11 @@
             <div v-else-if="wizardSteps[tendeWizardStep]?.key === 'thermal'" class="wizard-grid">
               <label>Strategia termica
                 <input type="checkbox" v-model="selectedShadeEdit.thermal_enabled" />
-                <small>Usa il termostato per rifinire la decisione quando il sole Ã¨ utile.</small>
+                <small>Usa il termostato per rifinire la decisione quando il sole e utile.</small>
               </label>
               <label>Termostato ambiente
                 <input type="text" placeholder="climate.sala" v-model.trim="selectedShadeEdit.thermal_climate_entity" />
-                <small>PuÃ² essere lo stesso climate per piÃ¹ cover della stessa zona.</small>
+                <small>Puo essere lo stesso climate per piu cover della stessa zona.</small>
               </label>
               <label>Isteresi termica °C
                 <input type="number" min="0" max="5" step="0.1" v-model.number="selectedShadeEdit.thermal_hysteresis" />
@@ -579,11 +579,11 @@
               </label>
               <label>Posizione guadagno calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_heat_gain_position" />
-                <small>In modalitÃ  heat, sotto setpoint, lascia entrare sole fino a questa posizione.</small>
+                <small>In modalita heat, sotto setpoint, lascia entrare sole fino a questa posizione.</small>
               </label>
               <label>Posizione blocco calore
                 <input type="number" min="0" max="100" step="1" v-model.number="selectedShadeEdit.thermal_cool_block_position" />
-                <small>In modalitÃ  cool, sopra setpoint, scherma il sole fino a questa posizione.</small>
+                <small>In modalita cool, sopra setpoint, scherma il sole fino a questa posizione.</small>
               </label>
               <button class="btn ghost wizard-preset" @click="applyWizardPreset('thermal_conservative')">
                 <strong>Preset termico conservativo</strong>
@@ -774,7 +774,7 @@
           >
             <strong>{{ s.name || s.id }}</strong>
             <span>{{ s.cover_entity || '-' }}</span>
-            <span>Az {{ fmt(s.azimuth_start_deg) }}° â†’ {{ fmt(s.azimuth_end_deg) }}°</span>
+            <span>Az {{ fmt(s.azimuth_start_deg) }}° -> {{ fmt(s.azimuth_end_deg) }}°</span>
             <span>Stato: {{ coverStateLabel(s.cover_entity) }}</span>
           </button>
         </div>
@@ -1548,7 +1548,7 @@ function metricUnitForKey(key) {
   if (key.includes('dew_point')) return '°C'
   if (key.includes('feels_like')) return '°C'
   if (key.includes('solar_lux')) return 'lx'
-  if (key.includes('solar_radiation')) return 'W/mÂ²'
+  if (key.includes('solar_radiation')) return 'W/m²'
   if (key.includes('vapour_pressure_deficit')) return 'hPa'
   return ''
 }
@@ -2850,7 +2850,7 @@ function drawSolarOverlay() {
         fillColor: color,
         fillOpacity: opacity,
       }).addTo(map)
-      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° â†’ ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
+      const tip = `${shade.name || shade.id}<br>${shade.cover_entity || ''}<br>Az: ${fmt(azStart)}° -> ${fmt(azEnd)}°<br>Active: ${active ? 'yes' : 'no'}`
       poly.bindTooltip(tip)
       tendeSectorLayers.push(poly)
     })
@@ -2886,7 +2886,7 @@ function ensurePublicMap() {
   if (!map) {
     map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles Â© Esri',
+      attribution: 'Tiles © Esri',
       maxZoom: 20,
     }).addTo(map)
   } else {
@@ -2965,7 +2965,7 @@ function ensureWindDirectionLayer() {
   windDirMarker = L.marker(windPt, {
     icon: L.divIcon({
       className: 'wind-map-icon-wrap',
-      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}° Â· ${fmt(lastKnownWindMs.value)} m/s</span>`,
+      html: `<span class="wind-map-label">VENTO DA ${fmt(dir)}° · ${fmt(lastKnownWindMs.value)} m/s</span>`,
       iconSize: [170, 20],
       iconAnchor: [0, 10],
     }),
@@ -3034,7 +3034,7 @@ function ensureTendeMap() {
   if (tendeMapObj || lat.value == null || lon.value == null) return
   tendeMapObj = L.map('tende-map', { zoomControl: true, attributionControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
   L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles Â© Esri',
+    attribution: 'Tiles © Esri',
     maxZoom: 20,
   }).addTo(tendeMapObj)
 }
@@ -3304,7 +3304,7 @@ async function loadData() {
     if (!map) {
       map = L.map(targetId, { zoomControl: true }).setView([lat.value, lon.value], cfg.value.mapZoom)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles Â© Esri',
+        attribution: 'Tiles © Esri',
         maxZoom: 20,
       }).addTo(map)
     } else {
