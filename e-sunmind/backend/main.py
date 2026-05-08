@@ -1,4 +1,5 @@
 ﻿import asyncio
+import hashlib
 import json
 import os
 import threading
@@ -33,9 +34,11 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.96"
+APP_VERSION = "0.3.97"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
+STATIC_ROOT = Path("/app/static")
+STATIC_ASSETS_ROOT = STATIC_ROOT / "assets"
 
 DATA_FILE = Path("/data/suncalc_data.json")
 OPTIONS_FILE = Path("/data/options.json")
@@ -77,6 +80,42 @@ def _dt_to_iso(value):
     if value is None:
         return None
     return value.isoformat()
+
+
+def _sha256_file(path: Path) -> str | None:
+    try:
+        h = hashlib.sha256()
+        with path.open("rb") as f:
+            while True:
+                chunk = f.read(1024 * 1024)
+                if not chunk:
+                    break
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return None
+
+
+def _static_file_meta(path: Path, public_path: str) -> dict[str, Any]:
+    exists = path.exists() and path.is_file()
+    size = path.stat().st_size if exists else None
+    return {
+        "public_path": public_path,
+        "exists": bool(exists),
+        "size_bytes": size,
+        "sha256": _sha256_file(path) if exists else None,
+    }
+
+
+def _extract_index_asset_refs(index_html_text: str) -> dict[str, str | None]:
+    import re
+
+    js_m = re.search(r'src="(\./assets/index-[^"]+\.js)"', index_html_text)
+    css_m = re.search(r'href="(\./assets/index-[^"]+\.css)"', index_html_text)
+    return {
+        "index_js_rel": js_m.group(1) if js_m else None,
+        "index_css_rel": css_m.group(1) if css_m else None,
+    }
 
 
 def _parse_forecast_dt(value: str) -> datetime | None:
@@ -2189,6 +2228,50 @@ async def favicon():
 @app.get("/api/status")
 async def status():
     return JSONResponse({"ok": True, "version": APP_VERSION, "state": WORKER_STATE})
+
+
+@app.get("/api/diag/static_hashes")
+async def static_hashes():
+    index_path = STATIC_ROOT / "index.html"
+    index_text = ""
+    try:
+        index_text = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
+    except Exception:
+        index_text = ""
+
+    refs = _extract_index_asset_refs(index_text)
+    js_rel = refs.get("index_js_rel")
+    css_rel = refs.get("index_css_rel")
+
+    files: list[dict[str, Any]] = []
+    files.append(_static_file_meta(index_path, "index.html"))
+    files.append(_static_file_meta(STATIC_ROOT / "favicon.png", "favicon.png"))
+    files.append(_static_file_meta(STATIC_ROOT / "logo.png", "logo.png"))
+
+    if isinstance(js_rel, str) and js_rel.startswith("./"):
+        files.append(_static_file_meta(STATIC_ROOT / js_rel[2:], js_rel[2:]))
+    if isinstance(css_rel, str) and css_rel.startswith("./"):
+        files.append(_static_file_meta(STATIC_ROOT / css_rel[2:], css_rel[2:]))
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "version": APP_VERSION,
+            "index_refs": refs,
+            "files": files,
+        }
+    )
+
+
+@app.get("/api/diag/static_hash")
+async def static_hash(path: str = ""):
+    rel = str(path or "").strip().lstrip("/")
+    if not rel or ".." in rel:
+        return JSONResponse({"ok": False, "error": "invalid_path"}, status_code=400)
+    full = STATIC_ROOT / rel
+    if not full.exists() or not full.is_file():
+        return JSONResponse({"ok": False, "error": "not_found", "path": rel}, status_code=404)
+    return JSONResponse({"ok": True, "version": APP_VERSION, "file": _static_file_meta(full, rel)})
 
 
 @app.get("/api/sun/live")

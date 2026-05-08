@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.97
+
+- Aggiunti endpoint diagnostici static asset per validazione proxy/WebView:
+  - `GET /api/diag/static_hashes` (hash/size dei file statici principali e riferimenti `index-*.js/css`)
+  - `GET /api/diag/static_hash?path=...` (hash/size di un file statico specifico)
+- Scopo: confronto oggettivo hash/size tra upstream e proxy per individuare truncation/alterazioni.
+
 ## 0.3.96
 
 - Hardening WebView: build frontend non minificata (`minify: false`, `cssMinify: false`) per ridurre rischi di parse-error su ambienti embedded/proxy.

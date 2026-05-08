@@ -1,6 +1,8 @@
 # WORKLOG
 
 ## 2026-05-07
+- Diagnostica anti-proxy/truncation: aggiunti endpoint hash statici (`/api/diag/static_hashes`, `/api/diag/static_hash`) per confronto upstream vs proxy.
+- Bump versione addon a `0.3.97` con changelog aggiornato.
 - Hardening ulteriore per WebView/Control4: build frontend senza minify + target `es2018` e mount app con retry per avvio robusto.
 - Bump versione addon a `0.3.96` con changelog aggiornato.
 - Fix WebView/proxy: gestito `ERR_EMPTY_RESPONSE` su `api/data` con fallback non bloccante (no unhandled promise).
