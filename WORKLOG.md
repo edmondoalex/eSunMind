@@ -1,6 +1,9 @@
 # WORKLOG
 
 ## 2026-05-07
+- Hotfix Ingress web UI: risolti path assoluti frontend (`/assets` e `/api`) che sotto HA Ingress causavano 404/MIME error e pagina non caricata.
+- Vite configurato con `base: './'` e chiamate API rese relative (`api/...`) per compatibilita con prefisso ingress.
+- Bump versione addon a `0.3.91` con changelog aggiornato.
 - Hotfix addon store: rimosso `ingress_entry` da `config.yaml` (incompatibile su alcune versioni HA, causava scomparsa addon dalla raccolta).
 - Bump versione addon a `0.3.90` con changelog aggiornato.
 - Bump versione addon a `0.3.89` per riallineamento numerazione release (fix ingress gia incluso).

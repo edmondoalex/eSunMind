@@ -13,7 +13,7 @@
       </div>
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
-        <a class="btn ghost" href="/?view=user">UI User</a>
+        <a class="btn ghost" href="?view=user">UI User</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -3244,7 +3244,7 @@ async function saveSelectedShade() {
       weather_rain_safe_position: Number(e.weather_rain_safe_position),
       weather_facade_rain_safe_position: Number(e.weather_facade_rain_safe_position),
     }
-    const r = await fetch('/api/tende/map/update', {
+    const r = await fetch('api/tende/map/update', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         id: e.id,
@@ -3278,7 +3278,7 @@ async function saveSelectedShade() {
 }
 
 async function loadData() {
-  const r = await fetch('/api/data', { cache: 'no-store' })
+  const r = await fetch('api/data', { cache: 'no-store' })
   const j = await r.json()
   data.value = j
   const incomingShades = j?.tende_map?.shades
@@ -3313,7 +3313,7 @@ async function loadData() {
   }
   // Keep forms in sync with current persisted options, independent from forecast availability.
   try {
-    const ro = await fetch('/api/options', { cache: 'no-store' })
+    const ro = await fetch('api/options', { cache: 'no-store' })
     const oj = await ro.json()
     const fso = oj?.forecast_solar || {}
     fsForm.value = {
@@ -3411,7 +3411,7 @@ async function loadData() {
 
 async function loadStatusVersion() {
   try {
-    const r = await fetch('/api/status', { cache: 'no-store' })
+    const r = await fetch('api/status', { cache: 'no-store' })
     const j = await r.json()
     if (j?.version) appVersion.value = String(j.version)
   } catch (_) {
@@ -3423,7 +3423,7 @@ async function autofillWeatherStationFromDevice() {
   const did = String(weatherStationForm.value.device_id || '').trim()
   if (!did) return
   try {
-    const r = await fetch(`/api/weather_station/autofill?device_id=${encodeURIComponent(did)}`, { cache: 'no-store' })
+    const r = await fetch(`api/weather_station/autofill?device_id=${encodeURIComponent(did)}`, { cache: 'no-store' })
     const j = await r.json()
     if (!r.ok || !j?.mapped) throw new Error(j?.error || 'autofill_failed')
     const mapped = j.mapped || {}
@@ -3520,7 +3520,7 @@ async function saveBaseSettings() {
         stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
       },
     }
-    const r = await fetch('/api/options/base', {
+    const r = await fetch('api/options/base', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -3613,9 +3613,9 @@ async function saveAllSettings() {
       kwp: Number(fsForm.value.kwp ?? 6.0),
     }
     const steps = [
-      ['/api/options/base', basePayload],
-      ['/api/options/overlay', overlayPayload],
-      ['/api/options/forecast_solar', forecastPayload],
+      ['api/options/base', basePayload],
+      ['api/options/overlay', overlayPayload],
+      ['api/options/forecast_solar', forecastPayload],
     ]
     for (const [url, payload] of steps) {
       const r = await fetch(url, {
@@ -3643,7 +3643,7 @@ async function saveForecastSettings() {
       azimuth: Number(fsForm.value.azimuth ?? 0),
       kwp: Number(fsForm.value.kwp ?? 6.0),
     }
-    const r = await fetch('/api/options/forecast_solar', {
+    const r = await fetch('api/options/forecast_solar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -3667,7 +3667,7 @@ async function saveOverlaySettings() {
       sunRadiusM: Number(cfg.value.sunRadiusM ?? 95),
       mapZoom: Number(cfg.value.mapZoom ?? 18),
     }
-    const r = await fetch('/api/options/overlay', {
+    const r = await fetch('api/options/overlay', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -4389,6 +4389,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
+
+
 
 
 

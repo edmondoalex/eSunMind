@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.91
+
+- Fix Ingress Home Assistant: build frontend con path relativi (`base: './'`) per evitare richieste errate a `/assets/...` su root HA.
+- Fix Ingress API: endpoint frontend chiamati con path relativi (`api/...`) invece di assoluti (`/api/...`).
+- Corretto riferimento logo UI Admin per evitare errore di build frontend.
+
 ## 0.3.90
 
 - Fix compatibilita manifest addon: rimosso `ingress_entry` da `config.yaml` (chiave non supportata su alcune installazioni Home Assistant).
