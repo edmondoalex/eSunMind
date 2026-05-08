@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.101
+
+- Fix layout smartphone UI User (`?view=user`): ridisegnati breakpoint mobile per logo, mappa, controlli simulazione e card KPI.
+- Timeline mobile resa leggibile (etichette orarie diradate), toggle impilati su singola colonna e spaziatura migliorata.
+- Ordine blocchi ottimizzato su schermi piccoli: mappa prima, legenda subito sotto, niente overlap/affollamento.
+
 ## 0.3.100
 
 - Hardening polling UI User/Admin su proxy instabile: `loadData()` ora evita richieste concorrenti a `api/data`.

@@ -1,6 +1,12 @@
 # WORKLOG
 
 ## 2026-05-08
+- UI User mobile: fix completo layout smartphone (`view=user_public`) con regole responsive dedicate.
+- Migliorati proporzioni header/logo, altezza mappa, ordine blocchi, slider timeline e griglia toggle su schermi <=768px.
+- Ridotte collisioni visive (orari/toggle troppo stretti) con etichette orarie diradate e spaziatura coerente.
+- Bump versione addon a `0.3.101` con changelog aggiornato.
+
+## 2026-05-08
 - Mitigazione errori proxy `502 Bad Gateway` su `api/data` in UI: introdotto lock `loadDataInFlight` per evitare richieste concorrenti.
 - Aggiunto backoff esponenziale automatico su errori fetch/http (2s -> max 60s) per non saturare proxy/WebView in condizioni degradate.
 - Mantenuto comportamento non bloccante: UI resta avviata anche con errori temporanei di rete/API.

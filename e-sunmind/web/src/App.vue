@@ -4083,6 +4083,7 @@ input[type='range']{width:100%}
 #solar-map-public{height:100%;min-height:520px}
 .up-map-controls{margin-top:14px;padding:10px 12px;border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72)}
 .up-time-sim{margin-bottom:8px}
+.user-public .time-labels{display:grid;grid-template-columns:repeat(19,1fr);font-size:11px;color:#c9d2df;gap:4px;margin-bottom:4px}
 .up-bottom{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:10px;margin-top:10px}
 .up-card{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;color:#b8cce3;display:grid;gap:6px}
 .up-card h4{margin:0 0 4px 0;color:#e8f2ff}
@@ -4483,10 +4484,83 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
     min-width:38px;
     font-size:10px;
   }
-  .user-public-head{grid-template-columns:1fr;text-align:left}
-  .user-public-main{grid-template-columns:1fr}
-  .up-bottom{grid-template-columns:1fr}
-  #solar-map-public,.up-map-wrap{min-height:360px}
+  .user-public{
+    padding:8px;
+    min-height:100dvh;
+  }
+  .user-public-head{
+    min-height:118px;
+    padding:8px 10px;
+    border-radius:12px;
+  }
+  .up-logo{
+    width:92vw;
+    max-width:92vw;
+    height:96px;
+  }
+  .user-public-main{
+    grid-template-columns:1fr;
+    gap:8px;
+    margin-top:8px;
+  }
+  .up-side{
+    order:2;
+    padding:10px;
+  }
+  .up-map-wrap{
+    order:1;
+    min-height:330px;
+    border-radius:12px;
+  }
+  #solar-map-public{
+    min-height:330px;
+  }
+  .up-map-controls{
+    margin-top:8px;
+    padding:8px 10px;
+  }
+  .user-public .time-labels{
+    grid-template-columns:repeat(7,1fr);
+    gap:2px;
+    font-size:10px;
+  }
+  .user-public .time-labels span{
+    text-align:center;
+  }
+  .user-public .time-labels span:nth-child(2n){
+    display:none;
+  }
+  .up-time-sim input[type="range"]{
+    width:100%;
+  }
+  .up-time-sim .time-meta{
+    margin-top:6px;
+    font-size:13px;
+  }
+  .user-public .toggles{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .user-public .toggles label{
+    font-size:12px;
+    line-height:1.3;
+  }
+  .user-public .pv-az-controls{
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .user-public .pv-az-input{
+    width:100%;
+  }
+  .up-bottom{
+    grid-template-columns:1fr;
+    gap:8px;
+    margin-top:8px;
+  }
+  .up-card{
+    padding:10px;
+  }
   .metric-row{
     flex-direction:column;
     align-items:flex-start;
