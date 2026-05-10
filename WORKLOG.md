@@ -1,6 +1,13 @@
 # WORKLOG
 
 ## 2026-05-10
+- Integrazione opzione `1`: dashboard React standalone incorporata nell'addon e servita da FastAPI.
+- Aggiunto mount statico `/energy-dashboard` e link `Energy Flow` in UI Admin.
+- Build `energy-dashboard-standalone` resa relativa (`base: './'`) e copiata in `web/public/energy-dashboard`.
+- Verificata presenza asset in `web/dist/energy-dashboard` dopo build Vue.
+- Bump versione addon a `0.3.105` con changelog aggiornato.
+
+## 2026-05-10
 - Energy UI: aggiunti temi selezionabili (`classic_flow`, `technical_dark`, `minimal_light`) con salvataggio in `Setting > Energy`.
 - Nuova resa `Classic Inverter` con flow board visivo (nodi/linee/KPI) piu vicina al riferimento grafico.
 - Supporto override tema via query string (`?view=energy&theme=classic|dark|minimal`).

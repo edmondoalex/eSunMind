@@ -34,9 +34,10 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.104"
+APP_VERSION = "0.3.105"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
+app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
 STATIC_ROOT = Path("/app/static")
 STATIC_ASSETS_ROOT = STATIC_ROOT / "assets"
 

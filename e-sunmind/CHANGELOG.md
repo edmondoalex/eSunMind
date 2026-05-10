@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.105
+
+- Integrata dashboard energetica standalone React (`Energy Flow`) direttamente nell'addon.
+- Nuovo mount backend: `/energy-dashboard` (statico interno addon, compatibile ingress/proxy).
+- Aggiunto link rapido `Energy Flow` in UI Admin (apertura nuova scheda).
+- Build React copiata in `web/public/energy-dashboard` e pubblicata insieme alla UI principale.
+
 ## 0.3.104
 
 - Energy UI: introdotti temi selezionabili (`Classic Inverter`, `Technical Dark`, `Minimal Light`).
