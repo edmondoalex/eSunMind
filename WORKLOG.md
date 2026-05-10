@@ -1,6 +1,15 @@
 # WORKLOG
 
 ## 2026-05-10
+- Rework totale `Energy Flow` su richiesta: eliminato look da diagramma tecnico.
+- Implementati componenti separati richiesti: `EnergyNode`, `HomeNode`, `EnergyEdge`, `simulateEnergy`.
+- Layout premium fisso 16:9 con casa centrale e device tiles compatti glassmorphism.
+- Edge premium con gradient/glow e particella animata su `animateMotion`.
+- Dati live da `../api/data`; fallback simulazione mantenuto solo se API non disponibile.
+- Build aggiornata e pubblicata in `web/public/energy-dashboard`.
+- Bump versione addon a `0.3.107`.
+
+## 2026-05-10
 - Correzione richiesta utente: `Energy Flow` mostrava valori fake non coerenti con entita reali.
 - Rebuild dashboard React flow con polling `../api/data` ogni 2s e mapping da `energy.normalized`.
 - Aggiornato pacchetto statico in `web/public/energy-dashboard` con nuova build live-data.

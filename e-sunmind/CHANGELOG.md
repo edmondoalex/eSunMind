@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.107
+
+- Refactor completo `Energy Flow` in stile dashboard premium (non piu look flowchart tecnico).
+- Nuovi `nodeTypes`: `energyNode` compatto e `homeNode` centrale enfatizzato.
+- Nuovo `edgeType` premium: gradient brillante, glow e particella animata direzionale su path.
+- Layout fisso: FV alto, casa centro, batteria basso-sx, rete basso-dx, pompa/carichi laterali.
+- UI pulita: header minimal, pill metriche top, mini-card bottom (`oggi prodotto`, `oggi consumato`, `autonomia batteria`).
+- Dati live da `../api/data` con fallback simulato solo in assenza API.
+
 ## 0.3.106
 
 - Fix critico `Energy Flow`: rimossa simulazione fake React.

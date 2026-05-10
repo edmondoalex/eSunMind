@@ -1,17 +1,15 @@
 ﻿import React from 'react'
 import { Handle, Position } from '@xyflow/react'
 
-export default function EnergyNode({ data }) {
+export default function HomeNode({ data }) {
   return (
-    <div className="tile tile-energy">
+    <div className="tile tile-home">
       <Handle type="target" position={Position.Left} style={{ opacity: 0 }} />
       <Handle type="source" position={Position.Right} style={{ opacity: 0 }} />
 
-      <div className="tile-icon-wrap">
-        <span className="tile-icon">{data.icon}</span>
-      </div>
-      <div className="tile-name">{data.label}</div>
-      <div className="tile-value">{data.value}</div>
+      <div className="home-hero">🏠</div>
+      <div className="home-title">Casa</div>
+      <div className="home-value">{data.value}</div>
       <div className="tile-pill">{data.state}</div>
     </div>
   )
