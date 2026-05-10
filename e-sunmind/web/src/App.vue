@@ -86,30 +86,43 @@
       </div>
     </div>
 
-    <div v-show="tab==='energy_public'" class="energy-public">
+    <div v-show="tab==='energy_public'" class="energy-public" :class="energyThemeClass">
       <div class="energy-hero">
         <div class="energy-status">Status: <strong>{{ energyEnabled ? 'Normal' : 'Spento' }}</strong></div>
         <div class="energy-temp">{{ fmt(externalTempC) }}°C</div>
       </div>
-      <div class="energy-flow">
-        <div class="energy-node">
-          <div class="energy-node-title">FV</div>
-          <div class="energy-node-val">{{ fmtKw(energyPvPowerW) }} kW</div>
+      <div class="energy-flow-board">
+        <div class="ef-link ef-link-bat"></div>
+        <div class="ef-link ef-link-grid"></div>
+        <div class="ef-link ef-link-home"></div>
+
+        <div class="ef-node ef-node-pv">
+          <div class="ef-icon">☀</div>
+          <div class="ef-name">FV</div>
+          <div class="ef-val">{{ fmtKw(energyPvPowerW) }} kW</div>
         </div>
-        <div class="energy-node">
-          <div class="energy-node-title">Casa</div>
-          <div class="energy-node-val">{{ fmtKw(energyHomePowerW) }} kW</div>
+        <div class="ef-node ef-node-home">
+          <div class="ef-icon">⌂</div>
+          <div class="ef-name">Casa</div>
+          <div class="ef-val">{{ fmtKw(energyHomePowerW) }} kW</div>
         </div>
-        <div class="energy-node">
-          <div class="energy-node-title">Rete</div>
-          <div class="energy-node-val">{{ fmtKw(energyGridPowerW) }} kW</div>
+        <div class="ef-node ef-node-grid">
+          <div class="ef-icon">⚡</div>
+          <div class="ef-name">Rete</div>
+          <div class="ef-val">{{ fmtKw(energyGridPowerW) }} kW</div>
         </div>
-        <div class="energy-node">
-          <div class="energy-node-title">Batteria</div>
-          <div class="energy-node-val">{{ fmtKw(energyBatteryPowerW) }} kW</div>
-          <div class="energy-node-sub">SOC {{ fmt(energyBatterySocPct) }}%</div>
+        <div class="ef-node ef-node-bat">
+          <div class="ef-icon">▣</div>
+          <div class="ef-name">Batteria</div>
+          <div class="ef-val">{{ fmtKw(energyBatteryPowerW) }} kW</div>
+          <div class="ef-sub">SOC {{ fmt(energyBatterySocPct) }}%</div>
+        </div>
+        <div class="ef-kpi-side">
+          <div class="ef-kpi"><span>Real-time Power</span><strong>{{ fmtKw(energyPvPowerW) }} kW</strong></div>
+          <div class="ef-kpi"><span>Installed Power</span><strong>{{ fmt(energyInstalledKwp) }} kWp</strong></div>
         </div>
       </div>
+
       <div class="energy-kpi-grid">
         <div class="energy-kpi"><span>Real-time Power</span><strong>{{ fmtKw(energyPvPowerW) }} kW</strong></div>
         <div class="energy-kpi"><span>Installed Power</span><strong>{{ fmt(energyInstalledKwp) }} kWp</strong></div>
@@ -1027,6 +1040,13 @@
             <label>Enabled
               <input type="checkbox" v-model="energyForm.enabled" />
             </label>
+            <label>Theme
+              <select v-model="energyForm.theme">
+                <option value="classic_flow">Classic Inverter</option>
+                <option value="technical_dark">Technical Dark</option>
+                <option value="minimal_light">Minimal Light</option>
+              </select>
+            </label>
             <label>PV power entity id
               <input type="text" v-model="energyForm.pv_power_entity_id" />
             </label>
@@ -1351,6 +1371,7 @@ const tendeMapForm = ref({
 })
 const energyForm = ref({
   enabled: true,
+  theme: 'classic_flow',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   home_power_entity_id: '',
   grid_power_entity_id: '',
@@ -1742,6 +1763,17 @@ const pvLiveRatio = computed(() => {
 })
 const energyNorm = computed(() => data.value?.energy?.normalized || null)
 const energyEnabled = computed(() => Boolean(data.value?.energy?.enabled ?? energyForm.value.enabled))
+const energyTheme = computed(() => {
+  const qp = new URLSearchParams(window.location.search || '')
+  const qTheme = String(qp.get('theme') || '').trim().toLowerCase()
+  if (qTheme === 'classic' || qTheme === 'classic_flow') return 'classic_flow'
+  if (qTheme === 'dark' || qTheme === 'technical_dark') return 'technical_dark'
+  if (qTheme === 'minimal' || qTheme === 'minimal_light') return 'minimal_light'
+  const fromData = String(data.value?.energy?.theme || energyForm.value.theme || 'classic_flow').trim().toLowerCase()
+  if (fromData === 'technical_dark' || fromData === 'minimal_light' || fromData === 'classic_flow') return fromData
+  return 'classic_flow'
+})
+const energyThemeClass = computed(() => `energy-theme-${energyTheme.value}`)
 const energyPvPowerW = computed(() => Number.isFinite(Number(energyNorm.value?.pv_power_w)) ? Number(energyNorm.value?.pv_power_w) : null)
 const energyHomePowerW = computed(() => Number.isFinite(Number(energyNorm.value?.home_power_w)) ? Number(energyNorm.value?.home_power_w) : null)
 const energyGridPowerW = computed(() => Number.isFinite(Number(energyNorm.value?.grid_power_w)) ? Number(energyNorm.value?.grid_power_w) : null)
@@ -3595,6 +3627,7 @@ async function loadData() {
       const eo = oj?.energy || {}
       energyForm.value = {
         enabled: Boolean(eo.enabled ?? true),
+        theme: String(eo.theme || 'classic_flow'),
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         home_power_entity_id: String(eo.home_power_entity_id || ''),
         grid_power_entity_id: String(eo.grid_power_entity_id || ''),
@@ -3741,6 +3774,7 @@ async function saveBaseSettings() {
       },
       energy: {
         enabled: Boolean(energyForm.value.enabled),
+        theme: String(energyForm.value.theme || 'classic_flow'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
         grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
@@ -3833,6 +3867,7 @@ async function saveAllSettings() {
       },
       energy: {
         enabled: Boolean(energyForm.value.enabled),
+        theme: String(energyForm.value.theme || 'classic_flow'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
         grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
@@ -4252,34 +4287,80 @@ input[type='range']{width:100%}
   font-size:32px;
   font-weight:700;
 }
-.energy-flow{
-  display:grid;
-  grid-template-columns:repeat(4,minmax(150px,1fr));
-  gap:10px;
-  margin-bottom:12px;
-}
-.energy-node{
+.energy-flow-board{
+  position:relative;
   border:1px solid #d6dbe5;
   border-radius:14px;
-  background:#ffffff;
-  padding:14px;
-  box-shadow:0 4px 16px rgba(16,24,40,.06);
+  background:linear-gradient(180deg,#f5f6f8 0%,#f0f1f4 100%);
+  min-height:360px;
+  margin-bottom:12px;
+  overflow:hidden;
 }
-.energy-node-title{
-  font-size:13px;
-  color:#5b6574;
-  margin-bottom:6px;
+.ef-link{
+  position:absolute;
+  border:2px solid #cfd7e9;
+  border-radius:18px;
+  opacity:.9;
 }
-.energy-node-val{
-  font-size:32px;
-  font-weight:700;
-  letter-spacing:-.5px;
+.ef-link-bat{
+  left:140px;
+  top:90px;
+  width:190px;
+  height:150px;
+  border-right:none;
+  border-bottom:none;
 }
-.energy-node-sub{
-  font-size:13px;
-  color:#5b6574;
-  margin-top:4px;
+.ef-link-grid{
+  right:220px;
+  top:90px;
+  width:190px;
+  height:150px;
+  border-left:none;
+  border-bottom:none;
 }
+.ef-link-home{
+  left:308px;
+  top:150px;
+  width:2px;
+  height:78px;
+  background:#cfd7e9;
+  border:none;
+}
+.ef-node{
+  position:absolute;
+  border:1px solid #d6dbe5;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 12px;
+  min-width:110px;
+  box-shadow:0 4px 12px rgba(16,24,40,.06);
+}
+.ef-node .ef-icon{font-size:20px;opacity:.85}
+.ef-node .ef-name{font-size:12px;color:#5b6574;margin-top:3px}
+.ef-node .ef-val{font-size:30px;font-weight:700;letter-spacing:-.4px;line-height:1.1}
+.ef-node .ef-sub{font-size:12px;color:#5b6574}
+.ef-node-pv{left:255px;top:44px}
+.ef-node-home{left:255px;top:180px}
+.ef-node-grid{left:430px;top:222px}
+.ef-node-bat{left:85px;top:222px}
+.ef-kpi-side{
+  position:absolute;
+  right:26px;
+  top:128px;
+  width:250px;
+  display:grid;
+  gap:10px;
+}
+.ef-kpi{
+  border:1px solid #d6dbe5;
+  border-radius:12px;
+  background:#fff;
+  padding:10px 12px;
+  display:grid;
+  gap:3px;
+}
+.ef-kpi span{font-size:12px;color:#5b6574}
+.ef-kpi strong{font-size:28px;color:#121926}
 .energy-kpi-grid{
   display:grid;
   grid-template-columns:repeat(3,minmax(220px,1fr));
@@ -4301,6 +4382,49 @@ input[type='range']{width:100%}
   color:#121926;
   font-size:28px;
   letter-spacing:-.4px;
+}
+.energy-theme-technical_dark{
+  background:radial-gradient(circle at top,#14273d 0%,#0a1320 48%,#060c15 100%);
+  color:#d9e8ff;
+}
+.energy-theme-technical_dark .energy-flow-board{
+  background:linear-gradient(180deg,#0f1b2e 0%,#0a1422 100%);
+  border-color:#355377;
+}
+.energy-theme-technical_dark .ef-link,
+.energy-theme-technical_dark .ef-link-home{
+  border-color:#476991;
+  background:#476991;
+}
+.energy-theme-technical_dark .ef-node,
+.energy-theme-technical_dark .ef-kpi,
+.energy-theme-technical_dark .energy-kpi{
+  background:#0d1a2b;
+  border-color:#355377;
+  box-shadow:none;
+}
+.energy-theme-technical_dark .ef-node .ef-name,
+.energy-theme-technical_dark .ef-node .ef-sub,
+.energy-theme-technical_dark .ef-kpi span,
+.energy-theme-technical_dark .energy-kpi span{
+  color:#9cb7d8;
+}
+.energy-theme-technical_dark .ef-node .ef-val,
+.energy-theme-technical_dark .ef-kpi strong,
+.energy-theme-technical_dark .energy-kpi strong{
+  color:#eef6ff;
+}
+.energy-theme-technical_dark .energy-status,
+.energy-theme-technical_dark .energy-temp{
+  color:#eef6ff;
+}
+.energy-theme-minimal_light .energy-flow-board{
+  background:#ffffff;
+}
+.energy-theme-minimal_light .ef-node,
+.energy-theme-minimal_light .ef-kpi,
+.energy-theme-minimal_light .energy-kpi{
+  box-shadow:none;
 }
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
@@ -4790,9 +4914,23 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   .energy-flow{
     grid-template-columns:1fr 1fr;
   }
-  .energy-node-val{
-    font-size:26px;
+  .energy-flow-board{
+    min-height:420px;
   }
+  .ef-kpi-side{
+    position:static;
+    width:auto;
+    padding:10px;
+    margin-top:260px;
+  }
+  .ef-node .ef-val{font-size:24px}
+  .ef-node-pv{left:50%;transform:translateX(-50%);top:20px}
+  .ef-node-home{left:50%;transform:translateX(-50%);top:145px}
+  .ef-node-bat{left:10px;top:250px}
+  .ef-node-grid{right:10px;left:auto;top:250px}
+  .ef-link-bat{left:78px;top:78px;width:120px;height:205px}
+  .ef-link-grid{right:78px;top:78px;width:120px;height:205px}
+  .ef-link-home{left:50%;transform:translateX(-50%);top:120px;height:64px}
   .energy-kpi-grid{
     grid-template-columns:1fr;
   }

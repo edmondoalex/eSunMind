@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.104
+
+- Energy UI: introdotti temi selezionabili (`Classic Inverter`, `Technical Dark`, `Minimal Light`).
+- Nuovo layout `Classic Inverter` piu vicino al mock: flow board con nodi FV/Casa/Rete/Batteria e KPI laterali.
+- Tema impostabile da `Setting > Energy` e forzabile da URL `?view=energy&theme=...`.
+- Persistenza tema nelle opzioni addon (`energy.theme`) e disponibilita nel payload backend.
+
 ## 0.3.103
 
 - Nuova pagina dedicata `Energy` per UI User, accessibile via `?view=energy` (layout senza pulsanti locali di navigazione).

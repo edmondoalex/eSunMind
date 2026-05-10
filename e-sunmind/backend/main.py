@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.103"
+APP_VERSION = "0.3.104"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 STATIC_ROOT = Path("/app/static")
@@ -237,6 +237,7 @@ def _load_options() -> dict[str, Any]:
         },
         "energy": {
             "enabled": True,
+            "theme": "classic_flow",
             "pv_power_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
             "home_power_entity_id": "",
             "grid_power_entity_id": "",
@@ -869,6 +870,7 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
             "grid_import_today_kwh": None,
             "grid_export_today_kwh": None,
         },
+        "theme": str(e_cfg.get("theme") or "classic_flow"),
         "errors": {},
     }
     if not out["enabled"]:
@@ -2525,6 +2527,7 @@ async def data_demo():
         "energy": {
             "ok": True,
             "enabled": True,
+            "theme": "classic_flow",
             "entities": {},
             "normalized": {
                 "pv_power_w": 4200.0,

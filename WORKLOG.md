@@ -1,6 +1,12 @@
 # WORKLOG
 
 ## 2026-05-10
+- Energy UI: aggiunti temi selezionabili (`classic_flow`, `technical_dark`, `minimal_light`) con salvataggio in `Setting > Energy`.
+- Nuova resa `Classic Inverter` con flow board visivo (nodi/linee/KPI) piu vicina al riferimento grafico.
+- Supporto override tema via query string (`?view=energy&theme=classic|dark|minimal`).
+- Bump versione addon a `0.3.104` con changelog aggiornato.
+
+## 2026-05-10
 - Aggiunta nuova pagina UI User `Energy` (query `?view=energy`) separata dal flusso meteo/mappa.
 - Implementata vista energia senza pulsanti interni con KPI produzione/consumo/rete/batteria e SOC.
 - Aggiunta sezione `Setting > Energy` per mappare tutte le entita energetiche HA.
