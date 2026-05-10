@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.106
+
+- Fix critico `Energy Flow`: rimossa simulazione fake React.
+- La dashboard flow ora legge i dati reali da `../api/data` (payload `energy.normalized`).
+- Allineamento con entita configurate in `Setting > Energy` (potenze, SOC, import/export, kWp).
+
 ## 0.3.105
 
 - Integrata dashboard energetica standalone React (`Energy Flow`) direttamente nell'addon.

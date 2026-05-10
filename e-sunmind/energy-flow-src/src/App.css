@@ -1,0 +1,19 @@
+﻿:root { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: #e9f2ff; }
+* { box-sizing: border-box; }
+body, html, #root { margin: 0; width: 100%; height: 100%; background: radial-gradient(circle at 15% 10%, #1f2b45 0%, #0d1220 40%, #070a14 100%); }
+.app { width: 100%; height: 100%; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.top h1 { margin: 0; font-size: 28px; }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; }
+.pill { border: 1px solid rgba(110, 162, 255, 0.28); background: rgba(22, 34, 58, 0.45); backdrop-filter: blur(10px); border-radius: 14px; padding: 8px 12px; display: grid; gap: 3px; }
+.pill span { font-size: 12px; color: #9fb9de; }
+.pill strong { font-size: 18px; color: #f3f8ff; }
+.flow-wrap { flex: 1; min-height: 0; border: 1px solid rgba(100, 150, 255, 0.22); border-radius: 20px; overflow: hidden; background: linear-gradient(180deg, rgba(9,16,30,.72), rgba(7,12,24,.84)); }
+.energy-node { width: 170px; border: 1px solid rgba(111, 168, 255, 0.35); border-radius: 16px; background: rgba(24, 36, 58, 0.55); backdrop-filter: blur(9px); padding: 10px 12px; color: #eef6ff; }
+.node-icon { font-size: 22px; margin-bottom: 4px; }
+.node-name { font-size: 13px; color: #a8c2e8; }
+.node-value { margin-top: 2px; font-size: 30px; font-weight: 700; }
+.node-state { margin-top: 4px; display: inline-block; font-size: 11px; color: #bfe2ff; border: 1px solid rgba(121, 192, 255, 0.35); border-radius: 999px; padding: 2px 8px; background: rgba(30, 60, 95, 0.4); }
+.edge-particle-layer { position: absolute; inset: 0; pointer-events: none; }
+.react-flow__edge-path { transition: stroke-width .3s ease, opacity .3s ease; }
+@media (max-width:1200px){ .summary{grid-template-columns: repeat(2,minmax(140px,1fr));} .top{flex-direction:column;align-items:flex-start;} }

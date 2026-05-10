@@ -1,6 +1,12 @@
 # WORKLOG
 
 ## 2026-05-10
+- Correzione richiesta utente: `Energy Flow` mostrava valori fake non coerenti con entita reali.
+- Rebuild dashboard React flow con polling `../api/data` ogni 2s e mapping da `energy.normalized`.
+- Aggiornato pacchetto statico in `web/public/energy-dashboard` con nuova build live-data.
+- Bump versione addon a `0.3.106`.
+
+## 2026-05-10
 - Integrazione opzione `1`: dashboard React standalone incorporata nell'addon e servita da FastAPI.
 - Aggiunto mount statico `/energy-dashboard` e link `Energy Flow` in UI Admin.
 - Build `energy-dashboard-standalone` resa relativa (`base: './'`) e copiata in `web/public/energy-dashboard`.
