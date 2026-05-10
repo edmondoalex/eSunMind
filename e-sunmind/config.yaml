@@ -1,7 +1,7 @@
 ﻿name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.101"
+version: "0.3.103"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -81,6 +81,18 @@ options:
     topic_state: "e-tendeintelligenti/map/shades"
     topic_availability: "e-tendeintelligenti/availability"
     stale_seconds: 180
+  energy:
+    enabled: true
+    pv_power_entity_id: "sensor.zcs_easas_1_activepower_pv_ext"
+    home_power_entity_id: ""
+    grid_power_entity_id: ""
+    battery_power_entity_id: ""
+    battery_soc_entity_id: ""
+    pv_installed_kwp: 6.6
+    pv_energy_today_entity_id: ""
+    home_energy_today_entity_id: ""
+    grid_import_today_entity_id: ""
+    grid_export_today_entity_id: ""
 schema:
   log_level: list(trace|debug|info|warning|error)
   latitude: float
@@ -145,3 +157,15 @@ schema:
     topic_state: str
     topic_availability: str
     stale_seconds: int(30,86400)
+  energy:
+    enabled: bool
+    pv_power_entity_id: str?
+    home_power_entity_id: str?
+    grid_power_entity_id: str?
+    battery_power_entity_id: str?
+    battery_soc_entity_id: str?
+    pv_installed_kwp: float(0,1000)
+    pv_energy_today_entity_id: str?
+    home_energy_today_entity_id: str?
+    grid_import_today_entity_id: str?
+    grid_export_today_entity_id: str?

@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.101"
+APP_VERSION = "0.3.103"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 STATIC_ROOT = Path("/app/static")
@@ -235,6 +235,19 @@ def _load_options() -> dict[str, Any]:
             "topic_availability": "e-tendeintelligenti/availability",
             "stale_seconds": 180,
         },
+        "energy": {
+            "enabled": True,
+            "pv_power_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
+            "home_power_entity_id": "",
+            "grid_power_entity_id": "",
+            "battery_power_entity_id": "",
+            "battery_soc_entity_id": "",
+            "pv_installed_kwp": 6.6,
+            "pv_energy_today_entity_id": "",
+            "home_energy_today_entity_id": "",
+            "grid_import_today_entity_id": "",
+            "grid_export_today_entity_id": "",
+        },
     }
     if not OPTIONS_FILE.exists():
         return defaults
@@ -259,6 +272,8 @@ def _load_options() -> dict[str, Any]:
         defaults["air_quality"].update(payload["air_quality"])
     if isinstance(payload.get("tende_map"), dict):
         defaults["tende_map"].update(payload["tende_map"])
+    if isinstance(payload.get("energy"), dict):
+        defaults["energy"].update(payload["energy"])
     if isinstance(payload.get("overlay"), dict):
         defaults["overlay"].update(payload["overlay"])
     # Local overrides are owned by addon UI and persist independently from HA-managed options.
@@ -277,6 +292,8 @@ def _load_options() -> dict[str, Any]:
         defaults["air_quality"].update(local["air_quality"])
     if isinstance(local.get("tende_map"), dict):
         defaults["tende_map"].update(local["tende_map"])
+    if isinstance(local.get("energy"), dict):
+        defaults["energy"].update(local["energy"])
     if isinstance(local.get("overlay"), dict):
         defaults["overlay"].update(local["overlay"])
     defaults["interval_minutes"] = max(1, min(1440, int(defaults.get("interval_minutes", 15) or 15)))
@@ -804,6 +821,97 @@ def _normalize_pressure_to_hpa(value: Any, unit: Any) -> float | None:
     if u in {"mmhg", "mm hg"}:
         return v * 1.3332236842
     return v
+
+
+def _normalize_power_to_w(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"w", "watt", "watts"}:
+        return v
+    if u in {"kw", "kilowatt", "kilowatts"}:
+        return v * 1000.0
+    if u in {"mw"}:
+        return v * 1000000.0
+    return v
+
+
+def _normalize_energy_to_kwh(value: Any, unit: Any) -> float | None:
+    v = _to_float_or_none(value)
+    if v is None:
+        return None
+    u = str(unit or "").strip().lower()
+    if u in {"kwh"}:
+        return v
+    if u in {"wh"}:
+        return v / 1000.0
+    if u in {"mwh"}:
+        return v * 1000.0
+    return v
+
+
+def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
+    e_cfg = cfg.get("energy") or {}
+    out: dict[str, Any] = {
+        "ok": False,
+        "enabled": bool(e_cfg.get("enabled", True)),
+        "entities": {},
+        "normalized": {
+            "pv_power_w": None,
+            "home_power_w": None,
+            "grid_power_w": None,
+            "battery_power_w": None,
+            "battery_soc_pct": None,
+            "pv_installed_kwp": _to_float_or_none(e_cfg.get("pv_installed_kwp")),
+            "pv_energy_today_kwh": None,
+            "home_energy_today_kwh": None,
+            "grid_import_today_kwh": None,
+            "grid_export_today_kwh": None,
+        },
+        "errors": {},
+    }
+    if not out["enabled"]:
+        return out
+
+    entity_keys = (
+        "pv_power_entity_id",
+        "home_power_entity_id",
+        "grid_power_entity_id",
+        "battery_power_entity_id",
+        "battery_soc_entity_id",
+        "pv_energy_today_entity_id",
+        "home_energy_today_entity_id",
+        "grid_import_today_entity_id",
+        "grid_export_today_entity_id",
+    )
+    for key in entity_keys:
+        ent = str(e_cfg.get(key) or "").strip()
+        if not ent:
+            out["entities"][key] = {"ok": False, "entity_id": "", "error": "empty_entity_id"}
+            continue
+        st = _fetch_ha_entity_state(ent)
+        if not st or not st.get("ok"):
+            out["entities"][key] = st or {"ok": False, "entity_id": ent, "error": "read_failed"}
+            out["errors"][key] = (st or {}).get("error", "read_failed")
+            continue
+        out["entities"][key] = st
+
+    def _val(k: str) -> tuple[Any, Any]:
+        st = out["entities"].get(k) or {}
+        return st.get("value"), st.get("unit")
+
+    out["normalized"]["pv_power_w"] = _normalize_power_to_w(*_val("pv_power_entity_id"))
+    out["normalized"]["home_power_w"] = _normalize_power_to_w(*_val("home_power_entity_id"))
+    out["normalized"]["grid_power_w"] = _normalize_power_to_w(*_val("grid_power_entity_id"))
+    out["normalized"]["battery_power_w"] = _normalize_power_to_w(*_val("battery_power_entity_id"))
+    out["normalized"]["battery_soc_pct"] = _to_float_or_none((out["entities"].get("battery_soc_entity_id") or {}).get("value"))
+    out["normalized"]["pv_energy_today_kwh"] = _normalize_energy_to_kwh(*_val("pv_energy_today_entity_id"))
+    out["normalized"]["home_energy_today_kwh"] = _normalize_energy_to_kwh(*_val("home_energy_today_entity_id"))
+    out["normalized"]["grid_import_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_import_today_entity_id"))
+    out["normalized"]["grid_export_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_export_today_entity_id"))
+    out["ok"] = out["normalized"]["pv_power_w"] is not None
+    return out
 
 
 def _weather_payload_ts(payload: dict[str, Any] | None) -> float | None:
@@ -2307,7 +2415,136 @@ async def data():
     payload["tende_map"] = _build_tende_map_snapshot(cfg)
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
     payload["weather_guard"] = _build_weather_guard(payload, cfg)
+    payload["energy"] = _build_energy_snapshot(cfg)
     return JSONResponse(payload)
+
+
+@app.get("/api/data_demo")
+async def data_demo():
+    now_local = datetime.now().astimezone().isoformat()
+    # Prefer real snapshot when available, but never fail the demo endpoint.
+    if DATA_FILE.exists():
+        try:
+            payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+            payload = _attach_weather_cache_for_guard(payload)
+            cfg = _load_options()
+            payload["tende_map"] = _build_tende_map_snapshot(cfg)
+            payload["weather_station"] = _build_weather_station_snapshot(cfg)
+            payload["weather_guard"] = _build_weather_guard(payload, cfg)
+            payload["energy"] = _build_energy_snapshot(cfg)
+            payload["demo_mode"] = True
+            payload["demo_source"] = "live_snapshot"
+            return JSONResponse(payload)
+        except Exception:
+            pass
+    # Guaranteed fallback for customer demo.
+    fallback = {
+        "timestamp_local": now_local,
+        "timezone": "Europe/Rome",
+        "coordinates_source": "demo",
+        "coordinates": {"latitude": 44.6973, "longitude": 7.8683},
+        "sun_position": {"azimuth_compass_deg": 245.0, "altitude_deg": 34.0},
+        "external_temp_live": {"ok": True, "value": 24.2, "unit": "°C"},
+        "external_humidity_live": {"ok": True, "value": 48.0, "unit": "%"},
+        "pv_live": {"ok": True, "watts": 4200.0, "unit": "W"},
+        "weather": {
+            "ok": True,
+            "provider": "met",
+            "normalized": {
+                "time": now_local,
+                "air_temperature_c": 20.4,
+                "relative_humidity_pct": 52.0,
+                "wind_speed_ms": 2.2,
+                "wind_gust_ms": 3.4,
+                "wind_from_direction_deg": 118.0,
+                "air_pressure_hpa": 1012.0,
+                "cloud_area_fraction_pct": 22.0,
+                "uv_index": 3.0,
+                "symbol_code": "fair_day",
+                "precipitation_next_1h_mm": 0.0,
+            },
+        },
+        "weather_open_meteo": {
+            "ok": True,
+            "provider": "open_meteo",
+            "normalized": {
+                "time": now_local,
+                "air_temperature_c": 20.8,
+                "relative_humidity_pct": 50.0,
+                "wind_speed_ms": 2.4,
+                "wind_gust_ms": 3.3,
+                "wind_from_direction_deg": 124.0,
+                "air_pressure_hpa": 1011.8,
+                "cloud_area_fraction_pct": 18.0,
+                "uv_index": 3.6,
+                "symbol_code": 1,
+                "precipitation_next_1h_mm": 0.0,
+            },
+        },
+        "weather_station": {
+            "ok": True,
+            "enabled": True,
+            "source": "e-Control",
+            "normalized": {
+                "wind_speed_ms": 1.8,
+                "wind_gust_ms": 2.9,
+                "wind_from_direction_deg": 112.0,
+                "rain_rate_mm_h": 0.0,
+                "rain_1h_mm": 0.0,
+                "air_temperature_c": 24.6,
+                "relative_humidity_pct": 46.0,
+                "air_pressure_hpa": 984.2,
+                "uv_index": 2.0,
+                "dew_point_c": 11.6,
+                "feels_like_temperature_c": 24.6,
+                "solar_lux_lx": 38200.0,
+                "solar_radiation_w_m2": 305.0,
+                "vapour_pressure_deficit_hpa": 15.0,
+                "precipitation_next_1h_mm": 0.0,
+            },
+            "entities_all": [],
+        },
+        "weather_guard": {
+            "ok": True,
+            "enabled": True,
+            "wind_speed_ms": 2.2,
+            "wind_gust_ms": 3.4,
+            "wind_dir_deg": 118.0,
+            "rain_rate_mm_h": 0.0,
+            "rain_1h_mm": 0.0,
+            "facade_rain_risk": False,
+            "wind_alarm": False,
+            "rain_alarm": False,
+            "severe_weather_alarm": False,
+            "updated_at": now_local,
+            "station": {"enabled": True, "ok": True, "used": True, "error": None, "age_seconds": 0.0},
+            "stale": False,
+            "age_seconds": 0.0,
+            "source": "weather_station_demo",
+        },
+        "energy": {
+            "ok": True,
+            "enabled": True,
+            "entities": {},
+            "normalized": {
+                "pv_power_w": 4200.0,
+                "home_power_w": 1580.0,
+                "grid_power_w": 1400.0,
+                "battery_power_w": 1220.0,
+                "battery_soc_pct": 74.0,
+                "pv_installed_kwp": 6.6,
+                "pv_energy_today_kwh": 26.5,
+                "home_energy_today_kwh": 45.2,
+                "grid_import_today_kwh": 18.7,
+                "grid_export_today_kwh": 9.1,
+            },
+            "errors": {},
+        },
+        "tende_map": {"ok": True, "availability": "online", "stale": False, "updated_at": now_local, "source": "demo", "shades": [], "cover_states": {}},
+        "demo_mode": True,
+        "demo_source": "fallback_payload",
+    }
+    return JSONResponse(fallback)
 
 
 @app.get("/api/weather/guard")
@@ -2604,7 +2841,7 @@ async def options_set_base(payload: dict):
     if not isinstance(payload, dict):
         return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
 
-    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "weather", "weather_station", "weather_guard", "air_quality", "tende_map")
+    keys = ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id", "weather", "weather_station", "weather_guard", "air_quality", "tende_map", "energy")
 
     raw = _load_local_options_raw()
     for k in keys:

@@ -2,11 +2,11 @@
   <div class="wrap">
     <transition name="splash-fade">
       <div v-if="showSplash" class="splash-screen">
-        <img :src="tab==='user_public' ? logoEtende : logoMain" alt="Splash logo" class="splash-logo" />
+        <img :src="(tab==='user_public' || tab==='energy_public') ? logoEtende : logoMain" alt="Splash logo" class="splash-logo" />
       </div>
     </transition>
 
-    <header class="topbar" v-if="tab!=='user_public'">
+    <header class="topbar" v-if="tab!=='user_public' && tab!=='energy_public'">
       <div class="brand">
         <img :src="logoMain" alt="e-SunMind logo" class="brand-logo" />
         <span>e-SunMind <small class="brand-version">v{{ appVersion }}</small></span>
@@ -14,6 +14,7 @@
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
         <a class="btn ghost" href="?view=user">UI User</a>
+        <a class="btn ghost" href="?view=energy">Energy</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -82,6 +83,40 @@
         <div class="up-card"><h4>Weather Guard</h4><div>Stato: <strong>{{ weatherGuardOk ? 'ATTIVO' : 'OFF' }}</strong></div><div>Vento: <strong>{{ weatherGuardWindAlarm ? 'ALLARME' : 'ok' }}</strong></div><div>Pioggia: <strong>{{ weatherGuardRainAlarm ? 'ALLARME' : 'ok' }}</strong></div></div>
         <div class="up-card"><h4>Termoregolazione</h4><div>Temperatura interna: <strong>{{ fmt(externalTempC) }}°C</strong></div><div>Umidita interna: <strong>{{ fmt(externalHumidityPct) }}%</strong></div></div>
         <div class="up-card"><h4>Fotovoltaico</h4><div>Reale: <strong>{{ fmt0(pvMeasuredW) }} W</strong></div><div>Atteso: <strong>{{ fmt0(pvForecastNowW) }} W</strong></div><div>Rapporto: <strong>{{ fmt2(pvLiveRatio) }}</strong></div></div>
+      </div>
+    </div>
+
+    <div v-show="tab==='energy_public'" class="energy-public">
+      <div class="energy-hero">
+        <div class="energy-status">Status: <strong>{{ energyEnabled ? 'Normal' : 'Spento' }}</strong></div>
+        <div class="energy-temp">{{ fmt(externalTempC) }}°C</div>
+      </div>
+      <div class="energy-flow">
+        <div class="energy-node">
+          <div class="energy-node-title">FV</div>
+          <div class="energy-node-val">{{ fmtKw(energyPvPowerW) }} kW</div>
+        </div>
+        <div class="energy-node">
+          <div class="energy-node-title">Casa</div>
+          <div class="energy-node-val">{{ fmtKw(energyHomePowerW) }} kW</div>
+        </div>
+        <div class="energy-node">
+          <div class="energy-node-title">Rete</div>
+          <div class="energy-node-val">{{ fmtKw(energyGridPowerW) }} kW</div>
+        </div>
+        <div class="energy-node">
+          <div class="energy-node-title">Batteria</div>
+          <div class="energy-node-val">{{ fmtKw(energyBatteryPowerW) }} kW</div>
+          <div class="energy-node-sub">SOC {{ fmt(energyBatterySocPct) }}%</div>
+        </div>
+      </div>
+      <div class="energy-kpi-grid">
+        <div class="energy-kpi"><span>Real-time Power</span><strong>{{ fmtKw(energyPvPowerW) }} kW</strong></div>
+        <div class="energy-kpi"><span>Installed Power</span><strong>{{ fmt(energyInstalledKwp) }} kWp</strong></div>
+        <div class="energy-kpi"><span>Produzione Oggi</span><strong>{{ fmt(energyPvTodayKwh) }} kWh</strong></div>
+        <div class="energy-kpi"><span>Consumo Oggi</span><strong>{{ fmt(energyHomeTodayKwh) }} kWh</strong></div>
+        <div class="energy-kpi"><span>Import Rete Oggi</span><strong>{{ fmt(energyGridImportTodayKwh) }} kWh</strong></div>
+        <div class="energy-kpi"><span>Export Rete Oggi</span><strong>{{ fmt(energyGridExportTodayKwh) }} kWh</strong></div>
       </div>
     </div>
 
@@ -987,6 +1022,45 @@
         </section>
 
         <section class="card">
+          <h3>Energy</h3>
+          <div class="form-grid">
+            <label>Enabled
+              <input type="checkbox" v-model="energyForm.enabled" />
+            </label>
+            <label>PV power entity id
+              <input type="text" v-model="energyForm.pv_power_entity_id" />
+            </label>
+            <label>Home power entity id
+              <input type="text" v-model="energyForm.home_power_entity_id" />
+            </label>
+            <label>Grid power entity id
+              <input type="text" v-model="energyForm.grid_power_entity_id" />
+            </label>
+            <label>Battery power entity id
+              <input type="text" v-model="energyForm.battery_power_entity_id" />
+            </label>
+            <label>Battery SOC entity id
+              <input type="text" v-model="energyForm.battery_soc_entity_id" />
+            </label>
+            <label>PV installed kWp
+              <input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" />
+            </label>
+            <label>PV energy today entity id
+              <input type="text" v-model="energyForm.pv_energy_today_entity_id" />
+            </label>
+            <label>Home energy today entity id
+              <input type="text" v-model="energyForm.home_energy_today_entity_id" />
+            </label>
+            <label>Grid import today entity id
+              <input type="text" v-model="energyForm.grid_import_today_entity_id" />
+            </label>
+            <label>Grid export today entity id
+              <input type="text" v-model="energyForm.grid_export_today_entity_id" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
           <h3>Weather Guard</h3>
           <p class="note">
             Qui imposti quando e-SunMind deve segnalare pericolo meteo a e-Tende.
@@ -1274,6 +1348,19 @@ const tendeMapForm = ref({
   topic_state: 'e-tendeintelligenti/map/shades',
   topic_availability: 'e-tendeintelligenti/availability',
   stale_seconds: 180,
+})
+const energyForm = ref({
+  enabled: true,
+  pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
+  home_power_entity_id: '',
+  grid_power_entity_id: '',
+  battery_power_entity_id: '',
+  battery_soc_entity_id: '',
+  pv_installed_kwp: 6.6,
+  pv_energy_today_entity_id: '',
+  home_energy_today_entity_id: '',
+  grid_import_today_entity_id: '',
+  grid_export_today_entity_id: '',
 })
 const baseForm = ref({
   latitude: 44.6973,
@@ -1653,6 +1740,18 @@ const pvLiveRatio = computed(() => {
   if (!Number.isFinite(m) || !Number.isFinite(f) || f <= 0) return 0.7
   return Math.max(0, Math.min(1.25, m / f))
 })
+const energyNorm = computed(() => data.value?.energy?.normalized || null)
+const energyEnabled = computed(() => Boolean(data.value?.energy?.enabled ?? energyForm.value.enabled))
+const energyPvPowerW = computed(() => Number.isFinite(Number(energyNorm.value?.pv_power_w)) ? Number(energyNorm.value?.pv_power_w) : null)
+const energyHomePowerW = computed(() => Number.isFinite(Number(energyNorm.value?.home_power_w)) ? Number(energyNorm.value?.home_power_w) : null)
+const energyGridPowerW = computed(() => Number.isFinite(Number(energyNorm.value?.grid_power_w)) ? Number(energyNorm.value?.grid_power_w) : null)
+const energyBatteryPowerW = computed(() => Number.isFinite(Number(energyNorm.value?.battery_power_w)) ? Number(energyNorm.value?.battery_power_w) : null)
+const energyBatterySocPct = computed(() => Number.isFinite(Number(energyNorm.value?.battery_soc_pct)) ? Number(energyNorm.value?.battery_soc_pct) : null)
+const energyInstalledKwp = computed(() => Number.isFinite(Number(energyNorm.value?.pv_installed_kwp)) ? Number(energyNorm.value?.pv_installed_kwp) : Number(energyForm.value.pv_installed_kwp || 0))
+const energyPvTodayKwh = computed(() => Number.isFinite(Number(energyNorm.value?.pv_energy_today_kwh)) ? Number(energyNorm.value?.pv_energy_today_kwh) : null)
+const energyHomeTodayKwh = computed(() => Number.isFinite(Number(energyNorm.value?.home_energy_today_kwh)) ? Number(energyNorm.value?.home_energy_today_kwh) : null)
+const energyGridImportTodayKwh = computed(() => Number.isFinite(Number(energyNorm.value?.grid_import_today_kwh)) ? Number(energyNorm.value?.grid_import_today_kwh) : null)
+const energyGridExportTodayKwh = computed(() => Number.isFinite(Number(energyNorm.value?.grid_export_today_kwh)) ? Number(energyNorm.value?.grid_export_today_kwh) : null)
 const weatherWindVec = computed(() => {
   const dir = Number(weatherWindDirDeg.value)
   const speed = Number(weatherWindMs.value)
@@ -1938,6 +2037,10 @@ function fmt2(v) {
 function fmt1(v) {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return '-'
   return Number(v).toFixed(1)
+}
+function fmtKw(w) {
+  if (w === null || w === undefined || Number.isNaN(Number(w))) return '-'
+  return (Number(w) / 1000).toFixed(2)
 }
 function xFromMinute(minute) {
   return 40 + (Number(minute) / 1440) * 640
@@ -3489,6 +3592,20 @@ async function loadData() {
         topic_availability: String(tmo.topic_availability || 'e-tendeintelligenti/availability'),
         stale_seconds: Number(tmo.stale_seconds ?? 180),
       }
+      const eo = oj?.energy || {}
+      energyForm.value = {
+        enabled: Boolean(eo.enabled ?? true),
+        pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+        home_power_entity_id: String(eo.home_power_entity_id || ''),
+        grid_power_entity_id: String(eo.grid_power_entity_id || ''),
+        battery_power_entity_id: String(eo.battery_power_entity_id || ''),
+        battery_soc_entity_id: String(eo.battery_soc_entity_id || ''),
+        pv_installed_kwp: Number(eo.pv_installed_kwp ?? 6.6),
+        pv_energy_today_entity_id: String(eo.pv_energy_today_entity_id || ''),
+        home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
+        grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
+        grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
+      }
       const ov = oj?.overlay || {}
       cfg.value = {
         pathRadiusM: Number(ov?.pathRadiusM ?? cfg.value.pathRadiusM ?? 102),
@@ -3622,6 +3739,19 @@ async function saveBaseSettings() {
         topic_availability: String(tendeMapForm.value.topic_availability || ''),
         stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
       },
+      energy: {
+        enabled: Boolean(energyForm.value.enabled),
+        pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
+        home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
+        grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
+        battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
+        battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
+        pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
+        pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
+        home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
+        grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
+        grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+      },
     }
     const r = await fetch('api/options/base', {
       method: 'POST',
@@ -3700,6 +3830,19 @@ async function saveAllSettings() {
         topic_state: String(tendeMapForm.value.topic_state || ''),
         topic_availability: String(tendeMapForm.value.topic_availability || ''),
         stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
+      },
+      energy: {
+        enabled: Boolean(energyForm.value.enabled),
+        pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
+        home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
+        grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
+        battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
+        battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
+        pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
+        pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
+        home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
+        grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
+        grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
       },
     }
     const overlayPayload = {
@@ -3789,13 +3932,14 @@ onMounted(() => {
     const qp = new URLSearchParams(window.location.search || '')
     const view = String(qp.get('view') || '').trim().toLowerCase()
     if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
+    if (view === 'energy' || view === 'ui-energy' || view === 'energy_public') tab.value = 'energy_public'
   } catch (_) {
     // no-op
   }
   // Failsafe splash: disabled on UI User for WebView stability.
   setTimeout(() => {
     showSplash.value = false
-  }, tab.value === 'user_public' ? 0 : 1200)
+  }, (tab.value === 'user_public' || tab.value === 'energy_public') ? 0 : 1200)
   try {
     const now = new Date()
     const total = (now.getHours() * 60) + now.getMinutes()
@@ -3810,7 +3954,7 @@ onMounted(() => {
     startWeatherAnimation()
     initBlockToggles()
     userAutoRefreshTimer = setInterval(() => {
-      if (tab.value === 'user' || tab.value === 'user_public') loadData()
+      if (tab.value === 'user' || tab.value === 'user_public' || tab.value === 'energy_public') loadData()
     }, userAutoRefreshMs)
   } catch (e) {
     console.error('onMounted init error', e)
@@ -4088,6 +4232,76 @@ input[type='range']{width:100%}
 .up-card{border:1px solid rgba(133,175,220,.22);border-radius:12px;background:rgba(5,14,25,.72);padding:12px;color:#b8cce3;display:grid;gap:6px}
 .up-card h4{margin:0 0 4px 0;color:#e8f2ff}
 .up-card strong{color:#fff}
+.energy-public{
+  padding:14px;
+  background:linear-gradient(180deg,#f2f4f8 0%,#ebedf2 100%);
+  min-height:100dvh;
+  color:#1f2733;
+}
+.energy-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
+}
+.energy-status{
+  font-size:18px;
+  font-weight:700;
+}
+.energy-temp{
+  font-size:32px;
+  font-weight:700;
+}
+.energy-flow{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(150px,1fr));
+  gap:10px;
+  margin-bottom:12px;
+}
+.energy-node{
+  border:1px solid #d6dbe5;
+  border-radius:14px;
+  background:#ffffff;
+  padding:14px;
+  box-shadow:0 4px 16px rgba(16,24,40,.06);
+}
+.energy-node-title{
+  font-size:13px;
+  color:#5b6574;
+  margin-bottom:6px;
+}
+.energy-node-val{
+  font-size:32px;
+  font-weight:700;
+  letter-spacing:-.5px;
+}
+.energy-node-sub{
+  font-size:13px;
+  color:#5b6574;
+  margin-top:4px;
+}
+.energy-kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(220px,1fr));
+  gap:10px;
+}
+.energy-kpi{
+  border:1px solid #d6dbe5;
+  border-radius:12px;
+  background:#ffffff;
+  padding:12px 14px;
+  display:grid;
+  gap:4px;
+}
+.energy-kpi span{
+  color:#5b6574;
+  font-size:13px;
+}
+.energy-kpi strong{
+  color:#121926;
+  font-size:28px;
+  letter-spacing:-.4px;
+}
 .panel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;padding:10px;background:#111722;border-top:1px solid var(--border)}
 .kpi{border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(10,15,22,.7);font-size:13px}
 .source-panel{grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px;align-items:start}
@@ -4560,6 +4774,30 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .up-card{
     padding:10px;
+  }
+  .energy-public{
+    padding:10px;
+  }
+  .energy-hero{
+    margin-bottom:10px;
+  }
+  .energy-status{
+    font-size:15px;
+  }
+  .energy-temp{
+    font-size:26px;
+  }
+  .energy-flow{
+    grid-template-columns:1fr 1fr;
+  }
+  .energy-node-val{
+    font-size:26px;
+  }
+  .energy-kpi-grid{
+    grid-template-columns:1fr;
+  }
+  .energy-kpi strong{
+    font-size:24px;
   }
   .metric-row{
     flex-direction:column;

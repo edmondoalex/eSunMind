@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.103
+
+- Nuova pagina dedicata `Energy` per UI User, accessibile via `?view=energy` (layout senza pulsanti locali di navigazione).
+- Dashboard energia con potenze realtime (FV, casa, rete, batteria), SOC batteria e KPI giornalieri.
+- Nuova sezione `Setting > Energy` per taratura entita Home Assistant:
+  `pv_power`, `home_power`, `grid_power`, `battery_power`, `battery_soc`,
+  `pv_energy_today`, `home_energy_today`, `grid_import_today`, `grid_export_today`, `pv_installed_kwp`.
+- Backend esteso con snapshot energia (`payload.energy`) e normalizzazione unita W/kW e Wh/kWh.
+
 ## 0.3.101
 
 - Fix layout smartphone UI User (`?view=user`): ridisegnati breakpoint mobile per logo, mappa, controlli simulazione e card KPI.

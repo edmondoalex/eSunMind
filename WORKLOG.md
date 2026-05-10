@@ -1,5 +1,13 @@
 # WORKLOG
 
+## 2026-05-10
+- Aggiunta nuova pagina UI User `Energy` (query `?view=energy`) separata dal flusso meteo/mappa.
+- Implementata vista energia senza pulsanti interni con KPI produzione/consumo/rete/batteria e SOC.
+- Aggiunta sezione `Setting > Energy` per mappare tutte le entita energetiche HA.
+- Backend: aggiunto snapshot `energy` in `/api/data` e `/api/data_demo` con normalizzazione potenza/energia.
+- Estesi defaults/salvataggio opzioni addon (`energy`) e schema `config.yaml`.
+- Bump versione addon a `0.3.103` con changelog aggiornato.
+
 ## 2026-05-08
 - UI User mobile: fix completo layout smartphone (`view=user_public`) con regole responsive dedicate.
 - Migliorati proporzioni header/logo, altezza mappa, ordine blocchi, slider timeline e griglia toggle su schermi <=768px.
