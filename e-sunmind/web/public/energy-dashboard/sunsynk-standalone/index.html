@@ -3,35 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sunsynk Standalone - Full Layout</title>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <title>Sunsynk Full Standalone</title>
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <div class="wrap">
-    <div class="board">
-      <div class="header">EA SAS - SUNSYNK STANDALONE</div>
-      <svg id="flow-layer" viewBox="0 0 1200 675" preserveAspectRatio="none"></svg>
-      <div class="cards">
-        <div class="col">
-          <div class="card node"><div class="icon gold" data-icon="sun"></div><div><div class="label">Solar</div><div class="value gold" id="solar-value">0 W</div></div></div>
-          <div class="card node"><div class="icon gold" data-icon="zap"></div><div><div class="label">PV String 1</div><div class="value gold" id="pv1-value">0 W</div></div></div>
-          <div class="card node"><div class="icon gold" data-icon="zap"></div><div><div class="label">PV String 2</div><div class="value gold" id="pv2-value">0 W</div></div></div>
-        </div>
-        <div class="col">
-          <div class="card node"><div class="icon slate" data-icon="cpu"></div><div><div class="label">Inverter</div><div class="value slate" id="inverter-value">0 W</div></div></div>
-          <div class="card node"><div class="icon violet" data-icon="battery"></div><div><div class="label">Battery</div><div class="value violet" id="battery-value">0 W</div><div class="small" id="battery-soc">SOC 0%</div></div></div>
-          <div class="card node"><div class="icon slate" data-icon="home"></div><div><div class="label">Load</div><div class="value slate" id="load-value">0 W</div></div></div>
-        </div>
-        <div class="col">
-          <div class="card node"><div class="icon cyan" data-icon="tower"></div><div><div class="label">Grid</div><div class="value cyan" id="grid-value">0 W</div></div></div>
-          <div class="card"><div class="label">Flow Status</div><div class="small" id="status-line">Pronto</div></div>
-          <div class="card"><div class="label">Debug durations</div><div class="small" id="debug-line">solar: -, battery: -, grid: -</div></div>
-        </div>
-      </div>
+    <div class="card">
+      <svg id="sunsynk" viewBox="0 0 720 405" preserveAspectRatio="xMidYMid meet">
+        <g id="solar" transform="translate(22,10)">
+          <text x="0" y="20" class="lbl">SOLAR</text>
+          <text x="0" y="42" class="val solar" id="solar_val">0 W</text>
+          <rect x="0" y="54" width="70" height="24" rx="4.5" class="box solar-stroke"></rect>
+          <text x="35" y="71" class="small" text-anchor="middle" id="pv1_val">0 W</text>
+          <rect x="101" y="54" width="70" height="24" rx="4.5" class="box solar-stroke"></rect>
+          <text x="136" y="71" class="small" text-anchor="middle" id="pv2_val">0 W</text>
+        </g>
+
+        <g id="inverter" transform="translate(279,250)">
+          <rect x="-35" y="-18" width="70" height="30" rx="4.5" class="box inv-stroke"></rect>
+          <text x="0" y="2" class="small" text-anchor="middle" id="inv_val">0 W</text>
+        </g>
+
+        <g id="battery" transform="translate(24,286)">
+          <text x="0" y="0" class="lbl">BATTERY</text>
+          <text x="0" y="22" class="val battery" id="bat_val">0 W</text>
+          <text x="0" y="40" class="small" id="bat_soc">SOC 0%</text>
+        </g>
+
+        <g id="load" transform="translate(540,122)">
+          <rect x="-35" y="-18" width="70" height="30" rx="4.5" class="box load-stroke"></rect>
+          <text x="0" y="2" class="small" text-anchor="middle" id="load_val">0 W</text>
+          <text x="-20" y="44" class="lbl">LOAD</text>
+        </g>
+
+        <g id="grid" transform="translate(650,310)">
+          <rect x="-35" y="-18" width="70" height="30" rx="4.5" class="box grid-stroke"></rect>
+          <text x="0" y="2" class="small" text-anchor="middle" id="grid_val">0 W</text>
+          <text x="-14" y="44" class="lbl">GRID</text>
+        </g>
+
+        <g id="flows"></g>
+      </svg>
     </div>
   </div>
   <script src="./script.js"></script>
 </body>
 </html>
-
