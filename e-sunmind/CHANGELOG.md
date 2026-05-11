@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.114
+
+- Energy Dashboard: ridotto affollamento UI con gerarchia visiva piu netta (label piu piccole, valori principali piu grandi) e rimozione overlap testi.
+- Layout convertito in griglia fissa 3 colonne (`Solar/Legnaia` | `Inverter/Battery/Status` | `CED/Consumo/Grid`) per lettura immediata.
+- Flussi SVG rifiniti: linee piu sottili (max ~3px), curve morbide e animazione `stroke-dasharray` in stile trailing light.
+- Card uniformate in glassmorphism high-end: `backdrop-filter: blur(10px)`, gradiente leggero, bordo 1px con opacita 20%.
+- Icone integrate nei box con glow coerente al flusso energetico associato (gold/violet/cyan/slate).
+
 ## 0.3.113
 
 - Energy Dashboard: sostituita pagina `/energy-dashboard` con versione single-file HTML5 Neon Cyberpunk (Tailwind CDN + Framer Motion).

@@ -1,6 +1,13 @@
 # WORKLOG
 
 ## 2026-05-11
+- Energy Dashboard: applicato refactor visuale \"Cyber-Tech\" richiesto per ridurre clutter e aumentare leggibilita.
+- Gerarchia/spacing corretti: ogni valore principale (kW, V, Hz) confinato nella propria glass-card, niente overlap tra testi.
+- Flussi SVG rifiniti: spessore ridotto (max ~3px), curve morbide e animazione trailing-light via `stroke-dasharray`.
+- Card glassmorphism uniformate con `blur(10px)`, gradiente leggero e bordo 1px a opacita 20%.
+- Layout forzato su griglia chiara a 3 colonne (sinistra solar/legnaia, centro inverter/battery/status, destra CED/consumi/grid).
+- Bump versione addon a `0.3.114` con changelog aggiornato.
+
 - Energy Dashboard: sostituito `web/public/energy-dashboard/index.html` con nuova UI single-file Neon Cyberpunk (Tailwind CDN + Framer Motion).
 - Layout allineato al mock con nodi glassmorphism e flussi SVG neon animati (solare giallo, pannelli giallo chiaro, batteria viola, consumi bianco/blu-grigio, rete ciano).
 - Aggiunta responsivita completa con scaling dinamico della scena per desktop/tablet/mobile, preservando geometria e proporzioni originali.
