@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.126
+
+- Fix segni potenza in dashboard Sunsynk: aggiunti toggle in Setting > Energy per invertire convenzione Grid e Battery.
+- Nuove opzioni: invert_grid_sign e invert_battery_sign salvate in configurazione addon.
+- Wrapper energy applica i toggle in tempo reale sul mapping da /api/data (grid_power_w, attery_power_w).
+
 ## 0.3.125
 
 - Setting > Energy: estesa la customizzazione completa della Sunsynk card senza JSON manuale.

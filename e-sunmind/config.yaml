@@ -1,7 +1,7 @@
-﻿name: e-SunMind
+name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.125"
+version: "0.3.126"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -94,6 +94,8 @@ options:
     home_energy_today_entity_id: ""
     grid_import_today_entity_id: ""
     grid_export_today_entity_id: ""
+    invert_grid_sign: false
+    invert_battery_sign: false
     sunsynk_card_config_json: ""
 schema:
   log_level: list(trace|debug|info|warning|error)
@@ -172,6 +174,8 @@ schema:
     home_energy_today_entity_id: str?
     grid_import_today_entity_id: str?
     grid_export_today_entity_id: str?
+    invert_grid_sign: bool
+    invert_battery_sign: bool
     sunsynk_card_config_json: str?
 
 

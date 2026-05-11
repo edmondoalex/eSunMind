@@ -103,6 +103,7 @@
       grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
       entities: { ...sensorIds },
     };
+    const signFix = { grid: 1, battery: 1 };
 
     function deepMerge(target, src) {
       if (!src || typeof src !== 'object') return target;
@@ -122,6 +123,9 @@
         const r = await fetch('../api/options', { cache: 'no-store' });
         if (!r.ok) return;
         const j = await r.json();
+        const e = j?.energy || {};
+        signFix.grid = e?.invert_grid_sign ? -1 : 1;
+        signFix.battery = e?.invert_battery_sign ? -1 : 1;
         const raw = j?.energy?.sunsynk_card_config_json;
         if (!raw) return;
         const parsed = JSON.parse(String(raw));
@@ -241,9 +245,9 @@
         const n = j?.energy?.normalized || {};
 
         const solarPower = Number(n.pv_power_w ?? 0);
-        const batteryPower = Number(n.battery_power_w ?? 0);
+        const batteryPower = Number(n.battery_power_w ?? 0) * signFix.battery;
         const batterySoc = Number(n.battery_soc_pct ?? 0);
-        const gridPower = Number(n.grid_power_w ?? 0);
+        const gridPower = Number(n.grid_power_w ?? 0) * signFix.grid;
         const inverterPower = Number(n.home_power_w ?? 0);
 
         // campi opzionali: usa valore corrente se non disponibili

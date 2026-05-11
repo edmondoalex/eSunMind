@@ -1,4 +1,4 @@
-ï»¿import asyncio
+import asyncio
 import hashlib
 import json
 import os
@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.125"
+APP_VERSION = "0.3.126"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -249,6 +249,8 @@ def _load_options() -> dict[str, Any]:
             "home_energy_today_entity_id": "",
             "grid_import_today_entity_id": "",
             "grid_export_today_entity_id": "",
+            "invert_grid_sign": False,
+            "invert_battery_sign": False,
             "sunsynk_card_config_json": "",
         },
     }
@@ -1968,11 +1970,11 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
         "sw_version": APP_VERSION,
     }
     sensors = [
-        ("sun_altitude", "Sun Altitude", "Â°", None, "measurement"),
-        ("sun_azimuth", "Sun Azimuth", "Â°", None, "measurement"),
-        ("sun_azimuth_compass", "Sun Azimuth Compass", "Â°", None, "measurement"),
-        ("moon_altitude", "Moon Altitude", "Â°", None, "measurement"),
-        ("moon_azimuth", "Moon Azimuth", "Â°", None, "measurement"),
+        ("sun_altitude", "Sun Altitude", "°", None, "measurement"),
+        ("sun_azimuth", "Sun Azimuth", "°", None, "measurement"),
+        ("sun_azimuth_compass", "Sun Azimuth Compass", "°", None, "measurement"),
+        ("moon_altitude", "Moon Altitude", "°", None, "measurement"),
+        ("moon_azimuth", "Moon Azimuth", "°", None, "measurement"),
         ("moon_fraction", "Moon Illumination", "%", None, "measurement"),
         ("moon_phase", "Moon Phase", None, None, "measurement"),
         ("pv_today_wh", "PV Forecast Today", "Wh", "energy", "total"),
@@ -1980,21 +1982,21 @@ def _mqtt_publish_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
         ("pv_now_w", "PV Forecast Current", "W", "power", "measurement"),
         ("pv_live_w", "PV Real Power", "W", "power", "measurement"),
         ("pv_live_ratio", "PV Real/Forecast Ratio", None, None, "measurement"),
-        ("external_temp_c", "External Temperature Real", "Â°C", "temperature", "measurement"),
-        ("weather_temp_c", "Weather Temperature", "Â°C", "temperature", "measurement"),
+        ("external_temp_c", "External Temperature Real", "°C", "temperature", "measurement"),
+        ("weather_temp_c", "Weather Temperature", "°C", "temperature", "measurement"),
         ("weather_humidity_pct", "Weather Humidity", "%", "humidity", "measurement"),
         ("weather_pressure_hpa", "Weather Pressure", "hPa", "atmospheric_pressure", "measurement"),
         ("weather_cloud_pct", "Weather Cloud Cover", "%", None, "measurement"),
         ("weather_wind_ms", "Weather Wind Speed", "m/s", "wind_speed", "measurement"),
-        ("weather_wind_dir_deg", "Weather Wind Direction", "Â°", None, "measurement"),
+        ("weather_wind_dir_deg", "Weather Wind Direction", "°", None, "measurement"),
         ("weather_precip_1h_mm", "Weather Rain Next 1h", "mm", "precipitation", "measurement"),
         ("weather_uv_index", "Weather UV Index", None, None, "measurement"),
         ("airq_eu_aqi", "Air Quality EU AQI", None, "aqi", "measurement"),
         ("airq_us_aqi", "Air Quality US AQI", None, "aqi", "measurement"),
-        ("airq_pm25", "Air Quality PM2.5", "Âµg/mÂ³", "pm25", "measurement"),
-        ("airq_pm10", "Air Quality PM10", "Âµg/mÂ³", "pm10", "measurement"),
-        ("airq_no2", "Air Quality NO2", "Âµg/mÂ³", "nitrogen_dioxide", "measurement"),
-        ("airq_o3", "Air Quality O3", "Âµg/mÂ³", "ozone", "measurement"),
+        ("airq_pm25", "Air Quality PM2.5", "µg/m³", "pm25", "measurement"),
+        ("airq_pm10", "Air Quality PM10", "µg/m³", "pm10", "measurement"),
+        ("airq_no2", "Air Quality NO2", "µg/m³", "nitrogen_dioxide", "measurement"),
+        ("airq_o3", "Air Quality O3", "µg/m³", "ozone", "measurement"),
     ]
     for key, name, unit, dclass, state_class in sensors:
         topic = f"{prefix}/sensor/sunmind/{key}/config"
@@ -2448,7 +2450,7 @@ async def data_demo():
         "coordinates_source": "demo",
         "coordinates": {"latitude": 44.6973, "longitude": 7.8683},
         "sun_position": {"azimuth_compass_deg": 245.0, "altitude_deg": 34.0},
-        "external_temp_live": {"ok": True, "value": 24.2, "unit": "Â°C"},
+        "external_temp_live": {"ok": True, "value": 24.2, "unit": "°C"},
         "external_humidity_live": {"ok": True, "value": 48.0, "unit": "%"},
         "pv_live": {"ok": True, "watts": 4200.0, "unit": "W"},
         "weather": {

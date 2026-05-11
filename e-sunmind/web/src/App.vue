@@ -1474,6 +1474,14 @@
             <label>Grid export today entity id
               <input type="text" v-model="energyForm.grid_export_today_entity_id" />
             </label>
+            <label>Inverti segno Grid
+              <input type="checkbox" v-model="energyForm.invert_grid_sign" />
+              <small>Attiva se il tuo sensore usa convenzione opposta (import/export invertiti).</small>
+            </label>
+            <label>Inverti segno Battery
+              <input type="checkbox" v-model="energyForm.invert_battery_sign" />
+              <small>Attiva se carica/scarica risultano invertite nella card.</small>
+            </label>
             <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
               <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
               <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
@@ -1783,6 +1791,8 @@ const energyForm = ref({
   home_energy_today_entity_id: '',
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
+  invert_grid_sign: false,
+  invert_battery_sign: false,
   sunsynk_card_config_json: '',
 })
 const energyWizardStep = ref(0)
@@ -4232,6 +4242,8 @@ async function loadData() {
         home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
+        invert_grid_sign: Boolean(eo.invert_grid_sign ?? false),
+        invert_battery_sign: Boolean(eo.invert_battery_sign ?? false),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
       }
       const wizardSeed = {
@@ -4476,6 +4488,8 @@ async function saveBaseSettings() {
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+        invert_grid_sign: Boolean(energyForm.value.invert_grid_sign),
+        invert_battery_sign: Boolean(energyForm.value.invert_battery_sign),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }
@@ -4570,6 +4584,8 @@ async function saveAllSettings() {
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+        invert_grid_sign: Boolean(energyForm.value.invert_grid_sign),
+        invert_battery_sign: Boolean(energyForm.value.invert_battery_sign),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }
