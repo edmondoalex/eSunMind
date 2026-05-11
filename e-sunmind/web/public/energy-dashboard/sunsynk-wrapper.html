@@ -118,6 +118,38 @@
       return target;
     }
 
+    function applyEnergyEntityFallbacks(e) {
+      cardConfig.entities = cardConfig.entities || {};
+      if (e?.home_power_entity_id) cardConfig.entities.inverter_power_175 = String(e.home_power_entity_id);
+      if (e?.grid_power_entity_id) {
+        cardConfig.entities.grid_power_169 = String(e.grid_power_entity_id);
+        cardConfig.entities.grid_ct_power_172 = String(e.grid_power_entity_id);
+      }
+      if (e?.battery_soc_entity_id) cardConfig.entities.battery_soc_184 = String(e.battery_soc_entity_id);
+      if (e?.battery_power_entity_id) cardConfig.entities.battery_power_190 = String(e.battery_power_entity_id);
+      if (e?.pv_power_entity_id) cardConfig.entities.pv1_power_186 = String(e.pv_power_entity_id);
+      if (e?.pv_energy_today_entity_id) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
+      if (e?.home_energy_today_entity_id) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
+      if (e?.grid_import_today_entity_id) cardConfig.entities.day_grid_import_76 = String(e.grid_import_today_entity_id);
+    }
+
+    function enforceTopologyFromConfig() {
+      cardConfig.solar = cardConfig.solar || {};
+      cardConfig.entities = cardConfig.entities || {};
+      const explicitMppts = Number(cardConfig.solar.mppts);
+      let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;
+      if (!Number.isFinite(mppts)) {
+        const hasPv2 = Boolean(String(cardConfig.entities.pv2_power_187 || '').trim());
+        mppts = hasPv2 ? 2 : 1;
+      }
+      cardConfig.solar.mppts = Math.max(1, Math.min(6, Math.round(mppts)));
+      if (cardConfig.solar.mppts === 1) {
+        cardConfig.entities.pv2_power_187 = '';
+        cardConfig.entities.pv2_voltage_111 = '';
+        cardConfig.entities.pv2_current_112 = '';
+      }
+    }
+
     async function loadCardConfigFromAddonOptions() {
       try {
         const r = await fetch('../api/options', { cache: 'no-store' });
@@ -128,14 +160,19 @@
         signFix.home = String(e?.home_power_sign || 'positive') === 'negative' ? -1 : 1;
         signFix.grid = String(e?.grid_power_sign || (e?.invert_grid_sign ? 'negative' : 'positive')) === 'negative' ? -1 : 1;
         signFix.battery = String(e?.battery_power_sign || (e?.invert_battery_sign ? 'negative' : 'positive')) === 'negative' ? -1 : 1;
+        applyEnergyEntityFallbacks(e);
         const raw = j?.energy?.sunsynk_card_config_json;
-        if (!raw) return;
-        const parsed = JSON.parse(String(raw));
-        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
-        cardConfig = deepMerge(cardConfig, parsed);
-        document.getElementById('status').textContent = 'Config card caricata da Setting > Energy';
+        if (raw) {
+          const parsed = JSON.parse(String(raw));
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            cardConfig = deepMerge(cardConfig, parsed);
+          }
+        }
+        enforceTopologyFromConfig();
+        document.getElementById('status').textContent = `Config card caricata (MPPT: ${cardConfig?.solar?.mppts || '?'})`;
       } catch (_) {
-        // ignore malformed JSON or temporary API errors
+        enforceTopologyFromConfig();
+        document.getElementById('status').textContent = 'Config card parziale: fallback applicato';
       }
     }
 
@@ -201,10 +238,16 @@
       };
 
       if (newData.solar_power != null) {
-        const pv1 = Number(newData.solar_power) * 0.52;
-        const pv2 = Number(newData.solar_power) * 0.48;
-        set(sensorIds.pv1_power_186, pv1.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
-        set(sensorIds.pv2_power_187, pv2.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+        const mppts = Number(cardConfig?.solar?.mppts || 2);
+        if (mppts <= 1) {
+          set(sensorIds.pv1_power_186, Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+          set(sensorIds.pv2_power_187, 0, 'W', { device_class: 'power', state_class: 'measurement' });
+        } else {
+          const pv1 = Number(newData.solar_power) * 0.52;
+          const pv2 = Number(newData.solar_power) * 0.48;
+          set(sensorIds.pv1_power_186, pv1.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+          set(sensorIds.pv2_power_187, pv2.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+        }
       }
       if (newData.battery_soc != null) set(sensorIds.battery_soc_184, newData.battery_soc, '%', { device_class: 'battery', state_class: 'measurement' });
       if (newData.battery_power != null) set(sensorIds.battery_power_190, newData.battery_power, 'W', { device_class: 'power', state_class: 'measurement' });

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.129
+
+- Fix topologia dashboard Sunsynk: ora il wrapper applica sempre la configurazione reale del wizard per MPPT/entita.
+- Se `solar.mppts=1` (o manca PV2), il secondo FV viene disattivato automaticamente.
+- Fallback robusto: anche con JSON card incompleto/malfomato, la dashboard non torna a 2 FV di default.
+
 ## 0.3.128
 
 - Setting > Energy: aggiunti flag segno `+/-` accanto alle entita di potenza (PV, Home, Grid, Battery).
