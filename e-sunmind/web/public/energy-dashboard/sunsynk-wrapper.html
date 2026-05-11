@@ -131,6 +131,8 @@
       }
       if (e?.battery_soc_entity_id) cardConfig.entities.battery_soc_184 = String(e.battery_soc_entity_id);
       if (e?.battery_power_entity_id) cardConfig.entities.battery_power_190 = String(e.battery_power_entity_id);
+      if (e?.inverter_voltage_entity_id) cardConfig.entities.inverter_voltage_154 = String(e.inverter_voltage_entity_id);
+      if (e?.load_frequency_entity_id) cardConfig.entities.load_frequency_192 = String(e.load_frequency_entity_id);
       if (e?.pv_power_entity_id) cardConfig.entities.pv1_power_186 = String(e.pv_power_entity_id);
       if (e?.pv_energy_today_entity_id) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
       if (e?.home_energy_today_entity_id) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
@@ -338,11 +340,13 @@
 
         // campi opzionali: usa valore corrente se non disponibili
         const inverterVoltage = Number(
+          j?.energy?.normalized?.inverter_voltage_v ??
           j?.energy?.inverter_voltage_v ??
           window.hass.states[entityId('inverter_voltage_154')]?.state ??
           231.5
         );
         const loadFrequency = Number(
+          j?.energy?.normalized?.load_frequency_hz ??
           j?.energy?.load_frequency_hz ??
           window.hass.states[entityId('load_frequency_192')]?.state ??
           50.0

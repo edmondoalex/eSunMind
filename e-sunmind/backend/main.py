@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.141"
+APP_VERSION = "0.3.142"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -248,6 +248,8 @@ def _load_options() -> dict[str, Any]:
             "battery_power_entity_id": "",
             "battery_power_sign": "positive",
             "battery_soc_entity_id": "",
+            "inverter_voltage_entity_id": "",
+            "load_frequency_entity_id": "",
             "pv_installed_kwp": 6.6,
             "pv_energy_today_entity_id": "",
             "home_energy_today_entity_id": "",
@@ -891,6 +893,8 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
             "home_energy_today_kwh": None,
             "grid_import_today_kwh": None,
             "grid_export_today_kwh": None,
+            "inverter_voltage_v": None,
+            "load_frequency_hz": None,
         },
         "theme": str(e_cfg.get("theme") or "classic_flow"),
         "errors": {},
@@ -904,6 +908,8 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "grid_power_entity_id",
         "battery_power_entity_id",
         "battery_soc_entity_id",
+        "inverter_voltage_entity_id",
+        "load_frequency_entity_id",
         "pv_energy_today_entity_id",
         "home_energy_today_entity_id",
         "grid_import_today_entity_id",
@@ -982,6 +988,8 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
     out["normalized"]["home_energy_today_kwh"] = _normalize_energy_to_kwh(*_val("home_energy_today_entity_id"))
     out["normalized"]["grid_import_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_import_today_entity_id"))
     out["normalized"]["grid_export_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_export_today_entity_id"))
+    out["normalized"]["inverter_voltage_v"] = _to_float_or_none((out["entities"].get("inverter_voltage_entity_id") or {}).get("value"))
+    out["normalized"]["load_frequency_hz"] = _to_float_or_none((out["entities"].get("load_frequency_entity_id") or {}).get("value"))
 
     # Fallback from Sunsynk card JSON entities when base energy.* entity ids are empty.
     if _is_missing(out["normalized"]["pv_power_w"]):
@@ -1006,6 +1014,12 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         out["normalized"]["grid_import_today_kwh"] = _card_energy_kwh("day_grid_import_76")
     if _is_missing(out["normalized"]["grid_export_today_kwh"]):
         out["normalized"]["grid_export_today_kwh"] = _card_energy_kwh("day_grid_export_77")
+    if _is_missing(out["normalized"]["inverter_voltage_v"]):
+        st_v = _card_state("inverter_voltage_154")
+        out["normalized"]["inverter_voltage_v"] = _to_float_or_none((st_v or {}).get("value"))
+    if _is_missing(out["normalized"]["load_frequency_hz"]):
+        st_hz = _card_state("load_frequency_192")
+        out["normalized"]["load_frequency_hz"] = _to_float_or_none((st_hz or {}).get("value"))
 
     out["ok"] = out["normalized"]["pv_power_w"] is not None
     return out
@@ -3069,7 +3083,5 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
-
 
 

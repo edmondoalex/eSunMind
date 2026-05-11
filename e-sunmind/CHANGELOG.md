@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.142
+
+- Energy Wizard: step `Entita realtime` e `Entita giornaliere` ora aprono popup dedicato di mappatura (meno incasinato, flusso guidato).
+- Popup mappatura: aggiunti pulsanti rapidi “clicca valore” per assegnare `entity_id` con prompt immediato.
+- `applyEnergyWizard` ora sincronizza anche i campi top-level energy (`pv/home/grid/battery`, `inverter_voltage_entity_id`, `load_frequency_entity_id`, daily entities).
+- Backend snapshot energy: aggiunti `inverter_voltage_entity_id` e `load_frequency_entity_id` + normalizzati `inverter_voltage_v`/`load_frequency_hz`.
+- Wrapper Sunsynk: mapping automatico dei nuovi entity id per tensione/frequenza e lettura da `energy.normalized`.
+
 ## 0.3.141
 
 - Energy wrapper: rimossi elementi UI di debug/fallback (`Random` e barra stato testuale) dalla pagina dashboard.
@@ -642,7 +650,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 

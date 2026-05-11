@@ -1126,81 +1126,15 @@
                   <select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`g3-${i}`" :value="i">{{ i }}</option></select>
                 </label>
               </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-grid">
-                <label>PV1 power entity
-                  <input type="text" v-model="energyWizardForm.pv1_power_186" />
-                </label>
-                <label>PV2 power entity
-                  <input type="text" v-model="energyWizardForm.pv2_power_187" />
-                </label>
-                <label>PV1 voltage entity
-                  <input type="text" v-model="energyWizardForm.pv1_voltage_109" />
-                </label>
-                <label>PV1 current entity
-                  <input type="text" v-model="energyWizardForm.pv1_current_110" />
-                </label>
-                <label>PV2 voltage entity
-                  <input type="text" v-model="energyWizardForm.pv2_voltage_111" />
-                </label>
-                <label>PV2 current entity
-                  <input type="text" v-model="energyWizardForm.pv2_current_112" />
-                </label>
-                <label>Grid power entity
-                  <input type="text" v-model="energyWizardForm.grid_power_169" />
-                </label>
-                <label>Grid CT power entity
-                  <input type="text" v-model="energyWizardForm.grid_ct_power_172" />
-                </label>
-                <label>Grid connected status entity
-                  <input type="text" v-model="energyWizardForm.grid_connected_status_194" />
-                </label>
-                <label>Inverter status entity
-                  <input type="text" v-model="energyWizardForm.inverter_status_59" />
-                </label>
-                <label>Inverter power entity
-                  <input type="text" v-model="energyWizardForm.inverter_power_175" />
-                </label>
-                <label>Inverter voltage entity
-                  <input type="text" v-model="energyWizardForm.inverter_voltage_154" />
-                </label>
-                <label>Inverter current entity
-                  <input type="text" v-model="energyWizardForm.inverter_current_164" />
-                </label>
-                <label>Load frequency entity
-                  <input type="text" v-model="energyWizardForm.load_frequency_192" />
-                </label>
-                <label>Battery SOC entity
-                  <input type="text" v-model="energyWizardForm.battery_soc_184" />
-                </label>
-                <label>Battery power entity
-                  <input type="text" v-model="energyWizardForm.battery_power_190" />
-                </label>
-                <label>Battery current entity
-                  <input type="text" v-model="energyWizardForm.battery_current_191" />
-                </label>
-                <label>Battery voltage entity
-                  <input type="text" v-model="energyWizardForm.battery_voltage_183" />
-                </label>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-review">
+                <span><strong>Entita realtime:</strong> mappa tutti i sensori PV/Battery/Grid/Inverter in un popup dedicato.</span>
+                <span><strong>Completate:</strong> {{ energyRealtimeMappedCount }} / 18</span>
+                <button class="btn" @click="openEnergyEntityPopup('realtime')">Mappa entita realtime</button>
               </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'daily'" class="wizard-grid">
-                <label>Daily PV energy entity
-                  <input type="text" v-model="energyWizardForm.day_pv_energy_108" />
-                </label>
-                <label>Daily battery charge entity
-                  <input type="text" v-model="energyWizardForm.day_battery_charge_70" />
-                </label>
-                <label>Daily battery discharge entity
-                  <input type="text" v-model="energyWizardForm.day_battery_discharge_71" />
-                </label>
-                <label>Daily load energy entity
-                  <input type="text" v-model="energyWizardForm.day_load_energy_84" />
-                </label>
-                <label>Daily grid import entity
-                  <input type="text" v-model="energyWizardForm.day_grid_import_76" />
-                </label>
-                <label>Daily grid export entity
-                  <input type="text" v-model="energyWizardForm.day_grid_export_77" />
-                </label>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'daily'" class="wizard-review">
+                <span><strong>Entita giornaliere:</strong> mappa tutti i contatori kWh in popup.</span>
+                <span><strong>Completate:</strong> {{ energyDailyMappedCount }} / 6</span>
+                <button class="btn" @click="openEnergyEntityPopup('daily')">Mappa entita giornaliere</button>
               </div>
               <div v-else class="wizard-review">
                 <span><strong>MPPT:</strong> {{ energyWizardForm.solar_mppts }}</span>
@@ -1214,6 +1148,55 @@
               <button class="btn ghost" @click="energyWizardPrev" :disabled="energyWizardStep <= 0">Indietro</button>
               <button class="btn ghost" @click="energyWizardNext" :disabled="energyWizardStep >= energyWizardSteps.length - 1">Avanti</button>
               <button class="btn" @click="applyEnergyWizard">Applica alla card</button>
+            </div>
+          </div>
+          <div v-if="energyEntityPopupOpen" class="energy-popup-backdrop" @click.self="energyEntityPopupOpen=false">
+            <div class="energy-popup-card">
+              <div class="energy-popup-head">
+                <strong>{{ energyEntityPopupMode === 'daily' ? 'Mappatura entita giornaliere' : 'Mappatura entita realtime' }}</strong>
+                <button class="btn ghost" @click="energyEntityPopupOpen=false">Chiudi</button>
+              </div>
+              <div class="wizard-grid" v-if="energyEntityPopupMode === 'realtime'">
+                <div style="grid-column:1/-1;">
+                  <div class="wizard-review" style="margin-bottom:8px;">
+                    <span><strong>Dashboard preview:</strong> clicca i valori sotto per mappare rapidamente le entita.</span>
+                  </div>
+                  <div class="energy-map-grid">
+                    <button v-for="t in energyMapTargets" :key="`map-${t.key}`" class="btn ghost" @click="editEnergyEntity(t.key, t.label)">
+                      {{ t.label }}: {{ String(energyWizardForm[t.key] || 'non impostata') }}
+                    </button>
+                  </div>
+                </div>
+                <label>PV1 power entity<input type="text" v-model="energyWizardForm.pv1_power_186" /></label>
+                <label>PV2 power entity<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
+                <label>PV1 voltage entity<input type="text" v-model="energyWizardForm.pv1_voltage_109" /></label>
+                <label>PV1 current entity<input type="text" v-model="energyWizardForm.pv1_current_110" /></label>
+                <label>PV2 voltage entity<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
+                <label>PV2 current entity<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
+                <label>Grid power entity<input type="text" v-model="energyWizardForm.grid_power_169" /></label>
+                <label>Grid CT power entity<input type="text" v-model="energyWizardForm.grid_ct_power_172" /></label>
+                <label>Grid connected status entity<input type="text" v-model="energyWizardForm.grid_connected_status_194" /></label>
+                <label>Inverter status entity<input type="text" v-model="energyWizardForm.inverter_status_59" /></label>
+                <label>Inverter power entity<input type="text" v-model="energyWizardForm.inverter_power_175" /></label>
+                <label>Inverter voltage entity<input type="text" v-model="energyWizardForm.inverter_voltage_154" /></label>
+                <label>Inverter current entity<input type="text" v-model="energyWizardForm.inverter_current_164" /></label>
+                <label>Load frequency entity<input type="text" v-model="energyWizardForm.load_frequency_192" /></label>
+                <label>Battery SOC entity<input type="text" v-model="energyWizardForm.battery_soc_184" /></label>
+                <label>Battery power entity<input type="text" v-model="energyWizardForm.battery_power_190" /></label>
+                <label>Battery current entity<input type="text" v-model="energyWizardForm.battery_current_191" /></label>
+                <label>Battery voltage entity<input type="text" v-model="energyWizardForm.battery_voltage_183" /></label>
+              </div>
+              <div class="wizard-grid" v-else>
+                <label>Daily PV energy entity<input type="text" v-model="energyWizardForm.day_pv_energy_108" /></label>
+                <label>Daily battery charge entity<input type="text" v-model="energyWizardForm.day_battery_charge_70" /></label>
+                <label>Daily battery discharge entity<input type="text" v-model="energyWizardForm.day_battery_discharge_71" /></label>
+                <label>Daily load energy entity<input type="text" v-model="energyWizardForm.day_load_energy_84" /></label>
+                <label>Daily grid import entity<input type="text" v-model="energyWizardForm.day_grid_import_76" /></label>
+                <label>Daily grid export entity<input type="text" v-model="energyWizardForm.day_grid_export_77" /></label>
+              </div>
+              <div class="actions-inline" style="margin-top:10px;">
+                <button class="btn" @click="energyEntityPopupOpen=false">Conferma e continua</button>
+              </div>
             </div>
           </div>
           <div class="form-grid">
@@ -1349,6 +1332,12 @@
             </label>
             <label>Battery SOC entity id
               <input type="text" v-model="energyForm.battery_soc_entity_id" />
+            </label>
+            <label>Inverter voltage entity id (V)
+              <input type="text" v-model="energyForm.inverter_voltage_entity_id" />
+            </label>
+            <label>Load frequency entity id (Hz)
+              <input type="text" v-model="energyForm.load_frequency_entity_id" />
             </label>
             <label>PV installed kWp
               <input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" />
@@ -1679,6 +1668,8 @@ const energyForm = ref({
   battery_power_entity_id: '',
   battery_power_sign: 'positive',
   battery_soc_entity_id: '',
+  inverter_voltage_entity_id: '',
+  load_frequency_entity_id: '',
   pv_installed_kwp: 6.6,
   pv_energy_today_entity_id: '',
   home_energy_today_entity_id: '',
@@ -1696,6 +1687,32 @@ const energyWizardSteps = [
   { key: 'review', label: 'Conferma', hint: 'Genera automaticamente il JSON completo.' },
 ]
 const energyIconOptions = ['default', 'boiler', 'aircon', 'pump', 'oven']
+const energyEntityPopupOpen = ref(false)
+const energyEntityPopupMode = ref('realtime')
+const energyEntityPreviewLoading = ref(false)
+const energyEntityPreview = ref({})
+const energyMapTargets = [
+  { key: 'pv1_power_186', label: 'PV1 Power' },
+  { key: 'pv2_power_187', label: 'PV2 Power' },
+  { key: 'inverter_power_175', label: 'Home/Inverter Power' },
+  { key: 'grid_power_169', label: 'Grid Power' },
+  { key: 'battery_power_190', label: 'Battery Power' },
+  { key: 'battery_soc_184', label: 'Battery SOC' },
+  { key: 'inverter_voltage_154', label: 'Inverter Voltage' },
+  { key: 'load_frequency_192', label: 'Load Frequency' },
+  { key: 'day_pv_energy_108', label: 'PV Energy Today' },
+  { key: 'day_load_energy_84', label: 'Load Energy Today' },
+  { key: 'day_grid_import_76', label: 'Grid Import Today' },
+]
+const realtimeEntityKeys = [
+  'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
+  'grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59','inverter_power_175',
+  'inverter_voltage_154','inverter_current_164','load_frequency_192','battery_soc_184','battery_power_190',
+  'battery_current_191','battery_voltage_183',
+]
+const dailyEntityKeys = [
+  'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
+]
 const energyWizardForm = ref({
   show_solar: true,
   show_battery: true,
@@ -1785,6 +1802,20 @@ const baseSaveStatus = ref('')
 const overlaySaveStatus = ref('')
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
+const energyRealtimeMappedCount = computed(() => realtimeEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
+const energyDailyMappedCount = computed(() => dailyEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
+
+function openEnergyEntityPopup(mode = 'realtime') {
+  energyEntityPopupMode.value = mode === 'daily' ? 'daily' : 'realtime'
+  energyEntityPopupOpen.value = true
+}
+
+function editEnergyEntity(key, label) {
+  const current = String(energyWizardForm.value?.[key] || '')
+  const next = window.prompt(`Entity ID per: ${label}`, current)
+  if (next === null) return
+  energyWizardForm.value[key] = String(next || '').trim()
+}
 const localTimestampLabel = computed(() => {
   const raw = data.value?.timestamp_local
   if (!raw) return '-'
@@ -3838,6 +3869,17 @@ function buildSunsynkConfigFromWizard() {
 function applyEnergyWizard() {
   const cfg = buildSunsynkConfigFromWizard()
   energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+  energyForm.value.pv_power_entity_id = String(energyWizardForm.value.pv1_power_186 || '')
+  energyForm.value.home_power_entity_id = String(energyWizardForm.value.inverter_power_175 || '')
+  energyForm.value.grid_power_entity_id = String(energyWizardForm.value.grid_power_169 || '')
+  energyForm.value.battery_power_entity_id = String(energyWizardForm.value.battery_power_190 || '')
+  energyForm.value.battery_soc_entity_id = String(energyWizardForm.value.battery_soc_184 || '')
+  energyForm.value.inverter_voltage_entity_id = String(energyWizardForm.value.inverter_voltage_154 || '')
+  energyForm.value.load_frequency_entity_id = String(energyWizardForm.value.load_frequency_192 || '')
+  energyForm.value.pv_energy_today_entity_id = String(energyWizardForm.value.day_pv_energy_108 || '')
+  energyForm.value.home_energy_today_entity_id = String(energyWizardForm.value.day_load_energy_84 || '')
+  energyForm.value.grid_import_today_entity_id = String(energyWizardForm.value.day_grid_import_76 || '')
+  energyForm.value.grid_export_today_entity_id = String(energyWizardForm.value.day_grid_export_77 || '')
   baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
@@ -4134,6 +4176,8 @@ async function loadData() {
         battery_power_entity_id: String(eo.battery_power_entity_id || ''),
         battery_power_sign: String(eo.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(eo.battery_soc_entity_id || ''),
+        inverter_voltage_entity_id: String(eo.inverter_voltage_entity_id || ''),
+        load_frequency_entity_id: String(eo.load_frequency_entity_id || ''),
         pv_installed_kwp: Number(eo.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(eo.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
@@ -4149,6 +4193,8 @@ async function loadData() {
         inverter_power_175: String(eo.home_power_entity_id || ''),
         battery_soc_184: String(eo.battery_soc_entity_id || ''),
         battery_power_190: String(eo.battery_power_entity_id || ''),
+        inverter_voltage_154: String(eo.inverter_voltage_entity_id || ''),
+        load_frequency_192: String(eo.load_frequency_entity_id || ''),
         day_pv_energy_108: String(eo.pv_energy_today_entity_id || ''),
         day_load_energy_84: String(eo.home_energy_today_entity_id || ''),
         day_grid_import_76: String(eo.grid_import_today_entity_id || ''),
@@ -4384,6 +4430,8 @@ async function saveBaseSettings() {
         battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
         battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
+        inverter_voltage_entity_id: String(energyForm.value.inverter_voltage_entity_id || ''),
+        load_frequency_entity_id: String(energyForm.value.load_frequency_entity_id || ''),
         pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
@@ -4482,6 +4530,8 @@ async function saveAllSettings() {
         battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
         battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
+        inverter_voltage_entity_id: String(energyForm.value.inverter_voltage_entity_id || ''),
+        load_frequency_entity_id: String(energyForm.value.load_frequency_entity_id || ''),
         pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
@@ -5403,6 +5453,39 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   font-weight:700;
   text-shadow:0 1px 2px rgba(0,0,0,.75);
 }
+.energy-popup-backdrop{
+  position:fixed;
+  inset:0;
+  background:rgba(2,6,18,.72);
+  z-index:1200;
+  display:grid;
+  place-items:center;
+  padding:14px;
+}
+.energy-popup-card{
+  width:min(1100px,96vw);
+  max-height:88vh;
+  overflow:auto;
+  background:linear-gradient(160deg,rgba(8,17,33,.98),rgba(3,9,20,.98));
+  border:1px solid rgba(100,116,139,.45);
+  border-radius:12px;
+  padding:12px;
+}
+.energy-popup-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+.energy-map-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:8px;
+}
+.energy-map-grid .btn{
+  text-align:left;
+  white-space:normal;
+}
 
 @media (max-width: 768px){
   .topbar{
@@ -5581,16 +5664,6 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
-
-
-
-
-
-
-
-
-
-
 
 
 
