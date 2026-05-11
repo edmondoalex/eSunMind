@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.136"
+APP_VERSION = "0.3.137"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -879,6 +879,7 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "ok": False,
         "enabled": bool(e_cfg.get("enabled", True)),
         "entities": {},
+        "card_entities": {},
         "normalized": {
             "pv_power_w": None,
             "home_power_w": None,
@@ -944,6 +945,13 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         st = _fetch_ha_entity_state(ent)
         if not st or not st.get("ok"):
             return None
+        out["card_entities"][card_key] = {
+            "entity_id": ent,
+            "value": st.get("value"),
+            "unit": st.get("unit"),
+            "state": st.get("state"),
+            "attributes": st.get("attributes") if isinstance(st.get("attributes"), dict) else {},
+        }
         return st
 
     def _card_power_w(card_key: str) -> float | None:
@@ -957,6 +965,13 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         if not st:
             return None
         return _normalize_energy_to_kwh(st.get("value"), st.get("unit"))
+
+    # Preload all card entity states for diagnostics and frontend fallback rendering.
+    for ck in list(card_entities.keys()):
+        try:
+            _card_state(str(ck))
+        except Exception:
+            continue
 
     out["normalized"]["pv_power_w"] = _normalize_power_to_w(*_val("pv_power_entity_id"))
     out["normalized"]["home_power_w"] = _normalize_power_to_w(*_val("home_power_entity_id"))
@@ -3031,8 +3046,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
-
 
 
 

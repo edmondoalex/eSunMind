@@ -295,12 +295,28 @@
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
         const n = j?.energy?.normalized || {};
+        const ce = j?.energy?.card_entities || {};
 
-        const solarPower = Number(n.pv_power_w ?? 0) * signFix.pv;
-        const batteryPower = Number(n.battery_power_w ?? 0) * signFix.battery;
-        const batterySoc = Number(n.battery_soc_pct ?? 0);
-        const gridPower = Number(n.grid_power_w ?? 0) * signFix.grid;
-        const inverterPower = Number(n.home_power_w ?? 0) * signFix.home;
+        const num = (v) => {
+          const x = Number(v);
+          return Number.isFinite(x) ? x : null;
+        };
+        const fromCard = (k) => num(ce?.[k]?.value);
+        const pick = (primary, fallback) => {
+          const p = num(primary);
+          if (p != null) return p;
+          const f = num(fallback);
+          return f != null ? f : 0;
+        };
+
+        const pv1 = fromCard('pv1_power_186');
+        const pv2 = fromCard('pv2_power_187');
+        const solarFallback = (pv1 != null || pv2 != null) ? (Number(pv1 || 0) + Number(pv2 || 0)) : null;
+        const solarPower = pick(n.pv_power_w, solarFallback) * signFix.pv;
+        const batteryPower = pick(n.battery_power_w, fromCard('battery_power_190')) * signFix.battery;
+        const batterySoc = pick(n.battery_soc_pct, fromCard('battery_soc_184'));
+        const gridPower = pick(n.grid_power_w, fromCard('grid_power_169')) * signFix.grid;
+        const inverterPower = pick(n.home_power_w, fromCard('inverter_power_175')) * signFix.home;
 
         // campi opzionali: usa valore corrente se non disponibili
         const inverterVoltage = Number(
@@ -340,7 +356,13 @@
         setDaily(sensorIds.day_grid_export_77, n.grid_export_today_kwh);
 
         forceRender();
-        document.getElementById('status').textContent = 'Dati reali da addon attivi';
+        const dbg = [
+          `PV:${solarPower.toFixed(0)}W`,
+          `HOME:${inverterPower.toFixed(0)}W`,
+          `GRID:${gridPower.toFixed(0)}W`,
+          `BAT:${batteryPower.toFixed(0)}W`,
+        ].join(' | ');
+        document.getElementById('status').textContent = `Dati reali da addon attivi - ${dbg}`;
       } catch (e) {
         document.getElementById('status').textContent = 'API non disponibile, uso ultimo stato / fallback';
       }

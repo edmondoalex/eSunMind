@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.137
+
+- Hotfix dashboard valori a zero: backend espone `energy.card_entities` con valori raw delle entita Sunsynk dal JSON card.
+- Wrapper Energy usa fallback diretto da `card_entities` quando i campi `energy.normalized` non sono valorizzati.
+- Aggiunto status debug live nel wrapper (PV/HOME/GRID/BAT) per verifica immediata dati in ingresso.
+
 ## 0.3.136
 
 - Nuova pagina dedicata `Energy Setup` separata da `Setting`, accessibile dalla topbar come tab vero.
