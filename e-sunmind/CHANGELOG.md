@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## 0.3.120
+
+- Sunsynk Wrapper: disattivato update random automatico e attivato polling dati reali da addon (../api/data) ogni 2 secondi.
+- Mapping realtime su sensori mock da energy.normalized (PV, battery power/SOC, grid, home/inverter) con render live della card originale.
+- Aggiornamento daily energy quando disponibili (pv_energy_today_kwh, home_energy_today_kwh, grid_import_today_kwh).
+- Random lasciato come fallback manuale tramite pulsante UI.
+
 ## 0.3.119
 
 - Sunsynk Wrapper: allineato tema scuro al background addon (#080a10) per continuita visiva tra UI principale e dashboard energia.
@@ -519,6 +526,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

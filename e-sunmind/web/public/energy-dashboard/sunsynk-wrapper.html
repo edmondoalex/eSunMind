@@ -24,7 +24,7 @@
   <div class="page">
     <div class="host">
       <div class="bar">
-        <button id="btn-random">Random Update</button>
+        <button id="btn-random">Random (fallback)</button>
         <span id="status">Wrapper attivo</span>
       </div>
       <sunsynk-power-flow-card id="card"></sunsynk-power-flow-card>
@@ -204,12 +204,69 @@
 
     document.getElementById('btn-random').addEventListener('click', randomTick);
 
+    async function syncFromAddonApi() {
+      try {
+        const r = await fetch('../api/data', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`api_data_http_${r.status}`);
+        const j = await r.json();
+        const n = j?.energy?.normalized || {};
+
+        const solarPower = Number(n.pv_power_w ?? 0);
+        const batteryPower = Number(n.battery_power_w ?? 0);
+        const batterySoc = Number(n.battery_soc_pct ?? 0);
+        const gridPower = Number(n.grid_power_w ?? 0);
+        const inverterPower = Number(n.home_power_w ?? 0);
+
+        // campi opzionali: usa valore corrente se non disponibili
+        const inverterVoltage = Number(
+          j?.energy?.inverter_voltage_v ??
+          window.hass.states[sensorIds.inverter_voltage_154]?.state ??
+          231.5
+        );
+        const loadFrequency = Number(
+          j?.energy?.load_frequency_hz ??
+          window.hass.states[sensorIds.load_frequency_192]?.state ??
+          50.0
+        );
+
+        window.updateSensors({
+          solar_power: solarPower,
+          battery_power: batteryPower,
+          battery_soc: batterySoc,
+          grid_power: gridPower,
+          inverter_power: inverterPower,
+          inverter_voltage: inverterVoltage,
+          load_frequency: loadFrequency,
+        });
+
+        const setDaily = (id, value) => {
+          if (value == null || Number.isNaN(Number(value))) return;
+          const prev = window.hass.states[id] || mkState(0, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+          window.hass.states[id] = {
+            ...prev,
+            state: String(value),
+            attributes: { ...(prev.attributes || {}), unit_of_measurement: 'kWh', device_class: 'energy', state_class: 'total_increasing' },
+            last_updated: new Date().toISOString(),
+          };
+        };
+        setDaily(sensorIds.day_pv_energy_108, n.pv_energy_today_kwh);
+        setDaily(sensorIds.day_load_energy_84, n.home_energy_today_kwh);
+        setDaily(sensorIds.day_grid_import_76, n.grid_import_today_kwh);
+
+        forceRender();
+        document.getElementById('status').textContent = 'Dati reali da addon attivi';
+      } catch (e) {
+        document.getElementById('status').textContent = 'API non disponibile, uso ultimo stato / fallback';
+      }
+    }
+
     // avvio
     const waitCard = setInterval(() => {
       if (customElements.get('sunsynk-power-flow-card')) {
         clearInterval(waitCard);
         initCard();
-        setInterval(randomTick, 1000);
+        syncFromAddonApi();
+        setInterval(syncFromAddonApi, 2000);
       }
     }, 100);
   </script>
