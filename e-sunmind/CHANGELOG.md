@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.136
+
+- Nuova pagina dedicata `Energy Setup` separata da `Setting`, accessibile dalla topbar come tab vero.
+- In `Energy Setup` rimane solo la configurazione Energy (wizard + opzioni card + entita + segni) con pulsante salvataggio dedicato.
+- `Setting` torna pulito con sole configurazioni generali (meteo/sistema/tende).
+
 ## 0.3.135
 
 - UI Energy piu leggibile: aumentati font, padding e dimensioni controlli nella sezione `Setting -> Energy`.
