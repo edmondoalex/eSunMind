@@ -1,0 +1,195 @@
+﻿<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunsynk Wrapper Standalone (Hass Mock)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" />
+  <style>
+    html, body { margin: 0; background: #0b1220; color: #e2e8f0; font-family: Inter, Segoe UI, sans-serif; }
+    .page { min-height: 100vh; display: grid; place-items: center; padding: 12px; }
+    .host { width: min(1200px, 98vw); }
+    .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; color: #94a3b8; }
+    button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="host">
+      <div class="bar">
+        <button id="btn-random">Random Update</button>
+        <span id="status">Wrapper attivo</span>
+      </div>
+      <sunsynk-power-flow-card id="card"></sunsynk-power-flow-card>
+    </div>
+  </div>
+
+  <script type="module" src="https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js"></script>
+  <script>
+    // Hass Mock globale
+    window.hass = {
+      language: 'it',
+      selectedLanguage: 'it',
+      locale: { language: 'it-IT', number_format: 'decimal_comma' },
+      states: {},
+      localize: (key) => String(key || ''),
+      callService: () => Promise.resolve(),
+      formatEntityState: (s) => String(s?.state ?? ''),
+      formatEntityAttributeValue: (_s, _a, v) => String(v ?? ''),
+    };
+
+    function mkState(state, unit = '', extra = {}) {
+      return {
+        entity_id: extra.entity_id || '',
+        state: String(state),
+        attributes: { unit_of_measurement: unit, device_class: extra.device_class || '', state_class: extra.state_class || '' },
+        last_changed: new Date().toISOString(),
+        last_updated: new Date().toISOString(),
+      };
+    }
+
+    const sensorIds = {
+      inverter_power_175: 'sensor.mock_inverter_power',
+      grid_power_169: 'sensor.mock_grid_power',
+      battery_soc_184: 'sensor.mock_battery_soc',
+      battery_power_190: 'sensor.mock_battery_power',
+      battery_current_191: 'sensor.mock_battery_current',
+      battery_voltage_183: 'sensor.mock_battery_voltage',
+      grid_ct_power_172: 'sensor.mock_grid_ct_power',
+      grid_connected_status_194: 'binary_sensor.mock_grid_connected',
+      inverter_status_59: 'sensor.mock_inverter_status',
+      inverter_voltage_154: 'sensor.mock_inverter_voltage',
+      inverter_current_164: 'sensor.mock_inverter_current',
+      load_frequency_192: 'sensor.mock_load_frequency',
+      pv1_power_186: 'sensor.mock_pv1_power',
+      pv2_power_187: 'sensor.mock_pv2_power',
+      pv1_voltage_109: 'sensor.mock_pv1_voltage',
+      pv1_current_110: 'sensor.mock_pv1_current',
+      pv2_voltage_111: 'sensor.mock_pv2_voltage',
+      pv2_current_112: 'sensor.mock_pv2_current',
+      day_pv_energy_108: 'sensor.mock_day_pv_energy',
+      day_battery_charge_70: 'sensor.mock_day_battery_charge',
+      day_battery_discharge_71: 'sensor.mock_day_battery_discharge',
+      day_load_energy_84: 'sensor.mock_day_load_energy',
+      day_grid_import_76: 'sensor.mock_day_grid_import',
+    };
+
+    const cardConfig = {
+      type: 'custom:sunsynk-power-flow-card',
+      cardstyle: 'full',
+      show_solar: true,
+      show_battery: true,
+      show_grid: true,
+      dynamic_line_width: true,
+      min_line_width: 1,
+      max_line_width: 4,
+      wide: false,
+      inverter: { modern: true, auto_scale: true, three_phase: false },
+      solar: { mppts: 2, show_daily: true, animation_speed: 6, max_power: 7000 },
+      battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
+      load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true },
+      grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
+      entities: { ...sensorIds },
+    };
+
+    function seedStates() {
+      const s = window.hass.states;
+      s[sensorIds.inverter_power_175] = mkState(1160, 'W');
+      s[sensorIds.grid_power_169] = mkState(1150, 'W');
+      s[sensorIds.battery_soc_184] = mkState(26, '%');
+      s[sensorIds.battery_power_190] = mkState(-3040, 'W');
+      s[sensorIds.battery_current_191] = mkState(18.3, 'A');
+      s[sensorIds.battery_voltage_183] = mkState(52.9, 'V');
+      s[sensorIds.grid_ct_power_172] = mkState(1150, 'W');
+      s[sensorIds.grid_connected_status_194] = mkState('on');
+      s[sensorIds.inverter_status_59] = mkState('normal');
+      s[sensorIds.inverter_voltage_154] = mkState(231.5, 'V');
+      s[sensorIds.inverter_current_164] = mkState(5.0, 'A');
+      s[sensorIds.load_frequency_192] = mkState(50.02, 'Hz');
+      s[sensorIds.pv1_power_186] = mkState(2950, 'W');
+      s[sensorIds.pv2_power_187] = mkState(2420, 'W');
+      s[sensorIds.pv1_voltage_109] = mkState(370, 'V');
+      s[sensorIds.pv1_current_110] = mkState(8.0, 'A');
+      s[sensorIds.pv2_voltage_111] = mkState(365, 'V');
+      s[sensorIds.pv2_current_112] = mkState(6.6, 'A');
+      s[sensorIds.day_pv_energy_108] = mkState(6.7, 'kWh');
+      s[sensorIds.day_battery_charge_70] = mkState(3.1, 'kWh');
+      s[sensorIds.day_battery_discharge_71] = mkState(0.0, 'kWh');
+      s[sensorIds.day_load_energy_84] = mkState(11.9, 'kWh');
+      s[sensorIds.day_grid_import_76] = mkState(8.5, 'kWh');
+    }
+
+    const card = document.getElementById('card');
+
+    function forceRender() {
+      // nuovo riferimento per trigger update lit
+      card.hass = { ...window.hass, states: { ...window.hass.states } };
+      if (typeof card.requestUpdate === 'function') card.requestUpdate();
+    }
+
+    function initCard() {
+      seedStates();
+      card.setConfig(cardConfig);
+      forceRender();
+      document.getElementById('status').textContent = 'Card inizializzata';
+    }
+
+    // API pubblica richiesta
+    window.updateSensors = function updateSensors(newData = {}) {
+      const s = window.hass.states;
+      const now = new Date().toISOString();
+      const set = (id, value, unit) => {
+        const prev = s[id] || mkState(0, unit);
+        s[id] = { ...prev, state: String(value), attributes: { ...(prev.attributes || {}), unit_of_measurement: unit }, last_updated: now };
+      };
+
+      if (newData.solar_power != null) {
+        const pv1 = Number(newData.solar_power) * 0.52;
+        const pv2 = Number(newData.solar_power) * 0.48;
+        set(sensorIds.pv1_power_186, pv1.toFixed(0), 'W');
+        set(sensorIds.pv2_power_187, pv2.toFixed(0), 'W');
+      }
+      if (newData.battery_soc != null) set(sensorIds.battery_soc_184, newData.battery_soc, '%');
+      if (newData.battery_power != null) set(sensorIds.battery_power_190, newData.battery_power, 'W');
+      if (newData.grid_power != null) {
+        set(sensorIds.grid_power_169, newData.grid_power, 'W');
+        set(sensorIds.grid_ct_power_172, newData.grid_power, 'W');
+      }
+      if (newData.inverter_power != null) set(sensorIds.inverter_power_175, newData.inverter_power, 'W');
+      if (newData.inverter_voltage != null) set(sensorIds.inverter_voltage_154, newData.inverter_voltage, 'V');
+      if (newData.load_frequency != null) set(sensorIds.load_frequency_192, newData.load_frequency, 'Hz');
+
+      forceRender();
+    };
+
+    function randomTick() {
+      const solar = 500 + Math.random() * 6000;
+      const batteryP = (Math.random() - 0.55) * 4500;
+      const gridP = (Math.random() - 0.45) * 3000;
+      const invP = Math.max(100, solar + Math.max(0, batteryP) - Math.max(0, -gridP));
+      const soc = Math.max(5, Math.min(98, Number(window.hass.states[sensorIds.battery_soc_184]?.state || 26) + (Math.random() - 0.48) * 2));
+
+      window.updateSensors({
+        solar_power: solar,
+        battery_power: Math.round(batteryP),
+        battery_soc: soc.toFixed(1),
+        grid_power: Math.round(gridP),
+        inverter_power: Math.round(invP),
+        inverter_voltage: (229 + Math.random() * 6).toFixed(1),
+        load_frequency: (49.95 + Math.random() * 0.15).toFixed(2),
+      });
+    }
+
+    document.getElementById('btn-random').addEventListener('click', randomTick);
+
+    // avvio
+    const waitCard = setInterval(() => {
+      if (customElements.get('sunsynk-power-flow-card')) {
+        clearInterval(waitCard);
+        initCard();
+        setInterval(randomTick, 1000);
+      }
+    }, 100);
+  </script>
+</body>
+</html>
