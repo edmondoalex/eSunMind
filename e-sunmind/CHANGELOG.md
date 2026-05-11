@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.110
+
+- Energy scene: fotovoltaico dinamico con icona meteo/produzione (`sole`, `nuvola`, `luna`) e indicatore `+/-`.
+- Aggiunti nuovi device nel diagramma: `Rack Dati`, `Wall Box` e `Carichi Casa` separati.
+- Batteria resa dinamica: livello riempimento e colore in funzione del SOC.
+- Aggiornati flussi energetici e label per i nuovi rami (rack/wallbox/carichi).
+
 ## 0.3.109
 
 - Energy Dashboard light: contrasto aumentato (testi, icone, flussi) e leggibilita generale migliorata.
