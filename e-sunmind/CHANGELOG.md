@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.134
+
+- Fix definitivo parsing valori entita HA: supportati formati stringa comuni (`1,23`, `231.5 V`, `-42W`) nel backend.
+- Questo evita `None` nei normalizzati e blocco dashboard a zero quando le entita non sono float puri.
+
 ## 0.3.133
 
 - Wizard Energy: aggiunto campo mancante `Daily grid export entity` (`day_grid_export_77`) per completare la mappatura entita giornaliere.

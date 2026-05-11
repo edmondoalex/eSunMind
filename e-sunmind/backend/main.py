@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.133"
+APP_VERSION = "0.3.134"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -760,7 +760,22 @@ def _to_float_or_none(value: Any) -> float | None:
     try:
         if value is None or value == "":
             return None
-        return float(value)
+        if isinstance(value, (int, float)):
+            return float(value)
+        s = str(value).strip()
+        if not s:
+            return None
+        # Accept common HA string formats like "1,23", "231.5 V", "-42W".
+        s_norm = s.replace(",", ".")
+        try:
+            return float(s_norm)
+        except Exception:
+            import re
+
+            m = re.search(r"[-+]?\d+(?:\.\d+)?", s_norm)
+            if not m:
+                return None
+            return float(m.group(0))
     except Exception:
         return None
 
@@ -3016,7 +3031,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
 
 
 
