@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.127
+
+- Hotfix startup: corretto encoding UTF-8 di `backend/main.py` (errore SyntaxError su byte non UTF-8).
+- Add-on torna avviabile su Home Assistant OS senza crash all'import di uvicorn.
+
 ## 0.3.126
 
 - Fix segni potenza in dashboard Sunsynk: aggiunti toggle in Setting > Energy per invertire convenzione Grid e Battery.
