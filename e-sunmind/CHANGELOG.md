@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.140
+
+- Aggiunto endpoint diagnostico `GET /api/energy/debug` per vedere config energy, entita card parse-ate e snapshot energia effettivo letto dal backend.
+- Utile per identificare subito entita non lette/parse error senza dover fare debug a mano nel wrapper.
+
 ## 0.3.139
 
 - Fix critico lettura entita HA: `_fetch_ha_entity_state` ora usa parser numerico robusto (`_to_float_or_none`) invece di parse float rigido.
