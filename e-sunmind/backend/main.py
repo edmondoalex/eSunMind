@@ -1301,14 +1301,7 @@ def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
 
     state_raw = payload.get("state")
     attrs = payload.get("attributes") or {}
-    numeric_value = None
-    try:
-        numeric_value = float(state_raw)
-    except Exception:
-        try:
-            numeric_value = float(str(state_raw).replace(",", "."))
-        except Exception:
-            numeric_value = None
+    numeric_value = _to_float_or_none(state_raw)
     return {
         "ok": True,
         "entity_id": entity,
@@ -3046,7 +3039,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
 
 
 
