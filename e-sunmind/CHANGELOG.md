@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.128
+
+- Setting > Energy: aggiunti flag segno `+/-` accanto alle entita di potenza (PV, Home, Grid, Battery).
+- La dashboard Sunsynk applica i flag direttamente al mapping realtime, correggendo subito valori invertiti.
+- Compatibilita mantenuta con i vecchi toggle invert_grid_sign/invert_battery_sign.
+
 ## 0.3.127
 
 - Hotfix startup: corretto encoding UTF-8 di `backend/main.py` (errore SyntaxError su byte non UTF-8).

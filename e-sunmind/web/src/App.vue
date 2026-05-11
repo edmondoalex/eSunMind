@@ -1447,14 +1447,38 @@
             <label>PV power entity id
               <input type="text" v-model="energyForm.pv_power_entity_id" />
             </label>
+            <label>PV segno
+              <select v-model="energyForm.pv_power_sign">
+                <option value="positive">Positivo (+)</option>
+                <option value="negative">Negativo (-)</option>
+              </select>
+            </label>
             <label>Home power entity id
               <input type="text" v-model="energyForm.home_power_entity_id" />
+            </label>
+            <label>Home segno
+              <select v-model="energyForm.home_power_sign">
+                <option value="positive">Positivo (+)</option>
+                <option value="negative">Negativo (-)</option>
+              </select>
             </label>
             <label>Grid power entity id
               <input type="text" v-model="energyForm.grid_power_entity_id" />
             </label>
+            <label>Grid segno
+              <select v-model="energyForm.grid_power_sign">
+                <option value="positive">Positivo (+)</option>
+                <option value="negative">Negativo (-)</option>
+              </select>
+            </label>
             <label>Battery power entity id
               <input type="text" v-model="energyForm.battery_power_entity_id" />
+            </label>
+            <label>Battery segno
+              <select v-model="energyForm.battery_power_sign">
+                <option value="positive">Positivo (+)</option>
+                <option value="negative">Negativo (-)</option>
+              </select>
             </label>
             <label>Battery SOC entity id
               <input type="text" v-model="energyForm.battery_soc_entity_id" />
@@ -1474,13 +1498,8 @@
             <label>Grid export today entity id
               <input type="text" v-model="energyForm.grid_export_today_entity_id" />
             </label>
-            <label>Inverti segno Grid
-              <input type="checkbox" v-model="energyForm.invert_grid_sign" />
-              <small>Attiva se il tuo sensore usa convenzione opposta (import/export invertiti).</small>
-            </label>
-            <label>Inverti segno Battery
-              <input type="checkbox" v-model="energyForm.invert_battery_sign" />
-              <small>Attiva se carica/scarica risultano invertite nella card.</small>
+            <label style="grid-column: 1 / -1;">
+              <small>I flag segno (+/-) regolano la convenzione per ogni entita di potenza nella dashboard.</small>
             </label>
             <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
               <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
@@ -1782,17 +1801,19 @@ const energyForm = ref({
   enabled: true,
   theme: 'classic_flow',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
+  pv_power_sign: 'positive',
   home_power_entity_id: '',
+  home_power_sign: 'positive',
   grid_power_entity_id: '',
+  grid_power_sign: 'positive',
   battery_power_entity_id: '',
+  battery_power_sign: 'positive',
   battery_soc_entity_id: '',
   pv_installed_kwp: 6.6,
   pv_energy_today_entity_id: '',
   home_energy_today_entity_id: '',
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
-  invert_grid_sign: false,
-  invert_battery_sign: false,
   sunsynk_card_config_json: '',
 })
 const energyWizardStep = ref(0)
@@ -4233,17 +4254,19 @@ async function loadData() {
         enabled: Boolean(eo.enabled ?? true),
         theme: String(eo.theme || 'classic_flow'),
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+        pv_power_sign: String(eo.pv_power_sign || 'positive'),
         home_power_entity_id: String(eo.home_power_entity_id || ''),
+        home_power_sign: String(eo.home_power_sign || 'positive'),
         grid_power_entity_id: String(eo.grid_power_entity_id || ''),
+        grid_power_sign: String(eo.grid_power_sign || 'positive'),
         battery_power_entity_id: String(eo.battery_power_entity_id || ''),
+        battery_power_sign: String(eo.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(eo.battery_soc_entity_id || ''),
         pv_installed_kwp: Number(eo.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(eo.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
-        invert_grid_sign: Boolean(eo.invert_grid_sign ?? false),
-        invert_battery_sign: Boolean(eo.invert_battery_sign ?? false),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
       }
       const wizardSeed = {
@@ -4479,17 +4502,19 @@ async function saveBaseSettings() {
         enabled: Boolean(energyForm.value.enabled),
         theme: String(energyForm.value.theme || 'classic_flow'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
+        pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
+        home_power_sign: String(energyForm.value.home_power_sign || 'positive'),
         grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
+        grid_power_sign: String(energyForm.value.grid_power_sign || 'positive'),
         battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
+        battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
         pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
-        invert_grid_sign: Boolean(energyForm.value.invert_grid_sign),
-        invert_battery_sign: Boolean(energyForm.value.invert_battery_sign),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }
@@ -4575,17 +4600,19 @@ async function saveAllSettings() {
         enabled: Boolean(energyForm.value.enabled),
         theme: String(energyForm.value.theme || 'classic_flow'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
+        pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
+        home_power_sign: String(energyForm.value.home_power_sign || 'positive'),
         grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
+        grid_power_sign: String(energyForm.value.grid_power_sign || 'positive'),
         battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
+        battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
         battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
         pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
         pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
-        invert_grid_sign: Boolean(energyForm.value.invert_grid_sign),
-        invert_battery_sign: Boolean(energyForm.value.invert_battery_sign),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }

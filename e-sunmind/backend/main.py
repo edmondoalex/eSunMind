@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.127"
+APP_VERSION = "0.3.128"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -240,17 +240,19 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "theme": "classic_flow",
             "pv_power_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
+            "pv_power_sign": "positive",
             "home_power_entity_id": "",
+            "home_power_sign": "positive",
             "grid_power_entity_id": "",
+            "grid_power_sign": "positive",
             "battery_power_entity_id": "",
+            "battery_power_sign": "positive",
             "battery_soc_entity_id": "",
             "pv_installed_kwp": 6.6,
             "pv_energy_today_entity_id": "",
             "home_energy_today_entity_id": "",
             "grid_import_today_entity_id": "",
             "grid_export_today_entity_id": "",
-            "invert_grid_sign": False,
-            "invert_battery_sign": False,
             "sunsynk_card_config_json": "",
         },
     }
@@ -2955,7 +2957,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
 
 
 
