@@ -1,4 +1,12 @@
-﻿# Changelog
+# Changelog
+
+## 0.3.125
+
+- Setting > Energy: estesa la customizzazione completa della Sunsynk card senza JSON manuale.
+- Aggiunti controlli avanzati card: visibilita rami, line width dinamico/min/max, layout wide, opzioni inverter (modern/auto-scale/three-phase).
+- Aggiunti parametri Solar/Battery/Load/Grid: max power, animation speed, show daily, auto-scale, capacita batteria e shutdown SOC.
+- Wizard entita ampliato con mappature complete runtime (status, tensioni/correnti, frequenza, CT grid, stato connessione grid, PV V/A).
+- Migliorato prefill dal JSON esistente: alla riapertura ricarica automaticamente topologia/colori/icone/opzioni/entita avanzate.
 
 ## 0.3.124
 
@@ -205,9 +213,9 @@
 
 ## 0.3.93
 
-- Fix encoding UI: corretti caratteri corrotti/mojibake in tutte le schermate (`Ã‚Â°`, `Ãƒ`, frecce, simboli unita).
-- Tooltip mappa e testi meteo ripuliti (es. `Az ... -> ...`, `Â°C`, `W/mÂ²`, `Tiles Â© Esri`).
-- Corrette anche le unita MQTT diagnostiche backend (`Â°`, `Â°C`, `Âµg/mÂ³`).
+- Fix encoding UI: corretti caratteri corrotti/mojibake in tutte le schermate (`Â°`, `Ã`, frecce, simboli unita).
+- Tooltip mappa e testi meteo ripuliti (es. `Az ... -> ...`, `°C`, `W/m²`, `Tiles © Esri`).
+- Corrette anche le unita MQTT diagnostiche backend (`°`, `°C`, `µg/m³`).
 
 ## 0.3.92
 
@@ -276,7 +284,7 @@
 
 - UI Admin: unificato accesso `UI User` in un solo elemento (rimosso duplicato tasto+link).
 - UI User: sostituito logo con asset ufficiale e-Tende (`logo-etende.png`) dal componente.
-- Corretto rendering caratteri speciali in UI (`Â°`, `Â°C`).
+- Corretto rendering caratteri speciali in UI (`°`, `°C`).
 
 ## 0.3.79
 
@@ -327,7 +335,7 @@
 ## 0.3.71
 
 - User UI: aggiunto auto-refresh periodico dati (polling ogni 15 secondi) quando la tab attiva e `User UI`.
-- Eliminata necessitÃ  di refresh manuale continuo per aggiornare meteo/sonde/stazione/FV.
+- Eliminata necessità di refresh manuale continuo per aggiornare meteo/sonde/stazione/FV.
 
 ## 0.3.70
 
@@ -441,7 +449,7 @@
 
 ## 0.3.48
 
-- Fix versione UI/API: allineato `APP_VERSION` backend a `0.3.48`, cosÃ¬ il titolo mostra la release reale invece di `0.3.40`.
+- Fix versione UI/API: allineato `APP_VERSION` backend a `0.3.48`, così il titolo mostra la release reale invece di `0.3.40`.
 
 ## 0.3.47
 

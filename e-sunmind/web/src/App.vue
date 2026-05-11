@@ -16,6 +16,7 @@
         <a class="btn ghost" href="?view=user">UI User</a>
         <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Energy Flow</a>
         <a class="btn ghost" href="?view=energy">Energy</a>
+        <button class="btn ghost" :class="{active: tab==='energy_setup'}" @click="tab='energy_setup'">Energy Wizard</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -867,6 +868,155 @@
       </div>
     </div>
 
+    <div v-show="tab==='energy_setup'">
+      <main class="tech-main">
+        <section class="card setting-save-card">
+          <div class="actions-inline">
+            <button class="btn" @click="saveBaseSettings">Salva configurazione Energy</button>
+            <span class="note">{{ baseSaveStatus }}</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Energy Wizard dedicato (Sunsynk)</h3>
+          <p class="note">
+            Procedura guidata completa per configurare topologia, entità, colori e icone della card.
+            Al termine usa <strong>Applica alla card</strong> e poi salva.
+          </p>
+          <div class="tende-wizard">
+            <div class="wizard-head">
+              <div>
+                <strong>Wizard configurazione Sunsynk</strong>
+                <p>{{ energyWizardSteps[energyWizardStep]?.hint }}</p>
+              </div>
+              <div class="wizard-step-count">Step {{ energyWizardStep + 1 }} / {{ energyWizardSteps.length }}</div>
+            </div>
+            <div class="wizard-tabs">
+              <button
+                v-for="(step, idx) in energyWizardSteps"
+                :key="step.key"
+                class="wizard-tab"
+                :class="{active: idx === energyWizardStep}"
+                @click="energyWizardStep = idx"
+              >{{ step.label }}</button>
+            </div>
+            <div class="wizard-body">
+              <div v-if="energyWizardSteps[energyWizardStep]?.key === 'topology'" class="wizard-grid">
+                <label>Numero stringhe solari (MPPT)<small>Quanti ingressi FV visualizzare (1..6).</small>
+                  <input type="number" min="1" max="6" v-model.number="energyWizardForm.solar_mppts" />
+                </label>
+                <label>Numero batterie<small>Supporto card: 1 o 2.</small>
+                  <input type="number" min="1" max="2" v-model.number="energyWizardForm.battery_count" />
+                </label>
+                <label>Numero assorbimenti casa<small>Carichi essenziali extra (0..6).</small>
+                  <input type="number" min="0" max="6" v-model.number="energyWizardForm.additional_loads" />
+                </label>
+                <label>Mostra ramo AUX<small>Abilita ramo ausiliario se usato dal tuo inverter.</small>
+                  <input type="checkbox" v-model="energyWizardForm.show_aux" />
+                </label>
+              </div>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'colors'" class="wizard-grid">
+                <label>Colore Solar
+                  <input type="color" v-model="energyWizardForm.color_solar" />
+                </label>
+                <label>Colore Battery
+                  <input type="color" v-model="energyWizardForm.color_battery" />
+                </label>
+                <label>Colore Grid
+                  <input type="color" v-model="energyWizardForm.color_grid" />
+                </label>
+                <label>Colore Load
+                  <input type="color" v-model="energyWizardForm.color_load" />
+                </label>
+              </div>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'icons'" class="wizard-grid">
+                <label>Load 1 icon
+                  <select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`ew-l1-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Load 2 icon
+                  <select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`ew-l2-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Load 3 icon
+                  <select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`ew-l3-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Load 4 icon
+                  <select v-model="energyWizardForm.load4_icon"><option v-for="i in energyIconOptions" :key="`ew-l4-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Load 5 icon
+                  <select v-model="energyWizardForm.load5_icon"><option v-for="i in energyIconOptions" :key="`ew-l5-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Load 6 icon
+                  <select v-model="energyWizardForm.load6_icon"><option v-for="i in energyIconOptions" :key="`ew-l6-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Grid non-essential icon (centro)
+                  <select v-model="energyWizardForm.grid_nonessential_icon"><option v-for="i in energyIconOptions" :key="`ew-gn-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Grid load 1 icon
+                  <select v-model="energyWizardForm.grid_load1_icon"><option v-for="i in energyIconOptions" :key="`ew-g1-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Grid load 2 icon
+                  <select v-model="energyWizardForm.grid_load2_icon"><option v-for="i in energyIconOptions" :key="`ew-g2-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Grid load 3 icon
+                  <select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`ew-g3-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Grid import icon (mdi)
+                  <input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" />
+                </label>
+                <label>Grid export icon (mdi)
+                  <input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" />
+                </label>
+                <label>Grid disconnected icon (mdi)
+                  <input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" />
+                </label>
+                <p class="note" style="grid-column:1/-1;">
+                  Nota: sole/batteria/inverter principali nella card originale usano SVG interni; qui personalizzi icone carichi e rete (comprese MDI import/export/off).
+                </p>
+              </div>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-grid">
+                <label>PV1 power entity<small>Potenza stringa FV 1 (W/kW).</small><input type="text" v-model="energyWizardForm.pv1_power_186" /></label>
+                <label>PV2 power entity<small>Potenza stringa FV 2.</small><input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
+                <label>Grid power entity<small>Potenza rete (+import, -export).</small><input type="text" v-model="energyWizardForm.grid_power_169" /></label>
+                <label>Inverter/Home power entity<small>Potenza casa/inverter.</small><input type="text" v-model="energyWizardForm.inverter_power_175" /></label>
+                <label>Battery SOC entity<small>Percentuale batteria.</small><input type="text" v-model="energyWizardForm.battery_soc_184" /></label>
+                <label>Battery power entity<small>Potenza batteria (+scarica / -carica).</small><input type="text" v-model="energyWizardForm.battery_power_190" /></label>
+                <label>Battery current entity<small>Corrente batteria (A).</small><input type="text" v-model="energyWizardForm.battery_current_191" /></label>
+                <label>Battery voltage entity<small>Tensione batteria (V).</small><input type="text" v-model="energyWizardForm.battery_voltage_183" /></label>
+              </div>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'daily'" class="wizard-grid">
+                <label>Daily PV energy entity<small>Produzione giornaliera FV (kWh).</small><input type="text" v-model="energyWizardForm.day_pv_energy_108" /></label>
+                <label>Daily battery charge entity<small>Carica batteria giornaliera.</small><input type="text" v-model="energyWizardForm.day_battery_charge_70" /></label>
+                <label>Daily battery discharge entity<small>Scarica batteria giornaliera.</small><input type="text" v-model="energyWizardForm.day_battery_discharge_71" /></label>
+                <label>Daily load energy entity<small>Consumo casa giornaliero.</small><input type="text" v-model="energyWizardForm.day_load_energy_84" /></label>
+                <label>Daily grid import entity<small>Import rete giornaliero.</small><input type="text" v-model="energyWizardForm.day_grid_import_76" /></label>
+              </div>
+              <div v-else class="wizard-review">
+                <span><strong>MPPT:</strong> {{ energyWizardForm.solar_mppts }}</span>
+                <span><strong>Batterie:</strong> {{ energyWizardForm.battery_count }}</span>
+                <span><strong>Carichi:</strong> {{ energyWizardForm.additional_loads }}</span>
+                <span><strong>Colori:</strong> Solar {{ energyWizardForm.color_solar }}, Battery {{ energyWizardForm.color_battery }}, Grid {{ energyWizardForm.color_grid }}, Load {{ energyWizardForm.color_load }}</span>
+                <span><strong>Icone:</strong> Load/Grid custom attivi</span>
+                <span><strong>Output:</strong> genera JSON completo in `sunsynk_card_config_json`</span>
+              </div>
+            </div>
+            <div class="wizard-actions">
+              <button class="btn ghost" @click="energyWizardPrev" :disabled="energyWizardStep <= 0">Indietro</button>
+              <button class="btn ghost" @click="energyWizardNext" :disabled="energyWizardStep >= energyWizardSteps.length - 1">Avanti</button>
+              <button class="btn" @click="applyEnergyWizard">Applica alla card</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Configurazione completa card (avanzata)</h3>
+          <p class="note">Qui puoi fare ogni minimo setting disponibile tramite JSON completo della card.</p>
+          <label>Sunsynk card config JSON
+            <textarea v-model="energyForm.sunsynk_card_config_json" rows="16" placeholder='{"cardstyle":"full","solar":{"mppts":2}}'></textarea>
+          </label>
+        </section>
+      </main>
+    </div>
+
     <div v-show="tab==='setting'">
       <main class="tech-main">
         <section class="card setting-save-card">
@@ -1119,11 +1269,41 @@
                 <label>PV2 power entity
                   <input type="text" v-model="energyWizardForm.pv2_power_187" />
                 </label>
+                <label>PV1 voltage entity
+                  <input type="text" v-model="energyWizardForm.pv1_voltage_109" />
+                </label>
+                <label>PV1 current entity
+                  <input type="text" v-model="energyWizardForm.pv1_current_110" />
+                </label>
+                <label>PV2 voltage entity
+                  <input type="text" v-model="energyWizardForm.pv2_voltage_111" />
+                </label>
+                <label>PV2 current entity
+                  <input type="text" v-model="energyWizardForm.pv2_current_112" />
+                </label>
                 <label>Grid power entity
                   <input type="text" v-model="energyWizardForm.grid_power_169" />
                 </label>
+                <label>Grid CT power entity
+                  <input type="text" v-model="energyWizardForm.grid_ct_power_172" />
+                </label>
+                <label>Grid connected status entity
+                  <input type="text" v-model="energyWizardForm.grid_connected_status_194" />
+                </label>
+                <label>Inverter status entity
+                  <input type="text" v-model="energyWizardForm.inverter_status_59" />
+                </label>
                 <label>Inverter power entity
                   <input type="text" v-model="energyWizardForm.inverter_power_175" />
+                </label>
+                <label>Inverter voltage entity
+                  <input type="text" v-model="energyWizardForm.inverter_voltage_154" />
+                </label>
+                <label>Inverter current entity
+                  <input type="text" v-model="energyWizardForm.inverter_current_164" />
+                </label>
+                <label>Load frequency entity
+                  <input type="text" v-model="energyWizardForm.load_frequency_192" />
                 </label>
                 <label>Battery SOC entity
                   <input type="text" v-model="energyWizardForm.battery_soc_184" />
@@ -1179,6 +1359,90 @@
                 <option value="technical_dark">Technical Dark</option>
                 <option value="minimal_light">Minimal Light</option>
               </select>
+            </label>
+            <label>Cardstyle
+              <input type="text" value="full" disabled />
+            </label>
+            <label>Show Solar
+              <input type="checkbox" v-model="energyWizardForm.show_solar" />
+            </label>
+            <label>Show Battery
+              <input type="checkbox" v-model="energyWizardForm.show_battery" />
+            </label>
+            <label>Show Grid
+              <input type="checkbox" v-model="energyWizardForm.show_grid" />
+            </label>
+            <label>Dynamic line width
+              <input type="checkbox" v-model="energyWizardForm.dynamic_line_width" />
+            </label>
+            <label>Line width min
+              <input type="number" min="1" max="6" step="1" v-model.number="energyWizardForm.min_line_width" />
+            </label>
+            <label>Line width max
+              <input type="number" min="1" max="8" step="1" v-model.number="energyWizardForm.max_line_width" />
+            </label>
+            <label>Wide layout
+              <input type="checkbox" v-model="energyWizardForm.wide" />
+            </label>
+            <label>Inverter modern
+              <input type="checkbox" v-model="energyWizardForm.inverter_modern" />
+            </label>
+            <label>Inverter auto-scale
+              <input type="checkbox" v-model="energyWizardForm.inverter_auto_scale" />
+            </label>
+            <label>Inverter three-phase
+              <input type="checkbox" v-model="energyWizardForm.inverter_three_phase" />
+            </label>
+            <label>Solar max power (W)
+              <input type="number" min="100" step="100" v-model.number="energyWizardForm.solar_max_power" />
+            </label>
+            <label>Solar speed
+              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" />
+            </label>
+            <label>Solar show daily
+              <input type="checkbox" v-model="energyWizardForm.solar_show_daily" />
+            </label>
+            <label>Battery capacity (Wh)
+              <input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_energy_wh" />
+            </label>
+            <label>Battery shutdown SOC (%)
+              <input type="number" min="0" max="100" step="1" v-model.number="energyWizardForm.battery_shutdown_soc" />
+            </label>
+            <label>Battery max power (W)
+              <input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_max_power" />
+            </label>
+            <label>Battery speed
+              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.battery_animation_speed" />
+            </label>
+            <label>Battery auto-scale
+              <input type="checkbox" v-model="energyWizardForm.battery_auto_scale" />
+            </label>
+            <label>Battery show daily
+              <input type="checkbox" v-model="energyWizardForm.battery_show_daily" />
+            </label>
+            <label>Load max power (W)
+              <input type="number" min="100" step="100" v-model.number="energyWizardForm.load_max_power" />
+            </label>
+            <label>Load speed
+              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.load_animation_speed" />
+            </label>
+            <label>Load auto-scale
+              <input type="checkbox" v-model="energyWizardForm.load_auto_scale" />
+            </label>
+            <label>Load show daily
+              <input type="checkbox" v-model="energyWizardForm.load_show_daily" />
+            </label>
+            <label>Grid max power (W)
+              <input type="number" min="100" step="100" v-model.number="energyWizardForm.grid_max_power" />
+            </label>
+            <label>Grid speed
+              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.grid_animation_speed" />
+            </label>
+            <label>Grid auto-scale
+              <input type="checkbox" v-model="energyWizardForm.grid_auto_scale" />
+            </label>
+            <label>Grid show daily buy
+              <input type="checkbox" v-model="energyWizardForm.grid_show_daily_buy" />
             </label>
             <label>PV power entity id
               <input type="text" v-model="energyForm.pv_power_entity_id" />
@@ -1532,10 +1796,37 @@ const energyWizardSteps = [
 ]
 const energyIconOptions = ['default', 'boiler', 'aircon', 'pump', 'oven']
 const energyWizardForm = ref({
+  show_solar: true,
+  show_battery: true,
+  show_grid: true,
+  dynamic_line_width: true,
+  min_line_width: 1,
+  max_line_width: 4,
+  wide: false,
+  inverter_modern: true,
+  inverter_auto_scale: true,
+  inverter_three_phase: false,
   solar_mppts: 2,
+  solar_show_daily: true,
+  solar_animation_speed: 6,
+  solar_max_power: 7000,
   battery_count: 1,
+  battery_energy_wh: 15960,
+  battery_shutdown_soc: 20,
+  battery_show_daily: true,
+  battery_animation_speed: 8,
+  battery_max_power: 5000,
+  battery_auto_scale: true,
   additional_loads: 2,
   show_aux: false,
+  load_show_daily: true,
+  load_animation_speed: 6,
+  load_max_power: 9000,
+  load_auto_scale: true,
+  grid_show_daily_buy: true,
+  grid_animation_speed: 9,
+  grid_max_power: 8000,
+  grid_auto_scale: true,
   color_solar: '#f59e0b',
   color_battery: '#a855f7',
   color_grid: '#06b6d4',
@@ -1546,11 +1837,25 @@ const energyWizardForm = ref({
   load4_icon: 'default',
   load5_icon: 'default',
   load6_icon: 'default',
+  grid_nonessential_icon: 'default',
   grid_load1_icon: 'default',
   grid_load2_icon: 'default',
   grid_load3_icon: 'default',
+  grid_import_icon: 'mdi:transmission-tower-import',
+  grid_export_icon: 'mdi:transmission-tower-export',
+  grid_disconnected_icon: 'mdi:transmission-tower-off',
+  grid_ct_power_172: '',
+  grid_connected_status_194: '',
+  inverter_status_59: '',
+  inverter_voltage_154: '',
+  inverter_current_164: '',
+  load_frequency_192: '',
   pv1_power_186: '',
   pv2_power_187: '',
+  pv1_voltage_109: '',
+  pv1_current_110: '',
+  pv2_voltage_111: '',
+  pv2_current_112: '',
   grid_power_169: '',
   inverter_power_175: '',
   battery_soc_184: '',
@@ -3535,14 +3840,24 @@ function energyWizardPrev() {
 function buildSunsynkConfigFromWizard() {
   const w = energyWizardForm.value
   const entities = {
+    inverter_status_59: String(w.inverter_status_59 || ''),
     inverter_power_175: String(w.inverter_power_175 || ''),
+    inverter_voltage_154: String(w.inverter_voltage_154 || ''),
+    inverter_current_164: String(w.inverter_current_164 || ''),
+    load_frequency_192: String(w.load_frequency_192 || ''),
     grid_power_169: String(w.grid_power_169 || ''),
+    grid_ct_power_172: String(w.grid_ct_power_172 || ''),
+    grid_connected_status_194: String(w.grid_connected_status_194 || ''),
     battery_soc_184: String(w.battery_soc_184 || ''),
     battery_power_190: String(w.battery_power_190 || ''),
     battery_current_191: String(w.battery_current_191 || ''),
     battery_voltage_183: String(w.battery_voltage_183 || ''),
     pv1_power_186: String(w.pv1_power_186 || ''),
     pv2_power_187: String(w.pv2_power_187 || ''),
+    pv1_voltage_109: String(w.pv1_voltage_109 || ''),
+    pv1_current_110: String(w.pv1_current_110 || ''),
+    pv2_voltage_111: String(w.pv2_voltage_111 || ''),
+    pv2_current_112: String(w.pv2_current_112 || ''),
     day_pv_energy_108: String(w.day_pv_energy_108 || ''),
     day_battery_charge_70: String(w.day_battery_charge_70 || ''),
     day_battery_discharge_71: String(w.day_battery_discharge_71 || ''),
@@ -3555,24 +3870,43 @@ function buildSunsynkConfigFromWizard() {
 
   return {
     cardstyle: 'full',
-    show_solar: true,
-    show_battery: true,
-    show_grid: true,
+    show_solar: Boolean(w.show_solar),
+    show_battery: Boolean(w.show_battery),
+    show_grid: Boolean(w.show_grid),
+    dynamic_line_width: Boolean(w.dynamic_line_width),
+    min_line_width: Math.max(1, Math.min(6, Number(w.min_line_width || 1))),
+    max_line_width: Math.max(1, Math.min(8, Number(w.max_line_width || 4))),
+    wide: Boolean(w.wide),
+    inverter: {
+      modern: Boolean(w.inverter_modern),
+      auto_scale: Boolean(w.inverter_auto_scale),
+      three_phase: Boolean(w.inverter_three_phase),
+    },
     solar: {
       mppts: Math.max(1, Math.min(6, Number(w.solar_mppts || 2))),
       colour: String(w.color_solar || '#f59e0b'),
-      animation_speed: 6,
+      show_daily: Boolean(w.solar_show_daily),
+      animation_speed: Math.max(1, Math.min(20, Number(w.solar_animation_speed || 6))),
+      max_power: Math.max(100, Number(w.solar_max_power || 7000)),
     },
     battery: {
       count: Math.max(1, Math.min(2, Number(w.battery_count || 1))),
       colour: String(w.color_battery || '#a855f7'),
-      animation_speed: 8,
+      energy: Math.max(100, Number(w.battery_energy_wh || 15960)),
+      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc || 20))),
+      show_daily: Boolean(w.battery_show_daily),
+      animation_speed: Math.max(1, Math.min(20, Number(w.battery_animation_speed || 8))),
+      max_power: Math.max(100, Number(w.battery_max_power || 5000)),
+      auto_scale: Boolean(w.battery_auto_scale),
     },
     load: {
       colour: String(w.color_load || '#cbd5e1'),
       additional_loads: Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
       show_aux: Boolean(w.show_aux),
-      animation_speed: 6,
+      show_daily: Boolean(w.load_show_daily),
+      animation_speed: Math.max(1, Math.min(20, Number(w.load_animation_speed || 6))),
+      max_power: Math.max(100, Number(w.load_max_power || 9000)),
+      auto_scale: Boolean(w.load_auto_scale),
       load1_icon: String(w.load1_icon || 'default'),
       load2_icon: String(w.load2_icon || 'default'),
       load3_icon: String(w.load3_icon || 'default'),
@@ -3582,10 +3916,17 @@ function buildSunsynkConfigFromWizard() {
     },
     grid: {
       colour: String(w.color_grid || '#06b6d4'),
-      animation_speed: 9,
+      show_daily_buy: Boolean(w.grid_show_daily_buy),
+      animation_speed: Math.max(1, Math.min(20, Number(w.grid_animation_speed || 9))),
+      max_power: Math.max(100, Number(w.grid_max_power || 8000)),
+      auto_scale: Boolean(w.grid_auto_scale),
+      nonessential_icon: String(w.grid_nonessential_icon || 'default'),
       load1_icon: String(w.grid_load1_icon || 'default'),
       load2_icon: String(w.grid_load2_icon || 'default'),
       load3_icon: String(w.grid_load3_icon || 'default'),
+      import_icon: String(w.grid_import_icon || 'mdi:transmission-tower-import'),
+      export_icon: String(w.grid_export_icon || 'mdi:transmission-tower-export'),
+      disconnected_icon: String(w.grid_disconnected_icon || 'mdi:transmission-tower-off'),
     },
     entities,
   }
@@ -3893,7 +4234,7 @@ async function loadData() {
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
       }
-      energyWizardForm.value = {
+      const wizardSeed = {
         ...energyWizardForm.value,
         pv1_power_186: String(eo.pv_power_entity_id || ''),
         pv2_power_187: '',
@@ -3904,6 +4245,90 @@ async function loadData() {
         day_pv_energy_108: String(eo.pv_energy_today_entity_id || ''),
         day_load_energy_84: String(eo.home_energy_today_entity_id || ''),
         day_grid_import_76: String(eo.grid_import_today_entity_id || ''),
+      }
+      try {
+        const parsed = JSON.parse(String(eo.sunsynk_card_config_json || '{}'))
+        const ents = parsed?.entities || {}
+        const solar = parsed?.solar || {}
+        const battery = parsed?.battery || {}
+        const load = parsed?.load || {}
+        const grid = parsed?.grid || {}
+        energyWizardForm.value = {
+          ...wizardSeed,
+          show_solar: Boolean(parsed?.show_solar ?? wizardSeed.show_solar),
+          show_battery: Boolean(parsed?.show_battery ?? wizardSeed.show_battery),
+          show_grid: Boolean(parsed?.show_grid ?? wizardSeed.show_grid),
+          dynamic_line_width: Boolean(parsed?.dynamic_line_width ?? wizardSeed.dynamic_line_width),
+          min_line_width: Number(parsed?.min_line_width ?? wizardSeed.min_line_width),
+          max_line_width: Number(parsed?.max_line_width ?? wizardSeed.max_line_width),
+          wide: Boolean(parsed?.wide ?? wizardSeed.wide),
+          inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
+          inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
+          inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
+          solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts),
+          solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
+          solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
+          solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
+          battery_count: Number(battery.count ?? wizardSeed.battery_count),
+          battery_energy_wh: Number(battery.energy ?? wizardSeed.battery_energy_wh),
+          battery_shutdown_soc: Number(battery.shutdown_soc ?? wizardSeed.battery_shutdown_soc),
+          battery_show_daily: Boolean(battery.show_daily ?? wizardSeed.battery_show_daily),
+          battery_animation_speed: Number(battery.animation_speed ?? wizardSeed.battery_animation_speed),
+          battery_max_power: Number(battery.max_power ?? wizardSeed.battery_max_power),
+          battery_auto_scale: Boolean(battery.auto_scale ?? wizardSeed.battery_auto_scale),
+          additional_loads: Number(load.additional_loads ?? wizardSeed.additional_loads),
+          show_aux: Boolean(load.show_aux ?? wizardSeed.show_aux),
+          load_show_daily: Boolean(load.show_daily ?? wizardSeed.load_show_daily),
+          load_animation_speed: Number(load.animation_speed ?? wizardSeed.load_animation_speed),
+          load_max_power: Number(load.max_power ?? wizardSeed.load_max_power),
+          load_auto_scale: Boolean(load.auto_scale ?? wizardSeed.load_auto_scale),
+          grid_show_daily_buy: Boolean(grid.show_daily_buy ?? wizardSeed.grid_show_daily_buy),
+          grid_animation_speed: Number(grid.animation_speed ?? wizardSeed.grid_animation_speed),
+          grid_max_power: Number(grid.max_power ?? wizardSeed.grid_max_power),
+          grid_auto_scale: Boolean(grid.auto_scale ?? wizardSeed.grid_auto_scale),
+          color_solar: String(solar.colour || wizardSeed.color_solar),
+          color_battery: String(battery.colour || wizardSeed.color_battery),
+          color_grid: String(grid.colour || wizardSeed.color_grid),
+          color_load: String(load.colour || wizardSeed.color_load),
+          load1_icon: String(load.load1_icon || wizardSeed.load1_icon),
+          load2_icon: String(load.load2_icon || wizardSeed.load2_icon),
+          load3_icon: String(load.load3_icon || wizardSeed.load3_icon),
+          load4_icon: String(load.load4_icon || wizardSeed.load4_icon),
+          load5_icon: String(load.load5_icon || wizardSeed.load5_icon),
+          load6_icon: String(load.load6_icon || wizardSeed.load6_icon),
+          grid_nonessential_icon: String(grid.nonessential_icon || wizardSeed.grid_nonessential_icon),
+          grid_load1_icon: String(grid.load1_icon || wizardSeed.grid_load1_icon),
+          grid_load2_icon: String(grid.load2_icon || wizardSeed.grid_load2_icon),
+          grid_load3_icon: String(grid.load3_icon || wizardSeed.grid_load3_icon),
+          grid_import_icon: String(grid.import_icon || wizardSeed.grid_import_icon),
+          grid_export_icon: String(grid.export_icon || wizardSeed.grid_export_icon),
+          grid_disconnected_icon: String(grid.disconnected_icon || wizardSeed.grid_disconnected_icon),
+          inverter_status_59: String(ents.inverter_status_59 || wizardSeed.inverter_status_59),
+          inverter_power_175: String(ents.inverter_power_175 || wizardSeed.inverter_power_175),
+          inverter_voltage_154: String(ents.inverter_voltage_154 || wizardSeed.inverter_voltage_154),
+          inverter_current_164: String(ents.inverter_current_164 || wizardSeed.inverter_current_164),
+          load_frequency_192: String(ents.load_frequency_192 || wizardSeed.load_frequency_192),
+          grid_power_169: String(ents.grid_power_169 || wizardSeed.grid_power_169),
+          grid_ct_power_172: String(ents.grid_ct_power_172 || wizardSeed.grid_ct_power_172),
+          grid_connected_status_194: String(ents.grid_connected_status_194 || wizardSeed.grid_connected_status_194),
+          battery_soc_184: String(ents.battery_soc_184 || wizardSeed.battery_soc_184),
+          battery_power_190: String(ents.battery_power_190 || wizardSeed.battery_power_190),
+          battery_current_191: String(ents.battery_current_191 || wizardSeed.battery_current_191),
+          battery_voltage_183: String(ents.battery_voltage_183 || wizardSeed.battery_voltage_183),
+          pv1_power_186: String(ents.pv1_power_186 || wizardSeed.pv1_power_186),
+          pv2_power_187: String(ents.pv2_power_187 || wizardSeed.pv2_power_187),
+          pv1_voltage_109: String(ents.pv1_voltage_109 || wizardSeed.pv1_voltage_109),
+          pv1_current_110: String(ents.pv1_current_110 || wizardSeed.pv1_current_110),
+          pv2_voltage_111: String(ents.pv2_voltage_111 || wizardSeed.pv2_voltage_111),
+          pv2_current_112: String(ents.pv2_current_112 || wizardSeed.pv2_current_112),
+          day_pv_energy_108: String(ents.day_pv_energy_108 || wizardSeed.day_pv_energy_108),
+          day_battery_charge_70: String(ents.day_battery_charge_70 || wizardSeed.day_battery_charge_70),
+          day_battery_discharge_71: String(ents.day_battery_discharge_71 || wizardSeed.day_battery_discharge_71),
+          day_load_energy_84: String(ents.day_load_energy_84 || wizardSeed.day_load_energy_84),
+          day_grid_import_76: String(ents.day_grid_import_76 || wizardSeed.day_grid_import_76),
+        }
+      } catch (_) {
+        energyWizardForm.value = wizardSeed
       }
       const ov = oj?.overlay || {}
       cfg.value = {

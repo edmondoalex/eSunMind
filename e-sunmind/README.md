@@ -1,4 +1,10 @@
-﻿# e-SunMind Add-on
+# e-SunMind Add-on
+
+## Energy card setup
+
+- Configurazione completa Sunsynk card in UI Admin -> Setting -> Energy.
+- Wizard e campi avanzati permettono di impostare topologia, colori, icone, linee, velocita animazioni e tutte le entita principali.
+- La dashboard energy-dashboard/sunsynk-wrapper.html carica automaticamente questa configurazione.
 
 ## API for integrations
 
