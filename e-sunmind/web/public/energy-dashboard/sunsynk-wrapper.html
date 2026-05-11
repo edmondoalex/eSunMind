@@ -308,6 +308,28 @@
           const f = num(fallback);
           return f != null ? f : 0;
         };
+        const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
+          const entry = ce?.[cardKey];
+          if (!entry || entry.value == null) return false;
+          const raw = entry.value;
+          const unit = String(entry.unit || fallbackUnit || '');
+          const extra = {};
+          if (deviceClass) extra.device_class = deviceClass;
+          if (stateClass) extra.state_class = stateClass;
+          const value = num(raw) != null ? num(raw) : raw;
+          const prev = window.hass.states[sensorId] || mkState(0, unit);
+          window.hass.states[sensorId] = {
+            ...prev,
+            state: String(value),
+            attributes: {
+              ...(prev.attributes || {}),
+              ...(unit ? { unit_of_measurement: unit } : {}),
+              ...extra,
+            },
+            last_updated: new Date().toISOString(),
+          };
+          return true;
+        };
 
         const pv1 = fromCard('pv1_power_186');
         const pv2 = fromCard('pv2_power_187');
@@ -339,6 +361,30 @@
           inverter_voltage: inverterVoltage,
           load_frequency: loadFrequency,
         });
+
+        // Hard override from raw card entities when available.
+        // This keeps the original card fields populated even if normalized mapping is partial.
+        setFromCardEntity(sensorIds.pv1_power_186, 'pv1_power_186', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.pv2_power_187, 'pv2_power_187', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.pv1_voltage_109, 'pv1_voltage_109', 'V', 'voltage', 'measurement');
+        setFromCardEntity(sensorIds.pv1_current_110, 'pv1_current_110', 'A', 'current', 'measurement');
+        setFromCardEntity(sensorIds.pv2_voltage_111, 'pv2_voltage_111', 'V', 'voltage', 'measurement');
+        setFromCardEntity(sensorIds.pv2_current_112, 'pv2_current_112', 'A', 'current', 'measurement');
+        setFromCardEntity(sensorIds.inverter_power_175, 'inverter_power_175', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.grid_power_169, 'grid_power_169', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.grid_ct_power_172, 'grid_ct_power_172', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.battery_soc_184, 'battery_soc_184', '%', 'battery', 'measurement');
+        setFromCardEntity(sensorIds.battery_power_190, 'battery_power_190', 'W', 'power', 'measurement');
+        setFromCardEntity(sensorIds.battery_current_191, 'battery_current_191', 'A', 'current', 'measurement');
+        setFromCardEntity(sensorIds.battery_voltage_183, 'battery_voltage_183', 'V', 'voltage', 'measurement');
+        setFromCardEntity(sensorIds.inverter_status_59, 'inverter_status_59', '', '', '');
+        setFromCardEntity(sensorIds.grid_connected_status_194, 'grid_connected_status_194', '', '', '');
+        setFromCardEntity(sensorIds.day_pv_energy_108, 'day_pv_energy_108', 'kWh', 'energy', 'total_increasing');
+        setFromCardEntity(sensorIds.day_battery_charge_70, 'day_battery_charge_70', 'kWh', 'energy', 'total_increasing');
+        setFromCardEntity(sensorIds.day_battery_discharge_71, 'day_battery_discharge_71', 'kWh', 'energy', 'total_increasing');
+        setFromCardEntity(sensorIds.day_load_energy_84, 'day_load_energy_84', 'kWh', 'energy', 'total_increasing');
+        setFromCardEntity(sensorIds.day_grid_import_76, 'day_grid_import_76', 'kWh', 'energy', 'total_increasing');
+        setFromCardEntity(sensorIds.day_grid_export_77, 'day_grid_export_77', 'kWh', 'energy', 'total_increasing');
 
         const setDaily = (id, value) => {
           if (value == null || Number.isNaN(Number(value))) return;
