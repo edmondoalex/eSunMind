@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.146
+
+- Energy Wizard mapping popup: riallineati hotspot su card Sunsynk Full con area a rapporto fisso e iframe non interattivo dietro overlay.
+- Ridotti/semplificati i marker visivi per evitare sovrapposizioni e disallineamenti con icone/nodi.
+
 ## 0.3.145
 
 - Wizard Energy: popup mappatura realtime ora mostra la card reale Sunsynk Full (iframe) con hotspot cliccabili sui nodi principali per assegnare direttamente le entita.
@@ -663,7 +668,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 

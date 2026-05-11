@@ -1165,10 +1165,9 @@
                   <div class="energy-live-map">
                     <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?v=live-map" title="Sunsynk Full Preview"></iframe>
                     <button class="map-hit pv1" @click="editEnergyEntity('pv1_power_186','PV1 Power')">PV1</button>
-                    <button class="map-hit pv2" @click="editEnergyEntity('pv2_power_187','PV2 Power')">PV2</button>
                     <button class="map-hit home" @click="editEnergyEntity('inverter_power_175','Home/Inverter Power')">HOME</button>
                     <button class="map-hit grid" @click="editEnergyEntity('grid_power_169','Grid Power')">GRID</button>
-                    <button class="map-hit batt" @click="editEnergyEntity('battery_power_190','Battery Power')">BATT P</button>
+                    <button class="map-hit batt" @click="editEnergyEntity('battery_power_190','Battery Power')">BATT</button>
                     <button class="map-hit soc" @click="editEnergyEntity('battery_soc_184','Battery SOC')">SOC</button>
                     <button class="map-hit volt" @click="editEnergyEntity('inverter_voltage_154','Inverter Voltage')">V</button>
                     <button class="map-hit hz" @click="editEnergyEntity('load_frequency_192','Load Frequency')">Hz</button>
@@ -5538,35 +5537,40 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   border-radius:10px;
   overflow:hidden;
   background:#040b1a;
+  aspect-ratio: 5 / 3.45;
+  min-height: 420px;
 }
 .energy-live-frame{
+  position:absolute;
+  inset:0;
   width:100%;
-  height:520px;
+  height:100%;
   border:0;
   display:block;
+  pointer-events:none;
 }
 .map-hit{
   position:absolute;
   z-index:3;
-  border:1px solid rgba(34,211,238,.85);
-  background:rgba(8,47,73,.75);
+  border:1px solid rgba(34,211,238,.9);
+  background:rgba(2,132,199,.18);
   color:#dbeafe;
   border-radius:8px;
   font-size:11px;
   padding:2px 6px;
   cursor:pointer;
+  line-height:1.1;
 }
-.map-hit.pv1{ left:4%; top:12%; }
-.map-hit.pv2{ left:20%; top:12%; }
-.map-hit.home{ left:50%; top:39%; transform:translateX(-50%); }
-.map-hit.grid{ right:8%; top:72%; }
-.map-hit.batt{ left:38%; top:72%; }
-.map-hit.soc{ left:43%; top:86%; }
-.map-hit.volt{ left:56%; top:41%; }
-.map-hit.hz{ left:56%; top:49%; }
-.map-hit.dailypv{ left:5%; top:4%; }
-.map-hit.dailyload{ left:51%; top:24%; transform:translateX(-50%); }
-.map-hit.dailygrid{ right:8%; top:58%; }
+.map-hit.pv1{ left:3.5%; top:25%; }
+.map-hit.home{ left:37%; top:38.5%; }
+.map-hit.grid{ right:4.5%; top:77%; }
+.map-hit.batt{ left:11%; top:76%; }
+.map-hit.soc{ left:36.5%; top:92%; }
+.map-hit.volt{ left:52%; top:39%; }
+.map-hit.hz{ left:52%; top:48%; }
+.map-hit.dailypv{ left:3%; top:7%; }
+.map-hit.dailyload{ left:52%; top:21%; }
+.map-hit.dailygrid{ right:10%; top:59%; }
 
 @media (max-width: 768px){
   .topbar{
