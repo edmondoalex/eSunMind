@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.138"
+APP_VERSION = "0.3.139"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -2509,6 +2509,36 @@ async def data():
     return JSONResponse(payload)
 
 
+@app.get("/api/energy/debug")
+async def energy_debug():
+    cfg = _load_options()
+    e_cfg = cfg.get("energy") if isinstance(cfg, dict) else {}
+    if not isinstance(e_cfg, dict):
+        e_cfg = {}
+    snapshot = _build_energy_snapshot(cfg)
+    raw = str(e_cfg.get("sunsynk_card_config_json") or "")
+    parse_error = None
+    parsed: dict[str, Any] = {}
+    try:
+        j = json.loads(raw) if raw.strip() else {}
+        if isinstance(j, dict):
+            parsed = j
+        else:
+            parse_error = "card_config_not_object"
+    except Exception as exc:
+        parse_error = str(exc)
+    entities = parsed.get("entities") if isinstance(parsed.get("entities"), dict) else {}
+    return JSONResponse(
+        {
+            "ok": True,
+            "energy_config": e_cfg,
+            "card_config_parse_error": parse_error,
+            "card_config_entities": entities,
+            "snapshot": snapshot,
+        }
+    )
+
+
 @app.get("/api/data_demo")
 async def data_demo():
     now_local = datetime.now().astimezone().isoformat()
@@ -3039,7 +3069,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
 
 
 

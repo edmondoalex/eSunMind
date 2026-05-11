@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.139
+
+- Fix critico lettura entita HA: `_fetch_ha_entity_state` ora usa parser numerico robusto (`_to_float_or_none`) invece di parse float rigido.
+- Corretto caso in cui lo stato entita e presente ma non veniva convertito, causando `value=None` e dashboard a zero.
+
 ## 0.3.138
 
 - Hotfix zero persistente: il wrapper Energy ora applica direttamente i valori raw da `energy.card_entities` ai sensori mock della card a ogni polling.
