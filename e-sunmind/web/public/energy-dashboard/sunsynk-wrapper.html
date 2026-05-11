@@ -120,6 +120,10 @@
 
     function applyEnergyEntityFallbacks(e) {
       cardConfig.entities = cardConfig.entities || {};
+      // Default fallback: single-PV topology unless PV2 is explicitly provided by card JSON.
+      cardConfig.entities.pv2_power_187 = '';
+      cardConfig.entities.pv2_voltage_111 = '';
+      cardConfig.entities.pv2_current_112 = '';
       if (e?.home_power_entity_id) cardConfig.entities.inverter_power_175 = String(e.home_power_entity_id);
       if (e?.grid_power_entity_id) {
         cardConfig.entities.grid_power_169 = String(e.grid_power_entity_id);

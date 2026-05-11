@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.130
+
+- Fix persistenza topologia FV: senza JSON esplicito, il wrapper ora forza fallback a 1 FV (pv2 vuoto) invece di riaprire a 2 FV di default.
+- La dashboard resta coerente con i Setting salvati finche non viene configurato un secondo MPPT nel JSON card.
+
 ## 0.3.129
 
 - Fix topologia dashboard Sunsynk: ora il wrapper applica sempre la configurazione reale del wizard per MPPT/entita.
