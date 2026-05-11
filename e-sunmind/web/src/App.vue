@@ -1159,11 +1159,52 @@
               <div class="wizard-grid" v-if="energyEntityPopupMode === 'realtime'">
                 <div style="grid-column:1/-1;">
                   <div class="wizard-review" style="margin-bottom:8px;">
-                    <span><strong>Dashboard preview:</strong> clicca i valori sotto per mappare rapidamente le entita.</span>
+                    <span><strong>Dashboard preview:</strong> clicca i riquadri della dashboard per mappare le entita.</span>
                   </div>
-                  <div class="energy-map-grid">
-                    <button v-for="t in energyMapTargets" :key="`map-${t.key}`" class="btn ghost" @click="editEnergyEntity(t.key, t.label)">
-                      {{ t.label }}: {{ String(energyWizardForm[t.key] || 'non impostata') }}
+                  <div class="energy-map-board">
+                    <button class="energy-map-node solar" @click="editEnergyEntity('pv1_power_186','PV1 Power')">
+                      PV1 Power
+                      <small>{{ String(energyWizardForm.pv1_power_186 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node solar2" @click="editEnergyEntity('pv2_power_187','PV2 Power')">
+                      PV2 Power
+                      <small>{{ String(energyWizardForm.pv2_power_187 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node home" @click="editEnergyEntity('inverter_power_175','Home/Inverter Power')">
+                      Home/Inverter
+                      <small>{{ String(energyWizardForm.inverter_power_175 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node grid" @click="editEnergyEntity('grid_power_169','Grid Power')">
+                      Grid Power
+                      <small>{{ String(energyWizardForm.grid_power_169 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node battery" @click="editEnergyEntity('battery_power_190','Battery Power')">
+                      Battery Power
+                      <small>{{ String(energyWizardForm.battery_power_190 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node soc" @click="editEnergyEntity('battery_soc_184','Battery SOC')">
+                      Battery SOC
+                      <small>{{ String(energyWizardForm.battery_soc_184 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node volt" @click="editEnergyEntity('inverter_voltage_154','Inverter Voltage')">
+                      Inverter Voltage
+                      <small>{{ String(energyWizardForm.inverter_voltage_154 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node hz" @click="editEnergyEntity('load_frequency_192','Load Frequency')">
+                      Load Frequency
+                      <small>{{ String(energyWizardForm.load_frequency_192 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node dailypv" @click="editEnergyEntity('day_pv_energy_108','PV Energy Today')">
+                      PV Energy Today
+                      <small>{{ String(energyWizardForm.day_pv_energy_108 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node dailyload" @click="editEnergyEntity('day_load_energy_84','Load Energy Today')">
+                      Load Energy Today
+                      <small>{{ String(energyWizardForm.day_load_energy_84 || 'non impostata') }}</small>
+                    </button>
+                    <button class="energy-map-node dailygrid" @click="editEnergyEntity('day_grid_import_76','Grid Import Today')">
+                      Grid Import Today
+                      <small>{{ String(energyWizardForm.day_grid_import_76 || 'non impostata') }}</small>
                     </button>
                   </div>
                 </div>
@@ -5486,6 +5527,32 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   text-align:left;
   white-space:normal;
 }
+.energy-map-board{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(220px,1fr));
+  gap:8px;
+}
+.energy-map-node{
+  background:rgba(15,23,42,.7);
+  border:1px solid rgba(148,163,184,.45);
+  color:#e5e7eb;
+  border-radius:10px;
+  padding:8px 10px;
+  text-align:left;
+  font-size:13px;
+  cursor:pointer;
+}
+.energy-map-node small{
+  display:block;
+  margin-top:4px;
+  color:#93c5fd;
+  font-size:11px;
+  word-break:break-all;
+}
+.energy-map-node.solar,.energy-map-node.solar2,.energy-map-node.home{ border-color:rgba(245,158,11,.6); }
+.energy-map-node.grid,.energy-map-node.volt,.energy-map-node.hz,.energy-map-node.dailygrid{ border-color:rgba(6,182,212,.6); }
+.energy-map-node.battery,.energy-map-node.soc{ border-color:rgba(99,102,241,.6); }
+.energy-map-node.dailypv,.energy-map-node.dailyload{ border-color:rgba(148,163,184,.6); }
 
 @media (max-width: 768px){
   .topbar{
@@ -5664,6 +5731,4 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
-
-
 

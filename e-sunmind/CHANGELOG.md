@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.143
+
+- Wizard Energy: popup mappatura realtime aggiornato con preview visuale tipo dashboard (nodi cliccabili) per assegnare le entita direttamente da una vista coerente con la card.
+
 ## 0.3.142
 
 - Energy Wizard: step `Entita realtime` e `Entita giornaliere` ora aprono popup dedicato di mappatura (meno incasinato, flusso guidato).
@@ -650,7 +654,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 
