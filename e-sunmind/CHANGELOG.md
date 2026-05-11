@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.133
+
+- Wizard Energy: aggiunto campo mancante `Daily grid export entity` (`day_grid_export_77`) per completare la mappatura entita giornaliere.
+- Wrapper dashboard aggiornato: supporta `day_grid_export_77` in sensorIds, fallback da Setting e aggiornamento realtime da `grid_export_today_kwh`.
+
 ## 0.3.132
 
 - UI semplificata: rimossa la pagina duplicata `Energy Wizard` dal top menu.

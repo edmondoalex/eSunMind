@@ -84,6 +84,7 @@
       day_battery_discharge_71: 'sensor.mock_day_battery_discharge',
       day_load_energy_84: 'sensor.mock_day_load_energy',
       day_grid_import_76: 'sensor.mock_day_grid_import',
+      day_grid_export_77: 'sensor.mock_day_grid_export',
     };
 
     let cardConfig = {
@@ -135,6 +136,7 @@
       if (e?.pv_energy_today_entity_id) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
       if (e?.home_energy_today_entity_id) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
       if (e?.grid_import_today_entity_id) cardConfig.entities.day_grid_import_76 = String(e.grid_import_today_entity_id);
+      if (e?.grid_export_today_entity_id) cardConfig.entities.day_grid_export_77 = String(e.grid_export_today_entity_id);
     }
 
     function enforceTopologyFromConfig() {
@@ -205,6 +207,7 @@
       s[sensorIds.day_battery_discharge_71] = mkState(0.0, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
       s[sensorIds.day_load_energy_84] = mkState(11.9, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
       s[sensorIds.day_grid_import_76] = mkState(8.5, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+      s[sensorIds.day_grid_export_77] = mkState(0.2, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
     }
 
     const card = document.getElementById('card');
@@ -334,6 +337,7 @@
         setDaily(sensorIds.day_pv_energy_108, n.pv_energy_today_kwh);
         setDaily(sensorIds.day_load_energy_84, n.home_energy_today_kwh);
         setDaily(sensorIds.day_grid_import_76, n.grid_import_today_kwh);
+        setDaily(sensorIds.day_grid_export_77, n.grid_export_today_kwh);
 
         forceRender();
         document.getElementById('status').textContent = 'Dati reali da addon attivi';

@@ -1185,6 +1185,9 @@
                 <label>Daily grid import entity
                   <input type="text" v-model="energyWizardForm.day_grid_import_76" />
                 </label>
+                <label>Daily grid export entity
+                  <input type="text" v-model="energyWizardForm.day_grid_export_77" />
+                </label>
               </div>
               <div v-else class="wizard-review">
                 <span><strong>MPPT:</strong> {{ energyWizardForm.solar_mppts }}</span>
@@ -1749,6 +1752,7 @@ const energyWizardForm = ref({
   day_battery_discharge_71: '',
   day_load_energy_84: '',
   day_grid_import_76: '',
+  day_grid_export_77: '',
 })
 const baseForm = ref({
   latitude: 44.6973,
@@ -3745,6 +3749,7 @@ function buildSunsynkConfigFromWizard() {
     day_battery_discharge_71: String(w.day_battery_discharge_71 || ''),
     day_load_energy_84: String(w.day_load_energy_84 || ''),
     day_grid_import_76: String(w.day_grid_import_76 || ''),
+    day_grid_export_77: String(w.day_grid_export_77 || ''),
   }
   Object.keys(entities).forEach((k) => {
     if (!String(entities[k] || '').trim()) delete entities[k]
@@ -4131,6 +4136,7 @@ async function loadData() {
         day_pv_energy_108: String(eo.pv_energy_today_entity_id || ''),
         day_load_energy_84: String(eo.home_energy_today_entity_id || ''),
         day_grid_import_76: String(eo.grid_import_today_entity_id || ''),
+        day_grid_export_77: String(eo.grid_export_today_entity_id || ''),
       }
       try {
         const parsed = JSON.parse(String(eo.sunsynk_card_config_json || '{}'))
@@ -4212,6 +4218,7 @@ async function loadData() {
           day_battery_discharge_71: String(ents.day_battery_discharge_71 || wizardSeed.day_battery_discharge_71),
           day_load_energy_84: String(ents.day_load_energy_84 || wizardSeed.day_load_energy_84),
           day_grid_import_76: String(ents.day_grid_import_76 || wizardSeed.day_grid_import_76),
+          day_grid_export_77: String(ents.day_grid_export_77 || wizardSeed.day_grid_export_77),
         }
       } catch (_) {
         energyWizardForm.value = wizardSeed
