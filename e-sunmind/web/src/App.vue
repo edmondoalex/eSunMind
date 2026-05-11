@@ -14,7 +14,7 @@
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
         <a class="btn ghost" href="?view=user">UI User</a>
-        <a class="btn ghost" href="energy-dashboard/" target="_blank" rel="noopener noreferrer">Energy Flow</a>
+        <a class="btn ghost" href="energy-dashboard/sunsynk-standalone/" target="_blank" rel="noopener noreferrer">Energy Flow</a>
         <a class="btn ghost" href="?view=energy">Energy</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
@@ -4947,6 +4947,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
+
 
 
 
