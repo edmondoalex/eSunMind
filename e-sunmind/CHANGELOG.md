@@ -1,5 +1,11 @@
 ﻿# Changelog
 
+## 0.3.123
+
+- Wizard Energy: aggiunto step Icone con selettori per icone carichi essenziali (load1..load6) e non essenziali (grid.load1..load3).
+- Supportate icone native Sunsynk: default, oiler, ircon, pump, oven.
+- Il JSON generato include ora anche gli override icona per load e grid oltre a topologia/colori/entita.
+
 ## 0.3.122
 
 - Setting > Energy: aggiunto wizard step-by-step per generare automaticamente la sunsynk_card_config_json (topologia, colori, entita realtime/daily, review).
@@ -538,6 +544,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

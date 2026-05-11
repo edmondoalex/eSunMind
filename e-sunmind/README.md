@@ -148,3 +148,5 @@ Il wrapper sunsynk-wrapper.html legge questa configurazione da /api/options all'
 
 Da .3.122 in Setting > Energy e disponibile un wizard passo-passo per costruire la configurazione completa della card Sunsynk (sunsynk_card_config_json) senza edit manuale JSON.
 
+
+- Wizard Energy: supporta anche selezione icone carichi (default, oiler, ircon, pump, oven) per nodi essenziali e non essenziali.

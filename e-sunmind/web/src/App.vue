@@ -1083,6 +1083,35 @@
                   <input type="color" v-model="energyWizardForm.color_load" />
                 </label>
               </div>
+              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'icons'" class="wizard-grid">
+                <label>Icona Load 1
+                  <select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`l1-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Load 2
+                  <select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`l2-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Load 3
+                  <select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`l3-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Load 4
+                  <select v-model="energyWizardForm.load4_icon"><option v-for="i in energyIconOptions" :key="`l4-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Load 5
+                  <select v-model="energyWizardForm.load5_icon"><option v-for="i in energyIconOptions" :key="`l5-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Load 6
+                  <select v-model="energyWizardForm.load6_icon"><option v-for="i in energyIconOptions" :key="`l6-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Non-Essential 1
+                  <select v-model="energyWizardForm.grid_load1_icon"><option v-for="i in energyIconOptions" :key="`g1-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Non-Essential 2
+                  <select v-model="energyWizardForm.grid_load2_icon"><option v-for="i in energyIconOptions" :key="`g2-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+                <label>Icona Non-Essential 3
+                  <select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`g3-${i}`" :value="i">{{ i }}</option></select>
+                </label>
+              </div>
               <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-grid">
                 <label>PV1 power entity
                   <input type="text" v-model="energyWizardForm.pv1_power_186" />
@@ -1496,10 +1525,12 @@ const energyWizardStep = ref(0)
 const energyWizardSteps = [
   { key: 'topology', label: 'Topologia', hint: 'Definisci numero pannelli/batterie/carichi.' },
   { key: 'colors', label: 'Colori', hint: 'Scegli palette della card.' },
+  { key: 'icons', label: 'Icone', hint: 'Scegli icone per carichi essenziali e non essenziali.' },
   { key: 'entities', label: 'Entita realtime', hint: 'Mappa sensori principali di potenza e batteria.' },
   { key: 'daily', label: 'Entita giornaliere', hint: 'Mappa i contatori energia daily.' },
   { key: 'review', label: 'Conferma', hint: 'Genera automaticamente il JSON completo.' },
 ]
+const energyIconOptions = ['default', 'boiler', 'aircon', 'pump', 'oven']
 const energyWizardForm = ref({
   solar_mppts: 2,
   battery_count: 1,
@@ -1509,6 +1540,15 @@ const energyWizardForm = ref({
   color_battery: '#a855f7',
   color_grid: '#06b6d4',
   color_load: '#cbd5e1',
+  load1_icon: 'default',
+  load2_icon: 'default',
+  load3_icon: 'default',
+  load4_icon: 'default',
+  load5_icon: 'default',
+  load6_icon: 'default',
+  grid_load1_icon: 'default',
+  grid_load2_icon: 'default',
+  grid_load3_icon: 'default',
   pv1_power_186: '',
   pv2_power_187: '',
   grid_power_169: '',
@@ -3528,15 +3568,24 @@ function buildSunsynkConfigFromWizard() {
       color: String(w.color_battery || '#a855f7'),
       animation_speed: 8,
     },
-    grid: {
-      color: String(w.color_grid || '#06b6d4'),
-      animation_speed: 9,
-    },
     load: {
       color: String(w.color_load || '#cbd5e1'),
       additional_loads: Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
       show_aux: Boolean(w.show_aux),
       animation_speed: 6,
+      load1_icon: String(w.load1_icon || 'default'),
+      load2_icon: String(w.load2_icon || 'default'),
+      load3_icon: String(w.load3_icon || 'default'),
+      load4_icon: String(w.load4_icon || 'default'),
+      load5_icon: String(w.load5_icon || 'default'),
+      load6_icon: String(w.load6_icon || 'default'),
+    },
+    grid: {
+      color: String(w.color_grid || '#06b6d4'),
+      animation_speed: 9,
+      load1_icon: String(w.grid_load1_icon || 'default'),
+      load2_icon: String(w.grid_load2_icon || 'default'),
+      load3_icon: String(w.grid_load3_icon || 'default'),
     },
     entities,
   }
