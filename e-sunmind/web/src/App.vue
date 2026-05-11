@@ -1140,6 +1140,7 @@
                 <span><strong>MPPT:</strong> {{ energyWizardForm.solar_mppts }}</span>
                 <span><strong>Batterie:</strong> {{ energyWizardForm.battery_count }}</span>
                 <span><strong>Carichi:</strong> {{ energyWizardForm.additional_loads }}</span>
+                <span><strong>Cardstyle:</strong> {{ energyWizardForm.cardstyle }}</span>
                 <span><strong>Colori:</strong> Solar {{ energyWizardForm.color_solar }}, Battery {{ energyWizardForm.color_battery }}, Grid {{ energyWizardForm.color_grid }}, Load {{ energyWizardForm.color_load }}</span>
                 <span><strong>Output:</strong> genera JSON completo in `sunsynk_card_config_json`</span>
               </div>
@@ -1252,7 +1253,12 @@
               </select>
             </label>
             <label>Cardstyle
-              <input type="text" value="full" disabled />
+              <select v-model="energyWizardForm.cardstyle">
+                <option value="full">full</option>
+                <option value="compact">compact</option>
+                <option value="lite">lite</option>
+                <option value="minimal">minimal</option>
+              </select>
             </label>
             <label>Show Solar
               <input type="checkbox" v-model="energyWizardForm.show_solar" />
@@ -1700,6 +1706,7 @@ const tendeMapForm = ref({
 const energyForm = ref({
   enabled: true,
   theme: 'classic_flow',
+  cardstyle: 'full',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   pv_power_sign: 'positive',
   home_power_entity_id: '',
@@ -1755,6 +1762,7 @@ const dailyEntityKeys = [
   'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
 ]
 const energyWizardForm = ref({
+  cardstyle: 'full',
   show_solar: true,
   show_battery: true,
   show_grid: true,
@@ -3844,7 +3852,7 @@ function buildSunsynkConfigFromWizard() {
   })
 
   return {
-    cardstyle: 'full',
+    cardstyle: String(w.cardstyle || 'full'),
     show_solar: Boolean(w.show_solar),
     show_battery: Boolean(w.show_battery),
     show_grid: Boolean(w.show_grid),
@@ -4208,6 +4216,7 @@ async function loadData() {
       energyForm.value = {
         enabled: Boolean(eo.enabled ?? true),
         theme: String(eo.theme || 'classic_flow'),
+        cardstyle: 'full',
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         pv_power_sign: String(eo.pv_power_sign || 'positive'),
         home_power_entity_id: String(eo.home_power_entity_id || ''),
@@ -4228,6 +4237,7 @@ async function loadData() {
       }
       const wizardSeed = {
         ...energyWizardForm.value,
+        cardstyle: 'full',
         pv1_power_186: String(eo.pv_power_entity_id || ''),
         pv2_power_187: '',
         grid_power_169: String(eo.grid_power_entity_id || ''),
@@ -4250,6 +4260,7 @@ async function loadData() {
         const grid = parsed?.grid || {}
         energyWizardForm.value = {
           ...wizardSeed,
+          cardstyle: String(parsed?.cardstyle || wizardSeed.cardstyle || 'full'),
           show_solar: Boolean(parsed?.show_solar ?? wizardSeed.show_solar),
           show_battery: Boolean(parsed?.show_battery ?? wizardSeed.show_battery),
           show_grid: Boolean(parsed?.show_grid ?? wizardSeed.show_grid),
@@ -5731,4 +5742,3 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
-

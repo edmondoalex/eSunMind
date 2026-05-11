@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.144
+
+- Energy Wizard: aggiunto selettore `Cardstyle` (non più fisso su `full`) con opzioni `full`, `compact`, `lite`, `minimal`.
+- Il valore scelto viene scritto nel JSON Sunsynk generato dal wizard e mostrato nello step di conferma.
+
 ## 0.3.143
 
 - Wizard Energy: popup mappatura realtime aggiornato con preview visuale tipo dashboard (nodi cliccabili) per assegnare le entita direttamente da una vista coerente con la card.
@@ -654,7 +659,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 
