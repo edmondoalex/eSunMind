@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.141
+
+- Energy wrapper: rimossi elementi UI di debug/fallback (`Random` e barra stato testuale) dalla pagina dashboard.
+- Fix critico binding entita: il wrapper aggiorna gli stati usando gli `entity_id` reali definiti in `cardConfig.entities` (non più solo `sensor.mock_*`), così i valori reali appaiono nella card.
+
 ## 0.3.140
 
 - Aggiunto endpoint diagnostico `GET /api/energy/debug` per vedere config energy, entita card parse-ate e snapshot energia effettivo letto dal backend.
@@ -637,7 +642,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 
