@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.145
+
+- Wizard Energy: popup mappatura realtime ora mostra la card reale Sunsynk Full (iframe) con hotspot cliccabili sui nodi principali per assegnare direttamente le entita.
+
 ## 0.3.144
 
 - Energy Wizard: aggiunto selettore `Cardstyle` (non più fisso su `full`) con opzioni `full`, `compact`, `lite`, `minimal`.
@@ -659,7 +663,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 
