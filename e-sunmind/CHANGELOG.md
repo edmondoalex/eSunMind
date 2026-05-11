@@ -1,5 +1,11 @@
 ﻿# Changelog
 
+## 0.3.121
+
+- Setting > Energy: aggiunto campo JSON sunsynk_card_config_json per configurare tutta la card Sunsynk (mppt, batterie, carichi, entities, opzioni full) dalla UI addon.
+- Wrapper standalone: carica la configurazione da /api/options e la applica in deep-merge alla cardConfig runtime prima dell'inizializzazione.
+- Persistenza completa: nuova chiave supportata in backend defaults, salvataggio opzioni e schema addon (config.yaml).
+
 ## 0.3.120
 
 - Sunsynk Wrapper: disattivato update random automatico e attivato polling dati reali da addon (../api/data) ogni 2 secondi.
@@ -526,6 +532,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

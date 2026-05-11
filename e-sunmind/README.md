@@ -138,3 +138,8 @@ Da .3.118 la dashboard energia usa di default un wrapper standalone basato sulla
 - Runtime: mock window.hass con states, localize(), 	hemes e API minime necessarie
 - Aggiornamento dati: funzione globale updateSensors(newData) per integrazione backend real-time
 
+
+### Config card Sunsynk da UI Addon
+
+In Setting > Energy e disponibile il campo JSON sunsynk_card_config_json per impostare tutta la cardConfig del wrapper (solar, attery, load, grid, entities, ecc.) senza modificare file statici.
+Il wrapper sunsynk-wrapper.html legge questa configurazione da /api/options all'avvio e la applica automaticamente.

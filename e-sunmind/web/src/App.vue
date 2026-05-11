@@ -1078,6 +1078,10 @@
             <label>Grid export today entity id
               <input type="text" v-model="energyForm.grid_export_today_entity_id" />
             </label>
+            <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
+              <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
+              <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
+            </label>
           </div>
         </section>
 
@@ -1383,6 +1387,7 @@ const energyForm = ref({
   home_energy_today_entity_id: '',
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
+  sunsynk_card_config_json: '',
 })
 const baseForm = ref({
   latitude: 44.6973,
@@ -3639,6 +3644,7 @@ async function loadData() {
         home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
+        sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
       }
       const ov = oj?.overlay || {}
       cfg.value = {
@@ -3786,6 +3792,7 @@ async function saveBaseSettings() {
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+        sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }
     const r = await fetch('api/options/base', {
@@ -3879,6 +3886,7 @@ async function saveAllSettings() {
         home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+        sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
       },
     }
     const overlayPayload = {

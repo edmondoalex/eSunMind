@@ -86,7 +86,7 @@
       day_grid_import_76: 'sensor.mock_day_grid_import',
     };
 
-    const cardConfig = {
+    let cardConfig = {
       type: 'custom:sunsynk-power-flow-card',
       cardstyle: 'full',
       show_solar: true,
@@ -103,6 +103,35 @@
       grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
       entities: { ...sensorIds },
     };
+
+    function deepMerge(target, src) {
+      if (!src || typeof src !== 'object') return target;
+      for (const [k, v] of Object.entries(src)) {
+        if (v && typeof v === 'object' && !Array.isArray(v)) {
+          if (!target[k] || typeof target[k] !== 'object' || Array.isArray(target[k])) target[k] = {};
+          deepMerge(target[k], v);
+        } else {
+          target[k] = v;
+        }
+      }
+      return target;
+    }
+
+    async function loadCardConfigFromAddonOptions() {
+      try {
+        const r = await fetch('../api/options', { cache: 'no-store' });
+        if (!r.ok) return;
+        const j = await r.json();
+        const raw = j?.energy?.sunsynk_card_config_json;
+        if (!raw) return;
+        const parsed = JSON.parse(String(raw));
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+        cardConfig = deepMerge(cardConfig, parsed);
+        document.getElementById('status').textContent = 'Config card caricata da Setting > Energy';
+      } catch (_) {
+        // ignore malformed JSON or temporary API errors
+      }
+    }
 
     function seedStates() {
       const s = window.hass.states;
@@ -261,9 +290,10 @@
     }
 
     // avvio
-    const waitCard = setInterval(() => {
+    const waitCard = setInterval(async () => {
       if (customElements.get('sunsynk-power-flow-card')) {
         clearInterval(waitCard);
+        await loadCardConfigFromAddonOptions();
         initCard();
         syncFromAddonApi();
         setInterval(syncFromAddonApi, 2000);
