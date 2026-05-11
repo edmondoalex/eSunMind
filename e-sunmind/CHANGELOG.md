@@ -1,5 +1,11 @@
 ﻿# Changelog
 
+## 0.3.122
+
+- Setting > Energy: aggiunto wizard step-by-step per generare automaticamente la sunsynk_card_config_json (topologia, colori, entita realtime/daily, review).
+- Il wizard costruisce una card config Full coerente con Sunsynk e scrive il JSON pronto nel campo configurazione card.
+- Aggiunto prefill iniziale del wizard dai campi Energy gia configurati (power/SOC/daily).
+
 ## 0.3.121
 
 - Setting > Energy: aggiunto campo JSON sunsynk_card_config_json per configurare tutta la card Sunsynk (mppt, batterie, carichi, entities, opzioni full) dalla UI addon.
@@ -532,6 +538,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
