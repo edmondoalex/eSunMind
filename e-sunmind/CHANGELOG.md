@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.138
+
+- Hotfix zero persistente: il wrapper Energy ora applica direttamente i valori raw da `energy.card_entities` ai sensori mock della card a ogni polling.
+- Bypassate eventuali perdite nella sola pipeline `normalized`, mantenendo popolate anche tensioni/correnti/status/daily quando presenti nelle entita card.
+
 ## 0.3.137
 
 - Hotfix dashboard valori a zero: backend espone `energy.card_entities` con valori raw delle entita Sunsynk dal JSON card.
