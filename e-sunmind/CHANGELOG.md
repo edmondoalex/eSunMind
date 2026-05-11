@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.109
+
+- Energy Dashboard light: contrasto aumentato (testi, icone, flussi) e leggibilita generale migliorata.
+- Scena centrale ingrandita (~25-30%) con casa, FV, batteria e rete piu evidenti.
+- Flussi energetici resi piu chiari: linee piu spesse, particelle piu visibili e label riposizionate.
+- Metriche integrate in scena allineate a destra con spaziatura/unita migliorate; `Real-time Power` allineato al consumo casa.
+- Pannello UI ottimizzato: larghezza utile maggiore (`94vw`) e altezza compatta (`~78vh`) con riduzione vuoti laterali.
+
 ## 0.3.108
 
 - Energy Dashboard: abbandonato React Flow nella scena centrale, ora rendering SVG custom puro.
