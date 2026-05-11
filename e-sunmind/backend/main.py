@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.130"
+APP_VERSION = "0.3.131"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -909,6 +909,40 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         st = out["entities"].get(k) or {}
         return st.get("value"), st.get("unit")
 
+    def _is_missing(v: Any) -> bool:
+        return v is None
+
+    card_entities: dict[str, Any] = {}
+    try:
+        raw_cfg = str(e_cfg.get("sunsynk_card_config_json") or "").strip()
+        if raw_cfg:
+            parsed = json.loads(raw_cfg)
+            if isinstance(parsed, dict) and isinstance(parsed.get("entities"), dict):
+                card_entities = parsed.get("entities") or {}
+    except Exception:
+        card_entities = {}
+
+    def _card_state(card_key: str) -> dict[str, Any] | None:
+        ent = str(card_entities.get(card_key) or "").strip()
+        if not ent:
+            return None
+        st = _fetch_ha_entity_state(ent)
+        if not st or not st.get("ok"):
+            return None
+        return st
+
+    def _card_power_w(card_key: str) -> float | None:
+        st = _card_state(card_key)
+        if not st:
+            return None
+        return _normalize_power_to_w(st.get("value"), st.get("unit"))
+
+    def _card_energy_kwh(card_key: str) -> float | None:
+        st = _card_state(card_key)
+        if not st:
+            return None
+        return _normalize_energy_to_kwh(st.get("value"), st.get("unit"))
+
     out["normalized"]["pv_power_w"] = _normalize_power_to_w(*_val("pv_power_entity_id"))
     out["normalized"]["home_power_w"] = _normalize_power_to_w(*_val("home_power_entity_id"))
     out["normalized"]["grid_power_w"] = _normalize_power_to_w(*_val("grid_power_entity_id"))
@@ -918,6 +952,31 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
     out["normalized"]["home_energy_today_kwh"] = _normalize_energy_to_kwh(*_val("home_energy_today_entity_id"))
     out["normalized"]["grid_import_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_import_today_entity_id"))
     out["normalized"]["grid_export_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_export_today_entity_id"))
+
+    # Fallback from Sunsynk card JSON entities when base energy.* entity ids are empty.
+    if _is_missing(out["normalized"]["pv_power_w"]):
+        pv1 = _card_power_w("pv1_power_186")
+        pv2 = _card_power_w("pv2_power_187")
+        if pv1 is not None or pv2 is not None:
+            out["normalized"]["pv_power_w"] = float(pv1 or 0.0) + float(pv2 or 0.0)
+    if _is_missing(out["normalized"]["home_power_w"]):
+        out["normalized"]["home_power_w"] = _card_power_w("inverter_power_175")
+    if _is_missing(out["normalized"]["grid_power_w"]):
+        out["normalized"]["grid_power_w"] = _card_power_w("grid_power_169")
+    if _is_missing(out["normalized"]["battery_power_w"]):
+        out["normalized"]["battery_power_w"] = _card_power_w("battery_power_190")
+    if _is_missing(out["normalized"]["battery_soc_pct"]):
+        st_soc = _card_state("battery_soc_184")
+        out["normalized"]["battery_soc_pct"] = _to_float_or_none((st_soc or {}).get("value"))
+    if _is_missing(out["normalized"]["pv_energy_today_kwh"]):
+        out["normalized"]["pv_energy_today_kwh"] = _card_energy_kwh("day_pv_energy_108")
+    if _is_missing(out["normalized"]["home_energy_today_kwh"]):
+        out["normalized"]["home_energy_today_kwh"] = _card_energy_kwh("day_load_energy_84")
+    if _is_missing(out["normalized"]["grid_import_today_kwh"]):
+        out["normalized"]["grid_import_today_kwh"] = _card_energy_kwh("day_grid_import_76")
+    if _is_missing(out["normalized"]["grid_export_today_kwh"]):
+        out["normalized"]["grid_export_today_kwh"] = _card_energy_kwh("day_grid_export_77")
+
     out["ok"] = out["normalized"]["pv_power_w"] is not None
     return out
 
@@ -2957,7 +3016,6 @@ async def options_set_overlay(payload: dict):
         "saved_to": str(LOCAL_OPTIONS_FILE),
         "mirrored_to_ha_options": saved_ha,
     })
-
 
 
 

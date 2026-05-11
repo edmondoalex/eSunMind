@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.131
+
+- Fix valori a zero dashboard energy: backend ora usa fallback automatico dalle entita di `sunsynk_card_config_json` quando i campi base `energy.*` sono vuoti.
+- Mapping fallback copre potenze principali (PV, Home/Inverter, Grid, Battery), SOC e contatori daily principali.
+
 ## 0.3.130
 
 - Fix persistenza topologia FV: senza JSON esplicito, il wrapper ora forza fallback a 1 FV (pv2 vuoto) invece di riaprire a 2 FV di default.
