@@ -3,331 +3,277 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EA SAS - Neon Cyberpunk Energy Dashboard</title>
+  <title>EA SAS - Cyber Tech Energy Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'Rajdhani', 'system-ui', 'sans-serif']
-          }
-        }
-      }
-    }
-  </script>
   <style>
     :root {
       --bg: #080a10;
-      --solar-main: #f59e0b;
-      --solar-sub: #fbbf24;
-      --battery: #a855f7;
-      --consumo: #e5e7eb;
-      --consumo-glow: #94a3b8;
+      --gold: #f59e0b;
+      --gold2: #fbbf24;
+      --violet: #a855f7;
       --grid: #06b6d4;
+      --cons: #cbd5e1;
     }
-    html, body { margin: 0; background: var(--bg); color: #e5e7eb; font-family: Inter, Rajdhani, sans-serif; }
-    .cyber-bg {
-      background:
-        radial-gradient(circle at 18% 14%, rgba(245,158,11,0.2), transparent 40%),
-        radial-gradient(circle at 80% 78%, rgba(6,182,212,0.16), transparent 45%),
-        radial-gradient(circle at 32% 74%, rgba(168,85,247,0.18), transparent 35%),
-        radial-gradient(circle at 50% 50%, rgba(2,6,23,0.75), rgba(2,6,23,0.98)),
-        #080a10;
+    html, body { margin: 0; height: 100%; background: var(--bg); color: #e2e8f0; font-family: Inter, Rajdhani, system-ui, sans-serif; }
+    .page {
       min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-    .cyber-bg::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle at center, rgba(148,163,184,0.13) 1px, transparent 1px);
-      background-size: 34px 34px;
-      opacity: .24;
-      pointer-events: none;
-    }
-    .glass {
-      background: linear-gradient(160deg, rgba(17,24,39,0.68), rgba(2,6,23,0.55));
-      border: 1px solid rgba(148,163,184,0.34);
-      box-shadow: inset 0 0 16px rgba(148,163,184,0.1), 0 0 14px rgba(15,23,42,0.8);
-      backdrop-filter: blur(12px);
-      border-radius: 14px;
-    }
-    .neon-title { text-shadow: 0 0 14px rgba(226,232,240,.44), 0 0 28px rgba(148,163,184,.32); }
-    .neon-solar { color: var(--solar-main); text-shadow: 0 0 12px rgba(245,158,11,.62), 0 0 24px rgba(245,158,11,.4); }
-    .neon-battery { color: var(--battery); text-shadow: 0 0 10px rgba(168,85,247,.62), 0 0 24px rgba(168,85,247,.4); }
-    .neon-grid { color: #7dd3fc; text-shadow: 0 0 10px rgba(6,182,212,.72), 0 0 28px rgba(6,182,212,.45); }
-    .card {
-      position: absolute;
-      padding: 12px 14px;
-      min-width: 112px;
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.25);
-      background: linear-gradient(160deg, rgba(15,23,42,.78), rgba(2,6,23,.63));
-      box-shadow: inset 0 0 14px rgba(148,163,184,.09), 0 0 14px rgba(15,23,42,.92);
-      backdrop-filter: blur(10px);
-    }
-    .metric-label { font-size: 12px; letter-spacing: .02em; color: #cbd5e1; opacity: .9; }
-    .metric-sub { font-size: 28px; line-height: 1; font-weight: 700; }
-    .flow-glow { filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 14px currentColor) drop-shadow(0 0 22px currentColor); }
-    .small { font-size: 12px; color: #94a3b8; }
-    .mono { font-variant-numeric: tabular-nums; }
-    .icon-shadow { filter: drop-shadow(0 0 10px rgba(255,255,255,.25)); }
-    .dashboard-viewport {
-      width: 100%;
-      height: 100vh;
       display: grid;
       place-items: center;
-      padding: 12px;
-      box-sizing: border-box;
+      padding: 14px;
+      background:
+        radial-gradient(circle at 16% 18%, rgba(245,158,11,.16), transparent 42%),
+        radial-gradient(circle at 82% 82%, rgba(6,182,212,.14), transparent 44%),
+        radial-gradient(circle at 38% 78%, rgba(168,85,247,.14), transparent 40%),
+        #080a10;
     }
-    .dashboard-stage {
-      width: 1024px;
-      height: 680px;
-      transform-origin: center center;
-      will-change: transform;
+    .board {
+      width: min(1280px, 96vw);
+      aspect-ratio: 16 / 9;
+      position: relative;
+      overflow: hidden;
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,.25);
+      box-shadow: inset 0 0 28px rgba(148,163,184,.08), 0 0 32px rgba(2,6,23,.8);
+      background: linear-gradient(160deg, rgba(15,23,42,.58), rgba(2,6,23,.75));
     }
-    @media (max-width: 640px) {
-      .dashboard-viewport { padding: 8px; }
+    .grid {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1.05fr 1fr;
+      gap: 22px;
+      padding: clamp(14px, 2vw, 28px);
+      z-index: 2;
+    }
+    .col { display: grid; gap: 14px; align-content: start; }
+    .title {
+      text-align: center;
+      font-size: clamp(24px, 3vw, 46px);
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: #dbeafe;
+      text-shadow: 0 0 14px rgba(148,163,184,.55), 0 0 28px rgba(148,163,184,.35);
+      margin-bottom: 4px;
+    }
+    .card {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.2);
+      backdrop-filter: blur(10px);
+      background: linear-gradient(135deg, rgba(255,255,255,.1), rgba(255,255,255,.05));
+      box-shadow: inset 0 0 18px rgba(148,163,184,.08);
+      padding: 12px 14px;
+    }
+    .node {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .icon {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: rgba(15,23,42,.55);
+      border: 1px solid rgba(255,255,255,.2);
+      flex: 0 0 auto;
+      font-size: 20px;
+    }
+    .icon.gold { color: var(--gold); box-shadow: 0 0 14px rgba(245,158,11,.45); }
+    .icon.violet { color: var(--violet); box-shadow: 0 0 14px rgba(168,85,247,.45); }
+    .icon.cyan { color: #67e8f9; box-shadow: 0 0 14px rgba(6,182,212,.45); }
+    .icon.slate { color: #e2e8f0; box-shadow: 0 0 14px rgba(148,163,184,.4); }
+    .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      opacity: .8;
+    }
+    .value {
+      font-size: clamp(24px, 2.6vw, 42px);
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .value.mid { font-size: clamp(20px, 2vw, 32px); }
+    .value.big { font-size: clamp(28px, 3.1vw, 48px); }
+    .gold { color: #fcd34d; text-shadow: 0 0 12px rgba(245,158,11,.5); }
+    .violet { color: #d8b4fe; text-shadow: 0 0 12px rgba(168,85,247,.5); }
+    .cyan { color: #93c5fd; text-shadow: 0 0 12px rgba(6,182,212,.55); }
+    .slate { color: #e2e8f0; text-shadow: 0 0 10px rgba(148,163,184,.5); }
+    .stack { display: grid; gap: 8px; }
+    .tiny { font-size: 12px; opacity: .8; }
+
+    svg.flows {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .flow-base { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .trail {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 6 22;
+      animation: trail 2.4s linear infinite;
+    }
+    @keyframes trail {
+      to { stroke-dashoffset: -120; }
+    }
+
+    @media (max-width: 980px) {
+      .board { aspect-ratio: auto; min-height: 92vh; }
+      .grid { grid-template-columns: 1fr; gap: 12px; }
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div class="page">
+    <section class="board">
+      <svg class="flows" viewBox="0 0 1280 720" preserveAspectRatio="none">
+        <path class="flow-base" d="M180 210 C250 210, 250 280, 330 280" stroke="#f59e0b" stroke-width="2.6" opacity=".8" filter="drop-shadow(0 0 8px #f59e0b)"/>
+        <path class="trail" d="M180 210 C250 210, 250 280, 330 280" stroke="#fff" stroke-width="1.4" filter="drop-shadow(0 0 8px #f59e0b)"/>
 
-  <script type="module">
-    import React from 'https://esm.sh/react@18.3.1';
-    import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
-    import { motion } from 'https://esm.sh/framer-motion@11.3.8';
+        <path class="flow-base" d="M180 292 C250 292, 250 330, 330 330" stroke="#fbbf24" stroke-width="2.6" opacity=".78" filter="drop-shadow(0 0 8px #fbbf24)"/>
+        <path class="trail" d="M180 292 C250 292, 250 330, 330 330" stroke="#fff" stroke-width="1.4" style="animation-delay:.2s" filter="drop-shadow(0 0 8px #fbbf24)"/>
 
-    const Flow = ({ d, color, width = 4, duration = 2.2, delay = 0 }) => (
-      React.createElement('g', { style: { color } },
-        React.createElement('path', {
-          d,
-          fill: 'none',
-          stroke: color,
-          strokeOpacity: 0.25,
-          strokeWidth: width + 6,
-          className: 'flow-glow'
-        }),
-        React.createElement('path', {
-          d,
-          fill: 'none',
-          stroke: color,
-          strokeWidth: width,
-          strokeLinecap: 'round',
-          className: 'flow-glow'
-        }),
-        React.createElement(motion.path, {
-          d,
-          fill: 'none',
-          stroke: '#ffffff',
-          strokeWidth: width - 1,
-          strokeLinecap: 'round',
-          strokeDasharray: '4 14',
-          className: 'flow-glow',
-          animate: { strokeDashoffset: [0, -72] },
-          transition: { duration, repeat: Infinity, ease: 'linear', delay }
-        })
-      )
-    );
+        <path class="flow-base" d="M460 320 C600 320, 600 320, 760 320" stroke="#fbbf24" stroke-width="2.8" opacity=".85" filter="drop-shadow(0 0 10px #f59e0b)"/>
+        <path class="trail" d="M460 320 C600 320, 600 320, 760 320" stroke="#fff" stroke-width="1.5" style="animation-delay:.1s" filter="drop-shadow(0 0 10px #f59e0b)"/>
 
-    function App() {
-      const viewportRef = React.useRef(null);
-      const [scale, setScale] = React.useState(1);
+        <path class="flow-base" d="M460 250 C610 250, 630 220, 835 220" stroke="#cbd5e1" stroke-width="2.4" opacity=".72" filter="drop-shadow(0 0 8px #94a3b8)"/>
+        <path class="trail" d="M460 250 C610 250, 630 220, 835 220" stroke="#fff" stroke-width="1.3" style="animation-delay:.35s" filter="drop-shadow(0 0 8px #94a3b8)"/>
 
-      React.useEffect(() => {
-        const recalc = () => {
-          const el = viewportRef.current;
-          if (!el) return;
-          const { clientWidth, clientHeight } = el;
-          const next = Math.min(clientWidth / 1024, clientHeight / 680);
-          setScale(Math.max(0.42, Math.min(1.6, next)));
-        };
-        recalc();
-        window.addEventListener('resize', recalc);
-        return () => window.removeEventListener('resize', recalc);
-      }, []);
+        <path class="flow-base" d="M470 420 C610 420, 760 420, 940 420" stroke="#06b6d4" stroke-width="2.8" opacity=".8" filter="drop-shadow(0 0 10px #06b6d4)"/>
+        <path class="trail" d="M470 420 C610 420, 760 420, 940 420" stroke="#fff" stroke-width="1.5" style="animation-delay:.18s" filter="drop-shadow(0 0 10px #06b6d4)"/>
 
-      return React.createElement('div', { className: 'cyber-bg' },
-        React.createElement('div', { className: 'dashboard-viewport', ref: viewportRef },
-          React.createElement('main', {
-            className: 'dashboard-stage relative glass overflow-hidden',
-            style: { transform: `scale(${scale})` }
-          },
-          React.createElement('div', { className: 'absolute left-1/2 -translate-x-1/2 top-4 text-5xl font-semibold tracking-wide neon-title text-slate-300' }, 'EA SAS'),
+        <path class="flow-base" d="M420 540 C320 540, 250 540, 175 540" stroke="#a855f7" stroke-width="2.8" opacity=".82" filter="drop-shadow(0 0 10px #a855f7)"/>
+        <path class="trail" d="M420 540 C320 540, 250 540, 175 540" stroke="#fff" stroke-width="1.5" style="animation-delay:.28s" filter="drop-shadow(0 0 10px #a855f7)"/>
+      </svg>
 
-          React.createElement('svg', { className: 'absolute inset-0 w-full h-full', viewBox: '0 0 1024 680' },
-            React.createElement(Flow, { d: 'M126 188 C186 188 170 270 170 322 L170 502 C170 514 176 520 188 520 L470 520', color: '#f59e0b', width: 4, duration: 2.1 }),
-            React.createElement(Flow, { d: 'M230 188 C316 188 350 206 390 248 C430 286 458 320 502 337', color: '#fbbf24', width: 3.5, duration: 2.6, delay: 0.2 }),
-            React.createElement(Flow, { d: 'M510 337 L810 337', color: '#fbbf24', width: 4, duration: 1.9, delay: 0.1 }),
-            React.createElement(Flow, { d: 'M510 337 L510 260 C510 236 520 226 546 226 L744 226', color: '#94a3b8', width: 3.4, duration: 2.8, delay: 0.35 }),
-            React.createElement(Flow, { d: 'M515 352 C560 352 572 352 610 352', color: '#cbd5e1', width: 3.3, duration: 2.4, delay: 0.16 }),
-            React.createElement(Flow, { d: 'M628 352 L900 352 C926 352 936 366 936 386 L936 533', color: '#06b6d4', width: 4, duration: 2.2, delay: 0.12 }),
-            React.createElement(Flow, { d: 'M480 538 L190 538', color: '#a855f7', width: 4.5, duration: 2.0, delay: 0.3 }),
-            React.createElement(Flow, { d: 'M504 348 L504 512', color: '#fbbf24', width: 3, duration: 2.5, delay: 0.18 })
-          ),
+      <div class="grid">
+        <div class="col">
+          <div class="title">EA SAS</div>
+          <div class="card node">
+            <div class="icon gold">☀</div>
+            <div>
+              <div class="label">Energia Solare Oggi</div>
+              <div class="value big gold">6,7 kWh</div>
+            </div>
+          </div>
+          <div class="card node">
+            <div class="icon gold">⚡</div>
+            <div>
+              <div class="label">Solare SAS</div>
+              <div class="value gold">2,95 kW</div>
+            </div>
+          </div>
+          <div class="card node">
+            <div class="icon gold">▦</div>
+            <div>
+              <div class="label">Pannelli Portoni</div>
+              <div class="value mid gold">202 W</div>
+            </div>
+          </div>
+          <div class="card node">
+            <div class="icon gold">🏠</div>
+            <div>
+              <div class="label">Legnaia</div>
+              <div class="value gold">2,22 kW</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="label">Linea Solare Combinata</div>
+            <div class="value gold">5,37 kW</div>
+            <div class="tiny">67%</div>
+          </div>
+        </div>
 
-          React.createElement('div', { className: 'absolute left-[54px] top-[96px] neon-solar' },
-            React.createElement('div', { className: 'text-5xl icon-shadow' }, '☀'),
-            React.createElement('div', { className: 'mono text-4xl font-bold mt-2' }, '6,7 kWh'),
-            React.createElement('div', { className: 'metric-label uppercase tracking-wider' }, 'Energia Solare Oggi')
-          ),
+        <div class="col">
+          <div class="card stack">
+            <div class="node">
+              <div class="icon slate">⚙</div>
+              <div>
+                <div class="label">Inverter Main</div>
+                <div class="value slate">1,16 kW</div>
+              </div>
+            </div>
+            <div class="tiny">45% Autosuff. · 100% Autoconsumo</div>
+          </div>
 
-          React.createElement('div', { className: 'absolute left-[258px] top-[88px] text-amber-300' },
-            React.createElement('svg', { className: 'icon-shadow', width: '140', height: '140', viewBox: '0 0 140 140' },
-              React.createElement('defs', null,
-                React.createElement('radialGradient', { id: 'sunGrad', cx: '50%', cy: '50%', r: '50%' },
-                  React.createElement('stop', { offset: '0%', stopColor: '#fde68a' }),
-                  React.createElement('stop', { offset: '100%', stopColor: '#f59e0b' })
-                )
-              ),
-              React.createElement('g', { fill: 'none', stroke: 'url(#sunGrad)', strokeWidth: '3' },
-                Array.from({ length: 12 }).map((_, i) => React.createElement('line', {
-                  key: i,
-                  x1: 70 + Math.cos((i * 30) * Math.PI / 180) * 42,
-                  y1: 70 + Math.sin((i * 30) * Math.PI / 180) * 42,
-                  x2: 70 + Math.cos((i * 30) * Math.PI / 180) * 62,
-                  y2: 70 + Math.sin((i * 30) * Math.PI / 180) * 62
-                }))
-              ),
-              React.createElement('circle', { cx: '70', cy: '70', r: '38', fill: 'url(#sunGrad)', fillOpacity: '0.2', stroke: '#fbbf24', strokeWidth: '3' }),
-              React.createElement('circle', { cx: '70', cy: '70', r: '26', fill: 'none', stroke: '#fde68a', strokeWidth: '2', strokeDasharray: '3 4' })
-            )
-          ),
+          <div class="card stack">
+            <div class="node">
+              <div class="icon violet">▧</div>
+              <div>
+                <div class="label">Battery Stack</div>
+                <div class="value violet">52,9 V · 18,3 A</div>
+              </div>
+            </div>
+            <div class="value mid violet">3,04 kW</div>
+            <div class="tiny">26% | 20% · 47,0°</div>
+          </div>
 
-          React.createElement('div', { className: 'card left-[24px] top-[170px] border-amber-300/60 text-amber-200' },
-            React.createElement('div', { className: 'metric-sub mono' }, '2,95 kW'),
-            React.createElement('div', { className: 'metric-label' }, 'Solare SAS'),
-            React.createElement('div', { className: 'small mono' }, '49%')
-          ),
-          React.createElement('div', { className: 'card left-[170px] top-[170px] border-amber-300/60 text-amber-200' },
-            React.createElement('div', { className: 'metric-sub mono' }, '202 W'),
-            React.createElement('div', { className: 'metric-label' }, 'Pannelli portoni'),
-            React.createElement('div', { className: 'small mono' }, '14%  ·  0,0 A')
-          ),
-          React.createElement('div', { className: 'card left-[24px] top-[266px] border-amber-300/60 text-amber-200' },
-            React.createElement('div', { className: 'metric-sub mono' }, '2,22 kW'),
-            React.createElement('div', { className: 'metric-label' }, 'Legnaia'),
-            React.createElement('div', { className: 'small mono' }, '63%')
-          ),
-          React.createElement('div', { className: 'card left-[96px] top-[362px] border-amber-300/60 text-amber-200' },
-            React.createElement('div', { className: 'metric-sub mono' }, '5,37 kW'),
-            React.createElement('div', { className: 'small mono mt-1' }, '67%')
-          ),
+          <div class="card stack">
+            <div class="node">
+              <div class="icon cyan">📟</div>
+              <div>
+                <div class="label">Status Node</div>
+                <div class="value cyan">231,5 V</div>
+              </div>
+            </div>
+            <div class="value mid cyan">50,02 Hz</div>
+            <div class="value mid slate">1,16 kW</div>
+          </div>
 
-          React.createElement('div', { className: 'absolute left-[34px] top-[470px] neon-battery' },
-            React.createElement('div', { className: 'mono text-4xl font-bold' }, '3,1 kWh'),
-            React.createElement('div', { className: 'metric-label uppercase' }, 'Carica Oggi'),
-            React.createElement('div', { className: 'mono text-4xl font-bold mt-2' }, '0,0 kWh'),
-            React.createElement('div', { className: 'metric-label uppercase' }, 'Scarica Oggi')
-          ),
+          <div class="card">
+            <div class="label">Carica/Scarica Oggi</div>
+            <div class="value violet">3,1 kWh</div>
+            <div class="value mid violet">0,0 kWh</div>
+          </div>
+        </div>
 
-          React.createElement('div', { className: 'card left-[34px] top-[548px] border-fuchsia-500/60 text-fuchsia-300 w-[130px]' },
-            React.createElement('div', { className: 'mono text-4xl font-semibold leading-tight' }, '52,9 V'),
-            React.createElement('div', { className: 'mono text-3xl font-semibold leading-tight mt-1' }, '18,3 A'),
-            React.createElement('div', { className: 'mono text-4xl font-semibold leading-tight mt-1' }, '3,04 kW')
-          ),
-
-          React.createElement('div', { className: 'absolute left-[164px] top-[546px] text-fuchsia-300' },
-            React.createElement('svg', { width: '64', height: '96', className: 'icon-shadow', viewBox: '0 0 64 96' },
-              React.createElement('defs', null,
-                React.createElement('linearGradient', { id: 'batt1', x1: '0', y1: '0', x2: '1', y2: '1' },
-                  React.createElement('stop', { offset: '0%', stopColor: '#e879f9' }),
-                  React.createElement('stop', { offset: '100%', stopColor: '#a855f7' })
-                )
-              ),
-              React.createElement('polygon', { points: '32,2 58,18 58,58 32,74 6,58 6,18', fill: 'none', stroke: 'url(#batt1)', strokeWidth: '2' }),
-              React.createElement('polygon', { points: '32,18 48,28 48,46 32,56 16,46 16,28', fill: 'url(#batt1)', fillOpacity: '0.3', stroke: '#f0abfc' }),
-              React.createElement('polygon', { points: '32,30 44,37 44,45 32,52 20,45 20,37', fill: '#f5d0fe', fillOpacity: '0.36' })
-            ),
-            React.createElement('div', { className: 'mono text-[14px] -mt-2' }, '0,00 kWh')
-          ),
-          React.createElement('div', { className: 'absolute left-[220px] top-[560px] neon-battery mono text-5xl font-bold' }, '26% | 20%'),
-          React.createElement('div', { className: 'absolute left-[164px] top-[542px] text-fuchsia-300 mono text-sm' }, '47,0°'),
-
-          React.createElement('div', { className: 'card left-[414px] top-[332px] w-[120px] h-[108px] border-cyan-200/60 text-slate-100 flex items-center justify-center' },
-            React.createElement('div', { className: 'mono text-5xl font-semibold neon-title' }, '1,16 kW')
-          ),
-
-          React.createElement('div', { className: 'absolute left-[438px] top-[452px] w-[72px] h-[110px] glass flex items-center justify-center text-cyan-100' },
-            React.createElement('svg', { className: 'icon-shadow', width: '54', height: '92', viewBox: '0 0 54 92' },
-              React.createElement('rect', { x: '7', y: '6', width: '40', height: '80', rx: '4', fill: '#cbd5e1', fillOpacity: '0.2', stroke: '#cbd5e1' }),
-              React.createElement('rect', { x: '11', y: '11', width: '32', height: '16', rx: '2', fill: '#0ea5e9', fillOpacity: '0.35' }),
-              React.createElement('circle', { cx: '16', cy: '19', r: '1.8', fill: '#67e8f9' }),
-              React.createElement('circle', { cx: '22', cy: '19', r: '1.8', fill: '#67e8f9' }),
-              React.createElement('circle', { cx: '28', cy: '19', r: '1.8', fill: '#67e8f9' }),
-              React.createElement('rect', { x: '11', y: '34', width: '32', height: '46', rx: '2', fill: '#0f172a', stroke: '#60a5fa' })
-            )
-          ),
-          React.createElement('div', { className: 'absolute left-[520px] top-[532px] text-slate-300 mono' },
-            React.createElement('span', { className: 'text-4xl font-semibold' }, '45%'),
-            React.createElement('span', { className: 'small text-slate-300 ml-2' }, 'Autosuff.'),
-            React.createElement('span', { className: 'text-4xl font-semibold ml-5' }, '100%'),
-            React.createElement('span', { className: 'small text-slate-300 ml-2' }, 'Autoconsumo')
-          ),
-
-          React.createElement('div', { className: 'card left-[650px] top-[162px] text-slate-200 border-slate-300/50' },
-            React.createElement('div', { className: 'metric-sub mono text-5xl' }, '0 W')
-          ),
-          React.createElement('div', { className: 'absolute left-[650px] top-[234px] text-slate-300' },
-            React.createElement('div', { className: 'mono text-5xl font-semibold' }, '11,9 kWh'),
-            React.createElement('div', { className: 'metric-label uppercase' }, 'Consumo Oggi')
-          ),
-          React.createElement('div', { className: 'card left-[646px] top-[310px] border-amber-300/60 text-amber-200' },
-            React.createElement('div', { className: 'metric-sub mono' }, '1,16 kW')
-          ),
-          React.createElement('div', { className: 'card left-[646px] top-[396px] border-blue-300/60 text-blue-200 w-[108px]' },
-            React.createElement('div', { className: 'mono text-5xl font-semibold leading-none' }, '231,5 V'),
-            React.createElement('div', { className: 'mono text-5xl font-semibold leading-none mt-2' }, '50,02 Hz')
-          ),
-
-          React.createElement('div', { className: 'absolute left-[860px] top-[88px] text-cyan-100 text-center' },
-            React.createElement('svg', { className: 'icon-shadow', width: '108', height: '118', viewBox: '0 0 108 118' },
-              React.createElement('rect', { x: '12', y: '10', width: '84', height: '96', rx: '7', fill: '#0f172a', stroke: '#93c5fd' }),
-              React.createElement('rect', { x: '18', y: '20', width: '72', height: '18', rx: '2', fill: '#1e293b', stroke: '#22d3ee' }),
-              React.createElement('rect', { x: '18', y: '45', width: '72', height: '18', rx: '2', fill: '#1e293b', stroke: '#22d3ee' }),
-              React.createElement('rect', { x: '18', y: '70', width: '72', height: '18', rx: '2', fill: '#1e293b', stroke: '#22d3ee' }),
-              React.createElement('circle', { cx: '82', cy: '29', r: '3', fill: '#a7f3d0' }),
-              React.createElement('circle', { cx: '82', cy: '54', r: '3', fill: '#a7f3d0' }),
-              React.createElement('circle', { cx: '82', cy: '79', r: '3', fill: '#a7f3d0' })
-            )
-          ),
-          React.createElement('div', { className: 'absolute left-[888px] top-[208px] text-center text-slate-300 text-2xl mono' }, 'CED'),
-
-          React.createElement('div', { className: 'absolute left-[850px] top-[244px] text-amber-200 text-center' },
-            React.createElement('svg', { className: 'icon-shadow', width: '120', height: '100', viewBox: '0 0 120 100' },
-              React.createElement('polygon', { points: '60,8 10,46 20,46 20,92 50,92 50,66 70,66 70,92 100,92 100,46 110,46', fill: '#78350f', fillOpacity: '0.38', stroke: '#fcd34d' }),
-              React.createElement('rect', { x: '26', y: '50', width: '18', height: '20', fill: '#fef3c7', fillOpacity: '0.5' }),
-              React.createElement('rect', { x: '55', y: '50', width: '18', height: '20', fill: '#fef3c7', fillOpacity: '0.5' }),
-              React.createElement('rect', { x: '84', y: '50', width: '10', height: '42', fill: '#a16207', fillOpacity: '0.5', stroke: '#fbbf24' })
-            ),
-            React.createElement('div', { className: 'mono text-2xl text-amber-100' }, 'Consumo')
-          ),
-
-          React.createElement('div', { className: 'card left-[868px] top-[494px] border-blue-300/60 text-blue-200 w-[102px] text-center' },
-            React.createElement('div', { className: 'metric-sub mono' }, '1,15 kW')
-          ),
-          React.createElement('div', { className: 'absolute left-[770px] top-[560px] neon-grid' },
-            React.createElement('div', { className: 'mono text-5xl font-semibold' }, '0,2 kWh'),
-            React.createElement('div', { className: 'metric-label' }, 'Vendita Giornaliera'),
-            React.createElement('div', { className: 'mono text-5xl font-semibold mt-2' }, '8,5 kWh'),
-            React.createElement('div', { className: 'metric-label' }, 'Consumo Giornaliero')
-          ),
-          React.createElement('div', { className: 'absolute left-[900px] top-[560px] text-center neon-grid' },
-            React.createElement('svg', { className: 'icon-shadow', width: '62', height: '80', viewBox: '0 0 62 80' },
-              React.createElement('polygon', { points: '31,6 11,36 24,36 8,72 31,45 22,45', fill: 'none', stroke: '#67e8f9', strokeWidth: '2' }),
-              React.createElement('polygon', { points: '31,6 51,36 38,36 54,72 31,45 40,45', fill: 'none', stroke: '#67e8f9', strokeWidth: '2' }),
-              React.createElement('line', { x1: '31', y1: '6', x2: '31', y2: '74', stroke: '#22d3ee', strokeWidth: '2' })
-            ),
-            React.createElement('div', { className: 'mono text-2xl text-cyan-200 -mt-1' }, 'Linea Sas')
-          ))
-        )
-      );
-    }
-
-    createRoot(document.getElementById('root')).render(React.createElement(App));
-  </script>
+        <div class="col">
+          <div class="card node">
+            <div class="icon slate">🗄</div>
+            <div>
+              <div class="label">CED</div>
+              <div class="value slate">0 W</div>
+            </div>
+          </div>
+          <div class="card node">
+            <div class="icon gold">🏡</div>
+            <div>
+              <div class="label">Consumo Casa</div>
+              <div class="value gold">1,16 kW</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="label">Consumo Oggi</div>
+            <div class="value slate">11,9 kWh</div>
+          </div>
+          <div class="card node">
+            <div class="icon cyan">⚙</div>
+            <div>
+              <div class="label">Grid Power</div>
+              <div class="value cyan">1,15 kW</div>
+            </div>
+          </div>
+          <div class="card stack">
+            <div>
+              <div class="label">Vendita Giornaliera</div>
+              <div class="value cyan">0,2 kWh</div>
+            </div>
+            <div>
+              <div class="label">Consumo Giornaliero</div>
+              <div class="value cyan">8,5 kWh</div>
+            </div>
+            <div class="tiny">Linea Sas</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </body>
 </html>
