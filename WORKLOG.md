@@ -1,6 +1,14 @@
 # WORKLOG
 
 ## 2026-05-11
+- Energy Dashboard: avviata migrazione da `sunsynk-power-flow-card` verso versione standalone addon-native senza dipendenze HA.
+- Creata nuova cartella `web/public/energy-dashboard/sunsynk-standalone/` con `index.html`, `styles.css`, `script.js`.
+- Portata logica flussi core: direzione invertibile (`invert_flow`) e speed dinamica da formula `animation_speed/max_power` in funzione potenza istantanea.
+- Implementata funzione globale `setPowerData(json)` per aggiornare valori e animazioni in realtime dal backend.
+- Agganciato polling automatico a `../api/data` con mapping dati da `energy.normalized` (PV/Home/Grid/Battery/SOC).
+- Layout reso facilmente tarabile tramite variabili CSS coordinate (`--solar-x`, `--inverter-y`, ecc.).
+- Bump versione addon a `0.3.115` con changelog aggiornato.
+
 - Energy Dashboard: applicato refactor visuale \"Cyber-Tech\" richiesto per ridurre clutter e aumentare leggibilita.
 - Gerarchia/spacing corretti: ogni valore principale (kW, V, Hz) confinato nella propria glass-card, niente overlap tra testi.
 - Flussi SVG rifiniti: spessore ridotto (max ~3px), curve morbide e animazione trailing-light via `stroke-dasharray`.

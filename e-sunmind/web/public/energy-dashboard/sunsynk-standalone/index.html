@@ -1,0 +1,37 @@
+﻿<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunsynk Standalone - Full Layout</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="board">
+      <div class="header">EA SAS - SUNSYNK STANDALONE</div>
+      <svg id="flow-layer" viewBox="0 0 1200 675" preserveAspectRatio="none"></svg>
+      <div class="cards">
+        <div class="col">
+          <div class="card node"><div class="icon gold" data-icon="sun"></div><div><div class="label">Solar</div><div class="value gold" id="solar-value">0 W</div></div></div>
+          <div class="card node"><div class="icon gold" data-icon="zap"></div><div><div class="label">PV String 1</div><div class="value gold" id="pv1-value">0 W</div></div></div>
+          <div class="card node"><div class="icon gold" data-icon="zap"></div><div><div class="label">PV String 2</div><div class="value gold" id="pv2-value">0 W</div></div></div>
+        </div>
+        <div class="col">
+          <div class="card node"><div class="icon slate" data-icon="cpu"></div><div><div class="label">Inverter</div><div class="value slate" id="inverter-value">0 W</div></div></div>
+          <div class="card node"><div class="icon violet" data-icon="battery"></div><div><div class="label">Battery</div><div class="value violet" id="battery-value">0 W</div><div class="small" id="battery-soc">SOC 0%</div></div></div>
+          <div class="card node"><div class="icon slate" data-icon="home"></div><div><div class="label">Load</div><div class="value slate" id="load-value">0 W</div></div></div>
+        </div>
+        <div class="col">
+          <div class="card node"><div class="icon cyan" data-icon="tower"></div><div><div class="label">Grid</div><div class="value cyan" id="grid-value">0 W</div></div></div>
+          <div class="card"><div class="label">Flow Status</div><div class="small" id="status-line">Pronto</div></div>
+          <div class="card"><div class="label">Debug durations</div><div class="small" id="debug-line">solar: -, battery: -, grid: -</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="./script.js"></script>
+</body>
+</html>
+

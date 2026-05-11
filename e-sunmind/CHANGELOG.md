@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.115
+
+- Energy Dashboard: aggiunta nuova variante standalone Sunsynk in `web/public/energy-dashboard/sunsynk-standalone/` (HTML/CSS/JS puro, nessuna dipendenza Home Assistant/LitElement/custom-card).
+- Estratta e applicata la logica core di flusso dal progetto Sunsynk: inversione direzione (`invert_flow`) e auto-scaling velocita animazioni in base alla potenza (`animation_speed`/`max_power`).
+- Introdotta API frontend `setPowerData(json)` per aggiornamento realtime da backend addon.
+- Aggiunto polling nativo su `../api/data` con mapping automatico da `energy.normalized` (`pv_power_w`, `home_power_w`, `grid_power_w`, `battery_power_w`, `battery_soc_pct`).
+- Separato il layout in `styles.css` con coordinate modificabili via CSS variables (`--solar-x`, `--solar-y`, `--inverter-x`, ecc.) per tuning rapido posizioni nodi/linee.
+
 ## 0.3.114
 
 - Energy Dashboard: ridotto affollamento UI con gerarchia visiva piu netta (label piu piccole, valori principali piu grandi) e rimozione overlap testi.
