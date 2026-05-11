@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.111
+
+- Fix publish Energy Dashboard: riallineato `web/public/energy-dashboard/index.html` al bundle JS corrente.
+- Applicate in release le modifiche grafiche Energy (`rack dati`, `wall box`, `carichi casa`, FV dinamico, batteria SOC dinamica).
+
 ## 0.3.110
 
 - Energy scene: fotovoltaico dinamico con icona meteo/produzione (`sole`, `nuvola`, `luna`) e indicatore `+/-`.
