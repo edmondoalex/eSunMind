@@ -5485,6 +5485,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   width:min(1100px,96vw);
   max-height:88vh;
   overflow:auto;
+  overscroll-behavior:contain;
   background:linear-gradient(160deg,rgba(8,17,33,.98),rgba(3,9,20,.98));
   border:1px solid rgba(100,116,139,.45);
   border-radius:12px;
@@ -5537,8 +5538,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   border-radius:10px;
   overflow:hidden;
   background:#040b1a;
-  aspect-ratio: 5 / 3.45;
-  min-height: 420px;
+  height:min(56vh,520px);
+  min-height:300px;
 }
 .energy-live-frame{
   position:absolute;

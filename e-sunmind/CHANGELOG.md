@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.147
+
+- Fix popup wizard energy: ripristinato scroll verticale nel modal di mappatura entita.
+- Mapper card full reso responsive con altezza dinamica (`min(56vh, 520px)`) per evitare blocchi su schermi bassi.
+
 ## 0.3.146
 
 - Energy Wizard mapping popup: riallineati hotspot su card Sunsynk Full con area a rapporto fisso e iframe non interattivo dietro overlay.
@@ -668,7 +673,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
 
