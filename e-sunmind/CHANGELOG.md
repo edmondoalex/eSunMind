@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.108
+
+- Energy Dashboard: abbandonato React Flow nella scena centrale, ora rendering SVG custom puro.
+- Nuovo stile light premium (sfondo chiaro, pannello ghiaccio, ombre morbide) in linea con app inverter.
+- Layout scena ripulito: FV alto, casa centrale, batteria basso-sx, rete basso-dx, pompa lato dx.
+- Metriche principali integrate nella scena a destra (`Real-time Power`, `Installed Power`, `Produzione Oggi`, `Consumo Oggi`).
+- Flussi energetici SVG alleggeriti (linee sottili azzurre, particelle animate soft, meno glow).
+
 ## 0.3.107
 
 - Refactor completo `Energy Flow` in stile dashboard premium (non piu look flowchart tecnico).

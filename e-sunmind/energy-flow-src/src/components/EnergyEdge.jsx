@@ -20,28 +20,29 @@ export default function EnergyEdge(props) {
     targetY,
     sourcePosition,
     targetPosition,
-    borderRadius: 28
+    borderRadius: 34
   })
 
   const power = Math.max(0, Number(data.power || 0))
-  const width = Math.max(1.2, Math.min(10, 1.2 + power / 900))
-  const opacity = power <= 0 ? 0.06 : Math.min(1, 0.2 + power / 6000)
-
+  const strokeWidth = power <= 0 ? 1.2 : Math.min(18, 5 + power * 2.1)
+  const opacity = power <= 0 ? 0.06 : Math.min(1, 0.35 + power * 0.2)
   const c1 = data.c1 || '#ffd84f'
-  const c2 = data.c2 || '#ff9d57'
-  const gradId = `grad-${id}`
-  const glowId = `glow-${id}`
+  const c2 = data.c2 || '#ff9a5a'
+  const speed = Math.max(0.55, 2.6 - power * 0.65)
+
+  const gradId = `g-${id}`
+  const glowId = `f-${id}`
 
   return (
     <>
-      <svg className="edge-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <svg width="0" height="0" className="edge-defs" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={c1} />
             <stop offset="100%" stopColor={c2} />
           </linearGradient>
-          <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="2.4" result="blur" />
+          <filter id={glowId} x="-80%" y="-80%" width="260%" height="260%">
+            <feGaussianBlur stdDeviation="4.5" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />
@@ -50,13 +51,26 @@ export default function EnergyEdge(props) {
         </defs>
       </svg>
 
-      <BaseEdge id={id} path={path} style={{ stroke: `url(#${gradId})`, strokeWidth: width, opacity, filter: `url(#${glowId})` }} />
+      <BaseEdge
+        id={id}
+        path={path}
+        style={{
+          stroke: `url(#${gradId})`,
+          strokeWidth,
+          opacity,
+          filter: `url(#${glowId})`,
+          strokeLinecap: 'round'
+        }}
+      />
 
       {power > 0 && (
         <EdgeLabelRenderer>
           <svg className="edge-particle-layer" aria-hidden="true">
-            <circle r="3.2" fill={c2} filter={`url(#${glowId})`}>
-              <animateMotion dur={`${Math.max(0.8, 3.6 - power / 2800)}s`} repeatCount="indefinite" path={path} />
+            <circle r="4" fill={c2} filter={`url(#${glowId})`}>
+              <animateMotion dur={`${speed}s`} repeatCount="indefinite" path={path} />
+            </circle>
+            <circle r="2.4" fill={c1} filter={`url(#${glowId})`}>
+              <animateMotion dur={`${speed * 1.18}s`} repeatCount="indefinite" path={path} />
             </circle>
           </svg>
         </EdgeLabelRenderer>
