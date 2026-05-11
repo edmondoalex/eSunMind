@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.132
+
+- UI semplificata: rimossa la pagina duplicata `Energy Wizard` dal top menu.
+- Rimane un solo wizard ufficiale in `Setting -> Energy` per evitare confusione.
+
 ## 0.3.131
 
 - Fix valori a zero dashboard energy: backend ora usa fallback automatico dalle entita di `sunsynk_card_config_json` quando i campi base `energy.*` sono vuoti.
