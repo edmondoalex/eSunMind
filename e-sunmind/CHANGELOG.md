@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.135
+
+- UI Energy piu leggibile: aumentati font, padding e dimensioni controlli nella sezione `Setting -> Energy`.
+- Topbar: aggiunto link `Energy Setup` (come gli altri link) che apre direttamente la sezione energy di configurazione.
+
 ## 0.3.134
 
 - Fix definitivo parsing valori entita HA: supportati formati stringa comuni (`1,23`, `231.5 V`, `-42W`) nel backend.

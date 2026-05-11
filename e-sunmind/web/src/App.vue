@@ -16,6 +16,7 @@
         <a class="btn ghost" href="?view=user">UI User</a>
         <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Energy Flow</a>
         <a class="btn ghost" href="?view=energy">Energy</a>
+        <a class="btn ghost" href="?view=energy_setup">Energy Setup</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -979,7 +980,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section id="energy-setup" class="card energy-settings-card">
           <h3>Weather Station e-Control</h3>
           <div class="form-grid">
             <label>Enabled
@@ -4557,11 +4558,16 @@ async function saveOverlaySettings() {
 }
 
 onMounted(() => {
+  let focusEnergySetup = false
   try {
     const qp = new URLSearchParams(window.location.search || '')
     const view = String(qp.get('view') || '').trim().toLowerCase()
     if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
     if (view === 'energy' || view === 'ui-energy' || view === 'energy_public') tab.value = 'energy_public'
+    if (view === 'energy_setup' || view === 'energy-setup' || view === 'ui-energy-setup') {
+      tab.value = 'setting'
+      focusEnergySetup = true
+    }
   } catch (_) {
     // no-op
   }
@@ -4569,6 +4575,16 @@ onMounted(() => {
   setTimeout(() => {
     showSplash.value = false
   }, (tab.value === 'user_public' || tab.value === 'energy_public') ? 0 : 1200)
+  if (focusEnergySetup) {
+    setTimeout(() => {
+      try {
+        const el = document.getElementById('energy-setup')
+        if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      } catch (_) {
+        // no-op
+      }
+    }, 180)
+  }
   try {
     const now = new Date()
     const total = (now.getHours() * 60) + now.getMinutes()
@@ -5261,6 +5277,28 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .what-if-card.proposed{border-color:rgba(87,227,214,.38)}
 .what-if-card.delta{border-color:rgba(250,204,21,.38)}
 .wizard-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+
+/* Energy readability boost */
+.energy-settings-card .tende-wizard{padding:16px;border-radius:14px}
+.energy-settings-card .wizard-head strong{font-size:18px;letter-spacing:.2px}
+.energy-settings-card .wizard-head p{font-size:14px;line-height:1.35}
+.energy-settings-card .wizard-step-count{font-size:14px}
+.energy-settings-card .wizard-tab{padding:9px 14px;font-size:14px}
+.energy-settings-card .wizard-grid{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.energy-settings-card .wizard-grid label{font-size:15px;gap:6px}
+.energy-settings-card .wizard-grid label small{font-size:12px;line-height:1.35}
+.energy-settings-card .wizard-review span{font-size:14px;padding:10px}
+.energy-settings-card .form-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.energy-settings-card label{font-size:15px;color:#cfe0f7;gap:7px}
+.energy-settings-card input,
+.energy-settings-card select,
+.energy-settings-card textarea{
+  min-height:44px;
+  padding:10px 12px;
+  font-size:15px;
+  border-radius:10px;
+}
+.energy-settings-card textarea{min-height:220px;line-height:1.45}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
 .tende-cal-grid label{display:flex;flex-direction:column;gap:4px;color:#cfe0f8;font-size:13px}
 .tende-position-row{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}
