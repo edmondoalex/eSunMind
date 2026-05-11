@@ -150,3 +150,5 @@ Da .3.122 in Setting > Energy e disponibile un wizard passo-passo per costruire 
 
 
 - Wizard Energy: supporta anche selezione icone carichi (default, oiler, ircon, pump, oven) per nodi essenziali e non essenziali.
+
+- Nota: la card Sunsynk usa colour (non color) nelle opzioni tema; il wizard Energy e allineato a questa sintassi.

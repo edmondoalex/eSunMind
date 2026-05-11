@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 0.3.124
+
+- Fix wizard Energy: corretta serializzazione colori per Sunsynk card (colour invece di color).
+- Ora le modifiche palette impostate nel wizard vengono applicate realmente a solar/battery/load/grid nella card originale.
+
 ## 0.3.123
 
 - Wizard Energy: aggiunto step Icone con selettori per icone carichi essenziali (load1..load6) e non essenziali (grid.load1..load3).
@@ -544,6 +549,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

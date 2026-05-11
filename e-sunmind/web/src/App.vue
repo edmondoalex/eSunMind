@@ -3560,16 +3560,16 @@ function buildSunsynkConfigFromWizard() {
     show_grid: true,
     solar: {
       mppts: Math.max(1, Math.min(6, Number(w.solar_mppts || 2))),
-      color: String(w.color_solar || '#f59e0b'),
+      colour: String(w.color_solar || '#f59e0b'),
       animation_speed: 6,
     },
     battery: {
       count: Math.max(1, Math.min(2, Number(w.battery_count || 1))),
-      color: String(w.color_battery || '#a855f7'),
+      colour: String(w.color_battery || '#a855f7'),
       animation_speed: 8,
     },
     load: {
-      color: String(w.color_load || '#cbd5e1'),
+      colour: String(w.color_load || '#cbd5e1'),
       additional_loads: Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
       show_aux: Boolean(w.show_aux),
       animation_speed: 6,
@@ -3581,7 +3581,7 @@ function buildSunsynkConfigFromWizard() {
       load6_icon: String(w.load6_icon || 'default'),
     },
     grid: {
-      color: String(w.color_grid || '#06b6d4'),
+      colour: String(w.color_grid || '#06b6d4'),
       animation_speed: 9,
       load1_icon: String(w.grid_load1_icon || 'default'),
       load2_icon: String(w.grid_load2_icon || 'default'),
