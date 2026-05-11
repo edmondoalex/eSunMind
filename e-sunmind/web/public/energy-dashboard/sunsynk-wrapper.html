@@ -6,11 +6,18 @@
   <title>Sunsynk Wrapper Standalone (Hass Mock)</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" />
   <style>
-    html, body { margin: 0; background: #0b1220; color: #e2e8f0; font-family: Inter, Segoe UI, sans-serif; }
+    :root {
+      --addon-bg: #080a10;
+      --primary-background-color: #080a10;
+      --card-background-color: #0f172a;
+      --primary-text-color: #e2e8f0;
+      --secondary-text-color: #94a3b8;
+    }
+    html, body { margin: 0; background: var(--addon-bg); color: var(--primary-text-color); font-family: Inter, Segoe UI, sans-serif; }
     .page { min-height: 100vh; display: grid; place-items: center; padding: 12px; }
     .host { width: min(1200px, 98vw); }
-    .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; color: #94a3b8; }
-    button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+    .bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; font-size: 13px; color: var(--secondary-text-color); }
+    button { background: #111827; color: var(--primary-text-color); border: 1px solid #334155; border-radius: 8px; padding: 6px 10px; cursor: pointer; }
   </style>
 </head>
 <body>

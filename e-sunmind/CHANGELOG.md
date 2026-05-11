@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## 0.3.119
+
+- Sunsynk Wrapper: allineato tema scuro al background addon (#080a10) per continuita visiva tra UI principale e dashboard energia.
+- Aggiornate variabili colore base (primary-background/card/text) e toolbar wrapper per coerenza dark mode.
+
 ## 0.3.118
 
 - Sunsynk Wrapper: migliorato mock window.hass con supporto temi (	hemes.dark = true) per resa grafica dark consistente.
@@ -514,6 +519,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
