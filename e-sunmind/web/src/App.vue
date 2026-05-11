@@ -16,7 +16,7 @@
         <a class="btn ghost" href="?view=user">UI User</a>
         <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Energy Flow</a>
         <a class="btn ghost" href="?view=energy">Energy</a>
-        <a class="btn ghost" href="?view=energy_setup">Energy Setup</a>
+        <button class="btn ghost" :class="{active: tab==='energy_setup'}" @click="tab='energy_setup'">Energy Setup</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -869,8 +869,9 @@
     </div>
 
 
-    <div v-show="tab==='setting'">
+    <div v-show="tab==='setting' || tab==='energy_setup'">
       <main class="tech-main">
+        <template v-if="tab==='setting'">
         <section class="card setting-save-card">
           <div class="actions-inline">
             <button class="btn" @click="saveAllSettings">Salva tutto</button>
@@ -980,7 +981,10 @@
           </div>
         </section>
 
-        <section id="energy-setup" class="card energy-settings-card">
+        </template>
+
+        <template v-if="tab==='setting'">
+        <section class="card energy-settings-card">
           <h3>Weather Station e-Control</h3>
           <div class="form-grid">
             <label>Enabled
@@ -1036,7 +1040,15 @@
             </label>
           </div>
         </section>
+        </template>
 
+        <template v-if="tab==='energy_setup'">
+        <section class="card setting-save-card">
+          <div class="actions-inline">
+            <button class="btn" @click="saveAllSettings">Salva configurazione Energy</button>
+            <span class="note">{{ allSaveStatus }}</span>
+          </div>
+        </section>
         <section class="card">
           <h3>Energy</h3>
           <div class="tende-wizard" style="margin-bottom:10px;">
@@ -1362,7 +1374,9 @@
             </label>
           </div>
         </section>
+        </template>
 
+        <template v-if="tab==='setting'">
         <section class="card">
           <h3>Weather Guard</h3>
           <p class="note">
@@ -1450,6 +1464,7 @@
             </label>
           </div>
         </section>
+        </template>
 
       </main>
     </div>
@@ -4558,15 +4573,13 @@ async function saveOverlaySettings() {
 }
 
 onMounted(() => {
-  let focusEnergySetup = false
   try {
     const qp = new URLSearchParams(window.location.search || '')
     const view = String(qp.get('view') || '').trim().toLowerCase()
     if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
     if (view === 'energy' || view === 'ui-energy' || view === 'energy_public') tab.value = 'energy_public'
     if (view === 'energy_setup' || view === 'energy-setup' || view === 'ui-energy-setup') {
-      tab.value = 'setting'
-      focusEnergySetup = true
+      tab.value = 'energy_setup'
     }
   } catch (_) {
     // no-op
@@ -4575,16 +4588,6 @@ onMounted(() => {
   setTimeout(() => {
     showSplash.value = false
   }, (tab.value === 'user_public' || tab.value === 'energy_public') ? 0 : 1200)
-  if (focusEnergySetup) {
-    setTimeout(() => {
-      try {
-        const el = document.getElementById('energy-setup')
-        if (el && typeof el.scrollIntoView === 'function') el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      } catch (_) {
-        // no-op
-      }
-    }, 180)
-  }
   try {
     const now = new Date()
     const total = (now.getHours() * 60) + now.getMinutes()
@@ -5578,7 +5581,6 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
 }
 </style>
-
 
 
 
