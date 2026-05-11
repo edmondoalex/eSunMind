@@ -31,6 +31,7 @@
       language: 'it',
       selectedLanguage: 'it',
       locale: { language: 'it-IT', number_format: 'decimal_comma' },
+      themes: { dark: true, default_theme: 'default', themes: {} },
       states: {},
       localize: (key) => String(key || ''),
       callService: () => Promise.resolve(),
@@ -42,7 +43,11 @@
       return {
         entity_id: extra.entity_id || '',
         state: String(state),
-        attributes: { unit_of_measurement: unit, device_class: extra.device_class || '', state_class: extra.state_class || '' },
+        attributes: {
+          unit_of_measurement: unit,
+          device_class: extra.device_class || '',
+          state_class: extra.state_class || '',
+        },
         last_changed: new Date().toISOString(),
         last_updated: new Date().toISOString(),
       };
@@ -94,29 +99,29 @@
 
     function seedStates() {
       const s = window.hass.states;
-      s[sensorIds.inverter_power_175] = mkState(1160, 'W');
-      s[sensorIds.grid_power_169] = mkState(1150, 'W');
-      s[sensorIds.battery_soc_184] = mkState(26, '%');
-      s[sensorIds.battery_power_190] = mkState(-3040, 'W');
-      s[sensorIds.battery_current_191] = mkState(18.3, 'A');
-      s[sensorIds.battery_voltage_183] = mkState(52.9, 'V');
-      s[sensorIds.grid_ct_power_172] = mkState(1150, 'W');
+      s[sensorIds.inverter_power_175] = mkState(1160, 'W', { device_class: 'power', state_class: 'measurement' });
+      s[sensorIds.grid_power_169] = mkState(1150, 'W', { device_class: 'power', state_class: 'measurement' });
+      s[sensorIds.battery_soc_184] = mkState(26, '%', { device_class: 'battery', state_class: 'measurement' });
+      s[sensorIds.battery_power_190] = mkState(-3040, 'W', { device_class: 'power', state_class: 'measurement' });
+      s[sensorIds.battery_current_191] = mkState(18.3, 'A', { device_class: 'current', state_class: 'measurement' });
+      s[sensorIds.battery_voltage_183] = mkState(52.9, 'V', { device_class: 'voltage', state_class: 'measurement' });
+      s[sensorIds.grid_ct_power_172] = mkState(1150, 'W', { device_class: 'power', state_class: 'measurement' });
       s[sensorIds.grid_connected_status_194] = mkState('on');
       s[sensorIds.inverter_status_59] = mkState('normal');
-      s[sensorIds.inverter_voltage_154] = mkState(231.5, 'V');
-      s[sensorIds.inverter_current_164] = mkState(5.0, 'A');
-      s[sensorIds.load_frequency_192] = mkState(50.02, 'Hz');
-      s[sensorIds.pv1_power_186] = mkState(2950, 'W');
-      s[sensorIds.pv2_power_187] = mkState(2420, 'W');
-      s[sensorIds.pv1_voltage_109] = mkState(370, 'V');
-      s[sensorIds.pv1_current_110] = mkState(8.0, 'A');
-      s[sensorIds.pv2_voltage_111] = mkState(365, 'V');
-      s[sensorIds.pv2_current_112] = mkState(6.6, 'A');
-      s[sensorIds.day_pv_energy_108] = mkState(6.7, 'kWh');
-      s[sensorIds.day_battery_charge_70] = mkState(3.1, 'kWh');
-      s[sensorIds.day_battery_discharge_71] = mkState(0.0, 'kWh');
-      s[sensorIds.day_load_energy_84] = mkState(11.9, 'kWh');
-      s[sensorIds.day_grid_import_76] = mkState(8.5, 'kWh');
+      s[sensorIds.inverter_voltage_154] = mkState(231.5, 'V', { device_class: 'voltage', state_class: 'measurement' });
+      s[sensorIds.inverter_current_164] = mkState(5.0, 'A', { device_class: 'current', state_class: 'measurement' });
+      s[sensorIds.load_frequency_192] = mkState(50.02, 'Hz', { device_class: 'frequency', state_class: 'measurement' });
+      s[sensorIds.pv1_power_186] = mkState(2950, 'W', { device_class: 'power', state_class: 'measurement' });
+      s[sensorIds.pv2_power_187] = mkState(2420, 'W', { device_class: 'power', state_class: 'measurement' });
+      s[sensorIds.pv1_voltage_109] = mkState(370, 'V', { device_class: 'voltage', state_class: 'measurement' });
+      s[sensorIds.pv1_current_110] = mkState(8.0, 'A', { device_class: 'current', state_class: 'measurement' });
+      s[sensorIds.pv2_voltage_111] = mkState(365, 'V', { device_class: 'voltage', state_class: 'measurement' });
+      s[sensorIds.pv2_current_112] = mkState(6.6, 'A', { device_class: 'current', state_class: 'measurement' });
+      s[sensorIds.day_pv_energy_108] = mkState(6.7, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+      s[sensorIds.day_battery_charge_70] = mkState(3.1, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+      s[sensorIds.day_battery_discharge_71] = mkState(0.0, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+      s[sensorIds.day_load_energy_84] = mkState(11.9, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
+      s[sensorIds.day_grid_import_76] = mkState(8.5, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
     }
 
     const card = document.getElementById('card');
@@ -138,26 +143,36 @@
     window.updateSensors = function updateSensors(newData = {}) {
       const s = window.hass.states;
       const now = new Date().toISOString();
-      const set = (id, value, unit) => {
+      const set = (id, value, unit, extra = {}) => {
         const prev = s[id] || mkState(0, unit);
-        s[id] = { ...prev, state: String(value), attributes: { ...(prev.attributes || {}), unit_of_measurement: unit }, last_updated: now };
+        s[id] = {
+          ...prev,
+          state: String(value),
+          attributes: {
+            ...(prev.attributes || {}),
+            unit_of_measurement: unit,
+            ...(extra.device_class ? { device_class: extra.device_class } : {}),
+            ...(extra.state_class ? { state_class: extra.state_class } : {}),
+          },
+          last_updated: now,
+        };
       };
 
       if (newData.solar_power != null) {
         const pv1 = Number(newData.solar_power) * 0.52;
         const pv2 = Number(newData.solar_power) * 0.48;
-        set(sensorIds.pv1_power_186, pv1.toFixed(0), 'W');
-        set(sensorIds.pv2_power_187, pv2.toFixed(0), 'W');
+        set(sensorIds.pv1_power_186, pv1.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+        set(sensorIds.pv2_power_187, pv2.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
       }
-      if (newData.battery_soc != null) set(sensorIds.battery_soc_184, newData.battery_soc, '%');
-      if (newData.battery_power != null) set(sensorIds.battery_power_190, newData.battery_power, 'W');
+      if (newData.battery_soc != null) set(sensorIds.battery_soc_184, newData.battery_soc, '%', { device_class: 'battery', state_class: 'measurement' });
+      if (newData.battery_power != null) set(sensorIds.battery_power_190, newData.battery_power, 'W', { device_class: 'power', state_class: 'measurement' });
       if (newData.grid_power != null) {
-        set(sensorIds.grid_power_169, newData.grid_power, 'W');
-        set(sensorIds.grid_ct_power_172, newData.grid_power, 'W');
+        set(sensorIds.grid_power_169, newData.grid_power, 'W', { device_class: 'power', state_class: 'measurement' });
+        set(sensorIds.grid_ct_power_172, newData.grid_power, 'W', { device_class: 'power', state_class: 'measurement' });
       }
-      if (newData.inverter_power != null) set(sensorIds.inverter_power_175, newData.inverter_power, 'W');
-      if (newData.inverter_voltage != null) set(sensorIds.inverter_voltage_154, newData.inverter_voltage, 'V');
-      if (newData.load_frequency != null) set(sensorIds.load_frequency_192, newData.load_frequency, 'Hz');
+      if (newData.inverter_power != null) set(sensorIds.inverter_power_175, newData.inverter_power, 'W', { device_class: 'power', state_class: 'measurement' });
+      if (newData.inverter_voltage != null) set(sensorIds.inverter_voltage_154, newData.inverter_voltage, 'V', { device_class: 'voltage', state_class: 'measurement' });
+      if (newData.load_frequency != null) set(sensorIds.load_frequency_192, newData.load_frequency, 'Hz', { device_class: 'frequency', state_class: 'measurement' });
 
       forceRender();
     };

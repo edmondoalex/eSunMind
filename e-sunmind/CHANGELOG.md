@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+## 0.3.118
+
+- Sunsynk Wrapper: migliorato mock window.hass con supporto temi (	hemes.dark = true) per resa grafica dark consistente.
+- Rafforzata struttura sensori mock: stati stringa + attributi completi (unit_of_measurement, device_class, state_class) per rendering unita/icone piu affidabile.
+- Rifinita updateSensors(newData) per preservare metadati entita durante gli update realtime.
+- README aggiornato con sezione dedicata alla dashboard standalone basata su card originale Slipx06.
+
 ## 0.3.117
 
 - Energy Dashboard: aggiunto wrapper standalone sunsynk-wrapper.html che esegue la card originale Sunsynk da CDN senza Home Assistant installato.
@@ -507,6 +514,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
