@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.113
+
+- Energy Dashboard: sostituita pagina `/energy-dashboard` con versione single-file HTML5 Neon Cyberpunk (Tailwind CDN + Framer Motion).
+- Nuovo layout glassmorphism dark (`#080a10`) con flussi SVG neon animati (`stroke-dasharray`) e glow aggressivo per sorgenti/consumi/rete/batteria.
+- Implementata responsivita completa con scaling dinamico della scena (desktop/tablet/mobile) mantenendo il posizionamento relativo del mock originale.
+- Mantenuti valori statici e nodi di stato principali del pannello (`1,16 kW`, `231,5 V`, `50,02 Hz`) e codifica colori energia per linea funzionale.
+
 ## 0.3.112
 
 - Energy Dashboard: refactor completo icone in stile soft isometric premium (SVG inline) per casa, fotovoltaico, batteria, rete, pompa di calore, rack dati, wall box e carichi casa.

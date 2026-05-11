@@ -1,5 +1,22 @@
 # WORKLOG
 
+## 2026-05-11
+- Energy Dashboard: sostituito `web/public/energy-dashboard/index.html` con nuova UI single-file Neon Cyberpunk (Tailwind CDN + Framer Motion).
+- Layout allineato al mock con nodi glassmorphism e flussi SVG neon animati (solare giallo, pannelli giallo chiaro, batteria viola, consumi bianco/blu-grigio, rete ciano).
+- Aggiunta responsivita completa con scaling dinamico della scena per desktop/tablet/mobile, preservando geometria e proporzioni originali.
+- Verifica preview locale effettuata via server HTTP su `http://localhost:8787/index.html`.
+- Bump versione addon a `0.3.113` con changelog aggiornato.
+
+- Energy Dashboard: abbandonato React Flow nella scena centrale e introdotto rendering SVG custom puro.
+- Nuovo stile light premium con layout scena ripulito (FV alto, casa centrale, batteria/rete in basso, pompa lato destro) e metriche integrate.
+- Flussi energetici alleggeriti e poi progressivamente migliorati in leggibilita (linee, particelle, contrasto, posizionamento label/KPI).
+- Aggiunti device dedicati `Rack Dati`, `Wall Box` e `Carichi Casa`; fotovoltaico reso dinamico (`sole/nuvola/luna`, indicatore `+/-`).
+- Batteria resa dinamica in funzione del SOC (riempimento e colore) e mantenuta nel redesign successivo.
+- Rifinito il publish dashboard statico con riallineamento `web/public/energy-dashboard/index.html` al bundle JS corrente.
+- Refactor grafico finale in stile soft isometric premium con icone SVG inline coerenti (casa, FV, batteria, rete, pompa, rack, wall box, carichi).
+- Flussi azzurri animati resi piu profondi con glow leggermente aumentato nel tema finale.
+- Bump versioni addon completato fino a `0.3.112` (`0.3.108` -> `0.3.112`) con changelog aggiornato.
+
 ## 2026-05-10
 - Rework totale `Energy Flow` su richiesta: eliminato look da diagramma tecnico.
 - Implementati componenti separati richiesti: `EnergyNode`, `HomeNode`, `EnergyEdge`, `simulateEnergy`.
