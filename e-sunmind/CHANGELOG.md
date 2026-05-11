@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.112
+
+- Energy Dashboard: refactor completo icone in stile soft isometric premium (SVG inline) per casa, fotovoltaico, batteria, rete, pompa di calore, rack dati, wall box e carichi casa.
+- Migliorata coerenza grafica dispositivi (ombre morbide, palette chiara uniforme, dettaglio visivo allineato).
+- Batteria dinamica per SOC mantenuta e integrata nel nuovo design isometrico.
+- Flussi energetici azzurri animati con profondita/glow leggermente aumentati.
+
 ## 0.3.111
 
 - Fix publish Energy Dashboard: riallineato `web/public/energy-dashboard/index.html` al bundle JS corrente.

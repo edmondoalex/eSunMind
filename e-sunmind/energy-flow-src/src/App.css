@@ -69,20 +69,21 @@ body,
 
 .flow-base {
   fill: none;
-  stroke: #dfe6f8;
-  stroke-width: 12;
+  stroke: #d8e3f8;
+  stroke-width: 13;
 }
 
 .flow-top {
   fill: none;
   stroke: url(#line-main);
-  stroke-width: 6.2;
+  stroke-width: 6.8;
   stroke-linecap: round;
   filter: url(#line-soft);
 }
 
 .flow-dot-light {
-  fill: #86a8ef;
+  fill: #78a0ef;
+  filter: drop-shadow(0 0 2px #9fc0ff);
 }
 
 .flow-num {
@@ -117,7 +118,7 @@ body,
 }
 
 .device-val {
-  font-size: 27px;
+  font-size: 26px;
   font-weight: 740;
   fill: #111827;
 }
@@ -128,7 +129,7 @@ body,
 }
 
 .device-label {
-  font-size: 12px;
+  font-size: 11.5px;
   fill: #4b6385;
 }
 

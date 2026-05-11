@@ -32,88 +32,132 @@ export default function EnergyScene({ energy }) {
             <stop offset="100%" stopColor="#b7c8ff" />
           </linearGradient>
 
-          <filter id="line-soft" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="1.25" />
+          <filter id="line-soft" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="2.1" />
+          </filter>
+
+          <filter id="icon-shadow" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="2.4" stdDeviation="2.2" floodColor="#90a9d4" floodOpacity="0.35" />
           </filter>
 
           <symbol id="icon-pv-sun" viewBox="0 0 120 120">
-            <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="60" cy="28" r="16" fill="#ffcb54" stroke="#f0b13d" />
-              <path d="M18 28h22M80 28h22M60 6v10M60 40v10M30 12l8 8M90 12l-8 8" stroke="#f1b545" />
-              <polygon points="20,64 80,46 104,76 44,94" fill="#f5f8ff" stroke="#7fa2df" />
-              <path d="M32 60 L86 44 M40 72 L94 56 M48 84 L102 68" stroke="#7fa2df" />
-              <path d="M42 56 L50 86 M58 51 L66 81 M74 47 L82 77" stroke="#7fa2df" />
+            <g filter="url(#icon-shadow)">
+              <circle cx="76" cy="28" r="14" fill="#ffd267" />
+              <path d="M58 30a18 18 0 0 1 33 -9" fill="none" stroke="#ffb74d" strokeWidth="3" />
+              <polygon points="18,68 72,48 102,68 48,88" fill="#2f78c9" />
+              <polygon points="20,66 74,46 104,66 50,86" fill="#54a8e8" />
+              <line x1="31" y1="60" x2="85" y2="40" stroke="#dff1ff" strokeWidth="2.2" />
+              <line x1="39" y1="70" x2="93" y2="50" stroke="#dff1ff" strokeWidth="2.2" />
+              <line x1="47" y1="80" x2="101" y2="60" stroke="#dff1ff" strokeWidth="2.2" />
+              <line x1="41" y1="56" x2="55" y2="82" stroke="#dff1ff" strokeWidth="2.2" />
+              <line x1="58" y1="50" x2="72" y2="76" stroke="#dff1ff" strokeWidth="2.2" />
+              <line x1="75" y1="44" x2="89" y2="70" stroke="#dff1ff" strokeWidth="2.2" />
+              <polygon points="50,86 63,93 72,90 59,83" fill="#1e5ea8" />
             </g>
           </symbol>
           <symbol id="icon-pv-cloud" viewBox="0 0 120 120">
-            <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M30 28c5-8 18-9 25-2 3-7 13-10 21-5 6 3 9 10 8 17 8 0 14 6 14 14s-7 14-15 14H31c-9 0-16-7-16-16s7-16 15-16z" fill="#e4ecfa" stroke="#93add6" />
-              <polygon points="20,74 80,56 104,86 44,104" fill="#f5f8ff" stroke="#7fa2df" />
-              <path d="M32 70 L86 54 M40 82 L94 66 M48 94 L102 78" stroke="#7fa2df" />
-              <path d="M42 66 L50 96 M58 61 L66 91 M74 57 L82 87" stroke="#7fa2df" />
+            <g filter="url(#icon-shadow)">
+              <path d="M30 30c6-8 19-9 26-1 3-7 13-11 22-6 6 4 9 10 8 18 9 0 15 6 15 14s-7 14-16 14H33c-9 0-17-7-17-16s8-16 14-16z" fill="#e6effb" stroke="#a2b8dc" strokeWidth="2.2" />
+              <polygon points="18,76 72,56 102,76 48,96" fill="#4f9fde" />
+              <line x1="30" y1="68" x2="84" y2="48" stroke="#e5f4ff" strokeWidth="2.2" />
+              <line x1="38" y1="78" x2="92" y2="58" stroke="#e5f4ff" strokeWidth="2.2" />
+              <line x1="46" y1="88" x2="100" y2="68" stroke="#e5f4ff" strokeWidth="2.2" />
+              <polygon points="48,96 61,103 70,100 57,93" fill="#2f7bbe" />
             </g>
           </symbol>
           <symbol id="icon-pv-moon" viewBox="0 0 120 120">
-            <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M66 9c-10 4-17 14-17 26 0 17 14 31 31 31 6 0 12-2 17-5-6 10-17 16-29 16-19 0-35-16-35-35 0-15 10-29 24-33 3-1 6-1 9 0z" fill="#d8deec" stroke="#99a6c2"/>
-              <polygon points="20,74 80,56 104,86 44,104" fill="#f5f8ff" stroke="#7fa2df" />
-              <path d="M32 70 L86 54 M40 82 L94 66 M48 94 L102 78" stroke="#7fa2df" />
-              <path d="M42 66 L50 96 M58 61 L66 91 M74 57 L82 87" stroke="#7fa2df" />
+            <g filter="url(#icon-shadow)">
+              <path d="M69 12c-10 5-16 15-16 26 0 16 13 29 29 29 5 0 11-1 16-4-6 10-17 16-29 16-19 0-34-15-34-34 0-15 10-28 24-33 3-1 6-1 10 0z" fill="#d9e1ee" stroke="#9cabca" strokeWidth="2.2"/>
+              <polygon points="18,76 72,56 102,76 48,96" fill="#4f9fde" />
+              <line x1="30" y1="68" x2="84" y2="48" stroke="#e5f4ff" strokeWidth="2.2" />
+              <line x1="38" y1="78" x2="92" y2="58" stroke="#e5f4ff" strokeWidth="2.2" />
+              <line x1="46" y1="88" x2="100" y2="68" stroke="#e5f4ff" strokeWidth="2.2" />
+              <polygon points="48,96 61,103 70,100 57,93" fill="#2f7bbe" />
             </g>
           </symbol>
 
           <symbol id="icon-house" viewBox="0 0 120 120">
-            <path d="M18 58 L60 20 L102 58" fill="none" stroke="#3d4451" strokeWidth="4" strokeLinecap="round" />
-            <path d="M46 58 L60 90 L74 58" fill="none" stroke="#c8b67a" strokeWidth="4" strokeLinecap="round" />
-            <rect x="54" y="44" width="12" height="12" fill="none" stroke="#6f7783" strokeWidth="2" />
-            <path d="M60 44V56M54 50H66" stroke="#6f7783" strokeWidth="1.8" />
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="98" rx="30" ry="8" fill="#d9e5f9" />
+              <polygon points="30,66 64,46 92,62 58,83" fill="#eef3fb" stroke="#afc0dc" strokeWidth="1.8"/>
+              <polygon points="30,66 30,88 58,104 58,83" fill="#dde7f6" stroke="#afc0dc" strokeWidth="1.8"/>
+              <polygon points="58,83 92,62 92,84 58,104" fill="#f7faff" stroke="#afc0dc" strokeWidth="1.8"/>
+              <polygon points="24,59 58,38 98,58 64,78" fill="#7f899a" stroke="#6e7686" strokeWidth="1.8"/>
+              <polygon points="58,38 98,58 88,64 50,44" fill="#5f6877"/>
+              <polygon points="52,50 78,62 70,67 44,55" fill="#59a8e6" stroke="#dff4ff" strokeWidth="1.3"/>
+              <line x1="56" y1="52" x2="72" y2="60" stroke="#def4ff" strokeWidth="1.2"/>
+              <line x1="52" y1="56" x2="68" y2="64" stroke="#def4ff" strokeWidth="1.2"/>
+              <rect x="42" y="76" width="7" height="8" fill="#8ba5ce"/>
+              <rect x="80" y="70" width="7" height="12" fill="#8ba5ce"/>
+            </g>
           </symbol>
 
           <symbol id="icon-battery" viewBox="0 0 120 120">
-            <rect x="38" y="20" width="44" height="78" rx="8" fill="#fff" stroke="#242932" strokeWidth="3"/>
-            <rect x="52" y="14" width="16" height="7" rx="2" fill="#242932"/>
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="102" rx="18" ry="6" fill="#d9e5f9" />
+              <rect x="40" y="20" width="40" height="78" rx="10" fill="#f7faff" stroke="#8ea2c5" strokeWidth="2.4"/>
+              <rect x="52" y="14" width="16" height="7" rx="2" fill="#64789d"/>
+              <rect x="44" y="26" width="32" height="68" rx="6" fill="#e8eef9" />
+              <rect x="44" y="26" width="32" height="68" rx="6" fill="none" stroke="#bcc9df" strokeWidth="1.1" />
+            </g>
           </symbol>
 
           <symbol id="icon-grid" viewBox="0 0 120 120">
-            <g fill="none" stroke="#1f2430" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M60 12L92 104H28z" />
-              <path d="M35 42h50M30 58h60M25 76h70" />
-              <path d="M60 12v92" />
-              <path d="M8 52c6 0 10 6 14 6s8-6 14-6" strokeWidth="2" />
-              <path d="M84 58c5 0 9 6 13 6s8-6 13-6" strokeWidth="2" />
+            <g fill="none" stroke="#7f9ecb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#icon-shadow)">
+              <path d="M60 14L86 98H34z" />
+              <path d="M42 42h36M36 56h48M30 72h60M25 88h70" />
+              <path d="M60 14v84M44 30l16 14 16-14M40 64l20 18 20-18" />
             </g>
           </symbol>
 
           <symbol id="icon-hp" viewBox="0 0 120 120">
-            <rect x="26" y="34" width="68" height="48" rx="10" fill="#fff" stroke="#8aa6d8" strokeWidth="2.6"/>
-            <circle cx="54" cy="58" r="13" fill="none" stroke="#8aa6d8" strokeWidth="2.3"/>
-            <path d="M54 45v26M41 58h26" stroke="#8aa6d8" strokeWidth="2.1" />
-            <rect x="72" y="44" width="14" height="28" rx="2" fill="none" stroke="#8aa6d8" strokeWidth="2"/>
-            <rect x="40" y="85" width="38" height="4" rx="2" fill="#c4d4f0"/>
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="99" rx="22" ry="6" fill="#d9e5f9" />
+              <polygon points="30,42 80,36 96,48 46,54" fill="#eef3fb" stroke="#a4bbdd" strokeWidth="1.8"/>
+              <polygon points="30,42 30,82 46,92 46,54" fill="#dce7f6" stroke="#a4bbdd" strokeWidth="1.8"/>
+              <polygon points="46,54 96,48 96,88 46,92" fill="#f7faff" stroke="#a4bbdd" strokeWidth="1.8"/>
+              <circle cx="67" cy="69" r="12" fill="#e9f1fc" stroke="#86a7d8" strokeWidth="2.2"/>
+              <circle cx="67" cy="69" r="2.5" fill="#7fa2df"/>
+              <path d="M67 57v24M55 69h24M58 60l18 18M76 60l-18 18" stroke="#86a7d8" strokeWidth="1.5"/>
+              <rect x="84" y="58" width="8" height="22" rx="2" fill="#d6e2f5"/>
+            </g>
           </symbol>
 
           <symbol id="icon-rack" viewBox="0 0 120 120">
-            <rect x="36" y="18" width="48" height="84" rx="5" fill="#eef2fb" stroke="#4a5160" strokeWidth="2.4"/>
-            <rect x="40" y="28" width="40" height="10" rx="2" fill="#1d2330"/>
-            <rect x="40" y="44" width="40" height="10" rx="2" fill="#1d2330"/>
-            <rect x="40" y="60" width="40" height="10" rx="2" fill="#1d2330"/>
-            <rect x="40" y="76" width="40" height="10" rx="2" fill="#1d2330"/>
-            <circle cx="44" cy="33" r="1.5" fill="#30b8ff"/>
-            <circle cx="44" cy="49" r="1.5" fill="#30b8ff"/>
-            <circle cx="44" cy="65" r="1.5" fill="#30b8ff"/>
-            <circle cx="44" cy="81" r="1.5" fill="#30b8ff"/>
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="99" rx="20" ry="6" fill="#d9e5f9" />
+              <polygon points="40,26 76,22 86,30 50,34" fill="#cfdbee" />
+              <polygon points="40,26 40,88 50,96 50,34" fill="#bccbe2" />
+              <polygon points="50,34 86,30 86,92 50,96" fill="#e9effa" />
+              <rect x="54" y="39" width="28" height="9" rx="2" fill="#202735" />
+              <rect x="54" y="51" width="28" height="9" rx="2" fill="#202735" />
+              <rect x="54" y="63" width="28" height="9" rx="2" fill="#202735" />
+              <rect x="54" y="75" width="28" height="9" rx="2" fill="#202735" />
+              <circle cx="57" cy="43.5" r="1.6" fill="#34c0ff"/>
+              <circle cx="57" cy="55.5" r="1.6" fill="#34c0ff"/>
+              <circle cx="57" cy="67.5" r="1.6" fill="#34c0ff"/>
+              <circle cx="57" cy="79.5" r="1.6" fill="#34c0ff"/>
+            </g>
           </symbol>
 
           <symbol id="icon-wallbox" viewBox="0 0 120 120">
-            <rect x="32" y="24" width="44" height="62" rx="12" fill="#fff" stroke="#6e7480" strokeWidth="3"/>
-            <path d="M76 40c12 0 20 9 20 21v20" fill="none" stroke="#6e7480" strokeWidth="3" />
-            <path d="M96 81c-9 0-14 7-17 15" fill="none" stroke="#6e7480" strokeWidth="3" />
-            <path d="M53 50l-8 11h9l-6 10 13-14h-8l5-7z" fill="#6e7480" />
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="100" rx="20" ry="6" fill="#d9e5f9" />
+              <rect x="36" y="24" width="40" height="62" rx="12" fill="#f8fbff" stroke="#8b97ab" strokeWidth="2.6"/>
+              <rect x="48" y="36" width="16" height="8" rx="4" fill="#d3dcea"/>
+              <path d="M76 40c12 0 20 9 20 21v20" fill="none" stroke="#8b97ab" strokeWidth="2.8" />
+              <path d="M96 81c-9 0-14 7-17 15" fill="none" stroke="#8b97ab" strokeWidth="2.8" />
+              <path d="M56 50l-8 11h9l-6 10 13-14h-8l5-7z" fill="#6f7f9c" />
+            </g>
           </symbol>
 
           <symbol id="icon-load" viewBox="0 0 120 120">
-            <path d="M63 28L45 60h17l-5 32 18-34H58z" fill="#7fa2df" />
-            <circle cx="34" cy="34" r="8" fill="none" stroke="#7fa2df" strokeWidth="2" />
+            <g filter="url(#icon-shadow)">
+              <ellipse cx="60" cy="98" rx="19" ry="5.5" fill="#d9e5f9" />
+              <circle cx="60" cy="56" r="21" fill="#fff9de" stroke="#e3d08d" strokeWidth="2.2"/>
+              <path d="M63 40L52 60h12l-6 18 16-23H61z" fill="#7fa2df" />
+              <path d="M60 20v8M42 28l5 6M78 28l-5 6" stroke="#e3d08d" strokeWidth="2" strokeLinecap="round"/>
+            </g>
           </symbol>
 
           {pathDef('path-pv-home', 'M560 132 C560 194 560 232 560 278')}
