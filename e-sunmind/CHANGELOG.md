@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.151
+
+- Fix persistenza cardstyle wizard: durante `Salva` viene sempre rigenerato `sunsynk_card_config_json` dal wizard, evitando il ritorno a `full` quando era selezionato `compact/lite/minimal`.
+
 ## 0.3.150
 
 - Popup mappatura entita energy: ripristinato scroll del modal/backdrop.
@@ -686,4 +690,3 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-

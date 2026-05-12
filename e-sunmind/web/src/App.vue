@@ -3899,6 +3899,11 @@ function applyEnergyWizard() {
   baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
+function syncEnergyJsonFromWizard() {
+  const cfg = buildSunsynkConfigFromWizard()
+  energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+}
+
 function applyWizardPreset(kind) {
   const e = selectedShadeEdit.value
   if (!e) return
@@ -4379,6 +4384,7 @@ async function autofillWeatherStationFromDevice() {
 async function saveBaseSettings() {
   baseSaveStatus.value = 'Salvataggio...'
   try {
+    syncEnergyJsonFromWizard()
     const payload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),
@@ -4479,6 +4485,7 @@ async function saveAllSettings() {
   fsSaveStatus.value = ''
   overlaySaveStatus.value = ''
   try {
+    syncEnergyJsonFromWizard()
     const basePayload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),
