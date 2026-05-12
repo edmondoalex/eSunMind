@@ -162,7 +162,7 @@
       battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
       load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true },
       grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
-      entities: { ...sensorIds },
+      entities: {},
     };
     const signFix = { pv: 1, home: 1, grid: 1, battery: 1 };
     const isConfiguredEntity = (v) => {

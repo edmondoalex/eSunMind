@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.193
+- Fix root-cause strict entities: rimossa inizializzazione cardConfig.entities con mock defaults nel wrapper.
+- Ora entita vuota in UI resta davvero vuota lato card (niente slot considerati mappati per errore).
+
 ## 0.3.192
 - Essential fix: se essential_power non e mappata ma essential_load1 e mappata, il riquadro Essential usa essential_load1 (sempre entita reale, nessuna stima).
 - Confermato strict mode: nessun valore sintetico per entita non mappate.
@@ -893,6 +897,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
