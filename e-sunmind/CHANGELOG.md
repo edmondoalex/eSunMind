@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.198
+- Fix segno flussi: la direzione animazioni ora segue i segni impostati in UI (sezione unica `Segno Entita (+/-)`).
+- Wrapper ricarica i segni senza refresh manuale pagina e riapplica la config card al volo.
+- Allineati anche i flag flow principali (`solar.invert_flow`, `battery.invert_power`, `load.invert_load`, `load.invert_aux`, `grid.invert_grid`) in base ai segni configurati.
+
 ## 0.3.197
 - UI Energy: rimossi i selettori segno duplicati nei blocchi (`Solar`, `Load`, `Grid`, `Battery`).
 - Segno ora centralizzato solo nella sezione unica `Segno Entita (+/-)` per evitare configurazione sparsa/confusa.

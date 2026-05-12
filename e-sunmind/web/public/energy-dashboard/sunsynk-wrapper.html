@@ -165,6 +165,10 @@
       entities: {},
     };
     const entitySignMap = {};
+    const signOf = (key, fallback = 'positive') => {
+      const v = String(entitySignMap[String(key)] || fallback).toLowerCase();
+      return v === 'negative' ? 'negative' : 'positive';
+    };
     const isConfiguredEntity = (v) => {
       const s = String(v || '').trim().toLowerCase();
       if (!s) return false;
@@ -347,6 +351,16 @@
             }
           }
         } catch (_) {}
+        // Keep card flow direction aligned with per-entity sign configuration.
+        cardConfig.solar = cardConfig.solar || {};
+        cardConfig.battery = cardConfig.battery || {};
+        cardConfig.load = cardConfig.load || {};
+        cardConfig.grid = cardConfig.grid || {};
+        cardConfig.solar.invert_flow = signOf('pv1_power_186') === 'negative';
+        cardConfig.battery.invert_power = signOf('battery_power_190') === 'negative';
+        cardConfig.load.invert_load = signOf('inverter_power_175') === 'negative';
+        cardConfig.load.invert_aux = signOf('aux_power_166') === 'negative';
+        cardConfig.grid.invert_grid = signOf('grid_power_169') === 'negative';
         applyEnergyEntityFallbacks(e);
         const raw = j?.energy?.sunsynk_card_config_json;
         if (raw) {
@@ -502,6 +516,12 @@
 
     async function syncFromAddonApi() {
       try {
+        // Reload options so sign changes in UI are applied without reloading the page.
+        await loadCardConfigFromAddonOptions();
+        if (card && typeof card.setConfig === 'function') {
+          cardConfig = normalizeConfigForCard(cardConfig);
+          card.setConfig(cardConfig);
+        }
         const r = await fetch('../api/data', { cache: 'no-store' });
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
