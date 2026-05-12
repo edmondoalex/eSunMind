@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.166
+
+- UI Energy `Entita Potenza` estesa con campi prima mancanti per parita con card originale:
+  - `grid_ct_power_172`, `grid_connected_status_194`
+  - `essential_power`, `nonessential_power`
+  - `essential_load1`, `essential_load2`
+  - `aux_power_166`
+- I nuovi campi sono letti dal JSON esistente e scritti nel JSON generato dal wizard.
+
 ## 0.3.165
 
 - UI Energy `Load & Grid` estesa con opzioni avanzate prima disponibili solo via JSON:

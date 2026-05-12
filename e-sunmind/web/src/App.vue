@@ -1293,11 +1293,18 @@
                 <label>Home segno<select v-model="energyForm.home_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Grid power entity id<input type="text" v-model="energyForm.grid_power_entity_id" /></label>
                 <label>Grid segno<select v-model="energyForm.grid_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Grid CT power entity id<input type="text" v-model="energyWizardForm.grid_ct_power_172" /></label>
+                <label>Grid connected status entity id<input type="text" v-model="energyWizardForm.grid_connected_status_194" /></label>
                 <label>Battery power entity id<input type="text" v-model="energyForm.battery_power_entity_id" /></label>
                 <label>Battery segno<select v-model="energyForm.battery_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Battery SOC entity id<input type="text" v-model="energyForm.battery_soc_entity_id" /></label>
                 <label>Inverter voltage entity id (V)<input type="text" v-model="energyForm.inverter_voltage_entity_id" /></label>
                 <label>Load frequency entity id (Hz)<input type="text" v-model="energyForm.load_frequency_entity_id" /></label>
+                <label>Essential power entity<input type="text" v-model="energyWizardForm.essential_power" /></label>
+                <label>Non-essential power entity<input type="text" v-model="energyWizardForm.nonessential_power" /></label>
+                <label>Essential load 1 entity<input type="text" v-model="energyWizardForm.essential_load1" /></label>
+                <label>Essential load 2 entity<input type="text" v-model="energyWizardForm.essential_load2" /></label>
+                <label>AUX power entity<input type="text" v-model="energyWizardForm.aux_power_166" /></label>
               </div>
             </section>
 
@@ -1756,6 +1763,11 @@ const energyWizardForm = ref({
   grid_disconnected_icon: 'mdi:transmission-tower-off',
   grid_ct_power_172: '',
   grid_connected_status_194: '',
+  essential_power: '',
+  nonessential_power: '',
+  essential_load1: '',
+  essential_load2: '',
+  aux_power_166: '',
   inverter_status_59: '',
   inverter_voltage_154: '',
   inverter_current_164: '',
@@ -3778,6 +3790,11 @@ function buildSunsynkConfigFromWizard() {
     grid_power_169: String(w.grid_power_169 || ''),
     grid_ct_power_172: String(w.grid_ct_power_172 || ''),
     grid_connected_status_194: String(w.grid_connected_status_194 || ''),
+    essential_power: String(w.essential_power || ''),
+    nonessential_power: String(w.nonessential_power || ''),
+    essential_load1: String(w.essential_load1 || ''),
+    essential_load2: String(w.essential_load2 || ''),
+    aux_power_166: String(w.aux_power_166 || ''),
     battery_soc_184: String(w.battery_soc_184 || ''),
     battery_power_190: String(w.battery_power_190 || ''),
     battery_current_191: String(w.battery_current_191 || ''),
@@ -4328,6 +4345,11 @@ async function loadData() {
           grid_power_169: String(ents.grid_power_169 || wizardSeed.grid_power_169),
           grid_ct_power_172: String(ents.grid_ct_power_172 || wizardSeed.grid_ct_power_172),
           grid_connected_status_194: String(ents.grid_connected_status_194 || wizardSeed.grid_connected_status_194),
+          essential_power: String(ents.essential_power || wizardSeed.essential_power),
+          nonessential_power: String(ents.nonessential_power || wizardSeed.nonessential_power),
+          essential_load1: String(ents.essential_load1 || wizardSeed.essential_load1),
+          essential_load2: String(ents.essential_load2 || wizardSeed.essential_load2),
+          aux_power_166: String(ents.aux_power_166 || wizardSeed.aux_power_166),
           battery_soc_184: String(ents.battery_soc_184 || wizardSeed.battery_soc_184),
           battery_power_190: String(ents.battery_power_190 || wizardSeed.battery_power_190),
           battery_current_191: String(ents.battery_current_191 || wizardSeed.battery_current_191),
