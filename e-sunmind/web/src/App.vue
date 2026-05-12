@@ -1139,19 +1139,19 @@
             <section class="energy-group">
               <h4>Icone</h4>
               <div class="form-grid">
-                <label>Load 1 icon<input type="text" v-model="energyWizardForm.load1_icon" placeholder="mdi:home" /></label>
-                <label>Load 2 icon<input type="text" v-model="energyWizardForm.load2_icon" placeholder="mdi:heat-wave" /></label>
-                <label>Load 3 icon<input type="text" v-model="energyWizardForm.load3_icon" placeholder="mdi:pump" /></label>
-                <label>Load 4 icon<input type="text" v-model="energyWizardForm.load4_icon" placeholder="mdi:stove" /></label>
-                <label>Load 5 icon<input type="text" v-model="energyWizardForm.load5_icon" placeholder="default" /></label>
-                <label>Load 6 icon<input type="text" v-model="energyWizardForm.load6_icon" placeholder="default" /></label>
-                <label>Grid non-essential icon<input type="text" v-model="energyWizardForm.grid_nonessential_icon" placeholder="mdi:home-outline" /></label>
-                <label>Grid load 1 icon<input type="text" v-model="energyWizardForm.grid_load1_icon" placeholder="default" /></label>
-                <label>Grid load 2 icon<input type="text" v-model="energyWizardForm.grid_load2_icon" placeholder="default" /></label>
-                <label>Grid load 3 icon<input type="text" v-model="energyWizardForm.grid_load3_icon" placeholder="default" /></label>
-                <label>Grid import icon<input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" /></label>
-                <label>Grid export icon<input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" /></label>
-                <label>Grid disconnected icon<input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" /></label>
+                <label>Load 1 icon<select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`l1-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load1_icon" placeholder="mdi:home" /></label>
+                <label>Load 2 icon<select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`l2-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load2_icon" placeholder="mdi:heat-wave" /></label>
+                <label>Load 3 icon<select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`l3-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load3_icon" placeholder="mdi:pump" /></label>
+                <label>Load 4 icon<select v-model="energyWizardForm.load4_icon"><option v-for="i in energyIconOptions" :key="`l4-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load4_icon" placeholder="mdi:stove" /></label>
+                <label>Load 5 icon<select v-model="energyWizardForm.load5_icon"><option v-for="i in energyIconOptions" :key="`l5-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load5_icon" placeholder="default" /></label>
+                <label>Load 6 icon<select v-model="energyWizardForm.load6_icon"><option v-for="i in energyIconOptions" :key="`l6-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load6_icon" placeholder="default" /></label>
+                <label>Grid non-essential icon<select v-model="energyWizardForm.grid_nonessential_icon"><option v-for="i in energyIconOptions" :key="`gn-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_nonessential_icon" placeholder="mdi:home-outline" /></label>
+                <label>Grid load 1 icon<select v-model="energyWizardForm.grid_load1_icon"><option v-for="i in energyIconOptions" :key="`g1-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_load1_icon" placeholder="default" /></label>
+                <label>Grid load 2 icon<select v-model="energyWizardForm.grid_load2_icon"><option v-for="i in energyIconOptions" :key="`g2-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_load2_icon" placeholder="default" /></label>
+                <label>Grid load 3 icon<select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`g3-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_load3_icon" placeholder="default" /></label>
+                <label>Grid import icon<select v-model="energyWizardForm.grid_import_icon"><option v-for="i in energyIconOptions" :key="`gi-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" /></label>
+                <label>Grid export icon<select v-model="energyWizardForm.grid_export_icon"><option v-for="i in energyIconOptions" :key="`ge-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" /></label>
+                <label>Grid disconnected icon<select v-model="energyWizardForm.grid_disconnected_icon"><option v-for="i in energyIconOptions" :key="`gd-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" /></label>
               </div>
             </section>
 

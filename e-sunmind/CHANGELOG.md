@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.184
+- Energy UI: aggiunto selettore icone per tutti i campi load/grid mantenendo input testo libero per valori mdi:... custom.
+
 ## 0.3.183
 - Grid icon fix (size): forzata dimensione minima della tower icon nel wrapper standalone (ha-icon) per evitare rendering microscopico.
 
@@ -856,6 +859,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
