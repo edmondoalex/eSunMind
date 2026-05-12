@@ -1049,22 +1049,27 @@
             <span class="note">{{ allSaveStatus }}</span>
           </div>
         </section>
-        <section class="card">
+        <section class="card energy-settings-card energy-setup-page">
           <h3>Energy</h3>
           <p class="note energy-note">
-            Prima mappa le entita principali, poi apri i dettagli solo per colori, icone, load extra e JSON avanzato.
+            Configura prima i sensori principali. Le opzioni tecniche sono divise per area, cosi non devi scorrere una pagina enorme.
           </p>
           <div class="energy-quick-panel">
             <div class="energy-quick-head">
               <div>
-                <strong>Configurazione rapida</strong>
-                <span>{{ energyQuickMappedCount }}/6 entita principali mappate</span>
+                <strong>Avvio rapido</strong>
+                <span>{{ energyQuickMappedCount }}/6 campi principali compilati</span>
               </div>
               <div class="energy-status-pills">
                 <span :class="{ok: energyForm.enabled}">{{ energyForm.enabled ? 'Energy ON' : 'Energy OFF' }}</span>
                 <span>{{ energyWizardForm.cardstyle }}</span>
                 <span>{{ energyWizardForm.show_aux ? 'AUX visibile' : 'AUX nascosto' }}</span>
               </div>
+            </div>
+            <div class="energy-setup-steps">
+              <div><strong>1</strong><span>Metti PV, casa, rete e batteria</span></div>
+              <div><strong>2</strong><span>Premi Genera JSON card</span></div>
+              <div><strong>3</strong><span>Salva e apri Energy Flow</span></div>
             </div>
             <div class="energy-quick-grid">
               <label class="toggle-line">Energy attivo<input type="checkbox" v-model="energyForm.enabled" /></label>
@@ -1100,10 +1105,23 @@
           <details class="energy-advanced-details">
             <summary>
               <span>Configurazione completa</span>
-              <small>Topologia, load, AUX, grid, icone, segni e JSON</small>
+              <small>Scegli una sezione: non viene piu mostrato tutto insieme</small>
             </summary>
+          <div class="energy-section-nav">
+            <button
+              v-for="section in energySetupSections"
+              :key="section.key"
+              type="button"
+              class="energy-section-tab"
+              :class="{active: energySetupSection === section.key}"
+              @click="energySetupSection = section.key"
+            >
+              <strong>{{ section.label }}</strong>
+              <small>{{ section.hint }}</small>
+            </button>
+          </div>
           <div class="energy-layout">
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'topology'">
               <h4>Generale / Topology</h4>
               <div class="form-grid">
                 <label>Enabled<input type="checkbox" v-model="energyForm.enabled" /></label>
@@ -1132,7 +1150,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'inverter'">
               <h4>Inverter</h4>
               <div class="form-grid">
                 <label>Inverter modern<input type="checkbox" v-model="energyWizardForm.inverter_modern" /></label>
@@ -1143,7 +1161,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'solar'">
               <h4>Solar</h4>
               <div class="form-grid">
                 <label>Colore Solar<input type="color" v-model="energyWizardForm.color_solar" /></label>
@@ -1162,7 +1180,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'battery'">
               <h4>Battery</h4>
               <div class="form-grid">
                 <label>Colore Battery<input type="color" v-model="energyWizardForm.color_battery" /></label>
@@ -1178,7 +1196,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'load'">
               <h4>Load</h4>
               <div class="form-grid">
                 <label>Casa/Home potenza (entity_id)<input type="text" v-model="energyForm.home_power_entity_id" /></label>
@@ -1207,7 +1225,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'aux'">
               <h4>AUX</h4>
               <div class="form-grid">
                 <label>Mostra ramo AUX<input type="checkbox" v-model="energyWizardForm.show_aux" /></label>
@@ -1218,7 +1236,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'grid'">
               <h4>Grid</h4>
               <div class="form-grid">
                 <label>Colore Grid<input type="color" v-model="energyWizardForm.color_grid" /></label>
@@ -1257,7 +1275,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'daily'">
               <h4>Entita Giornaliere</h4>
               <div class="form-grid">
                 <label>PV energy today entity id<input type="text" v-model="energyForm.pv_energy_today_entity_id" /></label>
@@ -1267,7 +1285,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'signs'">
               <h4>Segno Entita (+/-)</h4>
               <div class="form-grid">
                 <label v-for="f in energySignFields" :key="`sg-${f.key}`">
@@ -1280,7 +1298,7 @@
               </div>
             </section>
 
-            <section class="energy-group">
+            <section class="energy-group" v-show="energySetupSection === 'json'">
               <h4>JSON Avanzato</h4>
               <div class="form-grid">
                 <label style="grid-column: 1 / -1;">
@@ -1620,6 +1638,19 @@ const energyForm = ref({
   entity_signs_json: '',
 })
 const energyWizardStep = ref(0)
+const energySetupSection = ref('topology')
+const energySetupSections = [
+  { key: 'topology', label: 'Base', hint: 'layout e numeri' },
+  { key: 'solar', label: 'Solare', hint: 'PV e MPPT' },
+  { key: 'battery', label: 'Batteria', hint: 'SOC e potenza' },
+  { key: 'load', label: 'Carichi', hint: 'casa e load' },
+  { key: 'grid', label: 'Rete', hint: 'import/export' },
+  { key: 'daily', label: 'Giornalieri', hint: 'kWh oggi' },
+  { key: 'signs', label: 'Segni', hint: '+ / - valori' },
+  { key: 'inverter', label: 'Inverter', hint: 'V, Hz, stato' },
+  { key: 'aux', label: 'AUX', hint: 'ramo extra' },
+  { key: 'json', label: 'JSON', hint: 'avanzato' },
+]
 const energyWizardSteps = [
   { key: 'topology', label: 'Topologia', hint: 'Definisci numero pannelli/batterie/carichi.' },
   { key: 'colors', label: 'Colori', hint: 'Scegli palette della card.' },
@@ -5878,6 +5909,11 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   grid-template-columns:1fr;
   gap:16px;
 }
+.energy-setup-page{
+  max-width:1280px;
+  margin-left:auto;
+  margin-right:auto;
+}
 .energy-group{
   border:1px solid rgba(71,85,105,.42);
   border-radius:14px;
@@ -5897,6 +5933,37 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   font-size:14px;
   color:#9fb0c8;
   margin:0 0 14px 0;
+}
+.energy-setup-steps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin:0 0 14px 0;
+}
+.energy-setup-steps div{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  min-height:46px;
+  padding:10px 12px;
+  border:1px solid rgba(56,189,248,.22);
+  border-radius:12px;
+  background:rgba(2,6,23,.35);
+}
+.energy-setup-steps strong{
+  display:grid;
+  place-items:center;
+  width:26px;
+  height:26px;
+  border-radius:999px;
+  background:#155e75;
+  color:#cffafe;
+  flex:0 0 auto;
+}
+.energy-setup-steps span{
+  color:#cbd5e1;
+  font-size:13px;
+  line-height:1.25;
 }
 .energy-quick-panel{
   border:1px solid rgba(34,211,238,.32);
@@ -5946,7 +6013,7 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .energy-quick-grid{
   display:grid;
-  grid-template-columns:repeat(3,minmax(220px,1fr));
+  grid-template-columns:repeat(2,minmax(280px,1fr));
   gap:12px 14px;
 }
 .energy-quick-grid label{
@@ -6012,8 +6079,45 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .energy-advanced-details .energy-layout{
   padding:16px;
 }
+.energy-section-nav{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(145px,1fr));
+  gap:10px;
+  padding:14px 16px 0;
+}
+.energy-section-tab{
+  appearance:none;
+  text-align:left;
+  border:1px solid rgba(71,85,105,.55);
+  border-radius:12px;
+  background:rgba(15,23,42,.72);
+  color:#cbd5e1;
+  padding:11px 12px;
+  cursor:pointer;
+}
+.energy-section-tab strong,
+.energy-section-tab small{
+  display:block;
+}
+.energy-section-tab strong{
+  font-size:14px;
+  color:#e2e8f0;
+}
+.energy-section-tab small{
+  margin-top:3px;
+  font-size:11px;
+  color:#91a4bd;
+}
+.energy-section-tab.active{
+  border-color:rgba(34,211,238,.8);
+  background:linear-gradient(180deg,rgba(8,47,73,.72),rgba(15,23,42,.86));
+  box-shadow:0 0 0 2px rgba(34,211,238,.18);
+}
+.energy-section-tab.active strong{
+  color:#a5f3fc;
+}
 .energy-settings-card .form-grid{
-  grid-template-columns:repeat(4,minmax(220px,1fr));
+  grid-template-columns:repeat(2,minmax(280px,1fr));
   gap:12px 14px;
 }
 .energy-settings-card label{
@@ -6106,8 +6210,14 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   .energy-status-pills{
     justify-content:flex-start;
   }
+  .energy-setup-steps{
+    grid-template-columns:1fr;
+  }
   .energy-quick-grid{
     grid-template-columns:1fr;
+  }
+  .energy-section-nav{
+    grid-template-columns:1fr 1fr;
   }
   .energy-advanced-details > summary{
     flex-direction:column;

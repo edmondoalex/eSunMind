@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Setup UI: pagina resa piu user friendly con larghezza leggibile, avvio rapido in 3 passi e configurazione completa a sezioni cliccabili.
+- Energy Flow wrapper: ripristinata direzione flussi tramite flag `invert_*` calcolati da `entity_signs_json`, mantenendo gli stati HA raw.
+- Bump versione addon/backend a `0.3.208` con changelog aggiornato.
+
 - Energy Flow wrapper: sanitizzazione generale delle entita opzionali mancanti per daily solar/load/grid/battery e AUX daily.
 - Aggiunto retry difensivo di `setConfig()` dopo sanitizzazione per non fermare il sync dati con config parziali.
 - Bump versione addon/backend a `0.3.207` con changelog aggiornato.

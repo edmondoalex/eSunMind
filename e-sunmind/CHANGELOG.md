@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.208
+- Energy Setup piu leggibile: pagina limitata in larghezza, avvio rapido guidato e configurazione completa divisa in sezioni cliccabili.
+- Energy Setup: applicati gli stili dedicati anche alla pagina principale, evitando griglie enormi e campi illeggibili su monitor larghi.
+- Energy Flow: valori HA passati raw alla card Sunsynk e flag `invert_*` impostati dai segni configurati, cosi i pallini seguono la direzione della card.
+- Bump versione addon/backend a `0.3.208`.
+
 ## 0.3.207
 - Energy Flow wrapper piu tollerante: disattiva automaticamente tutte le opzioni daily/aux/grid opzionali quando mancano le entita richieste.
 - `setConfig()` ora ritenta dopo sanitizzazione e non blocca il polling dati se la card Sunsynk rifiuta una configurazione parziale.
