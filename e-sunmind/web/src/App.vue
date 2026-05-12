@@ -1220,7 +1220,7 @@
               </select>
             </label>
             <label>Cardstyle
-              <select v-model="energyWizardForm.cardstyle">
+              <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                 <option value="full">full</option>
                 <option value="compact">compact</option>
                 <option value="lite">lite</option>
@@ -3899,9 +3899,19 @@ function applyEnergyWizard() {
   baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
-function syncEnergyJsonFromWizard() {
-  const cfg = buildSunsynkConfigFromWizard()
-  energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+function onEnergyCardstyleChange() {
+  const selected = String(energyWizardForm.value.cardstyle || 'full')
+  try {
+    const raw = String(energyForm.value.sunsynk_card_config_json || '').trim()
+    const parsed = raw ? JSON.parse(raw) : {}
+    const obj = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {}
+    obj.cardstyle = selected
+    energyForm.value.sunsynk_card_config_json = JSON.stringify(obj, null, 2)
+  } catch (_) {
+    const cfg = buildSunsynkConfigFromWizard()
+    cfg.cardstyle = selected
+    energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+  }
 }
 
 function applyWizardPreset(kind) {
@@ -4384,7 +4394,6 @@ async function autofillWeatherStationFromDevice() {
 async function saveBaseSettings() {
   baseSaveStatus.value = 'Salvataggio...'
   try {
-    syncEnergyJsonFromWizard()
     const payload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),
@@ -4485,7 +4494,6 @@ async function saveAllSettings() {
   fsSaveStatus.value = ''
   overlaySaveStatus.value = ''
   try {
-    syncEnergyJsonFromWizard()
     const basePayload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.152
+
+- Fix salvataggio JSON fuori wizard: rimosso override globale del `sunsynk_card_config_json` durante `Salva`.
+- Il selettore `Cardstyle` ora aggiorna solo il campo `cardstyle` dentro il JSON corrente (`on change`), senza sovrascrivere le altre personalizzazioni manuali.
+
 ## 0.3.151
 
 - Fix persistenza cardstyle wizard: durante `Salva` viene sempre rigenerato `sunsynk_card_config_json` dal wizard, evitando il ritorno a `full` quando era selezionato `compact/lite/minimal`.
