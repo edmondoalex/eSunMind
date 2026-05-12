@@ -5555,9 +5555,9 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   overflow:hidden;
   background:#040b1a;
   width:960px;
-  height:640px;
+  height:760px;
   min-width:960px;
-  min-height:640px;
+  min-height:760px;
   max-width:none;
 }
 .energy-live-frame{

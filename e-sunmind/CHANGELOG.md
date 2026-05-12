@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.153
+
+- Popup mappatura energy: aumentata altezza preview card per includere la parte bassa della dashboard.
+- Wrapper `map=1`: rimosso crop verticale rigido (`100vh + overflow hidden`) che tagliava la sezione inferiore.
+
 ## 0.3.152
 
 - Fix salvataggio JSON fuori wizard: rimosso override globale del `sunsynk_card_config_json` durante `Salva`.
