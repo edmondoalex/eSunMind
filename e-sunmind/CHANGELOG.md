@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.176
+
+- UI Energy migliorata: campi mappatura entita allargati e font monospace per visualizzare interamente gli `entity_id` senza troncamenti ambigui.
+- Include i fix della 0.3.175 (persistenza wizard su save + fallback icona grid tower in standalone).
+
 ## 0.3.175
 
 - Persistenza UI Energy corretta: `Salva configurazione Energy` e `Salva tutto` applicano automaticamente il wizard prima del payload, evitando ritorni ai valori precedenti.
