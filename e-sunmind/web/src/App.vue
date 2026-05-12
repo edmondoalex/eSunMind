@@ -1267,6 +1267,20 @@
                 <label>Grid speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.grid_animation_speed" /></label>
                 <label>Grid auto-scale<input type="checkbox" v-model="energyWizardForm.grid_auto_scale" /></label>
                 <label>Grid show daily buy<input type="checkbox" v-model="energyWizardForm.grid_show_daily_buy" /></label>
+                <label>Grid show daily sell<input type="checkbox" v-model="energyWizardForm.grid_show_daily_sell" /></label>
+                <label>Grid invert<input type="checkbox" v-model="energyWizardForm.grid_invert_grid" /></label>
+                <label>Grid show absolute<input type="checkbox" v-model="energyWizardForm.grid_show_absolute" /></label>
+                <label>Show non-essential<input type="checkbox" v-model="energyWizardForm.grid_show_nonessential" /></label>
+                <label>Grid additional loads<input type="number" min="0" max="3" step="1" v-model.number="energyWizardForm.grid_additional_loads" /></label>
+                <label>Grid name<input type="text" v-model="energyWizardForm.grid_name" /></label>
+                <label>Label daily buy<input type="text" v-model="energyWizardForm.grid_label_daily_buy" /></label>
+                <label>Label daily sell<input type="text" v-model="energyWizardForm.grid_label_daily_sell" /></label>
+                <label>Non-essential name<input type="text" v-model="energyWizardForm.grid_nonessential_name" /></label>
+                <label>Grid invert flow<input type="checkbox" v-model="energyWizardForm.grid_invert_flow" /></label>
+                <label>Energy cost decimals<input type="number" min="0" max="4" step="1" v-model.number="energyWizardForm.grid_energy_cost_decimals" /></label>
+                <label>Grid export color<input type="color" v-model="energyWizardForm.color_grid_export" /></label>
+                <label>Grid off color<input type="color" v-model="energyWizardForm.color_grid_off" /></label>
+                <label>No-grid color<input type="color" v-model="energyWizardForm.color_no_grid" /></label>
               </div>
             </section>
 
@@ -1706,12 +1720,26 @@ const energyWizardForm = ref({
   load_max_power: 9000,
   load_auto_scale: true,
   grid_show_daily_buy: true,
+  grid_show_daily_sell: true,
+  grid_invert_grid: false,
+  grid_show_absolute: true,
+  grid_show_nonessential: false,
+  grid_additional_loads: 0,
+  grid_name: 'Linea Sas',
+  grid_label_daily_buy: 'Consumo Giornaliero',
+  grid_label_daily_sell: 'Vendita Giornaliera',
+  grid_nonessential_name: 'Non Essential',
+  grid_invert_flow: false,
+  grid_energy_cost_decimals: 0,
   grid_animation_speed: 9,
   grid_max_power: 8000,
   grid_auto_scale: true,
   color_solar: '#f59e0b',
   color_battery: '#a855f7',
   color_grid: '#06b6d4',
+  color_grid_export: '#6a7ac8',
+  color_grid_off: '#3a8d53',
+  color_no_grid: '#49ab6a',
   color_load: '#cbd5e1',
   load1_icon: 'default',
   load2_icon: 'default',
@@ -3820,9 +3848,23 @@ function buildSunsynkConfigFromWizard() {
     grid: {
       colour: String(w.color_grid || '#06b6d4'),
       show_daily_buy: Boolean(w.grid_show_daily_buy),
+      show_daily_sell: Boolean(w.grid_show_daily_sell),
+      invert_grid: Boolean(w.grid_invert_grid),
+      show_absolute: Boolean(w.grid_show_absolute),
+      show_nonessential: Boolean(w.grid_show_nonessential),
+      additional_loads: Math.max(0, Math.min(3, Number(w.grid_additional_loads || 0))),
+      grid_name: String(w.grid_name || 'Linea Sas'),
+      label_daily_grid_buy: String(w.grid_label_daily_buy || 'Consumo Giornaliero'),
+      label_daily_grid_sell: String(w.grid_label_daily_sell || 'Vendita Giornaliera'),
+      nonessential_name: String(w.grid_nonessential_name || 'Non Essential'),
+      invert_flow: Boolean(w.grid_invert_flow),
+      energy_cost_decimals: Math.max(0, Math.min(4, Number(w.grid_energy_cost_decimals || 0))),
       animation_speed: Math.max(1, Math.min(20, Number(w.grid_animation_speed || 9))),
       max_power: Math.max(100, Number(w.grid_max_power || 8000)),
       auto_scale: Boolean(w.grid_auto_scale),
+      no_grid_colour: String(w.color_no_grid || '#49ab6a'),
+      grid_off_colour: String(w.color_grid_off || '#3a8d53'),
+      export_colour: String(w.color_grid_export || '#6a7ac8'),
       nonessential_icon: String(w.grid_nonessential_icon || 'default'),
       load1_icon: String(w.grid_load1_icon || 'default'),
       load2_icon: String(w.grid_load2_icon || 'default'),
@@ -4244,12 +4286,26 @@ async function loadData() {
           load_max_power: Number(load.max_power ?? wizardSeed.load_max_power),
           load_auto_scale: Boolean(load.auto_scale ?? wizardSeed.load_auto_scale),
           grid_show_daily_buy: Boolean(grid.show_daily_buy ?? wizardSeed.grid_show_daily_buy),
+          grid_show_daily_sell: Boolean(grid.show_daily_sell ?? wizardSeed.grid_show_daily_sell),
+          grid_invert_grid: Boolean(grid.invert_grid ?? wizardSeed.grid_invert_grid),
+          grid_show_absolute: Boolean(grid.show_absolute ?? wizardSeed.grid_show_absolute),
+          grid_show_nonessential: Boolean(grid.show_nonessential ?? wizardSeed.grid_show_nonessential),
+          grid_additional_loads: Number(grid.additional_loads ?? wizardSeed.grid_additional_loads),
+          grid_name: String(grid.grid_name || wizardSeed.grid_name),
+          grid_label_daily_buy: String(grid.label_daily_grid_buy || wizardSeed.grid_label_daily_buy),
+          grid_label_daily_sell: String(grid.label_daily_grid_sell || wizardSeed.grid_label_daily_sell),
+          grid_nonessential_name: String(grid.nonessential_name || wizardSeed.grid_nonessential_name),
+          grid_invert_flow: Boolean(grid.invert_flow ?? wizardSeed.grid_invert_flow),
+          grid_energy_cost_decimals: Number(grid.energy_cost_decimals ?? wizardSeed.grid_energy_cost_decimals),
           grid_animation_speed: Number(grid.animation_speed ?? wizardSeed.grid_animation_speed),
           grid_max_power: Number(grid.max_power ?? wizardSeed.grid_max_power),
           grid_auto_scale: Boolean(grid.auto_scale ?? wizardSeed.grid_auto_scale),
           color_solar: String(solar.colour || wizardSeed.color_solar),
           color_battery: String(battery.colour || wizardSeed.color_battery),
           color_grid: String(grid.colour || wizardSeed.color_grid),
+          color_grid_export: String(grid.export_colour || wizardSeed.color_grid_export),
+          color_grid_off: String(grid.grid_off_colour || wizardSeed.color_grid_off),
+          color_no_grid: String(grid.no_grid_colour || wizardSeed.color_no_grid),
           color_load: String(load.colour || wizardSeed.color_load),
           load1_icon: String(load.load1_icon || wizardSeed.load1_icon),
           load2_icon: String(load.load2_icon || wizardSeed.load2_icon),

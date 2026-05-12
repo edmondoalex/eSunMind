@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.165
+
+- UI Energy `Load & Grid` estesa con opzioni avanzate prima disponibili solo via JSON:
+  - `show_daily_sell`, `invert_grid`, `show_absolute`, `show_nonessential`, `additional_loads`
+  - `grid_name`, label daily buy/sell, `nonessential_name`, `invert_flow`, `energy_cost_decimals`
+  - colori `export/off/no-grid`.
+- Mapping bidirezionale completo: i nuovi campi vengono letti dal JSON esistente e salvati nel JSON generato dal wizard.
+
+## 0.3.164
+
+- UI Energy completata su `Load & Grid`: aggiunti controlli dedicati `Show non-essential` e `Grid additional loads`.
+- I nuovi campi sono collegati al JSON card (`grid.show_nonessential`, `grid.additional_loads`) e persistono via wizard/salvataggio.
+
 ## 0.3.163
 
 - Restyling pagina Energy: configurazione divisa in blocchi funzionali (`Generale`, `Solar & Battery`, `Load & Grid`, `Entita Potenza`, `Entita Giornaliere`, `JSON Avanzato`).
