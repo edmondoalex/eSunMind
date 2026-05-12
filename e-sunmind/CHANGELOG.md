@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.161
+
+- Compatibilita config Sunsynk originale: nel wrapper energy i valori entita `none/null/unknown/unavailable` ora sono trattati come non configurati.
+- Coerenza con card reale: i rami Solar/Battery/Grid non vengono considerati mappati quando nel JSON hai `none`.
+
 ## 0.3.160
 
 - Regola strict mapping nel wrapper energy: se un'entita non e mappata, non vengono piu seedati valori fake e non vengono piu applicati fallback numerici a `0`.

@@ -109,9 +109,14 @@
       entities: { ...sensorIds },
     };
     const signFix = { pv: 1, home: 1, grid: 1, battery: 1 };
+    const isConfiguredEntity = (v) => {
+      const s = String(v || '').trim().toLowerCase();
+      if (!s) return false;
+      return !['none', 'null', 'undefined', 'unknown', 'unavailable'].includes(s);
+    };
     const entityId = (cardKey) => {
       const configured = cardConfig?.entities?.[cardKey];
-      if (typeof configured === 'string' && configured.trim()) return configured.trim();
+      if (isConfiguredEntity(configured)) return String(configured).trim();
       return sensorIds[cardKey] || '';
     };
 
@@ -179,9 +184,9 @@
         cardConfig.entities.pv2_voltage_111 = '';
         cardConfig.entities.pv2_current_112 = '';
       }
-      const hasPv = Boolean(String(cardConfig.entities.pv1_power_186 || '').trim() || String(cardConfig.entities.pv2_power_187 || '').trim());
-      const hasBattery = Boolean(String(cardConfig.entities.battery_power_190 || '').trim() || String(cardConfig.entities.battery_soc_184 || '').trim());
-      const hasGrid = Boolean(String(cardConfig.entities.grid_power_169 || '').trim() || String(cardConfig.entities.grid_ct_power_172 || '').trim());
+      const hasPv = Boolean(isConfiguredEntity(cardConfig.entities.pv1_power_186) || isConfiguredEntity(cardConfig.entities.pv2_power_187));
+      const hasBattery = Boolean(isConfiguredEntity(cardConfig.entities.battery_power_190) || isConfiguredEntity(cardConfig.entities.battery_soc_184));
+      const hasGrid = Boolean(isConfiguredEntity(cardConfig.entities.grid_power_169) || isConfiguredEntity(cardConfig.entities.grid_ct_power_172));
       cardConfig.show_solar = Boolean(cardConfig.show_solar && hasPv);
       cardConfig.show_battery = Boolean(cardConfig.show_battery && hasBattery);
       cardConfig.show_grid = Boolean(cardConfig.show_grid && hasGrid);
