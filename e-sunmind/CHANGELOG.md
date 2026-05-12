@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.149
+
+- Mapper popup energy: eliminato overflow interno nella modalita `map=1` del wrapper (niente doppie scrollbar nel frame), per ridurre disallineamento hotspot.
+
+## 0.3.148
+
+- Wrapper map mode: layout full-frame dedicato per la preview di mappatura entita nel wizard.
+
 ## 0.3.147
 
 - Fix popup wizard energy: ripristinato scroll verticale nel modal di mappatura entita.
@@ -673,6 +681,5 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 
 
