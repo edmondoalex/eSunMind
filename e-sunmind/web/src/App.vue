@@ -5466,11 +5466,11 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .energy-settings-card .wizard-head p{font-size:14px;line-height:1.35}
 .energy-settings-card .wizard-step-count{font-size:14px}
 .energy-settings-card .wizard-tab{padding:9px 14px;font-size:14px}
-.energy-settings-card .wizard-grid{grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.energy-settings-card .wizard-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
 .energy-settings-card .wizard-grid label{font-size:15px;gap:6px}
 .energy-settings-card .wizard-grid label small{font-size:12px;line-height:1.35}
 .energy-settings-card .wizard-review span{font-size:14px;padding:10px}
-.energy-settings-card .form-grid{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:12px}
+.energy-settings-card .form-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .energy-settings-card label{font-size:15px;color:#cfe0f7;gap:7px}
 .energy-settings-card input,
 .energy-settings-card select,
@@ -5483,6 +5483,17 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 .energy-settings-card input[type="text"]{
   font-family: Consolas, "Courier New", monospace;
   font-size: 14px;
+}
+@media (max-width: 1700px){
+  .energy-settings-card .form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width: 1280px){
+  .energy-settings-card .wizard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .energy-settings-card .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width: 820px){
+  .energy-settings-card .wizard-grid{grid-template-columns:1fr}
+  .energy-settings-card .form-grid{grid-template-columns:1fr}
 }
 .energy-settings-card textarea{min-height:220px;line-height:1.45}
 .tende-cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}

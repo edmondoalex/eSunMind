@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.177
+
+- Energy Setup restyle strutturale: layout a blocchi con griglia fissa (non più riga infinita “insalata”).
+- Nuove breakpoints responsive per mantenere leggibilità su desktop/laptop/tablet.
+- Sezione campi entità più ordinata con distribuzione 4/3/2/1 colonne in base alla larghezza.
+
 ## 0.3.176
 
 - UI Energy migliorata: campi mappatura entita allargati e font monospace per visualizzare interamente gli `entity_id` senza troncamenti ambigui.
