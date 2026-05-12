@@ -354,13 +354,6 @@
         cardConfig.battery.count = 1;
         delete cardConfig.entities.battery2_power_190;
       }
-      const hasBatteryDailyCharge = isConfiguredEntity(cardConfig.entities.day_battery_charge_70);
-      const hasBatteryDailyDischarge = isConfiguredEntity(cardConfig.entities.day_battery_discharge_71);
-      if (!hasBatteryDailyCharge || !hasBatteryDailyDischarge) {
-        cardConfig.battery.show_daily = false;
-        if (!hasBatteryDailyCharge) delete cardConfig.entities.day_battery_charge_70;
-        if (!hasBatteryDailyDischarge) delete cardConfig.entities.day_battery_discharge_71;
-      }
       // No synthetic load branches: show only mapped essential/aux/non-essential channels.
       const essentialMapped = [
         isConfiguredEntity(cardConfig.entities.essential_load1),
@@ -421,6 +414,41 @@
       cardConfig.show_solar = Boolean(cardConfig.show_solar && hasPv);
       cardConfig.show_battery = Boolean(cardConfig.show_battery && hasBattery);
       cardConfig.show_grid = Boolean(cardConfig.show_grid && hasGrid);
+      sanitizeMissingOptionalEntities();
+    }
+
+    function disableIfMissing(section, flag, requiredKeys) {
+      const target = cardConfig?.[section];
+      if (!target || typeof target !== 'object') return;
+      const keys = Array.isArray(requiredKeys) ? requiredKeys : [requiredKeys];
+      const missing = keys.filter((k) => !isConfiguredEntity(cardConfig.entities?.[k]));
+      if (!missing.length) return;
+      target[flag] = false;
+      for (const k of missing) delete cardConfig.entities[k];
+    }
+
+    function sanitizeMissingOptionalEntities() {
+      cardConfig.entities = cardConfig.entities || {};
+      cardConfig.solar = cardConfig.solar || {};
+      cardConfig.battery = cardConfig.battery || {};
+      cardConfig.battery2 = cardConfig.battery2 || {};
+      cardConfig.load = cardConfig.load || {};
+      cardConfig.grid = cardConfig.grid || {};
+
+      disableIfMissing('solar', 'show_daily', 'day_pv_energy_108');
+      disableIfMissing('battery', 'show_daily', ['day_battery_charge_70', 'day_battery_discharge_71']);
+      disableIfMissing('battery2', 'show_daily', ['day_battery_charge_70', 'day_battery_discharge_71']);
+      disableIfMissing('load', 'show_daily', 'day_load_energy_84');
+      disableIfMissing('load', 'show_daily_aux', 'day_aux_energy');
+      disableIfMissing('grid', 'show_daily_buy', 'day_grid_import_76');
+      disableIfMissing('grid', 'show_daily_sell', 'day_grid_export_77');
+
+      if (!isConfiguredEntity(cardConfig.entities.grid_connected_status_194)) {
+        delete cardConfig.entities.grid_connected_status_194;
+      }
+      if (!isConfiguredEntity(cardConfig.entities.inverter_status_59)) {
+        delete cardConfig.entities.inverter_status_59;
+      }
     }
 
     async function loadCardConfigFromAddonOptions() {
@@ -604,7 +632,17 @@
         await loadCardConfigFromAddonOptions();
         if (card && typeof card.setConfig === 'function') {
           cardConfig = normalizeConfigForCard(cardConfig);
-          card.setConfig(cardConfig);
+          try {
+            card.setConfig(cardConfig);
+          } catch (e) {
+            sanitizeMissingOptionalEntities();
+            cardConfig = normalizeConfigForCard(cardConfig);
+            try {
+              card.setConfig(cardConfig);
+            } catch (retryError) {
+              console.warn('e-SunMind Energy setConfig failed after sanitize', retryError);
+            }
+          }
         }
         const r = await fetch('../api/data', { cache: 'no-store' });
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);

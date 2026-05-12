@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Flow wrapper: sanitizzazione generale delle entita opzionali mancanti per daily solar/load/grid/battery e AUX daily.
+- Aggiunto retry difensivo di `setConfig()` dopo sanitizzazione per non fermare il sync dati con config parziali.
+- Bump versione addon/backend a `0.3.207` con changelog aggiornato.
+
 - Energy Flow wrapper: disattivazione automatica `battery.show_daily` quando mancano le entita daily charge/discharge richieste dalla card Sunsynk.
 - Risolto errore `day_battery_charge_70` / `day_battery_discharge_71` in config parziali o test.
 - Bump versione addon/backend a `0.3.206` con changelog aggiornato.

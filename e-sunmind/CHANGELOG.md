@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.207
+- Energy Flow wrapper piu tollerante: disattiva automaticamente tutte le opzioni daily/aux/grid opzionali quando mancano le entita richieste.
+- `setConfig()` ora ritenta dopo sanitizzazione e non blocca il polling dati se la card Sunsynk rifiuta una configurazione parziale.
+- Bump versione addon/backend a `0.3.207`.
+
 ## 0.3.206
 - Fix Energy Flow: se `battery.show_daily` e attivo ma mancano `day_battery_charge_70` o `day_battery_discharge_71`, il wrapper disattiva automaticamente il daily batteria prima di `setConfig()`.
 - Compatibilita Sunsynk Power Flow Card 6.9.2: evitato errore bloccante sulle entita daily charge/discharge batteria durante test o config parziali.
