@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.189
+- Wrapper strict mode: rimossi fallback impliciti da energy_config (niente auto-mapping entita).
+- Rimossa stima PV split da totale (solar_power non viene piu diviso su PV2+).
+- Rimossa auto-attivazione additional_loads basata su entita presenti.
+- Risultato: solo entita mappate esplicitamente; il resto resta a zero/disattivato.
+
+## 0.3.188
+- Energy wrapper: disattivata stima canali PV non mappati. Ora vengono mostrati solo MPPT con entita reale configurata (niente valori sintetici su PV2/PV3/PV4/PV5).
+
 ## 0.3.187
 - Grid tower icon: dimensione resa fissa in px (--grid-tower-size: 46px) per avere resa esatta e coerente.
 
@@ -872,6 +881,8 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
+
 
 
 

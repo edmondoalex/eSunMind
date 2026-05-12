@@ -220,22 +220,8 @@
     }
 
     function applyEnergyEntityFallbacks(e) {
+      // Strict mode: no implicit mappings from addon energy_config.
       cardConfig.entities = cardConfig.entities || {};
-      if (e?.home_power_entity_id && !isConfiguredEntity(cardConfig.entities.inverter_power_175)) cardConfig.entities.inverter_power_175 = String(e.home_power_entity_id);
-      if (e?.home_power_entity_id && !isConfiguredEntity(cardConfig.entities.essential_power)) cardConfig.entities.essential_power = String(e.home_power_entity_id);
-      if (e?.grid_power_entity_id) {
-        if (!isConfiguredEntity(cardConfig.entities.grid_power_169)) cardConfig.entities.grid_power_169 = String(e.grid_power_entity_id);
-        if (!isConfiguredEntity(cardConfig.entities.grid_ct_power_172)) cardConfig.entities.grid_ct_power_172 = String(e.grid_power_entity_id);
-      }
-      if (e?.battery_soc_entity_id && !isConfiguredEntity(cardConfig.entities.battery_soc_184)) cardConfig.entities.battery_soc_184 = String(e.battery_soc_entity_id);
-      if (e?.battery_power_entity_id && !isConfiguredEntity(cardConfig.entities.battery_power_190)) cardConfig.entities.battery_power_190 = String(e.battery_power_entity_id);
-      if (e?.inverter_voltage_entity_id && !isConfiguredEntity(cardConfig.entities.inverter_voltage_154)) cardConfig.entities.inverter_voltage_154 = String(e.inverter_voltage_entity_id);
-      if (e?.load_frequency_entity_id && !isConfiguredEntity(cardConfig.entities.load_frequency_192)) cardConfig.entities.load_frequency_192 = String(e.load_frequency_entity_id);
-      if (e?.pv_power_entity_id && !isConfiguredEntity(cardConfig.entities.pv1_power_186)) cardConfig.entities.pv1_power_186 = String(e.pv_power_entity_id);
-      if (e?.pv_energy_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_pv_energy_108)) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
-      if (e?.home_energy_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_load_energy_84)) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
-      if (e?.grid_import_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_grid_import_76)) cardConfig.entities.day_grid_import_76 = String(e.grid_import_today_entity_id);
-      if (e?.grid_export_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_grid_export_77)) cardConfig.entities.day_grid_export_77 = String(e.grid_export_today_entity_id);
     }
 
     function enforceTopologyFromConfig() {
@@ -288,23 +274,35 @@
           cardConfig.grid[k] = raw;
         }
       }
-      const explicitMppts = Number(cardConfig.solar.mppts);
-      let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;
-      if (!Number.isFinite(mppts)) {
-        const hasPv2 = Boolean(String(cardConfig.entities.pv2_power_187 || '').trim());
-        mppts = hasPv2 ? 2 : 1;
-      }
-      cardConfig.solar.mppts = Math.max(1, Math.min(6, Math.round(mppts)));
-      if (cardConfig.solar.mppts === 1) {
+      // No synthetic PV channel estimation: show only channels that are explicitly mapped.
+      const pvMapped = [
+        isConfiguredEntity(cardConfig.entities.pv1_power_186),
+        isConfiguredEntity(cardConfig.entities.pv2_power_187),
+        isConfiguredEntity(cardConfig.entities.pv3_power_188),
+        isConfiguredEntity(cardConfig.entities.pv4_power_189),
+        isConfiguredEntity(cardConfig.entities.pv5_power_247),
+      ];
+      const mappedCount = pvMapped.filter(Boolean).length;
+      cardConfig.solar.mppts = Math.max(1, mappedCount || 1);
+      if (!pvMapped[1]) {
         cardConfig.entities.pv2_power_187 = '';
         cardConfig.entities.pv2_voltage_111 = '';
         cardConfig.entities.pv2_current_112 = '';
       }
-      if ((!Number.isFinite(Number(cardConfig.load.additional_loads)) || Number(cardConfig.load.additional_loads) <= 0)) {
-        const n =
-          (isConfiguredEntity(cardConfig.entities.essential_load1) ? 1 : 0) +
-          (isConfiguredEntity(cardConfig.entities.essential_load2) ? 1 : 0);
-        if (n > 0) cardConfig.load.additional_loads = n;
+      if (!pvMapped[2]) {
+        cardConfig.entities.pv3_power_188 = '';
+        cardConfig.entities.pv3_voltage_113 = '';
+        cardConfig.entities.pv3_current_114 = '';
+      }
+      if (!pvMapped[3]) {
+        cardConfig.entities.pv4_power_189 = '';
+        cardConfig.entities.pv4_voltage_115 = '';
+        cardConfig.entities.pv4_current_116 = '';
+      }
+      if (!pvMapped[4]) {
+        cardConfig.entities.pv5_power_247 = '';
+        cardConfig.entities.pv5_voltage_117 = '';
+        cardConfig.entities.pv5_current_118 = '';
       }
       const hasPv = Boolean(isConfiguredEntity(cardConfig.entities.pv1_power_186) || isConfiguredEntity(cardConfig.entities.pv2_power_187));
       const hasBattery = Boolean(isConfiguredEntity(cardConfig.entities.battery_power_190) || isConfiguredEntity(cardConfig.entities.battery_soc_184));
@@ -443,17 +441,8 @@
       };
 
       if (newData.solar_power != null) {
-        const mppts = Number(cardConfig?.solar?.mppts || 2);
-        if (mppts <= 1) {
-          set(entityId('pv1_power_186'), Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
-          const pv2id = entityId('pv2_power_187');
-          if (pv2id) set(pv2id, 0, 'W', { device_class: 'power', state_class: 'measurement' });
-        } else {
-          const pv1 = Number(newData.solar_power) * 0.52;
-          const pv2 = Number(newData.solar_power) * 0.48;
-          set(entityId('pv1_power_186'), pv1.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
-          set(entityId('pv2_power_187'), pv2.toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
-        }
+        // Strict mode: never synthesize PV2+ from total PV.
+        set(entityId('pv1_power_186'), Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
       }
       if (newData.battery_soc != null) set(entityId('battery_soc_184'), newData.battery_soc, '%', { device_class: 'battery', state_class: 'measurement' });
       if (newData.battery_power != null) set(entityId('battery_power_190'), newData.battery_power, 'W', { device_class: 'power', state_class: 'measurement' });
