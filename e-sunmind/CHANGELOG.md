@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.181
+- Fix icona Grid nel wrapper Sunsynk: rimosso fallback che la nascondeva, normalizzazione verso icone tower visibili (mdi:transmission-tower, mdi:transmission-tower-off-outline).
+
 ## 0.3.180
 - Rimossa completamente la UI Wizard Energy (e popup collegati): ora la configurazione e diretta e lineare.
 - Nuova pagina Energy a blocchi grandi e leggibili (Generale, Solar/Battery, Load/Grid, Icone, Entita Potenza, Entita Giornaliere, JSON).
@@ -847,4 +850,5 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 

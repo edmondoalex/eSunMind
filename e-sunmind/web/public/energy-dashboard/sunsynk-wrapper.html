@@ -235,10 +235,18 @@
       }
       for (const k of ['import_icon', 'export_icon', 'disconnected_icon']) {
         const raw = String(cardConfig.grid[k] || '').trim();
-        // Standalone wrapper may not resolve all mdi transmission tower aliases.
-        // Keep icon visible by forcing a safe fallback when mdi tower aliases are used.
-        if (!raw || raw.toLowerCase().startsWith('mdi:transmission-tower')) cardConfig.grid[k] = 'default';
-        else cardConfig.grid[k] = raw;
+        const lc = raw.toLowerCase();
+        // Some tower variants are not present in all mdi packs loaded by browser.
+        // Normalize to known-visible icons instead of dropping to "default".
+        if (!raw) {
+          cardConfig.grid[k] = 'mdi:transmission-tower';
+        } else if (lc === 'mdi:transmission-tower-import' || lc === 'mdi:transmission-tower-export') {
+          cardConfig.grid[k] = 'mdi:transmission-tower';
+        } else if (lc === 'mdi:transmission-tower-off') {
+          cardConfig.grid[k] = 'mdi:transmission-tower-off-outline';
+        } else {
+          cardConfig.grid[k] = raw;
+        }
       }
       const explicitMppts = Number(cardConfig.solar.mppts);
       let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;
