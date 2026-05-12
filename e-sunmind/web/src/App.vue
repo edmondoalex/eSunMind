@@ -3933,16 +3933,19 @@ function applyEnergyWizard() {
 
 function onEnergyCardstyleChange() {
   const selected = String(energyWizardForm.value.cardstyle || 'full')
+  const baseCfg = buildSunsynkConfigFromWizard()
   try {
     const raw = String(energyForm.value.sunsynk_card_config_json || '').trim()
     const parsed = raw ? JSON.parse(raw) : {}
-    const obj = (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {}
+    const obj = (parsed && typeof parsed === 'object' && !Array.isArray(parsed))
+      ? mergeObjectsDeep(baseCfg, parsed)
+      : baseCfg
     obj.cardstyle = selected
+    if (!obj.entities || typeof obj.entities !== 'object' || Array.isArray(obj.entities)) obj.entities = { ...baseCfg.entities }
     energyForm.value.sunsynk_card_config_json = JSON.stringify(obj, null, 2)
   } catch (_) {
-    const cfg = buildSunsynkConfigFromWizard()
-    cfg.cardstyle = selected
-    energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+    baseCfg.cardstyle = selected
+    energyForm.value.sunsynk_card_config_json = JSON.stringify(baseCfg, null, 2)
   }
 }
 

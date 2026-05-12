@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.167
+
+- Hotfix stabilita configurazione card: aggiornamento UI del `cardstyle` ora parte sempre da una base config completa e valida.
+- Evitato JSON parziale che causava crash runtime della card (`Cannot read properties of undefined (reading 'entities'/'push')`).
+
 ## 0.3.166
 
 - UI Energy `Entita Potenza` estesa con campi prima mancanti per parita con card originale:
