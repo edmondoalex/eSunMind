@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Flow wrapper: aggiunti fallback batteria richiesti da Sunsynk Power Flow Card 6.9.2 (`shutdown_soc`, `energy`, `max_power`, speed, auto-scale).
+- Risolto crash `setConfig()` quando il JSON utente contiene `battery: {}` o omette `battery.shutdown_soc`.
+- Bump versione addon/backend a `0.3.204` con changelog aggiornato.
+
 - Energy Setup UI: aggiunto pannello rapido con campi essenziali e azioni dirette.
 - Energy Setup UI: nascosta la configurazione completa dentro sezione espandibile per rendere leggibili load, AUX, grid, segni e JSON avanzato.
 - Bump versione addon/backend a `0.3.203` con changelog aggiornato.

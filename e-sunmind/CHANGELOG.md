@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.204
+- Fix Energy Flow: aggiunti fallback obbligatori `battery.shutdown_soc`, `battery.energy`, `battery.max_power` e valori equivalenti per `battery2` prima di chiamare `setConfig()` sulla card Sunsynk.
+- Compatibilita Sunsynk Power Flow Card 6.9.2: evitato errore bloccante `Please include the battery shutdown_soc attribute`.
+- Bump versione addon/backend a `0.3.204`.
+
 ## 0.3.203
 - Energy Setup: aggiunto pannello `Configurazione rapida` con solo entita principali, tema, layout e azioni operative.
 - Energy Setup: spostata la configurazione completa in sezione apribile per ridurre rumore visivo e separare topologia/load/grid/segni/JSON avanzato.
