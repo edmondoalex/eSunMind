@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.203
+- Energy Setup: aggiunto pannello `Configurazione rapida` con solo entita principali, tema, layout e azioni operative.
+- Energy Setup: spostata la configurazione completa in sezione apribile per ridurre rumore visivo e separare topologia/load/grid/segni/JSON avanzato.
+- Energy Setup: aggiunto warning leggibile per incompatibilita `full + AUX + 4+ load` della card Sunsynk.
+- Bump versione addon/backend a `0.3.203`.
+
 ## 0.3.202
 - Fix Energy Sunsynk: neutralizzati gli `invert_*` della card dopo la normalizzazione dei segni per evitare flussi animati in direzioni incoerenti.
 - Fix carichi aggiuntivi: nel layout `full`, se sono mappati 4+ load essenziali, il wrapper disattiva automaticamente AUX per evitare che la card originale annulli `additional_loads`.

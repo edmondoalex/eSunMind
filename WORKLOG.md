@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Setup UI: aggiunto pannello rapido con campi essenziali e azioni dirette.
+- Energy Setup UI: nascosta la configurazione completa dentro sezione espandibile per rendere leggibili load, AUX, grid, segni e JSON avanzato.
+- Bump versione addon/backend a `0.3.203` con changelog aggiornato.
+
 - Energy Sunsynk wrapper: corretta doppia inversione dei flussi, lasciando i valori gia normalizzati dal wrapper e neutralizzando gli `invert_*` della card.
 - Energy Sunsynk wrapper: corretto caso `full + show_aux + 4 load`, che nella card originale azzerava i carichi aggiuntivi; ora AUX viene disattivato automaticamente per mostrare i load essenziali.
 - Bump versione addon/backend a `0.3.202` con changelog aggiornato.

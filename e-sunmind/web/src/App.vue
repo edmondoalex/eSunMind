@@ -1052,8 +1052,56 @@
         <section class="card">
           <h3>Energy</h3>
           <p class="note energy-note">
-            Configurazione diretta (senza wizard): tutti i campi sono qui sotto e vengono salvati in JSON + UI.
+            Prima mappa le entita principali, poi apri i dettagli solo per colori, icone, load extra e JSON avanzato.
           </p>
+          <div class="energy-quick-panel">
+            <div class="energy-quick-head">
+              <div>
+                <strong>Configurazione rapida</strong>
+                <span>{{ energyQuickMappedCount }}/6 entita principali mappate</span>
+              </div>
+              <div class="energy-status-pills">
+                <span :class="{ok: energyForm.enabled}">{{ energyForm.enabled ? 'Energy ON' : 'Energy OFF' }}</span>
+                <span>{{ energyWizardForm.cardstyle }}</span>
+                <span>{{ energyWizardForm.show_aux ? 'AUX visibile' : 'AUX nascosto' }}</span>
+              </div>
+            </div>
+            <div class="energy-quick-grid">
+              <label class="toggle-line">Energy attivo<input type="checkbox" v-model="energyForm.enabled" /></label>
+              <label>Tema
+                <select v-model="energyForm.theme">
+                  <option value="classic_flow">Classic Inverter</option>
+                  <option value="technical_dark">Technical Dark</option>
+                  <option value="minimal_light">Minimal Light</option>
+                </select>
+              </label>
+              <label>Layout card
+                <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
+                  <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
+                </select>
+              </label>
+              <label>PV1 produzione<input type="text" v-model="energyForm.pv_power_entity_id" placeholder="sensor... activepower_pv" /></label>
+              <label>Casa / inverter<input type="text" v-model="energyForm.home_power_entity_id" placeholder="sensor... activepower_load" /></label>
+              <label>Rete / grid<input type="text" v-model="energyForm.grid_power_entity_id" placeholder="sensor... activepower_pcc" /></label>
+              <label>Batteria potenza<input type="text" v-model="energyForm.battery_power_entity_id" placeholder="sensor... battery_power" /></label>
+              <label>Batteria SOC<input type="text" v-model="energyForm.battery_soc_entity_id" placeholder="sensor... battery" /></label>
+              <label>PV installato kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
+            </div>
+            <div class="energy-quick-actions">
+              <button class="btn ghost" @click="openEnergyEntityPopup('realtime')">Mappa entita da schema</button>
+              <button class="btn ghost" @click="syncWizardFromEnergyForm(); applyEnergyWizard()">Genera JSON card</button>
+              <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Apri Energy Flow</a>
+            </div>
+            <div v-if="energyFullAuxLoadConflict" class="energy-warning">
+              Layout full: con 4+ load essenziali la card Sunsynk non mostra AUX. Il wrapper dara priorita ai load e nascondera AUX.
+            </div>
+          </div>
+
+          <details class="energy-advanced-details">
+            <summary>
+              <span>Configurazione completa</span>
+              <small>Topologia, load, AUX, grid, icone, segni e JSON</small>
+            </summary>
           <div class="energy-layout">
             <section class="energy-group">
               <h4>Generale / Topology</h4>
@@ -1253,6 +1301,7 @@
               </div>
             </section>
           </div>
+          </details>
         </section>
         </template>
 
@@ -1844,6 +1893,27 @@ function syncEnergySignsJsonFromUi() {
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const energyRealtimeMappedCount = computed(() => realtimeEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
 const energyDailyMappedCount = computed(() => dailyEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
+const energyQuickMappedCount = computed(() => [
+  energyForm.value.pv_power_entity_id,
+  energyForm.value.home_power_entity_id,
+  energyForm.value.grid_power_entity_id,
+  energyForm.value.battery_power_entity_id,
+  energyForm.value.battery_soc_entity_id,
+  energyForm.value.pv_installed_kwp,
+].filter((v) => String(v ?? '').trim()).length)
+const energyEssentialLoadMappedCount = computed(() => [
+  energyWizardForm.value.essential_load1,
+  energyWizardForm.value.essential_load2,
+  energyWizardForm.value.essential_load3,
+  energyWizardForm.value.essential_load4,
+  energyWizardForm.value.essential_load5,
+  energyWizardForm.value.essential_load6,
+].filter((v) => String(v || '').trim()).length)
+const energyFullAuxLoadConflict = computed(() =>
+  String(energyWizardForm.value.cardstyle || 'full') === 'full' &&
+  Boolean(energyWizardForm.value.show_aux) &&
+  energyEssentialLoadMappedCount.value >= 4
+)
 
 function openEnergyEntityPopup(mode = 'realtime') {
   energyEntityPopupMode.value = mode === 'daily' ? 'daily' : 'realtime'
@@ -5828,6 +5898,120 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   color:#9fb0c8;
   margin:0 0 14px 0;
 }
+.energy-quick-panel{
+  border:1px solid rgba(34,211,238,.32);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(8,30,52,.82),rgba(7,16,31,.88));
+  padding:16px;
+  margin-bottom:16px;
+}
+.energy-quick-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:14px;
+}
+.energy-quick-head strong{
+  display:block;
+  font-size:19px;
+  color:#e0f2fe;
+}
+.energy-quick-head span{
+  display:block;
+  margin-top:4px;
+  color:#93c5fd;
+  font-size:13px;
+}
+.energy-status-pills{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+.energy-status-pills span{
+  margin:0;
+  padding:7px 10px;
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:999px;
+  background:rgba(15,23,42,.7);
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:700;
+}
+.energy-status-pills span.ok{
+  border-color:rgba(34,197,94,.45);
+  color:#bbf7d0;
+  background:rgba(20,83,45,.36);
+}
+.energy-quick-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(220px,1fr));
+  gap:12px 14px;
+}
+.energy-quick-grid label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  color:#dbeafe;
+  font-size:13px;
+}
+.energy-quick-grid .toggle-line{
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  min-height:42px;
+  padding:0 10px;
+  border:1px solid rgba(71,85,105,.55);
+  border-radius:10px;
+  background:#0a1424;
+}
+.energy-quick-actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:14px;
+}
+.energy-warning{
+  margin-top:12px;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(245,158,11,.45);
+  background:rgba(120,53,15,.32);
+  color:#fde68a;
+  font-size:13px;
+}
+.energy-advanced-details{
+  border:1px solid rgba(71,85,105,.4);
+  border-radius:14px;
+  background:rgba(2,6,23,.36);
+  padding:0;
+  overflow:hidden;
+}
+.energy-advanced-details > summary{
+  cursor:pointer;
+  list-style:none;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  background:rgba(15,23,42,.72);
+  border-bottom:1px solid rgba(71,85,105,.35);
+}
+.energy-advanced-details > summary::-webkit-details-marker{display:none}
+.energy-advanced-details > summary span{
+  color:#e2e8f0;
+  font-weight:800;
+  font-size:16px;
+}
+.energy-advanced-details > summary small{
+  color:#93a4bb;
+  font-size:12px;
+}
+.energy-advanced-details .energy-layout{
+  padding:16px;
+}
 .energy-settings-card .form-grid{
   grid-template-columns:repeat(4,minmax(220px,1fr));
   gap:12px 14px;
@@ -5915,6 +6099,19 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .energy-layout{
     grid-template-columns:1fr;
+  }
+  .energy-quick-head{
+    flex-direction:column;
+  }
+  .energy-status-pills{
+    justify-content:flex-start;
+  }
+  .energy-quick-grid{
+    grid-template-columns:1fr;
+  }
+  .energy-advanced-details > summary{
+    flex-direction:column;
+    align-items:flex-start;
   }
   .energy-settings-card .form-grid{
     grid-template-columns:1fr;
