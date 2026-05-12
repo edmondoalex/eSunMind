@@ -1,5 +1,10 @@
 ﻿# WORKLOG
 
+## 2026-05-12
+- Energy Sunsynk wrapper: corretta doppia inversione dei flussi, lasciando i valori gia normalizzati dal wrapper e neutralizzando gli `invert_*` della card.
+- Energy Sunsynk wrapper: corretto caso `full + show_aux + 4 load`, che nella card originale azzerava i carichi aggiuntivi; ora AUX viene disattivato automaticamente per mostrare i load essenziali.
+- Bump versione addon/backend a `0.3.202` con changelog aggiornato.
+
 ## 2026-05-11
 - Fix critico wizard Energy: campi colore allineati ai parametri reali Sunsynk (colour).
 - Risolto il caso in cui le modifiche visive sembravano non applicarsi nonostante JSON aggiornato.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.202
+- Fix Energy Sunsynk: neutralizzati gli `invert_*` della card dopo la normalizzazione dei segni per evitare flussi animati in direzioni incoerenti.
+- Fix carichi aggiuntivi: nel layout `full`, se sono mappati 4+ load essenziali, il wrapper disattiva automaticamente AUX per evitare che la card originale annulli `additional_loads`.
+- Bump versione addon/backend a `0.3.202`.
+
 ## 0.3.198
 - Fix segno flussi: la direzione animazioni ora segue i segni impostati in UI (sezione unica `Segno Entita (+/-)`).
 - Wrapper ricarica i segni senza refresh manuale pagina e riapplica la config card al volo.

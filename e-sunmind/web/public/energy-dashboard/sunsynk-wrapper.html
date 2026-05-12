@@ -233,6 +233,25 @@
       cardConfig.entities = cardConfig.entities || {};
     }
 
+    function applySignFlowOverrides() {
+      cardConfig.solar = cardConfig.solar || {};
+      cardConfig.battery = cardConfig.battery || {};
+      cardConfig.battery2 = cardConfig.battery2 || {};
+      cardConfig.load = cardConfig.load || {};
+      cardConfig.grid = cardConfig.grid || {};
+
+      // Values are already normalized by applySignByKey() before they are
+      // published to the standalone HA state map. Keep the Sunsynk card's own
+      // inversion flags neutral so the same sign is not inverted a second time.
+      cardConfig.solar.invert_flow = false;
+      cardConfig.battery.invert_flow = false;
+      cardConfig.battery2.invert_flow = false;
+      cardConfig.load.invert_load = false;
+      cardConfig.load.invert_aux = false;
+      cardConfig.grid.invert_grid = false;
+      cardConfig.grid.invert_flow = false;
+    }
+
     function enforceTopologyFromConfig() {
       if (!cardConfig || typeof cardConfig !== 'object' || Array.isArray(cardConfig)) {
         cardConfig = {};
@@ -334,6 +353,16 @@
       ];
       const essentialCount = essentialMapped.filter(Boolean).length;
       cardConfig.load.additional_loads = essentialCount;
+      if (String(cardConfig.cardstyle || 'full') === 'full') {
+        // Sunsynk full-card internally invalidates additional_loads 3-6 when
+        // show_aux is true, and invalidates exactly 3 even without AUX. Prefer
+        // showing mapped load branches over keeping AUX visible.
+        if (essentialCount >= 4) {
+          cardConfig.load.show_aux = false;
+        } else if (essentialCount === 3) {
+          cardConfig.load.additional_loads = 2;
+        }
+      }
       if (!essentialMapped[0]) delete cardConfig.entities.essential_load1;
       if (!essentialMapped[1]) delete cardConfig.entities.essential_load2;
       if (!essentialMapped[2]) delete cardConfig.entities.essential_load3;
@@ -394,16 +423,6 @@
             }
           }
         } catch (_) {}
-        // Keep card flow direction aligned with per-entity sign configuration.
-        cardConfig.solar = cardConfig.solar || {};
-        cardConfig.battery = cardConfig.battery || {};
-        cardConfig.load = cardConfig.load || {};
-        cardConfig.grid = cardConfig.grid || {};
-        cardConfig.solar.invert_flow = signOf('pv1_power_186') === 'negative';
-        cardConfig.battery.invert_power = signOf('battery_power_190') === 'negative';
-        cardConfig.load.invert_load = signOf('inverter_power_175') === 'negative';
-        cardConfig.load.invert_aux = signOf('aux_power_166') === 'negative';
-        cardConfig.grid.invert_grid = signOf('grid_power_169') === 'negative';
         applyEnergyEntityFallbacks(e);
         const raw = j?.energy?.sunsynk_card_config_json;
         if (raw) {
@@ -413,8 +432,10 @@
           }
         }
         enforceTopologyFromConfig();
+        applySignFlowOverrides();
       } catch (_) {
         enforceTopologyFromConfig();
+        applySignFlowOverrides();
       }
     }
 
