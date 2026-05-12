@@ -51,13 +51,31 @@
           const raw = String(this.getAttribute('icon') || '').trim();
           const lc = raw.toLowerCase();
           if (lc === 'mdi:transmission-tower' || lc === 'mdi:transmission-tower-import' || lc === 'mdi:transmission-tower-export') {
+            this.style.display = 'inline-flex';
+            this.style.alignItems = 'center';
+            this.style.justifyContent = 'center';
+            this.style.width = '1.7em';
+            this.style.height = '1.7em';
+            this.style.minWidth = '22px';
+            this.style.minHeight = '22px';
             this.innerHTML = this.towerSvg(false);
             return;
           }
           if (lc === 'mdi:transmission-tower-off' || lc === 'mdi:transmission-tower-off-outline') {
+            this.style.display = 'inline-flex';
+            this.style.alignItems = 'center';
+            this.style.justifyContent = 'center';
+            this.style.width = '1.7em';
+            this.style.height = '1.7em';
+            this.style.minWidth = '22px';
+            this.style.minHeight = '22px';
             this.innerHTML = this.towerSvg(true);
             return;
           }
+          this.style.removeProperty('width');
+          this.style.removeProperty('height');
+          this.style.removeProperty('min-width');
+          this.style.removeProperty('min-height');
           const name = raw.startsWith('mdi:') ? raw.slice(4) : raw;
           const cls = name ? `mdi mdi-${name}` : 'mdi mdi-help-circle-outline';
           this.innerHTML = `<i class="${cls}" style="font-size:1.35em;line-height:1;color:inherit;"></i>`;

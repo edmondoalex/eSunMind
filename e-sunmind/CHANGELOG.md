@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.183
+- Grid icon fix (size): forzata dimensione minima della tower icon nel wrapper standalone (ha-icon) per evitare rendering microscopico.
+
 ## 0.3.182
 - Fix definitivo icona Grid: ha-icon standalone ora disegna SVG tower interno per mdi:transmission-tower*, quindi la torre rete e sempre visibile anche quando il font mdi non risolve in shadow DOM.
 
@@ -853,6 +856,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
