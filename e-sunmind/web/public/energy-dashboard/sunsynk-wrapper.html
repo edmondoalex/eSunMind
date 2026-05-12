@@ -319,6 +319,45 @@
         cardConfig.battery.count = 1;
         delete cardConfig.entities.battery2_power_190;
       }
+      // No synthetic load branches: show only mapped essential/aux/non-essential channels.
+      const essentialMapped = [
+        isConfiguredEntity(cardConfig.entities.essential_load1),
+        isConfiguredEntity(cardConfig.entities.essential_load2),
+        isConfiguredEntity(cardConfig.entities.essential_load3),
+        isConfiguredEntity(cardConfig.entities.essential_load4),
+        isConfiguredEntity(cardConfig.entities.essential_load5),
+        isConfiguredEntity(cardConfig.entities.essential_load6),
+      ];
+      const essentialCount = essentialMapped.filter(Boolean).length;
+      cardConfig.load.additional_loads = essentialCount;
+      if (!essentialMapped[0]) delete cardConfig.entities.essential_load1;
+      if (!essentialMapped[1]) delete cardConfig.entities.essential_load2;
+      if (!essentialMapped[2]) delete cardConfig.entities.essential_load3;
+      if (!essentialMapped[3]) delete cardConfig.entities.essential_load4;
+      if (!essentialMapped[4]) delete cardConfig.entities.essential_load5;
+      if (!essentialMapped[5]) delete cardConfig.entities.essential_load6;
+
+      const auxMapped = [
+        isConfiguredEntity(cardConfig.entities.aux_power_166),
+        isConfiguredEntity(cardConfig.entities.aux_load1),
+        isConfiguredEntity(cardConfig.entities.aux_load2),
+      ];
+      cardConfig.load.show_aux = auxMapped.some(Boolean) && Boolean(cardConfig.load.show_aux);
+      if (!auxMapped[0]) delete cardConfig.entities.aux_power_166;
+      if (!auxMapped[1]) delete cardConfig.entities.aux_load1;
+      if (!auxMapped[2]) delete cardConfig.entities.aux_load2;
+
+      const nonEssentialMapped = [
+        isConfiguredEntity(cardConfig.entities.non_essential_load1),
+        isConfiguredEntity(cardConfig.entities.non_essential_load2),
+        isConfiguredEntity(cardConfig.entities.non_essential_load3),
+      ];
+      const nonEssentialCount = nonEssentialMapped.filter(Boolean).length;
+      cardConfig.grid.additional_loads = nonEssentialCount;
+      cardConfig.grid.show_nonessential = nonEssentialCount > 0 && Boolean(cardConfig.grid.show_nonessential);
+      if (!nonEssentialMapped[0]) delete cardConfig.entities.non_essential_load1;
+      if (!nonEssentialMapped[1]) delete cardConfig.entities.non_essential_load2;
+      if (!nonEssentialMapped[2]) delete cardConfig.entities.non_essential_load3;
       // If main essential power is not mapped but essential_load1 is mapped,
       // use that mapped entity as the main essential power source.
       if (!isConfiguredEntity(cardConfig.entities.essential_power) && isConfiguredEntity(cardConfig.entities.essential_load1)) {
@@ -628,6 +667,21 @@
         setFromCardEntity(entityId('day_load_energy_84'), 'day_load_energy_84', 'kWh', 'energy', 'total_increasing');
         setFromCardEntity(entityId('day_grid_import_76'), 'day_grid_import_76', 'kWh', 'energy', 'total_increasing');
         setFromCardEntity(entityId('day_grid_export_77'), 'day_grid_export_77', 'kWh', 'energy', 'total_increasing');
+        // Load branches (essential/aux/non-essential): keep all mapped nodes live.
+        setFromCardEntity(entityId('essential_power'), 'essential_power', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load1'), 'essential_load1', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load2'), 'essential_load2', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load3'), 'essential_load3', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load4'), 'essential_load4', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load5'), 'essential_load5', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('essential_load6'), 'essential_load6', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('aux_power_166'), 'aux_power_166', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('aux_load1'), 'aux_load1', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('aux_load2'), 'aux_load2', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('nonessential_power'), 'nonessential_power', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('non_essential_load1'), 'non_essential_load1', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('non_essential_load2'), 'non_essential_load2', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('non_essential_load3'), 'non_essential_load3', 'W', 'power', 'measurement');
 
         const setDaily = (id, value) => {
           if (value == null || Number.isNaN(Number(value))) return;
