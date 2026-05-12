@@ -135,24 +135,20 @@
 
     function applyEnergyEntityFallbacks(e) {
       cardConfig.entities = cardConfig.entities || {};
-      // Default fallback: single-PV topology unless PV2 is explicitly provided by card JSON.
-      cardConfig.entities.pv2_power_187 = '';
-      cardConfig.entities.pv2_voltage_111 = '';
-      cardConfig.entities.pv2_current_112 = '';
-      if (e?.home_power_entity_id) cardConfig.entities.inverter_power_175 = String(e.home_power_entity_id);
+      if (e?.home_power_entity_id && !isConfiguredEntity(cardConfig.entities.inverter_power_175)) cardConfig.entities.inverter_power_175 = String(e.home_power_entity_id);
       if (e?.grid_power_entity_id) {
-        cardConfig.entities.grid_power_169 = String(e.grid_power_entity_id);
-        cardConfig.entities.grid_ct_power_172 = String(e.grid_power_entity_id);
+        if (!isConfiguredEntity(cardConfig.entities.grid_power_169)) cardConfig.entities.grid_power_169 = String(e.grid_power_entity_id);
+        if (!isConfiguredEntity(cardConfig.entities.grid_ct_power_172)) cardConfig.entities.grid_ct_power_172 = String(e.grid_power_entity_id);
       }
-      if (e?.battery_soc_entity_id) cardConfig.entities.battery_soc_184 = String(e.battery_soc_entity_id);
-      if (e?.battery_power_entity_id) cardConfig.entities.battery_power_190 = String(e.battery_power_entity_id);
-      if (e?.inverter_voltage_entity_id) cardConfig.entities.inverter_voltage_154 = String(e.inverter_voltage_entity_id);
-      if (e?.load_frequency_entity_id) cardConfig.entities.load_frequency_192 = String(e.load_frequency_entity_id);
-      if (e?.pv_power_entity_id) cardConfig.entities.pv1_power_186 = String(e.pv_power_entity_id);
-      if (e?.pv_energy_today_entity_id) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
-      if (e?.home_energy_today_entity_id) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
-      if (e?.grid_import_today_entity_id) cardConfig.entities.day_grid_import_76 = String(e.grid_import_today_entity_id);
-      if (e?.grid_export_today_entity_id) cardConfig.entities.day_grid_export_77 = String(e.grid_export_today_entity_id);
+      if (e?.battery_soc_entity_id && !isConfiguredEntity(cardConfig.entities.battery_soc_184)) cardConfig.entities.battery_soc_184 = String(e.battery_soc_entity_id);
+      if (e?.battery_power_entity_id && !isConfiguredEntity(cardConfig.entities.battery_power_190)) cardConfig.entities.battery_power_190 = String(e.battery_power_entity_id);
+      if (e?.inverter_voltage_entity_id && !isConfiguredEntity(cardConfig.entities.inverter_voltage_154)) cardConfig.entities.inverter_voltage_154 = String(e.inverter_voltage_entity_id);
+      if (e?.load_frequency_entity_id && !isConfiguredEntity(cardConfig.entities.load_frequency_192)) cardConfig.entities.load_frequency_192 = String(e.load_frequency_entity_id);
+      if (e?.pv_power_entity_id && !isConfiguredEntity(cardConfig.entities.pv1_power_186)) cardConfig.entities.pv1_power_186 = String(e.pv_power_entity_id);
+      if (e?.pv_energy_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_pv_energy_108)) cardConfig.entities.day_pv_energy_108 = String(e.pv_energy_today_entity_id);
+      if (e?.home_energy_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_load_energy_84)) cardConfig.entities.day_load_energy_84 = String(e.home_energy_today_entity_id);
+      if (e?.grid_import_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_grid_import_76)) cardConfig.entities.day_grid_import_76 = String(e.grid_import_today_entity_id);
+      if (e?.grid_export_today_entity_id && !isConfiguredEntity(cardConfig.entities.day_grid_export_77)) cardConfig.entities.day_grid_export_77 = String(e.grid_export_today_entity_id);
     }
 
     function enforceTopologyFromConfig() {
@@ -168,6 +164,11 @@
       cardConfig.entities = cardConfig.entities || {};
       cardConfig.load = cardConfig.load || {};
       cardConfig.grid = cardConfig.grid || {};
+      cardConfig.load.show_aux = Boolean(cardConfig.load.show_aux ?? false);
+      cardConfig.grid.show_nonessential = Boolean(cardConfig.grid.show_nonessential ?? false);
+      cardConfig.grid.additional_loads = Number.isFinite(Number(cardConfig.grid.additional_loads))
+        ? Math.max(0, Math.min(3, Number(cardConfig.grid.additional_loads)))
+        : 0;
       cardConfig.show_solar = Boolean(cardConfig.show_solar ?? true);
       cardConfig.show_battery = Boolean(cardConfig.show_battery ?? true);
       cardConfig.show_grid = Boolean(cardConfig.show_grid ?? true);
@@ -233,7 +234,34 @@
       }
     }
 
-    function seedStates() {}
+    function seedStates() {
+      const now = new Date().toISOString();
+      const all = cardConfig?.entities && typeof cardConfig.entities === 'object' ? cardConfig.entities : {};
+      for (const v of Object.values(all)) {
+        const id = String(v || '').trim();
+        if (!isConfiguredEntity(id)) continue;
+        if (window.hass.states[id]) continue;
+        if (id.startsWith('binary_sensor.')) {
+          window.hass.states[id] = {
+            entity_id: id,
+            state: 'on',
+            attributes: { device_class: 'power', state_class: '' },
+            last_changed: now,
+            last_updated: now,
+          };
+        } else if (id.includes('status')) {
+          window.hass.states[id] = {
+            entity_id: id,
+            state: 'Normal',
+            attributes: {},
+            last_changed: now,
+            last_updated: now,
+          };
+        } else {
+          window.hass.states[id] = mkState(0, '', { entity_id: id });
+        }
+      }
+    }
 
     const card = document.getElementById('card');
 

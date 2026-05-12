@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.169
+
+- Wrapper Sunsynk riallineato alla card originale: rimossi override aggressivi che alteravano topologia/entita rispetto al JSON.
+- Fallback entita Energy ora non sovrascrive campi gia mappati nel JSON (`card.entities` ha priorita completa).
+- Coerenza visibilita rami: `grid.show_nonessential` e `load.show_aux` rispettati con default sicuri (`false`) quando non impostati.
+- Seed stati mock migliorato: entita configurate inizializzate in modo stabile (`binary_sensor` on, status `Normal`) per evitare stati grafici incoerenti/icone mancanti.
+
 ## 0.3.168
 
 - Hotfix crash Sunsynk card (`entities undefined` / `push undefined`): normalizzazione hard della config nel wrapper prima di `setConfig`.
