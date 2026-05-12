@@ -170,10 +170,11 @@
       if (!s) return false;
       return !['none', 'null', 'undefined', 'unknown', 'unavailable'].includes(s);
     };
+    const STRICT_ENTITIES_ONLY = true;
     const entityId = (cardKey) => {
       const configured = cardConfig?.entities?.[cardKey];
       if (isConfiguredEntity(configured)) return String(configured).trim();
-      return sensorIds[cardKey] || '';
+      return STRICT_ENTITIES_ONLY ? '' : (sensorIds[cardKey] || '');
     };
 
     function deepMerge(target, src) {
@@ -285,24 +286,33 @@
       const mappedCount = pvMapped.filter(Boolean).length;
       cardConfig.solar.mppts = Math.max(1, mappedCount || 1);
       if (!pvMapped[1]) {
-        cardConfig.entities.pv2_power_187 = '';
-        cardConfig.entities.pv2_voltage_111 = '';
-        cardConfig.entities.pv2_current_112 = '';
+        delete cardConfig.entities.pv2_power_187;
+        delete cardConfig.entities.pv2_voltage_111;
+        delete cardConfig.entities.pv2_current_112;
       }
       if (!pvMapped[2]) {
-        cardConfig.entities.pv3_power_188 = '';
-        cardConfig.entities.pv3_voltage_113 = '';
-        cardConfig.entities.pv3_current_114 = '';
+        delete cardConfig.entities.pv3_power_188;
+        delete cardConfig.entities.pv3_voltage_113;
+        delete cardConfig.entities.pv3_current_114;
       }
       if (!pvMapped[3]) {
-        cardConfig.entities.pv4_power_189 = '';
-        cardConfig.entities.pv4_voltage_115 = '';
-        cardConfig.entities.pv4_current_116 = '';
+        delete cardConfig.entities.pv4_power_189;
+        delete cardConfig.entities.pv4_voltage_115;
+        delete cardConfig.entities.pv4_current_116;
       }
       if (!pvMapped[4]) {
-        cardConfig.entities.pv5_power_247 = '';
-        cardConfig.entities.pv5_voltage_117 = '';
-        cardConfig.entities.pv5_current_118 = '';
+        delete cardConfig.entities.pv5_power_247;
+        delete cardConfig.entities.pv5_voltage_117;
+        delete cardConfig.entities.pv5_current_118;
+      }
+      if (!isConfiguredEntity(cardConfig.entities.battery2_power_190)) {
+        cardConfig.battery.count = 1;
+        delete cardConfig.entities.battery2_power_190;
+      }
+      // If main essential power is not mapped but essential_load1 is mapped,
+      // use that mapped entity as the main essential power source.
+      if (!isConfiguredEntity(cardConfig.entities.essential_power) && isConfiguredEntity(cardConfig.entities.essential_load1)) {
+        cardConfig.entities.essential_power = String(cardConfig.entities.essential_load1);
       }
       const hasPv = Boolean(isConfiguredEntity(cardConfig.entities.pv1_power_186) || isConfiguredEntity(cardConfig.entities.pv2_power_187));
       const hasBattery = Boolean(isConfiguredEntity(cardConfig.entities.battery_power_190) || isConfiguredEntity(cardConfig.entities.battery_soc_184));

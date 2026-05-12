@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.192
+- Essential fix: se essential_power non e mappata ma essential_load1 e mappata, il riquadro Essential usa essential_load1 (sempre entita reale, nessuna stima).
+- Confermato strict mode: nessun valore sintetico per entita non mappate.
+
+## 0.3.191
+- Wrapper strict hard-mode: rimosso fallback sensor.mock_* per entita non mappate (entityId restituisce vuoto).
+- Canali non mappati ora vengono eliminati dalla config passata alla card (PV2+/battery2), non solo messi a stringa vuota.
+- attery.count forzato a 1 se attery2_power_190 non e mappata.
+
 ## 0.3.190
 - Grid tower icon: aumentata dimensione fissa a 64px e tratto SVG piu spesso per renderla chiaramente visibile.
 
@@ -884,6 +893,8 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
+
 
 
 
