@@ -1051,187 +1051,9 @@
         </section>
         <section class="card">
           <h3>Energy</h3>
-          <div class="tende-wizard" style="margin-bottom:10px;">
-            <div class="wizard-head">
-              <div>
-                <strong>Wizard configurazione Sunsynk</strong>
-                <p>{{ energyWizardSteps[energyWizardStep]?.hint }}</p>
-              </div>
-              <div class="wizard-step-count">Step {{ energyWizardStep + 1 }} / {{ energyWizardSteps.length }}</div>
-            </div>
-            <div class="wizard-tabs">
-              <button
-                v-for="(step, idx) in energyWizardSteps"
-                :key="step.key"
-                class="wizard-tab"
-                :class="{active: idx === energyWizardStep}"
-                @click="energyWizardStep = idx"
-              >{{ step.label }}</button>
-            </div>
-            <div class="wizard-body">
-              <div v-if="energyWizardSteps[energyWizardStep]?.key === 'topology'" class="wizard-grid">
-                <label>Numero stringhe solari (MPPT)
-                  <input type="number" min="1" max="6" v-model.number="energyWizardForm.solar_mppts" />
-                </label>
-                <label>Numero batterie
-                  <input type="number" min="1" max="2" v-model.number="energyWizardForm.battery_count" />
-                </label>
-                <label>Numero assorbimenti casa (additional_loads)
-                  <input type="number" min="0" max="6" v-model.number="energyWizardForm.additional_loads" />
-                </label>
-                <label>Mostra ramo AUX
-                  <input type="checkbox" v-model="energyWizardForm.show_aux" />
-                </label>
-              </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'colors'" class="wizard-grid">
-                <label>Colore Solar
-                  <input type="color" v-model="energyWizardForm.color_solar" />
-                </label>
-                <label>Colore Battery
-                  <input type="color" v-model="energyWizardForm.color_battery" />
-                </label>
-                <label>Colore Grid
-                  <input type="color" v-model="energyWizardForm.color_grid" />
-                </label>
-                <label>Colore Load
-                  <input type="color" v-model="energyWizardForm.color_load" />
-                </label>
-              </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'icons'" class="wizard-grid">
-                <label>Icona Load 1
-                  <select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`l1-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load1_icon" placeholder="custom icon (es: mdi:home)" />
-                </label>
-                <label>Icona Load 2
-                  <select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`l2-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load2_icon" placeholder="custom icon (es: mdi:fan)" />
-                </label>
-                <label>Icona Load 3
-                  <select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`l3-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load3_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Load 4
-                  <select v-model="energyWizardForm.load4_icon"><option v-for="i in energyIconOptions" :key="`l4-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load4_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Load 5
-                  <select v-model="energyWizardForm.load5_icon"><option v-for="i in energyIconOptions" :key="`l5-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load5_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Load 6
-                  <select v-model="energyWizardForm.load6_icon"><option v-for="i in energyIconOptions" :key="`l6-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.load6_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Non-Essential 1
-                  <select v-model="energyWizardForm.grid_load1_icon"><option v-for="i in energyIconOptions" :key="`g1-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.grid_load1_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Non-Essential 2
-                  <select v-model="energyWizardForm.grid_load2_icon"><option v-for="i in energyIconOptions" :key="`g2-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.grid_load2_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Non-Essential 3
-                  <select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`g3-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.grid_load3_icon" placeholder="custom icon" />
-                </label>
-                <label>Icona Non-Essential principale
-                  <select v-model="energyWizardForm.grid_nonessential_icon"><option v-for="i in energyIconOptions" :key="`gn-${i}`" :value="i">{{ i }}</option></select>
-                  <input type="text" v-model="energyWizardForm.grid_nonessential_icon" placeholder="custom icon" />
-                </label>
-                <label>Grid Import Icon
-                  <input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" />
-                </label>
-                <label>Grid Export Icon
-                  <input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" />
-                </label>
-                <label>Grid Disconnected Icon
-                  <input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" />
-                </label>
-              </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-review">
-                <span><strong>Entita realtime:</strong> mappa tutti i sensori PV/Battery/Grid/Inverter in un popup dedicato.</span>
-                <span><strong>Completate:</strong> {{ energyRealtimeMappedCount }} / 18</span>
-                <button class="btn" @click="openEnergyEntityPopup('realtime')">Mappa entita realtime</button>
-              </div>
-              <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'daily'" class="wizard-review">
-                <span><strong>Entita giornaliere:</strong> mappa tutti i contatori kWh in popup.</span>
-                <span><strong>Completate:</strong> {{ energyDailyMappedCount }} / 6</span>
-                <button class="btn" @click="openEnergyEntityPopup('daily')">Mappa entita giornaliere</button>
-              </div>
-              <div v-else class="wizard-review">
-                <span><strong>MPPT:</strong> {{ energyWizardForm.solar_mppts }}</span>
-                <span><strong>Batterie:</strong> {{ energyWizardForm.battery_count }}</span>
-                <span><strong>Carichi:</strong> {{ energyWizardForm.additional_loads }}</span>
-                <span><strong>Cardstyle:</strong> {{ energyWizardForm.cardstyle }}</span>
-                <span><strong>Colori:</strong> Solar {{ energyWizardForm.color_solar }}, Battery {{ energyWizardForm.color_battery }}, Grid {{ energyWizardForm.color_grid }}, Load {{ energyWizardForm.color_load }}</span>
-                <span><strong>Output:</strong> genera JSON completo in `sunsynk_card_config_json`</span>
-              </div>
-            </div>
-            <div class="wizard-actions">
-              <button class="btn ghost" @click="energyWizardPrev" :disabled="energyWizardStep <= 0">Indietro</button>
-              <button class="btn ghost" @click="energyWizardNext" :disabled="energyWizardStep >= energyWizardSteps.length - 1">Avanti</button>
-              <button class="btn" @click="applyEnergyWizard">Applica alla card</button>
-            </div>
-          </div>
-          <div v-if="energyEntityPopupOpen" class="energy-popup-backdrop" @click.self="energyEntityPopupOpen=false">
-            <div class="energy-popup-card">
-              <div class="energy-popup-head">
-                <strong>{{ energyEntityPopupMode === 'daily' ? 'Mappatura entita giornaliere' : 'Mappatura entita realtime' }}</strong>
-                <button class="btn ghost" @click="energyEntityPopupOpen=false">Chiudi</button>
-              </div>
-              <div class="wizard-grid" v-if="energyEntityPopupMode === 'realtime'">
-                <div style="grid-column:1/-1;">
-                  <div class="wizard-review" style="margin-bottom:8px;">
-                    <span><strong>Dashboard preview:</strong> clicca i riquadri della dashboard per mappare le entita.</span>
-                  </div>
-                  <div class="energy-live-map">
-                    <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?map=1&v=live-map" title="Sunsynk Full Preview"></iframe>
-                    <div class="map-selected-banner" v-if="selectedEnergyMapKey">
-                      Stai mappando: {{ (energyHotspots.find(h => h.key === selectedEnergyMapKey) || {}).label || selectedEnergyMapKey }}
-                    </div>
-                  </div>
-                  <div class="energy-map-list">
-                    <div class="energy-map-row" v-for="h in energyHotspots" :key="`row-${h.key}`" :class="{active: selectedEnergyMapKey === h.key}">
-                      <div>
-                        <strong>{{ h.label }}</strong>
-                        <small>{{ String(energyWizardForm[h.key] || 'non impostata') }}</small>
-                      </div>
-                      <button class="btn ghost" @click="selectEnergyEntityFromList(h.key, h.label)">Seleziona</button>
-                    </div>
-                  </div>
-                </div>
-                <label>PV1 power entity<input type="text" v-model="energyWizardForm.pv1_power_186" /></label>
-                <label>PV2 power entity<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
-                <label>PV1 voltage entity<input type="text" v-model="energyWizardForm.pv1_voltage_109" /></label>
-                <label>PV1 current entity<input type="text" v-model="energyWizardForm.pv1_current_110" /></label>
-                <label>PV2 voltage entity<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
-                <label>PV2 current entity<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
-                <label>Grid power entity<input type="text" v-model="energyWizardForm.grid_power_169" /></label>
-                <label>Grid CT power entity<input type="text" v-model="energyWizardForm.grid_ct_power_172" /></label>
-                <label>Grid connected status entity<input type="text" v-model="energyWizardForm.grid_connected_status_194" /></label>
-                <label>Inverter status entity<input type="text" v-model="energyWizardForm.inverter_status_59" /></label>
-                <label>Inverter power entity<input type="text" v-model="energyWizardForm.inverter_power_175" /></label>
-                <label>Inverter voltage entity<input type="text" v-model="energyWizardForm.inverter_voltage_154" /></label>
-                <label>Inverter current entity<input type="text" v-model="energyWizardForm.inverter_current_164" /></label>
-                <label>Load frequency entity<input type="text" v-model="energyWizardForm.load_frequency_192" /></label>
-                <label>Battery SOC entity<input type="text" v-model="energyWizardForm.battery_soc_184" /></label>
-                <label>Battery power entity<input type="text" v-model="energyWizardForm.battery_power_190" /></label>
-                <label>Battery current entity<input type="text" v-model="energyWizardForm.battery_current_191" /></label>
-                <label>Battery voltage entity<input type="text" v-model="energyWizardForm.battery_voltage_183" /></label>
-              </div>
-              <div class="wizard-grid" v-else>
-                <label>Daily PV energy entity<input type="text" v-model="energyWizardForm.day_pv_energy_108" /></label>
-                <label>Daily battery charge entity<input type="text" v-model="energyWizardForm.day_battery_charge_70" /></label>
-                <label>Daily battery discharge entity<input type="text" v-model="energyWizardForm.day_battery_discharge_71" /></label>
-                <label>Daily load energy entity<input type="text" v-model="energyWizardForm.day_load_energy_84" /></label>
-                <label>Daily grid import entity<input type="text" v-model="energyWizardForm.day_grid_import_76" /></label>
-                <label>Daily grid export entity<input type="text" v-model="energyWizardForm.day_grid_export_77" /></label>
-              </div>
-              <div class="actions-inline" style="margin-top:10px;">
-                <button class="btn" @click="energyEntityPopupOpen=false">Conferma e continua</button>
-              </div>
-            </div>
-          </div>
+          <p class="note energy-note">
+            Configurazione diretta (senza wizard): tutti i campi sono qui sotto e vengono salvati in JSON + UI.
+          </p>
           <div class="energy-layout">
             <section class="energy-group">
               <h4>Generale</h4>
@@ -1259,12 +1081,18 @@
                 <label>Inverter modern<input type="checkbox" v-model="energyWizardForm.inverter_modern" /></label>
                 <label>Inverter auto-scale<input type="checkbox" v-model="energyWizardForm.inverter_auto_scale" /></label>
                 <label>Inverter three-phase<input type="checkbox" v-model="energyWizardForm.inverter_three_phase" /></label>
+                <label>Numero stringhe solari (MPPT)<input type="number" min="1" max="6" v-model.number="energyWizardForm.solar_mppts" /></label>
+                <label>Numero batterie<input type="number" min="1" max="4" v-model.number="energyWizardForm.battery_count" /></label>
+                <label>Numero carichi casa (additional_loads)<input type="number" min="0" max="6" v-model.number="energyWizardForm.additional_loads" /></label>
+                <label>Mostra ramo AUX<input type="checkbox" v-model="energyWizardForm.show_aux" /></label>
               </div>
             </section>
 
             <section class="energy-group">
               <h4>Solar & Battery</h4>
               <div class="form-grid">
+                <label>Colore Solar<input type="color" v-model="energyWizardForm.color_solar" /></label>
+                <label>Colore Battery<input type="color" v-model="energyWizardForm.color_battery" /></label>
                 <label>Solar max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.solar_max_power" /></label>
                 <label>Solar speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" /></label>
                 <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
@@ -1281,6 +1109,8 @@
             <section class="energy-group">
               <h4>Load & Grid</h4>
               <div class="form-grid">
+                <label>Colore Load<input type="color" v-model="energyWizardForm.color_load" /></label>
+                <label>Colore Grid<input type="color" v-model="energyWizardForm.color_grid" /></label>
                 <label>Load max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.load_max_power" /></label>
                 <label>Load speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.load_animation_speed" /></label>
                 <label>Load auto-scale<input type="checkbox" v-model="energyWizardForm.load_auto_scale" /></label>
@@ -1303,6 +1133,25 @@
                 <label>Grid export color<input type="color" v-model="energyWizardForm.color_grid_export" /></label>
                 <label>Grid off color<input type="color" v-model="energyWizardForm.color_grid_off" /></label>
                 <label>No-grid color<input type="color" v-model="energyWizardForm.color_no_grid" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>Icone</h4>
+              <div class="form-grid">
+                <label>Load 1 icon<input type="text" v-model="energyWizardForm.load1_icon" placeholder="mdi:home" /></label>
+                <label>Load 2 icon<input type="text" v-model="energyWizardForm.load2_icon" placeholder="mdi:heat-wave" /></label>
+                <label>Load 3 icon<input type="text" v-model="energyWizardForm.load3_icon" placeholder="mdi:pump" /></label>
+                <label>Load 4 icon<input type="text" v-model="energyWizardForm.load4_icon" placeholder="mdi:stove" /></label>
+                <label>Load 5 icon<input type="text" v-model="energyWizardForm.load5_icon" placeholder="default" /></label>
+                <label>Load 6 icon<input type="text" v-model="energyWizardForm.load6_icon" placeholder="default" /></label>
+                <label>Grid non-essential icon<input type="text" v-model="energyWizardForm.grid_nonessential_icon" placeholder="mdi:home-outline" /></label>
+                <label>Grid load 1 icon<input type="text" v-model="energyWizardForm.grid_load1_icon" placeholder="default" /></label>
+                <label>Grid load 2 icon<input type="text" v-model="energyWizardForm.grid_load2_icon" placeholder="default" /></label>
+                <label>Grid load 3 icon<input type="text" v-model="energyWizardForm.grid_load3_icon" placeholder="default" /></label>
+                <label>Grid import icon<input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" /></label>
+                <label>Grid export icon<input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" /></label>
+                <label>Grid disconnected icon<input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" /></label>
               </div>
             </section>
 
@@ -5734,20 +5583,40 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .energy-layout{
   display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
+  grid-template-columns:repeat(2,minmax(420px,1fr));
+  gap:14px;
 }
 .energy-group{
   border:1px solid rgba(71,85,105,.45);
-  border-radius:10px;
+  border-radius:14px;
   background:linear-gradient(180deg,rgba(8,17,33,.72),rgba(4,10,22,.72));
-  padding:10px;
+  padding:14px;
 }
 .energy-group h4{
-  margin:0 0 8px 0;
-  font-size:13px;
+  margin:0 0 12px 0;
+  font-size:17px;
   color:#cfe6ff;
   letter-spacing:.2px;
+}
+.energy-note{
+  font-size:14px;
+  margin:8px 0 12px 0;
+}
+.energy-settings-card .form-grid{
+  grid-template-columns:repeat(3,minmax(260px,1fr));
+  gap:12px;
+}
+.energy-settings-card label{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  font-size:14px;
+}
+.energy-settings-card input,
+.energy-settings-card select,
+.energy-settings-card textarea{
+  min-height:40px;
+  font-size:15px;
 }
 
 @media (max-width: 768px){
@@ -5788,6 +5657,12 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .tende-position-row{
     grid-template-columns:1fr 1fr;
+  }
+  .energy-layout{
+    grid-template-columns:1fr;
+  }
+  .energy-settings-card .form-grid{
+    grid-template-columns:1fr;
   }
   .heatmap-head{
     flex-direction:column;

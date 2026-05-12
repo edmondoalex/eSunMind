@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.180
+- Rimossa completamente la UI Wizard Energy (e popup collegati): ora la configurazione e diretta e lineare.
+- Nuova pagina Energy a blocchi grandi e leggibili (Generale, Solar/Battery, Load/Grid, Icone, Entita Potenza, Entita Giornaliere, JSON).
+- Aggiunti in UI diretta tutti i campi principali mancanti del wizard: topologia (MPPT/batterie/carichi/AUX), colori, icone load/grid/import/export/disconnected.
+- Migliorata leggibilita: card piu grandi, griglia 2 colonne desktop, input/font piu grandi, mobile 1 colonna.
+
 ## 0.3.179
 
 - Fix persistenza entita Energy da UI: durante `Salva` i campi `energyForm` (entita potenza/giornaliere) vengono prima sincronizzati nel wizard, poi serializzati nel JSON card.
@@ -841,3 +847,4 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
