@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.156
+
+- Nuovo flusso mappatura entita (popup realtime): mantenuta card reale come preview, ma selezione entita spostata su lista strutturata con pulsante `Seleziona`.
+- Quando selezioni un campo, viene evidenziato il punto corrispondente sul grafico (marker glow + riga attiva), evitando click diretti disallineati sulla card.
+
 ## 0.3.155
 
 - Mapper dashboard (`map=1`): aggiunto auto-fit dinamico della card Sunsynk al viewport del frame.

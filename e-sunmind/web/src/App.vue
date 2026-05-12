@@ -1164,13 +1164,22 @@
                   </div>
                   <div class="energy-live-map">
                     <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?map=1&v=live-map" title="Sunsynk Full Preview"></iframe>
-                    <button
+                    <div
                       v-for="h in energyHotspots"
                       :key="h.key"
                       class="map-hit"
+                      :class="{active: selectedEnergyMapKey === h.key}"
                       :style="energyHotspotStyle(h)"
-                      @click="editEnergyEntity(h.key, h.label)"
-                    >{{ h.short }}</button>
+                    >{{ h.short }}</div>
+                  </div>
+                  <div class="energy-map-list">
+                    <div class="energy-map-row" v-for="h in energyHotspots" :key="`row-${h.key}`" :class="{active: selectedEnergyMapKey === h.key}">
+                      <div>
+                        <strong>{{ h.label }}</strong>
+                        <small>{{ String(energyWizardForm[h.key] || 'non impostata') }}</small>
+                      </div>
+                      <button class="btn ghost" @click="selectEnergyEntityFromList(h.key, h.label)">Seleziona</button>
+                    </div>
                   </div>
                 </div>
                 <label>PV1 power entity<input type="text" v-model="energyWizardForm.pv1_power_186" /></label>
@@ -1729,6 +1738,7 @@ const energyHotspots = [
   { key: 'day_grid_import_76', label: 'Grid Import Today', short: 'GRID IN', x: 0.79, y: 0.49 },
   { key: 'day_grid_export_77', label: 'Grid Export Today', short: 'GRID OUT', x: 0.79, y: 0.56 },
 ]
+const selectedEnergyMapKey = ref('')
 const realtimeEntityKeys = [
   'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
   'grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59','inverter_power_175',
@@ -1841,6 +1851,11 @@ function editEnergyEntity(key, label) {
   const next = window.prompt(`Entity ID per: ${label}`, current)
   if (next === null) return
   energyWizardForm.value[key] = String(next || '').trim()
+}
+
+function selectEnergyEntityFromList(key, label) {
+  selectedEnergyMapKey.value = String(key || '')
+  editEnergyEntity(key, label)
 }
 
 function energyHotspotStyle(h) {
@@ -5597,9 +5612,41 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   border-radius:8px;
   font-size:12px;
   padding:2px 6px;
-  cursor:pointer;
+  cursor:default;
   line-height:1.1;
   transform: translate(-50%, -50%);
+  opacity:.65;
+}
+.map-hit.active{
+  opacity:1;
+  border-color:#22d3ee;
+  box-shadow:0 0 0 2px rgba(34,211,238,.35), 0 0 18px rgba(34,211,238,.45);
+}
+.energy-map-list{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(280px,1fr));
+  gap:8px;
+}
+.energy-map-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:8px;
+  border:1px solid rgba(71,85,105,.45);
+  border-radius:8px;
+  background:rgba(15,23,42,.55);
+}
+.energy-map-row small{
+  display:block;
+  color:#93c5fd;
+  margin-top:2px;
+  word-break:break-all;
+}
+.energy-map-row.active{
+  border-color:#22d3ee;
+  box-shadow:inset 0 0 0 1px rgba(34,211,238,.35);
 }
 
 @media (max-width: 768px){
