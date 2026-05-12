@@ -1164,13 +1164,9 @@
                   </div>
                   <div class="energy-live-map">
                     <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?map=1&v=live-map" title="Sunsynk Full Preview"></iframe>
-                    <div
-                      v-for="h in energyHotspots"
-                      :key="h.key"
-                      class="map-hit"
-                      :class="{active: selectedEnergyMapKey === h.key}"
-                      :style="energyHotspotStyle(h)"
-                    >{{ h.short }}</div>
+                    <div class="map-selected-banner" v-if="selectedEnergyMapKey">
+                      Stai mappando: {{ (energyHotspots.find(h => h.key === selectedEnergyMapKey) || {}).label || selectedEnergyMapKey }}
+                    </div>
                   </div>
                   <div class="energy-map-list">
                     <div class="energy-map-row" v-for="h in energyHotspots" :key="`row-${h.key}`" :class="{active: selectedEnergyMapKey === h.key}">
@@ -1726,17 +1722,17 @@ const energyMapTargets = [
   { key: 'day_grid_import_76', label: 'Grid Import Today' },
 ]
 const energyHotspots = [
-  { key: 'pv1_power_186', label: 'PV1 Power', short: 'PV1', x: 0.03, y: 0.23 },
-  { key: 'day_pv_energy_108', label: 'PV Energy Today', short: 'PV kWh', x: 0.03, y: 0.04 },
-  { key: 'inverter_power_175', label: 'Home/Inverter Power', short: 'HOME', x: 0.33, y: 0.32 },
-  { key: 'day_load_energy_84', label: 'Load Energy Today', short: 'LOAD kWh', x: 0.43, y: 0.14 },
-  { key: 'inverter_voltage_154', label: 'Inverter Voltage', short: 'V', x: 0.46, y: 0.32 },
-  { key: 'load_frequency_192', label: 'Load Frequency', short: 'Hz', x: 0.46, y: 0.40 },
-  { key: 'battery_power_190', label: 'Battery Power', short: 'BATT', x: 0.12, y: 0.62 },
-  { key: 'battery_soc_184', label: 'Battery SOC', short: 'SOC', x: 0.31, y: 0.79 },
-  { key: 'grid_power_169', label: 'Grid Power', short: 'GRID', x: 0.90, y: 0.62 },
-  { key: 'day_grid_import_76', label: 'Grid Import Today', short: 'GRID IN', x: 0.79, y: 0.49 },
-  { key: 'day_grid_export_77', label: 'Grid Export Today', short: 'GRID OUT', x: 0.79, y: 0.56 },
+  { key: 'pv1_power_186', label: 'PV1 Power' },
+  { key: 'day_pv_energy_108', label: 'PV Energy Today' },
+  { key: 'inverter_power_175', label: 'Home/Inverter Power' },
+  { key: 'day_load_energy_84', label: 'Load Energy Today' },
+  { key: 'inverter_voltage_154', label: 'Inverter Voltage' },
+  { key: 'load_frequency_192', label: 'Load Frequency' },
+  { key: 'battery_power_190', label: 'Battery Power' },
+  { key: 'battery_soc_184', label: 'Battery SOC' },
+  { key: 'grid_power_169', label: 'Grid Power' },
+  { key: 'day_grid_import_76', label: 'Grid Import Today' },
+  { key: 'day_grid_export_77', label: 'Grid Export Today' },
 ]
 const selectedEnergyMapKey = ref('')
 const realtimeEntityKeys = [
@@ -1856,15 +1852,6 @@ function editEnergyEntity(key, label) {
 function selectEnergyEntityFromList(key, label) {
   selectedEnergyMapKey.value = String(key || '')
   editEnergyEntity(key, label)
-}
-
-function energyHotspotStyle(h) {
-  const x = Math.max(0, Math.min(1, Number(h?.x || 0)));
-  const y = Math.max(0, Math.min(1, Number(h?.y || 0)));
-  return {
-    left: `${(x * 100).toFixed(3)}%`,
-    top: `${(y * 100).toFixed(3)}%`,
-  }
 }
 const localTimestampLabel = computed(() => {
   const raw = data.value?.timestamp_local
@@ -5603,24 +5590,17 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   display:block;
   pointer-events:none;
 }
-.map-hit{
+.map-selected-banner{
   position:absolute;
-  z-index:3;
-  border:1px solid rgba(34,211,238,.9);
-  background:rgba(2,132,199,.18);
-  color:#dbeafe;
+  left:10px;
+  top:10px;
+  z-index:4;
+  padding:8px 10px;
   border-radius:8px;
-  font-size:12px;
-  padding:2px 6px;
-  cursor:default;
-  line-height:1.1;
-  transform: translate(-50%, -50%);
-  opacity:.65;
-}
-.map-hit.active{
-  opacity:1;
-  border-color:#22d3ee;
-  box-shadow:0 0 0 2px rgba(34,211,238,.35), 0 0 18px rgba(34,211,238,.45);
+  border:1px solid rgba(34,211,238,.75);
+  background:rgba(8,47,73,.8);
+  color:#e0f2fe;
+  font-weight:700;
 }
 .energy-map-list{
   margin-top:10px;
@@ -5646,7 +5626,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .energy-map-row.active{
   border-color:#22d3ee;
-  box-shadow:inset 0 0 0 1px rgba(34,211,238,.35);
+  box-shadow:inset 0 0 0 1px rgba(34,211,238,.45), 0 0 0 2px rgba(34,211,238,.2);
+  background:rgba(8,47,73,.38);
 }
 
 @media (max-width: 768px){

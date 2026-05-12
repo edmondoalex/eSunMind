@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.158
+
+- Mappatura entita realtime semplificata: rimossi marker cliccabili sovrapposti alla card (fonte principale di disallineamento).
+- Selezione ora solo da lista strutturata con evidenza forte della riga attiva.
+- Aggiunta barra visiva "Stai mappando: ..." sopra la preview della card reale per capire sempre il campo corrente.
+
 ## 0.3.157
 
 - Wrapper standalone: aggiunta sanitizzazione icone `load/grid` con fallback automatico a `default` per evitare icone mancanti/non renderizzate.
