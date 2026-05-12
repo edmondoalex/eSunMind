@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.168
+
+- Hotfix crash Sunsynk card (`entities undefined` / `push undefined`): normalizzazione hard della config nel wrapper prima di `setConfig`.
+- Garantiti tipi validi per `entities`, `solar`, `battery`, `load`, `grid`, `inverter` e fallback coerenti per i campi base della card.
+
 ## 0.3.167
 
 - Hotfix stabilita configurazione card: aggiornamento UI del `cardstyle` ora parte sempre da una base config completa e valida.

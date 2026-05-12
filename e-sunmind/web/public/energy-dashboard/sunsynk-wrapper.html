@@ -156,10 +156,27 @@
     }
 
     function enforceTopologyFromConfig() {
+      if (!cardConfig || typeof cardConfig !== 'object' || Array.isArray(cardConfig)) {
+        cardConfig = {};
+      }
+      if (!cardConfig.entities || typeof cardConfig.entities !== 'object' || Array.isArray(cardConfig.entities)) {
+        cardConfig.entities = {};
+      }
       cardConfig.solar = cardConfig.solar || {};
+      cardConfig.battery = cardConfig.battery || {};
+      cardConfig.inverter = cardConfig.inverter || {};
       cardConfig.entities = cardConfig.entities || {};
       cardConfig.load = cardConfig.load || {};
       cardConfig.grid = cardConfig.grid || {};
+      cardConfig.show_solar = Boolean(cardConfig.show_solar ?? true);
+      cardConfig.show_battery = Boolean(cardConfig.show_battery ?? true);
+      cardConfig.show_grid = Boolean(cardConfig.show_grid ?? true);
+      cardConfig.dynamic_line_width = Boolean(cardConfig.dynamic_line_width ?? true);
+      cardConfig.min_line_width = Number.isFinite(Number(cardConfig.min_line_width)) ? Number(cardConfig.min_line_width) : 1;
+      cardConfig.max_line_width = Number.isFinite(Number(cardConfig.max_line_width)) ? Number(cardConfig.max_line_width) : 4;
+      cardConfig.wide = Boolean(cardConfig.wide ?? false);
+      cardConfig.cardstyle = String(cardConfig.cardstyle || 'full');
+      cardConfig.type = String(cardConfig.type || 'custom:sunsynk-power-flow-card');
       const allowed = new Set(['default', 'boiler', 'aircon', 'pump', 'oven']);
       const safeIcon = (v) => {
         const s = String(v || 'default').trim().toLowerCase();
