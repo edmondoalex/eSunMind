@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.182
+- Fix definitivo icona Grid: ha-icon standalone ora disegna SVG tower interno per mdi:transmission-tower*, quindi la torre rete e sempre visibile anche quando il font mdi non risolve in shadow DOM.
+
 ## 0.3.181
 - Fix icona Grid nel wrapper Sunsynk: rimosso fallback che la nascondeva, normalizzazione verso icone tower visibili (mdi:transmission-tower, mdi:transmission-tower-off-outline).
 
@@ -850,5 +853,6 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
