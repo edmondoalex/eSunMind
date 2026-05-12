@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.150
+
+- Popup mappatura entita energy: ripristinato scroll del modal/backdrop.
+- Overlay hotspot ricalibrato con coordinate fisse su canvas mappa dedicato (ridotto il disallineamento percepito).
+
 ## 0.3.149
 
 - Mapper popup energy: eliminato overflow interno nella modalita `map=1` del wrapper (niente doppie scrollbar nel frame), per ridurre disallineamento hotspot.
@@ -681,5 +686,4 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
-
 

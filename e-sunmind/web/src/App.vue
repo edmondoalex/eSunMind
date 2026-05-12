@@ -1163,7 +1163,7 @@
                     <span><strong>Dashboard preview:</strong> clicca i riquadri della dashboard per mappare le entita.</span>
                   </div>
                   <div class="energy-live-map">
-                    <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?v=live-map" title="Sunsynk Full Preview"></iframe>
+                    <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?map=1&v=live-map" title="Sunsynk Full Preview"></iframe>
                     <button class="map-hit pv1" @click="editEnergyEntity('pv1_power_186','PV1 Power')">PV1</button>
                     <button class="map-hit home" @click="editEnergyEntity('inverter_power_175','Home/Inverter Power')">HOME</button>
                     <button class="map-hit grid" @click="editEnergyEntity('grid_power_169','Grid Power')">GRID</button>
@@ -5477,13 +5477,14 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   inset:0;
   background:rgba(2,6,18,.72);
   z-index:1200;
-  display:grid;
-  place-items:center;
+  display:block;
+  overflow:auto;
   padding:14px;
 }
 .energy-popup-card{
-  width:min(1100px,96vw);
-  max-height:88vh;
+  width:min(1180px,98vw);
+  max-height:none;
+  margin:8px auto;
   overflow:auto;
   overscroll-behavior:contain;
   background:linear-gradient(160deg,rgba(8,17,33,.98),rgba(3,9,20,.98));
@@ -5538,8 +5539,11 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   border-radius:10px;
   overflow:hidden;
   background:#040b1a;
-  height:min(56vh,520px);
-  min-height:300px;
+  width:960px;
+  height:640px;
+  min-width:960px;
+  min-height:640px;
+  max-width:none;
 }
 .energy-live-frame{
   position:absolute;
@@ -5557,21 +5561,21 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   background:rgba(2,132,199,.18);
   color:#dbeafe;
   border-radius:8px;
-  font-size:11px;
+  font-size:12px;
   padding:2px 6px;
   cursor:pointer;
   line-height:1.1;
 }
-.map-hit.pv1{ left:3.5%; top:25%; }
-.map-hit.home{ left:37%; top:38.5%; }
-.map-hit.grid{ right:4.5%; top:77%; }
-.map-hit.batt{ left:11%; top:76%; }
-.map-hit.soc{ left:36.5%; top:92%; }
-.map-hit.volt{ left:52%; top:39%; }
-.map-hit.hz{ left:52%; top:48%; }
-.map-hit.dailypv{ left:3%; top:7%; }
-.map-hit.dailyload{ left:52%; top:21%; }
-.map-hit.dailygrid{ right:10%; top:59%; }
+.map-hit.pv1{ left:28px; top:160px; }
+.map-hit.home{ left:360px; top:248px; }
+.map-hit.grid{ right:42px; top:480px; }
+.map-hit.batt{ left:132px; top:492px; }
+.map-hit.soc{ left:352px; top:596px; }
+.map-hit.volt{ left:500px; top:250px; }
+.map-hit.hz{ left:500px; top:312px; }
+.map-hit.dailypv{ left:20px; top:24px; }
+.map-hit.dailyload{ left:470px; top:130px; }
+.map-hit.dailygrid{ right:86px; top:388px; }
 
 @media (max-width: 768px){
   .topbar{
