@@ -354,6 +354,13 @@
         cardConfig.battery.count = 1;
         delete cardConfig.entities.battery2_power_190;
       }
+      const hasBatteryDailyCharge = isConfiguredEntity(cardConfig.entities.day_battery_charge_70);
+      const hasBatteryDailyDischarge = isConfiguredEntity(cardConfig.entities.day_battery_discharge_71);
+      if (!hasBatteryDailyCharge || !hasBatteryDailyDischarge) {
+        cardConfig.battery.show_daily = false;
+        if (!hasBatteryDailyCharge) delete cardConfig.entities.day_battery_charge_70;
+        if (!hasBatteryDailyDischarge) delete cardConfig.entities.day_battery_discharge_71;
+      }
       // No synthetic load branches: show only mapped essential/aux/non-essential channels.
       const essentialMapped = [
         isConfiguredEntity(cardConfig.entities.essential_load1),

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.206
+- Fix Energy Flow: se `battery.show_daily` e attivo ma mancano `day_battery_charge_70` o `day_battery_discharge_71`, il wrapper disattiva automaticamente il daily batteria prima di `setConfig()`.
+- Compatibilita Sunsynk Power Flow Card 6.9.2: evitato errore bloccante sulle entita daily charge/discharge batteria durante test o config parziali.
+- Bump versione addon/backend a `0.3.206`.
+
 ## 0.3.205
 - Fix Energy Flow test/mapping: il wrapper ora pubblica direttamente in `window.hass.states` gli stati HA reali letti da `energy.card_entities`, evitando che restino i seed a `0`.
 - Aggiunto log `console.warn` quando il sync Energy fallisce, per non nascondere errori runtime del wrapper.

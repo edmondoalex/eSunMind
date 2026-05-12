@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Flow wrapper: disattivazione automatica `battery.show_daily` quando mancano le entita daily charge/discharge richieste dalla card Sunsynk.
+- Risolto errore `day_battery_charge_70` / `day_battery_discharge_71` in config parziali o test.
+- Bump versione addon/backend a `0.3.206` con changelog aggiornato.
+
 - Energy Flow wrapper: corretta pubblicazione degli stati HA reali da `card_entities` verso `window.hass.states`, utile anche quando piu chiavi puntano allo stesso sensore di test.
 - Aggiunto warning console per errori di sync Energy non gestiti.
 - Bump versione addon/backend a `0.3.205` con changelog aggiornato.
