@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.194
+- Energy UI riorganizzata in blocchi chiari: `Generale/Topology`, `Inverter`, `Solar`, `Battery`, `Load`, `AUX`, `Grid`, `Entita Giornaliere`.
+- Rinominati i campi principali con nomi piu leggibili (PV1/PV2, Casa/Home, Rete/Grid, Batteria 1/2, Essential/AUX).
+- Wrapper Sunsynk allineato alla card originale: rimossa la manipolazione interna dei segni `+/-` (niente inversioni extra nel wrapper).
+
 ## 0.3.193
 - Fix root-cause strict entities: rimossa inizializzazione cardConfig.entities con mock defaults nel wrapper.
 - Ora entita vuota in UI resta davvero vuota lato card (niente slot considerati mappati per errore).

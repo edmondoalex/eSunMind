@@ -164,7 +164,6 @@
       grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
       entities: {},
     };
-    const signFix = { pv: 1, home: 1, grid: 1, battery: 1 };
     const isConfiguredEntity = (v) => {
       const s = String(v || '').trim().toLowerCase();
       if (!s) return false;
@@ -328,10 +327,6 @@
         if (!r.ok) return;
         const j = await r.json();
         const e = j?.energy || {};
-        signFix.pv = String(e?.pv_power_sign || 'positive') === 'negative' ? -1 : 1;
-        signFix.home = String(e?.home_power_sign || 'positive') === 'negative' ? -1 : 1;
-        signFix.grid = String(e?.grid_power_sign || (e?.invert_grid_sign ? 'negative' : 'positive')) === 'negative' ? -1 : 1;
-        signFix.battery = String(e?.battery_power_sign || (e?.invert_battery_sign ? 'negative' : 'positive')) === 'negative' ? -1 : 1;
         applyEnergyEntityFallbacks(e);
         const raw = j?.energy?.sunsynk_card_config_json;
         if (raw) {
@@ -535,10 +530,10 @@
         const batterySoc = pick(n.battery_soc_pct, fromCard('battery_soc_184'));
         const gridRaw = pick(n.grid_power_w, fromCard('grid_power_169'));
         const inverterRaw = pick(n.home_power_w, fromCard('inverter_power_175'));
-        const solarPower = (solarRaw == null ? null : solarRaw * signFix.pv);
-        const batteryPower = (batteryRaw == null ? null : batteryRaw * signFix.battery);
-        const gridPower = (gridRaw == null ? null : gridRaw * signFix.grid);
-        const inverterPower = (inverterRaw == null ? null : inverterRaw * signFix.home);
+        const solarPower = (solarRaw == null ? null : solarRaw);
+        const batteryPower = (batteryRaw == null ? null : batteryRaw);
+        const gridPower = (gridRaw == null ? null : gridRaw);
+        const inverterPower = (inverterRaw == null ? null : inverterRaw);
 
         // campi opzionali: usa valore corrente se non disponibili
         const inverterVoltageRaw = Number(
