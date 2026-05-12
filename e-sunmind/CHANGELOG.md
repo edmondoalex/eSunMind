@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.187
+- Grid tower icon: dimensione resa fissa in px (--grid-tower-size: 46px) per avere resa esatta e coerente.
+
 ## 0.3.186
 - Energy UI: aggiunta mappatura diretta entita per PV2/PV3/PV4/PV5 e Battery2 power.
 - Energy UI: aggiunto blocco Entita extra JSON (chiave->entity_id) per coprire tutte le entities supportate dalla card senza altri buchi UI.
@@ -869,6 +872,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

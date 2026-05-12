@@ -20,6 +20,7 @@
     body.map-mode .page { min-height: 100vh; height: 100vh; padding: 0; display: block; overflow: hidden; }
     body.map-mode .host { width: 100vw; height: 100vh; max-width: 100vw; transform-origin: top left; }
     body.map-mode sunsynk-power-flow-card { display: block; }
+    :root { --grid-tower-size: 46px; }
   </style>
 </head>
 <body>
@@ -54,10 +55,10 @@
             this.style.display = 'inline-flex';
             this.style.alignItems = 'center';
             this.style.justifyContent = 'center';
-            this.style.width = '2.35em';
-            this.style.height = '2.35em';
-            this.style.minWidth = '34px';
-            this.style.minHeight = '34px';
+            this.style.width = 'var(--grid-tower-size)';
+            this.style.height = 'var(--grid-tower-size)';
+            this.style.minWidth = 'var(--grid-tower-size)';
+            this.style.minHeight = 'var(--grid-tower-size)';
             this.innerHTML = this.towerSvg(false);
             return;
           }
@@ -65,10 +66,10 @@
             this.style.display = 'inline-flex';
             this.style.alignItems = 'center';
             this.style.justifyContent = 'center';
-            this.style.width = '2.35em';
-            this.style.height = '2.35em';
-            this.style.minWidth = '34px';
-            this.style.minHeight = '34px';
+            this.style.width = 'var(--grid-tower-size)';
+            this.style.height = 'var(--grid-tower-size)';
+            this.style.minWidth = 'var(--grid-tower-size)';
+            this.style.minHeight = 'var(--grid-tower-size)';
             this.innerHTML = this.towerSvg(true);
             return;
           }
