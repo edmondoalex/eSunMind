@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.195
+- Fix profondo mappatura entita Sunsynk: aggiunte chiavi realtime mancanti per `essential_load3..6`, `aux_load1..2`, `non_essential_load1..3`, `pv5/pv6` (power/voltage/current).
+- UI Energy aggiornata con i nuovi campi entita nei blocchi `Load`, `AUX`, `Grid`, `Solar` (PV6 incluso).
+- Corretto naming chiavi PV non standard: rimossi mapping custom errati (`pv5_power_247`, `pv5_voltage_117`, `pv5_current_118`) e allineato alle chiavi card reali.
+- Aggiunta configurazione segno per tutte le entita tramite `entity_signs_json` (override per chiave entita, `positive|negative`), applicata nel wrapper.
+- Topology allineata alle capacita reali card per batterie (`count` max 2).
+
 ## 0.3.194
 - Energy UI riorganizzata in blocchi chiari: `Generale/Topology`, `Inverter`, `Solar`, `Battery`, `Load`, `AUX`, `Grid`, `Entita Giornaliere`.
 - Rinominati i campi principali con nomi piu leggibili (PV1/PV2, Casa/Home, Rete/Grid, Batteria 1/2, Essential/AUX).

@@ -1079,7 +1079,7 @@
                 <label>Line width max<input type="number" min="1" max="8" step="1" v-model.number="energyWizardForm.max_line_width" /></label>
                 <label>Wide layout<input type="checkbox" v-model="energyWizardForm.wide" /></label>
                 <label>Numero stringhe solari (MPPT)<input type="number" min="1" max="6" v-model.number="energyWizardForm.solar_mppts" /></label>
-                <label>Numero batterie<input type="number" min="1" max="4" v-model.number="energyWizardForm.battery_count" /></label>
+                <label>Numero batterie<input type="number" min="1" max="2" v-model.number="energyWizardForm.battery_count" /></label>
                 <label>Numero carichi casa (additional_loads)<input type="number" min="0" max="6" v-model.number="energyWizardForm.additional_loads" /></label>
               </div>
             </section>
@@ -1110,7 +1110,8 @@
                 <label>PV2 corrente (A)<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
                 <label>PV3 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv3_power_188" /></label>
                 <label>PV4 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv4_power_189" /></label>
-                <label>PV5 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv5_power_247" /></label>
+                <label>PV5 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv5_power" /></label>
+                <label>PV6 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv6_power" /></label>
               </div>
             </section>
 
@@ -1148,6 +1149,10 @@
                 <label>Essential potenza principale (entity_id)<input type="text" v-model="energyWizardForm.essential_power" /></label>
                 <label>Essential load 1 (entity_id)<input type="text" v-model="energyWizardForm.essential_load1" /></label>
                 <label>Essential load 2 (entity_id)<input type="text" v-model="energyWizardForm.essential_load2" /></label>
+                <label>Essential load 3 (entity_id)<input type="text" v-model="energyWizardForm.essential_load3" /></label>
+                <label>Essential load 4 (entity_id)<input type="text" v-model="energyWizardForm.essential_load4" /></label>
+                <label>Essential load 5 (entity_id)<input type="text" v-model="energyWizardForm.essential_load5" /></label>
+                <label>Essential load 6 (entity_id)<input type="text" v-model="energyWizardForm.essential_load6" /></label>
                 <label>Load 1 icon<select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`l1-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load1_icon" placeholder="mdi:home" /></label>
                 <label>Load 2 icon<select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`l2-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load2_icon" placeholder="mdi:heat-wave" /></label>
                 <label>Load 3 icon<select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`l3-${i}`" :value="i">{{ i }}</option></select><input type="text" v-model="energyWizardForm.load3_icon" placeholder="mdi:pump" /></label>
@@ -1163,6 +1168,8 @@
                 <label>Mostra ramo AUX<input type="checkbox" v-model="energyWizardForm.show_aux" /></label>
                 <label>Auxiliary name<input type="text" v-model="energyWizardForm.load_aux_name" /></label>
                 <label>AUX potenza (entity_id)<input type="text" v-model="energyWizardForm.aux_power_166" /></label>
+                <label>AUX load 1 (entity_id)<input type="text" v-model="energyWizardForm.aux_load1" /></label>
+                <label>AUX load 2 (entity_id)<input type="text" v-model="energyWizardForm.aux_load2" /></label>
               </div>
             </section>
 
@@ -1183,6 +1190,9 @@
                 <label>Grid show absolute<input type="checkbox" v-model="energyWizardForm.grid_show_absolute" /></label>
                 <label>Show non-essential<input type="checkbox" v-model="energyWizardForm.grid_show_nonessential" /></label>
                 <label>Non-Essential potenza (entity_id)<input type="text" v-model="energyWizardForm.nonessential_power" /></label>
+                <label>Non-Essential load 1 (entity_id)<input type="text" v-model="energyWizardForm.non_essential_load1" /></label>
+                <label>Non-Essential load 2 (entity_id)<input type="text" v-model="energyWizardForm.non_essential_load2" /></label>
+                <label>Non-Essential load 3 (entity_id)<input type="text" v-model="energyWizardForm.non_essential_load3" /></label>
                 <label>Grid additional loads<input type="number" min="0" max="3" step="1" v-model.number="energyWizardForm.grid_additional_loads" /></label>
                 <label>Grid name<input type="text" v-model="energyWizardForm.grid_name" /></label>
                 <label>Label daily buy<input type="text" v-model="energyWizardForm.grid_label_daily_buy" /></label>
@@ -1226,6 +1236,10 @@
                 <label style="grid-column: 1 / -1;">Entita extra JSON (chiave -> entity_id)
                   <textarea v-model="energyWizardForm.entities_extra_json" rows="5" placeholder='{"pv3_power_188":"sensor.xxx","use_timer_248":"sensor.yyy"}'></textarea>
                   <small>Qui puoi mappare qualsiasi chiave entities supportata dalla card, anche se non ha ancora un campo dedicato sopra.</small>
+                </label>
+                <label style="grid-column: 1 / -1;">Segno entita JSON (chiave -> positive/negative)
+                  <textarea v-model="energyForm.entity_signs_json" rows="4" placeholder='{"grid_power_169":"negative","essential_load1":"positive","aux_power_166":"negative"}'></textarea>
+                  <small>Override segno per singola entita di potenza nel wrapper (`positive` o `negative`).</small>
                 </label>
               </div>
             </section>
@@ -1545,6 +1559,7 @@ const energyForm = ref({
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
   sunsynk_card_config_json: '',
+  entity_signs_json: '',
 })
 const energyWizardStep = ref(0)
 const energyWizardSteps = [
@@ -1604,9 +1619,13 @@ const energyHotspots = [
 const selectedEnergyMapKey = ref('')
 const realtimeEntityKeys = [
   'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
+  'pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
   'grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59','inverter_power_175',
   'inverter_voltage_154','inverter_current_164','load_frequency_192','battery_soc_184','battery_power_190',
-  'battery_current_191','battery_voltage_183',
+  'battery_current_191','battery_voltage_183','battery2_power_190',
+  'essential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6',
+  'nonessential_power','non_essential_load1','non_essential_load2','non_essential_load3',
+  'aux_power_166','aux_load1','aux_load2',
 ]
 const dailyEntityKeys = [
   'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
@@ -1614,8 +1633,10 @@ const dailyEntityKeys = [
 const knownEnergyEntityKeys = [
   ...realtimeEntityKeys,
   ...dailyEntityKeys,
-  'essential_power','nonessential_power','essential_load1','essential_load2','aux_power_166','battery2_power_190',
-  'pv3_power_188','pv4_power_189','pv5_power_247','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage_117','pv5_current_118',
+  'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6',
+  'non_essential_load1','non_essential_load2','non_essential_load3',
+  'aux_power_166','aux_load1','aux_load2','battery2_power_190',
+  'pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
   'use_timer_248','priority_load_243',
 ]
 const energyWizardForm = ref({
@@ -1693,7 +1714,16 @@ const energyWizardForm = ref({
   nonessential_power: '',
   essential_load1: '',
   essential_load2: '',
+  essential_load3: '',
+  essential_load4: '',
+  essential_load5: '',
+  essential_load6: '',
   aux_power_166: '',
+  aux_load1: '',
+  aux_load2: '',
+  non_essential_load1: '',
+  non_essential_load2: '',
+  non_essential_load3: '',
   inverter_status_59: '',
   inverter_voltage_154: '',
   inverter_current_164: '',
@@ -1718,13 +1748,16 @@ const energyWizardForm = ref({
   day_grid_export_77: '',
   pv3_power_188: '',
   pv4_power_189: '',
-  pv5_power_247: '',
+  pv5_power: '',
+  pv6_power: '',
   pv3_voltage_113: '',
   pv3_current_114: '',
   pv4_voltage_115: '',
   pv4_current_116: '',
-  pv5_voltage_117: '',
-  pv5_current_118: '',
+  pv5_voltage: '',
+  pv5_current: '',
+  pv6_voltage: '',
+  pv6_current: '',
   battery2_power_190: '',
   use_timer_248: '',
   priority_load_243: '',
@@ -3733,7 +3766,16 @@ function buildSunsynkConfigFromWizard() {
     nonessential_power: String(w.nonessential_power || ''),
     essential_load1: String(w.essential_load1 || ''),
     essential_load2: String(w.essential_load2 || ''),
+    essential_load3: String(w.essential_load3 || ''),
+    essential_load4: String(w.essential_load4 || ''),
+    essential_load5: String(w.essential_load5 || ''),
+    essential_load6: String(w.essential_load6 || ''),
     aux_power_166: String(w.aux_power_166 || ''),
+    aux_load1: String(w.aux_load1 || ''),
+    aux_load2: String(w.aux_load2 || ''),
+    non_essential_load1: String(w.non_essential_load1 || ''),
+    non_essential_load2: String(w.non_essential_load2 || ''),
+    non_essential_load3: String(w.non_essential_load3 || ''),
     battery_soc_184: String(w.battery_soc_184 || ''),
     battery_power_190: String(w.battery_power_190 || ''),
     battery_current_191: String(w.battery_current_191 || ''),
@@ -3746,13 +3788,16 @@ function buildSunsynkConfigFromWizard() {
     pv2_current_112: String(w.pv2_current_112 || ''),
     pv3_power_188: String(w.pv3_power_188 || ''),
     pv4_power_189: String(w.pv4_power_189 || ''),
-    pv5_power_247: String(w.pv5_power_247 || ''),
+    pv5_power: String(w.pv5_power || ''),
+    pv6_power: String(w.pv6_power || ''),
     pv3_voltage_113: String(w.pv3_voltage_113 || ''),
     pv3_current_114: String(w.pv3_current_114 || ''),
     pv4_voltage_115: String(w.pv4_voltage_115 || ''),
     pv4_current_116: String(w.pv4_current_116 || ''),
-    pv5_voltage_117: String(w.pv5_voltage_117 || ''),
-    pv5_current_118: String(w.pv5_current_118 || ''),
+    pv5_voltage: String(w.pv5_voltage || ''),
+    pv5_current: String(w.pv5_current || ''),
+    pv6_voltage: String(w.pv6_voltage || ''),
+    pv6_current: String(w.pv6_current || ''),
     battery2_power_190: String(w.battery2_power_190 || ''),
     use_timer_248: String(w.use_timer_248 || ''),
     priority_load_243: String(w.priority_load_243 || ''),
@@ -4231,6 +4276,7 @@ async function loadData() {
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
+        entity_signs_json: String(eo.entity_signs_json || ''),
       }
       const wizardSeed = {
         ...energyWizardForm.value,
@@ -4337,7 +4383,16 @@ async function loadData() {
           nonessential_power: String(ents.nonessential_power || wizardSeed.nonessential_power),
           essential_load1: String(ents.essential_load1 || wizardSeed.essential_load1),
           essential_load2: String(ents.essential_load2 || wizardSeed.essential_load2),
+          essential_load3: String(ents.essential_load3 || wizardSeed.essential_load3),
+          essential_load4: String(ents.essential_load4 || wizardSeed.essential_load4),
+          essential_load5: String(ents.essential_load5 || wizardSeed.essential_load5),
+          essential_load6: String(ents.essential_load6 || wizardSeed.essential_load6),
           aux_power_166: String(ents.aux_power_166 || wizardSeed.aux_power_166),
+          aux_load1: String(ents.aux_load1 || wizardSeed.aux_load1),
+          aux_load2: String(ents.aux_load2 || wizardSeed.aux_load2),
+          non_essential_load1: String(ents.non_essential_load1 || wizardSeed.non_essential_load1),
+          non_essential_load2: String(ents.non_essential_load2 || wizardSeed.non_essential_load2),
+          non_essential_load3: String(ents.non_essential_load3 || wizardSeed.non_essential_load3),
           battery_soc_184: String(ents.battery_soc_184 || wizardSeed.battery_soc_184),
           battery_power_190: String(ents.battery_power_190 || wizardSeed.battery_power_190),
           battery_current_191: String(ents.battery_current_191 || wizardSeed.battery_current_191),
@@ -4350,13 +4405,16 @@ async function loadData() {
           pv2_current_112: String(ents.pv2_current_112 || wizardSeed.pv2_current_112),
           pv3_power_188: String(ents.pv3_power_188 || wizardSeed.pv3_power_188),
           pv4_power_189: String(ents.pv4_power_189 || wizardSeed.pv4_power_189),
-          pv5_power_247: String(ents.pv5_power_247 || wizardSeed.pv5_power_247),
+          pv5_power: String(ents.pv5_power || wizardSeed.pv5_power),
+          pv6_power: String(ents.pv6_power || wizardSeed.pv6_power),
           pv3_voltage_113: String(ents.pv3_voltage_113 || wizardSeed.pv3_voltage_113),
           pv3_current_114: String(ents.pv3_current_114 || wizardSeed.pv3_current_114),
           pv4_voltage_115: String(ents.pv4_voltage_115 || wizardSeed.pv4_voltage_115),
           pv4_current_116: String(ents.pv4_current_116 || wizardSeed.pv4_current_116),
-          pv5_voltage_117: String(ents.pv5_voltage_117 || wizardSeed.pv5_voltage_117),
-          pv5_current_118: String(ents.pv5_current_118 || wizardSeed.pv5_current_118),
+          pv5_voltage: String(ents.pv5_voltage || wizardSeed.pv5_voltage),
+          pv5_current: String(ents.pv5_current || wizardSeed.pv5_current),
+          pv6_voltage: String(ents.pv6_voltage || wizardSeed.pv6_voltage),
+          pv6_current: String(ents.pv6_current || wizardSeed.pv6_current),
           battery2_power_190: String(ents.battery2_power_190 || wizardSeed.battery2_power_190),
           use_timer_248: String(ents.use_timer_248 || wizardSeed.use_timer_248),
           priority_load_243: String(ents.priority_load_243 || wizardSeed.priority_load_243),
@@ -4527,6 +4585,7 @@ async function saveBaseSettings() {
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
+        entity_signs_json: String(energyForm.value.entity_signs_json || ''),
       },
     }
     const r = await fetch('api/options/base', {
@@ -4630,6 +4689,7 @@ async function saveAllSettings() {
         grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
+        entity_signs_json: String(energyForm.value.entity_signs_json || ''),
       },
     }
     const overlayPayload = {

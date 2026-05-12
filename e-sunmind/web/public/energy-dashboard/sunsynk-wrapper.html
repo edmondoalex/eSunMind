@@ -164,6 +164,7 @@
       grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
       entities: {},
     };
+    const entitySignMap = {};
     const isConfiguredEntity = (v) => {
       const s = String(v || '').trim().toLowerCase();
       if (!s) return false;
@@ -192,9 +193,9 @@
       'inverter_power_175','grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59',
       'battery_soc_184','battery_power_190','battery_current_191','battery_voltage_183',
       'inverter_voltage_154','inverter_current_164','load_frequency_192',
-      'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
+      'pv1_power_186','pv2_power_187','pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
       'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
-      'essential_power','nonessential_power','essential_load1','essential_load2','aux_power_166','battery2_power_190'
+      'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6','aux_power_166','aux_load1','aux_load2','non_essential_load1','non_essential_load2','non_essential_load3','battery2_power_190'
     ];
     function normalizeConfigForCard(input) {
       const c = (input && typeof input === 'object' && !Array.isArray(input)) ? input : {};
@@ -280,7 +281,8 @@
         isConfiguredEntity(cardConfig.entities.pv2_power_187),
         isConfiguredEntity(cardConfig.entities.pv3_power_188),
         isConfiguredEntity(cardConfig.entities.pv4_power_189),
-        isConfiguredEntity(cardConfig.entities.pv5_power_247),
+        isConfiguredEntity(cardConfig.entities.pv5_power),
+        isConfiguredEntity(cardConfig.entities.pv6_power),
       ];
       const mappedCount = pvMapped.filter(Boolean).length;
       cardConfig.solar.mppts = Math.max(1, mappedCount || 1);
@@ -300,9 +302,14 @@
         delete cardConfig.entities.pv4_current_116;
       }
       if (!pvMapped[4]) {
-        delete cardConfig.entities.pv5_power_247;
-        delete cardConfig.entities.pv5_voltage_117;
-        delete cardConfig.entities.pv5_current_118;
+        delete cardConfig.entities.pv5_power;
+        delete cardConfig.entities.pv5_voltage;
+        delete cardConfig.entities.pv5_current;
+      }
+      if (!pvMapped[5]) {
+        delete cardConfig.entities.pv6_power;
+        delete cardConfig.entities.pv6_voltage;
+        delete cardConfig.entities.pv6_current;
       }
       if (!isConfiguredEntity(cardConfig.entities.battery2_power_190)) {
         cardConfig.battery.count = 1;
@@ -327,6 +334,19 @@
         if (!r.ok) return;
         const j = await r.json();
         const e = j?.energy || {};
+        try {
+          Object.keys(entitySignMap).forEach((k) => delete entitySignMap[k]);
+          const rawSigns = String(e?.entity_signs_json || '').trim();
+          if (rawSigns) {
+            const parsedSigns = JSON.parse(rawSigns);
+            if (parsedSigns && typeof parsedSigns === 'object' && !Array.isArray(parsedSigns)) {
+              for (const [k, v] of Object.entries(parsedSigns)) {
+                const vv = String(v || '').toLowerCase();
+                if (vv === 'positive' || vv === 'negative') entitySignMap[String(k)] = vv;
+              }
+            }
+          }
+        } catch (_) {}
         applyEnergyEntityFallbacks(e);
         const raw = j?.energy?.sunsynk_card_config_json;
         if (raw) {
@@ -499,6 +519,11 @@
           const f = num(fallback);
           return f != null ? f : null;
         };
+        const applySignByKey = (key, value) => {
+          const n = num(value);
+          if (n == null) return value;
+          return entitySignMap[String(key)] === 'negative' ? -n : n;
+        };
         const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
           const entry = ce?.[cardKey];
           if (!entry || entry.value == null) return false;
@@ -507,7 +532,7 @@
           const extra = {};
           if (deviceClass) extra.device_class = deviceClass;
           if (stateClass) extra.state_class = stateClass;
-          const value = num(raw) != null ? num(raw) : raw;
+          const value = num(raw) != null ? applySignByKey(cardKey, num(raw)) : raw;
           const prev = window.hass.states[sensorId] || mkState(0, unit);
           window.hass.states[sensorId] = {
             ...prev,
@@ -530,10 +555,10 @@
         const batterySoc = pick(n.battery_soc_pct, fromCard('battery_soc_184'));
         const gridRaw = pick(n.grid_power_w, fromCard('grid_power_169'));
         const inverterRaw = pick(n.home_power_w, fromCard('inverter_power_175'));
-        const solarPower = (solarRaw == null ? null : solarRaw);
-        const batteryPower = (batteryRaw == null ? null : batteryRaw);
-        const gridPower = (gridRaw == null ? null : gridRaw);
-        const inverterPower = (inverterRaw == null ? null : inverterRaw);
+        const solarPower = (solarRaw == null ? null : applySignByKey('pv1_power_186', solarRaw));
+        const batteryPower = (batteryRaw == null ? null : applySignByKey('battery_power_190', batteryRaw));
+        const gridPower = (gridRaw == null ? null : applySignByKey('grid_power_169', gridRaw));
+        const inverterPower = (inverterRaw == null ? null : applySignByKey('inverter_power_175', inverterRaw));
 
         // campi opzionali: usa valore corrente se non disponibili
         const inverterVoltageRaw = Number(
