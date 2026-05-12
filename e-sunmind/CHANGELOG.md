@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.179
+
+- Fix persistenza entita Energy da UI: durante `Salva` i campi `energyForm` (entita potenza/giornaliere) vengono prima sincronizzati nel wizard, poi serializzati nel JSON card.
+- Risolto il caso in cui le entita inserite manualmente sparivano dopo salvataggio per sovrascrittura con stato wizard non aggiornato.
+
 ## 0.3.178
 
 - Versione UI allineata: aggiornato `APP_VERSION` backend, ora `api/status` e badge in topbar mostrano release reale.

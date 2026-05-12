@@ -3968,6 +3968,21 @@ function applyEnergyWizard() {
   baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
+function syncWizardFromEnergyForm() {
+  // Keep direct UI edits (Entita Potenza/Giornaliere) in sync before JSON generation.
+  energyWizardForm.value.pv1_power_186 = String(energyForm.value.pv_power_entity_id || '')
+  energyWizardForm.value.inverter_power_175 = String(energyForm.value.home_power_entity_id || '')
+  energyWizardForm.value.grid_power_169 = String(energyForm.value.grid_power_entity_id || '')
+  energyWizardForm.value.battery_power_190 = String(energyForm.value.battery_power_entity_id || '')
+  energyWizardForm.value.battery_soc_184 = String(energyForm.value.battery_soc_entity_id || '')
+  energyWizardForm.value.inverter_voltage_154 = String(energyForm.value.inverter_voltage_entity_id || '')
+  energyWizardForm.value.load_frequency_192 = String(energyForm.value.load_frequency_entity_id || '')
+  energyWizardForm.value.day_pv_energy_108 = String(energyForm.value.pv_energy_today_entity_id || '')
+  energyWizardForm.value.day_load_energy_84 = String(energyForm.value.home_energy_today_entity_id || '')
+  energyWizardForm.value.day_grid_import_76 = String(energyForm.value.grid_import_today_entity_id || '')
+  energyWizardForm.value.day_grid_export_77 = String(energyForm.value.grid_export_today_entity_id || '')
+}
+
 function onEnergyCardstyleChange() {
   const selected = String(energyWizardForm.value.cardstyle || 'full')
   const baseCfg = buildSunsynkConfigFromWizard()
@@ -4485,7 +4500,8 @@ async function autofillWeatherStationFromDevice() {
 async function saveBaseSettings() {
   baseSaveStatus.value = 'Salvataggio...'
   try {
-    // Ensure wizard edits (icons/topology/entities) are persisted into card JSON before save.
+    // Keep both edit paths aligned before save (wizard + direct fields).
+    syncWizardFromEnergyForm()
     applyEnergyWizard()
     const payload = {
       latitude: Number(baseForm.value.latitude),
@@ -4587,7 +4603,8 @@ async function saveAllSettings() {
   fsSaveStatus.value = ''
   overlaySaveStatus.value = ''
   try {
-    // Ensure wizard edits (icons/topology/entities) are persisted into card JSON before save.
+    // Keep both edit paths aligned before save (wizard + direct fields).
+    syncWizardFromEnergyForm()
     applyEnergyWizard()
     const basePayload = {
       latitude: Number(baseForm.value.latitude),
