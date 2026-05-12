@@ -1224,6 +1224,19 @@
             </section>
 
             <section class="energy-group">
+              <h4>Segno Entita (+/-)</h4>
+              <div class="form-grid">
+                <label v-for="f in energySignFields" :key="`sg-${f.key}`">
+                  {{ f.label }}
+                  <select v-model="energyEntitySigns[f.key]" @change="syncEnergySignsJsonFromUi">
+                    <option value="positive">Positivo (+)</option>
+                    <option value="negative">Negativo (-)</option>
+                  </select>
+                </label>
+              </div>
+            </section>
+
+            <section class="energy-group">
               <h4>JSON Avanzato</h4>
               <div class="form-grid">
                 <label style="grid-column: 1 / -1;">
@@ -1776,6 +1789,61 @@ const baseForm = ref({
 })
 const baseSaveStatus = ref('')
 const overlaySaveStatus = ref('')
+const energyEntitySigns = ref({})
+const energySignFields = [
+  { key: 'pv1_power_186', label: 'PV1' },
+  { key: 'pv2_power_187', label: 'PV2' },
+  { key: 'pv3_power_188', label: 'PV3' },
+  { key: 'pv4_power_189', label: 'PV4' },
+  { key: 'pv5_power', label: 'PV5' },
+  { key: 'pv6_power', label: 'PV6' },
+  { key: 'inverter_power_175', label: 'Casa/Home' },
+  { key: 'essential_power', label: 'Essential principale' },
+  { key: 'essential_load1', label: 'Essential load 1' },
+  { key: 'essential_load2', label: 'Essential load 2' },
+  { key: 'essential_load3', label: 'Essential load 3' },
+  { key: 'essential_load4', label: 'Essential load 4' },
+  { key: 'essential_load5', label: 'Essential load 5' },
+  { key: 'essential_load6', label: 'Essential load 6' },
+  { key: 'aux_power_166', label: 'AUX principale' },
+  { key: 'aux_load1', label: 'AUX load 1' },
+  { key: 'aux_load2', label: 'AUX load 2' },
+  { key: 'grid_power_169', label: 'Rete/Grid' },
+  { key: 'grid_ct_power_172', label: 'Rete CT' },
+  { key: 'nonessential_power', label: 'Non-Essential principale' },
+  { key: 'non_essential_load1', label: 'Non-Essential load 1' },
+  { key: 'non_essential_load2', label: 'Non-Essential load 2' },
+  { key: 'non_essential_load3', label: 'Non-Essential load 3' },
+  { key: 'battery_power_190', label: 'Batteria 1' },
+  { key: 'battery2_power_190', label: 'Batteria 2' },
+]
+
+function syncEnergySignsUiFromJson() {
+  let parsed = {}
+  try {
+    const raw = String(energyForm.value?.entity_signs_json || '').trim()
+    if (raw) {
+      const obj = JSON.parse(raw)
+      if (obj && typeof obj === 'object' && !Array.isArray(obj)) parsed = obj
+    }
+  } catch (_) {}
+  const next = {}
+  for (const f of energySignFields) {
+    const v = String(parsed[f.key] || '').toLowerCase()
+    next[f.key] = v === 'negative' ? 'negative' : 'positive'
+  }
+  energyEntitySigns.value = next
+}
+
+function syncEnergySignsJsonFromUi() {
+  const out = {}
+  for (const f of energySignFields) {
+    const v = String(energyEntitySigns.value?.[f.key] || 'positive')
+    if (v === 'negative') out[f.key] = 'negative'
+    else out[f.key] = 'positive'
+  }
+  energyForm.value.entity_signs_json = JSON.stringify(out, null, 2)
+}
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
 const energyRealtimeMappedCount = computed(() => realtimeEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
@@ -4278,6 +4346,7 @@ async function loadData() {
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
         entity_signs_json: String(eo.entity_signs_json || ''),
       }
+      syncEnergySignsUiFromJson()
       const wizardSeed = {
         ...energyWizardForm.value,
         cardstyle: 'full',

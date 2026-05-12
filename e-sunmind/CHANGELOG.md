@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.196
+- Segno `+/-` ora configurabile in UI per tutte le principali entita di potenza (PV1..PV6, Home/Essential, Battery1/2, Grid/CT, AUX, Non-Essential, load dedicati).
+- Aggiunta sezione UI `Segno Entita (+/-)` con dropdown per chiave; generazione automatica di `entity_signs_json` (non serve piu scriverlo a mano).
+- Persistenza backend del nuovo campo `energy.entity_signs_json`.
+- Fix mapping UI allineato chiavi Sunsynk reali: aggiunti campi e serializzazione per `essential_load3..6`, `aux_load1..2`, `non_essential_load1..3`, `pv6_*` e `pv5_*` standard.
+
 ## 0.3.195
 - Fix profondo mappatura entita Sunsynk: aggiunte chiavi realtime mancanti per `essential_load3..6`, `aux_load1..2`, `non_essential_load1..3`, `pv5/pv6` (power/voltage/current).
 - UI Energy aggiornata con i nuovi campi entita nei blocchi `Load`, `AUX`, `Grid`, `Solar` (PV6 incluso).

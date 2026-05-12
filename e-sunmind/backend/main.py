@@ -34,7 +34,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.195"
+APP_VERSION = "0.3.196"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -256,6 +256,7 @@ def _load_options() -> dict[str, Any]:
             "grid_import_today_entity_id": "",
             "grid_export_today_entity_id": "",
             "sunsynk_card_config_json": "",
+            "entity_signs_json": "",
         },
     }
     if not OPTIONS_FILE.exists():
