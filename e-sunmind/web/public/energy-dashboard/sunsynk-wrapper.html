@@ -24,9 +24,7 @@
 </head>
 <body>
   <div class="page">
-    <div class="host">
-      <sunsynk-power-flow-card id="card"></sunsynk-power-flow-card>
-    </div>
+    <div class="host" id="host"></div>
   </div>
 
   <script>
@@ -297,9 +295,11 @@
       }
     }
 
-    const card = document.getElementById('card');
+    const host = document.getElementById('host');
+    let card = null;
 
     function forceRender() {
+      if (!card) return;
       // nuovo riferimento per trigger update lit
       card.hass = { ...window.hass, states: { ...window.hass.states } };
       if (typeof card.requestUpdate === 'function') card.requestUpdate();
@@ -308,6 +308,7 @@
     function initCard() {
       seedStates();
       cardConfig = normalizeConfigForCard(cardConfig);
+      card = document.createElement('sunsynk-power-flow-card');
       try {
         card.setConfig(cardConfig);
       } catch (_) {
@@ -327,13 +328,14 @@
         cardConfig = fallback;
         card.setConfig(fallback);
       }
+      host.innerHTML = '';
+      host.appendChild(card);
       forceRender();
       if (MAP_MODE) fitMapMode();
     }
 
     function fitMapMode() {
       if (!MAP_MODE) return;
-      const host = document.querySelector('.host');
       if (!host || !card) return;
       host.style.transform = 'none';
       host.style.width = '100vw';

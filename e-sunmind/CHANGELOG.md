@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.172
+
+- Fix definitivo race `config.entities` su Sunsynk wrapper: la card non e piu nel DOM statico all'avvio.
+- Bootstrap nuovo: creazione dinamica `<sunsynk-power-flow-card>` via JS, `setConfig()` prima del mount, poi `appendChild`.
+- Evitato render iniziale con `config` undefined che causava `Cannot read properties of undefined (reading 'entities')`.
+
 ## 0.3.171
 
 - Fix crash startup card Sunsynk 6.9.2: inizializzazione `window.customCards` forzata ad array prima del load script (fix errore `push`).
