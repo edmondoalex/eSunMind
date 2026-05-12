@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.190
+- Grid tower icon: aumentata dimensione fissa a 64px e tratto SVG piu spesso per renderla chiaramente visibile.
+
 ## 0.3.189
 - Wrapper strict mode: rimossi fallback impliciti da energy_config (niente auto-mapping entita).
 - Rimossa stima PV split da totale (solar_power non viene piu diviso su PV2+).
@@ -881,6 +884,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

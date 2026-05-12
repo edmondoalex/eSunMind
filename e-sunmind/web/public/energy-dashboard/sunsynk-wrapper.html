@@ -20,7 +20,7 @@
     body.map-mode .page { min-height: 100vh; height: 100vh; padding: 0; display: block; overflow: hidden; }
     body.map-mode .host { width: 100vw; height: 100vh; max-width: 100vw; transform-origin: top left; }
     body.map-mode sunsynk-power-flow-card { display: block; }
-    :root { --grid-tower-size: 46px; }
+    :root { --grid-tower-size: 64px; }
   </style>
 </head>
 <body>
@@ -39,7 +39,7 @@
         attributeChangedCallback() { this.render(); }
         towerSvg(off = false) {
           return `
-            <svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" style="display:block;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;">
+            <svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" style="display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;">
               <path d="M12 3 L16 8 H13.6 L16.8 21 H14.3 L12 14.8 L9.7 21 H7.2 L10.4 8 H8 Z"></path>
               <path d="M6.5 10.5 H17.5"></path>
               <path d="M5.5 14.5 H18.5"></path>
