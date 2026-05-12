@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.162
+
+- Wizard Energy: `Applica alla card` ora fa merge non distruttivo con il JSON esistente invece di sostituirlo.
+- Le opzioni avanzate della card originale (es. `show_nonessential`, nomi custom, icone, label) non vengono più perse quando usi il wizard.
+
 ## 0.3.161
 
 - Compatibilita config Sunsynk originale: nel wrapper energy i valori entita `none/null/unknown/unavailable` ora sono trattati come non configurati.

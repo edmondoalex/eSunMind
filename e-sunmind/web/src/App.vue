@@ -3903,9 +3903,29 @@ function buildSunsynkConfigFromWizard() {
   }
 }
 
+function mergeObjectsDeep(base, patch) {
+  const out = { ...(base || {}) }
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      out[k] = mergeObjectsDeep((base || {})[k] || {}, v)
+    } else {
+      out[k] = v
+    }
+  }
+  return out
+}
+
 function applyEnergyWizard() {
   const cfg = buildSunsynkConfigFromWizard()
-  energyForm.value.sunsynk_card_config_json = JSON.stringify(cfg, null, 2)
+  let merged = cfg
+  try {
+    const raw = String(energyForm.value.sunsynk_card_config_json || '').trim()
+    const current = raw ? JSON.parse(raw) : {}
+    if (current && typeof current === 'object' && !Array.isArray(current)) {
+      merged = mergeObjectsDeep(current, cfg)
+    }
+  } catch (_) {}
+  energyForm.value.sunsynk_card_config_json = JSON.stringify(merged, null, 2)
   energyForm.value.pv_power_entity_id = String(energyWizardForm.value.pv1_power_186 || '')
   energyForm.value.home_power_entity_id = String(energyWizardForm.value.inverter_power_175 || '')
   energyForm.value.grid_power_entity_id = String(energyWizardForm.value.grid_power_169 || '')
