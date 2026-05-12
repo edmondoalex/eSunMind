@@ -1165,6 +1165,12 @@
               <div class="form-grid">
                 <label>PV power entity id<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
                 <label>PV segno<select v-model="energyForm.pv_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>PV2 power entity id<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
+                <label>PV2 voltage entity id<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
+                <label>PV2 current entity id<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
+                <label>PV3 power entity id<input type="text" v-model="energyWizardForm.pv3_power_188" /></label>
+                <label>PV4 power entity id<input type="text" v-model="energyWizardForm.pv4_power_189" /></label>
+                <label>PV5 power entity id<input type="text" v-model="energyWizardForm.pv5_power_247" /></label>
                 <label>Home power entity id<input type="text" v-model="energyForm.home_power_entity_id" /></label>
                 <label>Home segno<select v-model="energyForm.home_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Grid power entity id<input type="text" v-model="energyForm.grid_power_entity_id" /></label>
@@ -1173,6 +1179,7 @@
                 <label>Grid connected status entity id<input type="text" v-model="energyWizardForm.grid_connected_status_194" /></label>
                 <label>Battery power entity id<input type="text" v-model="energyForm.battery_power_entity_id" /></label>
                 <label>Battery segno<select v-model="energyForm.battery_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Battery 2 power entity id<input type="text" v-model="energyWizardForm.battery2_power_190" /></label>
                 <label>Battery SOC entity id<input type="text" v-model="energyForm.battery_soc_entity_id" /></label>
                 <label>Inverter voltage entity id (V)<input type="text" v-model="energyForm.inverter_voltage_entity_id" /></label>
                 <label>Load frequency entity id (Hz)<input type="text" v-model="energyForm.load_frequency_entity_id" /></label>
@@ -1203,6 +1210,10 @@
                 <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
                   <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
                   <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
+                </label>
+                <label style="grid-column: 1 / -1;">Entita extra JSON (chiave -> entity_id)
+                  <textarea v-model="energyWizardForm.entities_extra_json" rows="5" placeholder='{"pv3_power_188":"sensor.xxx","use_timer_248":"sensor.yyy"}'></textarea>
+                  <small>Qui puoi mappare qualsiasi chiave entities supportata dalla card, anche se non ha ancora un campo dedicato sopra.</small>
                 </label>
               </div>
             </section>
@@ -1588,6 +1599,13 @@ const realtimeEntityKeys = [
 const dailyEntityKeys = [
   'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
 ]
+const knownEnergyEntityKeys = [
+  ...realtimeEntityKeys,
+  ...dailyEntityKeys,
+  'essential_power','nonessential_power','essential_load1','essential_load2','aux_power_166','battery2_power_190',
+  'pv3_power_188','pv4_power_189','pv5_power_247','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage_117','pv5_current_118',
+  'use_timer_248','priority_load_243',
+]
 const energyWizardForm = ref({
   cardstyle: 'full',
   show_solar: true,
@@ -1686,6 +1704,19 @@ const energyWizardForm = ref({
   day_load_energy_84: '',
   day_grid_import_76: '',
   day_grid_export_77: '',
+  pv3_power_188: '',
+  pv4_power_189: '',
+  pv5_power_247: '',
+  pv3_voltage_113: '',
+  pv3_current_114: '',
+  pv4_voltage_115: '',
+  pv4_current_116: '',
+  pv5_voltage_117: '',
+  pv5_current_118: '',
+  battery2_power_190: '',
+  use_timer_248: '',
+  priority_load_243: '',
+  entities_extra_json: '',
 })
 const baseForm = ref({
   latitude: 44.6973,
@@ -3701,6 +3732,18 @@ function buildSunsynkConfigFromWizard() {
     pv1_current_110: String(w.pv1_current_110 || ''),
     pv2_voltage_111: String(w.pv2_voltage_111 || ''),
     pv2_current_112: String(w.pv2_current_112 || ''),
+    pv3_power_188: String(w.pv3_power_188 || ''),
+    pv4_power_189: String(w.pv4_power_189 || ''),
+    pv5_power_247: String(w.pv5_power_247 || ''),
+    pv3_voltage_113: String(w.pv3_voltage_113 || ''),
+    pv3_current_114: String(w.pv3_current_114 || ''),
+    pv4_voltage_115: String(w.pv4_voltage_115 || ''),
+    pv4_current_116: String(w.pv4_current_116 || ''),
+    pv5_voltage_117: String(w.pv5_voltage_117 || ''),
+    pv5_current_118: String(w.pv5_current_118 || ''),
+    battery2_power_190: String(w.battery2_power_190 || ''),
+    use_timer_248: String(w.use_timer_248 || ''),
+    priority_load_243: String(w.priority_load_243 || ''),
     day_pv_energy_108: String(w.day_pv_energy_108 || ''),
     day_battery_charge_70: String(w.day_battery_charge_70 || ''),
     day_battery_discharge_71: String(w.day_battery_discharge_71 || ''),
@@ -3708,6 +3751,15 @@ function buildSunsynkConfigFromWizard() {
     day_grid_import_76: String(w.day_grid_import_76 || ''),
     day_grid_export_77: String(w.day_grid_export_77 || ''),
   }
+  try {
+    const extraRaw = String(w.entities_extra_json || '').trim()
+    if (extraRaw) {
+      const extraObj = JSON.parse(extraRaw)
+      if (extraObj && typeof extraObj === 'object' && !Array.isArray(extraObj)) {
+        for (const [k, v] of Object.entries(extraObj)) entities[String(k)] = String(v ?? '')
+      }
+    }
+  } catch (_) {}
   Object.keys(entities).forEach((k) => {
     if (!String(entities[k] || '').trim()) delete entities[k]
   })
@@ -4284,12 +4336,25 @@ async function loadData() {
           pv1_current_110: String(ents.pv1_current_110 || wizardSeed.pv1_current_110),
           pv2_voltage_111: String(ents.pv2_voltage_111 || wizardSeed.pv2_voltage_111),
           pv2_current_112: String(ents.pv2_current_112 || wizardSeed.pv2_current_112),
+          pv3_power_188: String(ents.pv3_power_188 || wizardSeed.pv3_power_188),
+          pv4_power_189: String(ents.pv4_power_189 || wizardSeed.pv4_power_189),
+          pv5_power_247: String(ents.pv5_power_247 || wizardSeed.pv5_power_247),
+          pv3_voltage_113: String(ents.pv3_voltage_113 || wizardSeed.pv3_voltage_113),
+          pv3_current_114: String(ents.pv3_current_114 || wizardSeed.pv3_current_114),
+          pv4_voltage_115: String(ents.pv4_voltage_115 || wizardSeed.pv4_voltage_115),
+          pv4_current_116: String(ents.pv4_current_116 || wizardSeed.pv4_current_116),
+          pv5_voltage_117: String(ents.pv5_voltage_117 || wizardSeed.pv5_voltage_117),
+          pv5_current_118: String(ents.pv5_current_118 || wizardSeed.pv5_current_118),
+          battery2_power_190: String(ents.battery2_power_190 || wizardSeed.battery2_power_190),
+          use_timer_248: String(ents.use_timer_248 || wizardSeed.use_timer_248),
+          priority_load_243: String(ents.priority_load_243 || wizardSeed.priority_load_243),
           day_pv_energy_108: String(ents.day_pv_energy_108 || wizardSeed.day_pv_energy_108),
           day_battery_charge_70: String(ents.day_battery_charge_70 || wizardSeed.day_battery_charge_70),
           day_battery_discharge_71: String(ents.day_battery_discharge_71 || wizardSeed.day_battery_discharge_71),
           day_load_energy_84: String(ents.day_load_energy_84 || wizardSeed.day_load_energy_84),
           day_grid_import_76: String(ents.day_grid_import_76 || wizardSeed.day_grid_import_76),
           day_grid_export_77: String(ents.day_grid_export_77 || wizardSeed.day_grid_export_77),
+          entities_extra_json: JSON.stringify(Object.fromEntries(Object.entries(ents || {}).filter(([k]) => !knownEnergyEntityKeys.includes(String(k)))), null, 2),
         }
       } catch (_) {
         energyWizardForm.value = wizardSeed

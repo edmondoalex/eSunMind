@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.186
+- Energy UI: aggiunta mappatura diretta entita per PV2/PV3/PV4/PV5 e Battery2 power.
+- Energy UI: aggiunto blocco Entita extra JSON (chiave->entity_id) per coprire tutte le entities supportate dalla card senza altri buchi UI.
+- Caricamento config: import automatico in UI delle chiavi entita extra non standard.
+
 ## 0.3.185
 - Energy: aggiunti campi UI per rinominare Essential, Auxiliary, Daily Load, Load 1 name, Load 2 name (salvati nel JSON della card).
 - Wrapper: fallback entita per ramo load (essential_power <- home_power se vuoto) e auto dditional_loads quando ci sono essential_load1/2 mappati.
@@ -864,6 +869,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 
