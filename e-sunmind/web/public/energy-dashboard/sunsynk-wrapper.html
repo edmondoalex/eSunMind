@@ -153,6 +153,20 @@
     function enforceTopologyFromConfig() {
       cardConfig.solar = cardConfig.solar || {};
       cardConfig.entities = cardConfig.entities || {};
+      cardConfig.load = cardConfig.load || {};
+      cardConfig.grid = cardConfig.grid || {};
+      const allowed = new Set(['default', 'boiler', 'aircon', 'pump', 'oven']);
+      const safeIcon = (v) => {
+        const s = String(v || 'default').trim().toLowerCase();
+        return allowed.has(s) ? s : 'default';
+      };
+      // sanitize optional icons to avoid invisible/unsupported glyphs in standalone mode
+      for (const k of ['load1_icon', 'load2_icon', 'load3_icon', 'load4_icon', 'load5_icon', 'load6_icon']) {
+        cardConfig.load[k] = safeIcon(cardConfig.load[k]);
+      }
+      for (const k of ['nonessential_icon', 'load1_icon', 'load2_icon', 'load3_icon']) {
+        cardConfig.grid[k] = safeIcon(cardConfig.grid[k]);
+      }
       const explicitMppts = Number(cardConfig.solar.mppts);
       let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;
       if (!Number.isFinite(mppts)) {

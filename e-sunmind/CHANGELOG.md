@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.157
+
+- Wrapper standalone: aggiunta sanitizzazione icone `load/grid` con fallback automatico a `default` per evitare icone mancanti/non renderizzate.
+
 ## 0.3.156
 
 - Nuovo flusso mappatura entita (popup realtime): mantenuta card reale come preview, ma selezione entita spostata su lista strutturata con pulsante `Seleziona`.
