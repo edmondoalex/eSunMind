@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.174
+
+- Wizard icone Energy esteso: aggiunti preset aggiuntivi e campi testo custom per tutte le icone Load/Non-Essential.
+- Aggiunti controlli UI per `grid_nonessential_icon`, `grid_import_icon`, `grid_export_icon`, `grid_disconnected_icon`.
+- Wrapper: rimosso filtro whitelist rigido sulle icone, ora passa i valori icona configurati da UI/JSON senza forzare `default`.
+
+## 0.3.173
+
+- Fix icona Grid mancante in wrapper standalone: fallback automatico a `default` per `grid.import_icon`, `grid.export_icon`, `grid.disconnected_icon` quando impostati come `mdi:*`.
+- In ambiente senza resolver completo Home Assistant, la torre grid torna sempre visibile.
+
 ## 0.3.172
 
 - Fix definitivo race `config.entities` su Sunsynk wrapper: la card non e piu nel DOM statico all'avvio.

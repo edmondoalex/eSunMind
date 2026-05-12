@@ -210,17 +210,16 @@
       cardConfig.wide = Boolean(cardConfig.wide ?? false);
       cardConfig.cardstyle = String(cardConfig.cardstyle || 'full');
       cardConfig.type = String(cardConfig.type || 'custom:sunsynk-power-flow-card');
-      const allowed = new Set(['default', 'boiler', 'aircon', 'pump', 'oven']);
-      const safeIcon = (v) => {
-        const s = String(v || 'default').trim().toLowerCase();
-        return allowed.has(s) ? s : 'default';
-      };
-      // sanitize optional icons to avoid invisible/unsupported glyphs in standalone mode
+      // Keep icon values as configured from UI/JSON (including custom mdi:*),
+      // only fallback to default when empty.
       for (const k of ['load1_icon', 'load2_icon', 'load3_icon', 'load4_icon', 'load5_icon', 'load6_icon']) {
-        cardConfig.load[k] = safeIcon(cardConfig.load[k]);
+        cardConfig.load[k] = String(cardConfig.load[k] || 'default').trim() || 'default';
       }
       for (const k of ['nonessential_icon', 'load1_icon', 'load2_icon', 'load3_icon']) {
-        cardConfig.grid[k] = safeIcon(cardConfig.grid[k]);
+        cardConfig.grid[k] = String(cardConfig.grid[k] || 'default').trim() || 'default';
+      }
+      for (const k of ['import_icon', 'export_icon', 'disconnected_icon']) {
+        cardConfig.grid[k] = String(cardConfig.grid[k] || '').trim();
       }
       const explicitMppts = Number(cardConfig.solar.mppts);
       let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;

@@ -1100,30 +1100,52 @@
               <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'icons'" class="wizard-grid">
                 <label>Icona Load 1
                   <select v-model="energyWizardForm.load1_icon"><option v-for="i in energyIconOptions" :key="`l1-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load1_icon" placeholder="custom icon (es: mdi:home)" />
                 </label>
                 <label>Icona Load 2
                   <select v-model="energyWizardForm.load2_icon"><option v-for="i in energyIconOptions" :key="`l2-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load2_icon" placeholder="custom icon (es: mdi:fan)" />
                 </label>
                 <label>Icona Load 3
                   <select v-model="energyWizardForm.load3_icon"><option v-for="i in energyIconOptions" :key="`l3-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load3_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Load 4
                   <select v-model="energyWizardForm.load4_icon"><option v-for="i in energyIconOptions" :key="`l4-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load4_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Load 5
                   <select v-model="energyWizardForm.load5_icon"><option v-for="i in energyIconOptions" :key="`l5-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load5_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Load 6
                   <select v-model="energyWizardForm.load6_icon"><option v-for="i in energyIconOptions" :key="`l6-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.load6_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Non-Essential 1
                   <select v-model="energyWizardForm.grid_load1_icon"><option v-for="i in energyIconOptions" :key="`g1-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.grid_load1_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Non-Essential 2
                   <select v-model="energyWizardForm.grid_load2_icon"><option v-for="i in energyIconOptions" :key="`g2-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.grid_load2_icon" placeholder="custom icon" />
                 </label>
                 <label>Icona Non-Essential 3
                   <select v-model="energyWizardForm.grid_load3_icon"><option v-for="i in energyIconOptions" :key="`g3-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.grid_load3_icon" placeholder="custom icon" />
+                </label>
+                <label>Icona Non-Essential principale
+                  <select v-model="energyWizardForm.grid_nonessential_icon"><option v-for="i in energyIconOptions" :key="`gn-${i}`" :value="i">{{ i }}</option></select>
+                  <input type="text" v-model="energyWizardForm.grid_nonessential_icon" placeholder="custom icon" />
+                </label>
+                <label>Grid Import Icon
+                  <input type="text" v-model="energyWizardForm.grid_import_icon" placeholder="mdi:transmission-tower-import" />
+                </label>
+                <label>Grid Export Icon
+                  <input type="text" v-model="energyWizardForm.grid_export_icon" placeholder="mdi:transmission-tower-export" />
+                </label>
+                <label>Grid Disconnected Icon
+                  <input type="text" v-model="energyWizardForm.grid_disconnected_icon" placeholder="mdi:transmission-tower-off" />
                 </label>
               </div>
               <div v-else-if="energyWizardSteps[energyWizardStep]?.key === 'entities'" class="wizard-review">
@@ -1656,7 +1678,22 @@ const energyWizardSteps = [
   { key: 'daily', label: 'Entita giornaliere', hint: 'Mappa i contatori energia daily.' },
   { key: 'review', label: 'Conferma', hint: 'Genera automaticamente il JSON completo.' },
 ]
-const energyIconOptions = ['default', 'boiler', 'aircon', 'pump', 'oven']
+const energyIconOptions = [
+  'default',
+  'boiler',
+  'aircon',
+  'pump',
+  'oven',
+  'home',
+  'battery',
+  'solar-panel',
+  'flash',
+  'ev-station',
+  'server',
+  'water-pump',
+  'radiator',
+  'fan',
+]
 const energyEntityPopupOpen = ref(false)
 const energyEntityPopupMode = ref('realtime')
 const energyEntityPreviewLoading = ref(false)
