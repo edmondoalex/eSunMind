@@ -879,7 +879,7 @@
           </div>
         </section>
 
-        <section class="card">
+        <section class="card energy-settings-card">
           <h3>Configurazione Base Addon</h3>
           <div class="form-grid">
             <label>Latitude
@@ -5805,40 +5805,73 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
 }
 .energy-layout{
   display:grid;
-  grid-template-columns:repeat(2,minmax(420px,1fr));
-  gap:14px;
+  grid-template-columns:1fr;
+  gap:16px;
 }
 .energy-group{
-  border:1px solid rgba(71,85,105,.45);
+  border:1px solid rgba(71,85,105,.42);
   border-radius:14px;
-  background:linear-gradient(180deg,rgba(8,17,33,.72),rgba(4,10,22,.72));
-  padding:14px;
+  background:linear-gradient(180deg,rgba(8,17,33,.78),rgba(4,10,22,.78));
+  padding:14px 14px 12px;
+  box-shadow:0 0 0 1px rgba(8,18,36,.2) inset;
 }
 .energy-group h4{
   margin:0 0 12px 0;
-  font-size:17px;
-  color:#cfe6ff;
+  padding:0 0 8px 0;
+  border-bottom:1px solid rgba(71,85,105,.4);
+  font-size:18px;
+  color:#dbeafe;
   letter-spacing:.2px;
 }
 .energy-note{
   font-size:14px;
-  margin:8px 0 12px 0;
+  color:#9fb0c8;
+  margin:0 0 14px 0;
 }
 .energy-settings-card .form-grid{
-  grid-template-columns:repeat(3,minmax(260px,1fr));
-  gap:12px;
+  grid-template-columns:repeat(4,minmax(220px,1fr));
+  gap:12px 14px;
 }
 .energy-settings-card label{
   display:flex;
   flex-direction:column;
   gap:6px;
-  font-size:14px;
+  font-size:13px;
+  color:#cbd5e1;
+}
+.energy-settings-card label small{
+  color:#8aa0bb;
+  font-size:12px;
+  line-height:1.3;
 }
 .energy-settings-card input,
 .energy-settings-card select,
 .energy-settings-card textarea{
-  min-height:40px;
+  min-height:42px;
   font-size:15px;
+  padding:10px 12px;
+  border-radius:10px;
+  border:1px solid rgba(71,85,105,.55);
+  background:#0a1424;
+  color:#e2e8f0;
+}
+.energy-settings-card input:focus,
+.energy-settings-card select:focus,
+.energy-settings-card textarea:focus{
+  outline:none;
+  border-color:#22d3ee;
+  box-shadow:0 0 0 2px rgba(34,211,238,.22);
+}
+.energy-settings-card input[type="checkbox"]{
+  min-height:auto;
+  width:18px;
+  height:18px;
+  margin-top:4px;
+  accent-color:#56e6d8;
+}
+.energy-settings-card textarea{
+  min-height:180px;
+  line-height:1.45;
 }
 
 @media (max-width: 768px){
@@ -6021,6 +6054,16 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .metric-val{
     text-align:left;
+  }
+}
+@media (max-width: 1500px){
+  .energy-settings-card .form-grid{
+    grid-template-columns:repeat(3,minmax(220px,1fr));
+  }
+}
+@media (max-width: 1180px){
+  .energy-settings-card .form-grid{
+    grid-template-columns:repeat(2,minmax(220px,1fr));
   }
 }
 </style>
