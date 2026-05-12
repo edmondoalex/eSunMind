@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.170
+
+- Hotfix crash runtime Sunsynk (`Cannot read properties of undefined: push/entities`): introdotta normalizzazione hard della config prima di `setConfig`.
+- Garantita presenza di tutte le sezioni oggetto richieste dalla card (`solar`, `battery`, `load`, `grid`, `inverter`, `entities`) e serializzazione stringa dei valori entita.
+- Aggiunto fallback protetto su `setConfig`: se la config utente e invalida/parziale, viene applicata una config minima safe senza bloccare il rendering.
+
 ## 0.3.169
 
 - Wrapper Sunsynk riallineato alla card originale: rimossi override aggressivi che alteravano topologia/entita rispetto al JSON.

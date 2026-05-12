@@ -132,6 +132,36 @@
       }
       return target;
     }
+    const REQUIRED_ENTITY_KEYS = [
+      'inverter_power_175','grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59',
+      'battery_soc_184','battery_power_190','battery_current_191','battery_voltage_183',
+      'inverter_voltage_154','inverter_current_164','load_frequency_192',
+      'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
+      'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
+      'essential_power','nonessential_power','essential_load1','essential_load2','aux_power_166','battery2_power_190'
+    ];
+    function normalizeConfigForCard(input) {
+      const c = (input && typeof input === 'object' && !Array.isArray(input)) ? input : {};
+      c.type = String(c.type || 'custom:sunsynk-power-flow-card');
+      c.cardstyle = String(c.cardstyle || 'full');
+      c.solar = (c.solar && typeof c.solar === 'object' && !Array.isArray(c.solar)) ? c.solar : {};
+      c.battery = (c.battery && typeof c.battery === 'object' && !Array.isArray(c.battery)) ? c.battery : {};
+      c.load = (c.load && typeof c.load === 'object' && !Array.isArray(c.load)) ? c.load : {};
+      c.grid = (c.grid && typeof c.grid === 'object' && !Array.isArray(c.grid)) ? c.grid : {};
+      c.inverter = (c.inverter && typeof c.inverter === 'object' && !Array.isArray(c.inverter)) ? c.inverter : {};
+      c.entities = (c.entities && typeof c.entities === 'object' && !Array.isArray(c.entities)) ? c.entities : {};
+      for (const k of REQUIRED_ENTITY_KEYS) {
+        if (!(k in c.entities)) c.entities[k] = '';
+      }
+      for (const [k, v] of Object.entries(c.entities)) {
+        if (v == null) c.entities[k] = '';
+        else c.entities[k] = String(v);
+      }
+      c.solar.mppts = Number.isFinite(Number(c.solar.mppts)) ? Number(c.solar.mppts) : 1;
+      c.load.additional_loads = Number.isFinite(Number(c.load.additional_loads)) ? Number(c.load.additional_loads) : 0;
+      c.grid.additional_loads = Number.isFinite(Number(c.grid.additional_loads)) ? Number(c.grid.additional_loads) : 0;
+      return c;
+    }
 
     function applyEnergyEntityFallbacks(e) {
       cardConfig.entities = cardConfig.entities || {};
@@ -273,7 +303,27 @@
 
     function initCard() {
       seedStates();
-      card.setConfig(cardConfig);
+      card.hass = { ...window.hass, states: { ...window.hass.states } };
+      cardConfig = normalizeConfigForCard(cardConfig);
+      try {
+        card.setConfig(cardConfig);
+      } catch (_) {
+        const fallback = normalizeConfigForCard({
+          type: 'custom:sunsynk-power-flow-card',
+          cardstyle: 'full',
+          show_solar: true,
+          show_battery: true,
+          show_grid: true,
+          solar: { mppts: 1 },
+          battery: {},
+          load: {},
+          grid: {},
+          inverter: {},
+          entities: { ...cardConfig.entities },
+        });
+        cardConfig = fallback;
+        card.setConfig(fallback);
+      }
       forceRender();
       if (MAP_MODE) fitMapMode();
     }
