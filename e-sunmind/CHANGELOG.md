@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.178
+
+- Versione UI allineata: aggiornato `APP_VERSION` backend, ora `api/status` e badge in topbar mostrano release reale.
+- Wrapper Sunsynk standalone: aggiunto shim `ha-icon` per compatibilita icone MDI in assenza del runtime Home Assistant completo.
+- Energy Setup: layout ulteriormente semplificato a 2 colonne stabili per ridurre l'effetto “insalata”.
+
 ## 0.3.177
 
 - Energy Setup restyle strutturale: layout a blocchi con griglia fissa (non più riga infinita “insalata”).

@@ -30,6 +30,21 @@
   <script>
     // Compat HA custom-card registry: some environments define customCards as non-array.
     if (!Array.isArray(window.customCards)) window.customCards = [];
+    // Minimal HA icon shim for standalone mode (required by sunsynk card icons).
+    if (!customElements.get('ha-icon')) {
+      class HaIcon extends HTMLElement {
+        static get observedAttributes() { return ['icon']; }
+        connectedCallback() { this.render(); }
+        attributeChangedCallback() { this.render(); }
+        render() {
+          const raw = String(this.getAttribute('icon') || '').trim();
+          const name = raw.startsWith('mdi:') ? raw.slice(4) : raw;
+          const cls = name ? `mdi mdi-${name}` : 'mdi mdi-help-circle-outline';
+          this.innerHTML = `<i class="${cls}" style="font-size:1.35em;line-height:1;color:inherit;"></i>`;
+        }
+      }
+      customElements.define('ha-icon', HaIcon);
+    }
   </script>
   <script type="module" src="https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js"></script>
   <script>
