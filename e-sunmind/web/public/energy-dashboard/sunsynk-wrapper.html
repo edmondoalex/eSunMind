@@ -170,9 +170,13 @@
       return v === 'negative' ? 'negative' : 'positive';
     };
     const isConfiguredEntity = (v) => {
-      const s = String(v || '').trim().toLowerCase();
+      const raw = String(v || '').trim();
+      const s = raw.toLowerCase();
       if (!s) return false;
-      return !['none', 'null', 'undefined', 'unknown', 'unavailable'].includes(s);
+      if (['none', 'null', 'undefined', 'unknown', 'unavailable'].includes(s)) return false;
+      // Accept only real HA entity_ids (domain.object_id).
+      // This avoids counting accidental labels/placeholders as mapped entities.
+      return /^[a-z0-9_]+\.[a-z0-9_]+$/i.test(raw);
     };
     const STRICT_ENTITIES_ONLY = true;
     const entityId = (cardKey) => {
