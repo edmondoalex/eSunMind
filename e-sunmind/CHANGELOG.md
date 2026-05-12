@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.209
+- Energy Setup: in layout `full` con AUX attivo, il generatore JSON rimuove `essential_load3..6` invece di farli tornare al salvataggio.
+- Energy Flow: in layout `full + AUX`, il wrapper mantiene AUX visibile e limita i load essenziali a 2, evitando che la card Sunsynk nasconda AUX.
+- Bump versione addon/backend a `0.3.209`.
+
 ## 0.3.208
 - Energy Setup piu leggibile: pagina limitata in larghezza, avvio rapido guidato e configurazione completa divisa in sezioni cliccabili.
 - Energy Setup: applicati gli stili dedicati anche alla pagina principale, evitando griglie enormi e campi illeggibili su monitor larghi.

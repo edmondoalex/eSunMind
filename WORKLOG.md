@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-12
+- Energy Setup/Flow: corretto caso `full + AUX`, ora il JSON elimina `essential_load3..6` e il wrapper mantiene AUX visibile limitando i load essenziali a 2.
+- Bump versione addon/backend a `0.3.209` con changelog aggiornato.
+
 - Energy Setup UI: pagina resa piu user friendly con larghezza leggibile, avvio rapido in 3 passi e configurazione completa a sezioni cliccabili.
 - Energy Flow wrapper: ripristinata direzione flussi tramite flag `invert_*` calcolati da `entity_signs_json`, mantenendo gli stati HA raw.
 - Bump versione addon/backend a `0.3.208` con changelog aggiornato.

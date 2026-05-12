@@ -363,23 +363,29 @@
         isConfiguredEntity(cardConfig.entities.essential_load6),
       ];
       const essentialCount = essentialMapped.filter(Boolean).length;
+      const visibleEssentialMapped = [...essentialMapped];
       cardConfig.load.additional_loads = essentialCount;
       if (String(cardConfig.cardstyle || 'full') === 'full') {
         // Sunsynk full-card internally invalidates additional_loads 3-6 when
-        // show_aux is true, and invalidates exactly 3 even without AUX. Prefer
-        // showing mapped load branches over keeping AUX visible.
-        if (essentialCount >= 4) {
-          cardConfig.load.show_aux = false;
+        // show_aux is true, and invalidates exactly 3 even without AUX. If AUX
+        // is requested, keep AUX visible and cap essential load branches to 2.
+        if (Boolean(cardConfig.load.show_aux) && essentialCount > 2) {
+          cardConfig.load.additional_loads = 2;
+          visibleEssentialMapped[2] = false;
+          visibleEssentialMapped[3] = false;
+          visibleEssentialMapped[4] = false;
+          visibleEssentialMapped[5] = false;
         } else if (essentialCount === 3) {
           cardConfig.load.additional_loads = 2;
+          visibleEssentialMapped[2] = false;
         }
       }
-      if (!essentialMapped[0]) delete cardConfig.entities.essential_load1;
-      if (!essentialMapped[1]) delete cardConfig.entities.essential_load2;
-      if (!essentialMapped[2]) delete cardConfig.entities.essential_load3;
-      if (!essentialMapped[3]) delete cardConfig.entities.essential_load4;
-      if (!essentialMapped[4]) delete cardConfig.entities.essential_load5;
-      if (!essentialMapped[5]) delete cardConfig.entities.essential_load6;
+      if (!visibleEssentialMapped[0]) delete cardConfig.entities.essential_load1;
+      if (!visibleEssentialMapped[1]) delete cardConfig.entities.essential_load2;
+      if (!visibleEssentialMapped[2]) delete cardConfig.entities.essential_load3;
+      if (!visibleEssentialMapped[3]) delete cardConfig.entities.essential_load4;
+      if (!visibleEssentialMapped[4]) delete cardConfig.entities.essential_load5;
+      if (!visibleEssentialMapped[5]) delete cardConfig.entities.essential_load6;
 
       const auxMapped = [
         isConfiguredEntity(cardConfig.entities.aux_power_166),

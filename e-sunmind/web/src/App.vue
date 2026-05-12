@@ -1098,7 +1098,7 @@
               <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Apri Energy Flow</a>
             </div>
             <div v-if="energyFullAuxLoadConflict" class="energy-warning">
-              Layout full: con 4+ load essenziali la card Sunsynk non mostra AUX. Il wrapper dara priorita ai load e nascondera AUX.
+              Layout full + AUX: la card Sunsynk mostra al massimo 2 load essenziali. Load 3-6 verranno tolti dal JSON generato.
             </div>
           </div>
 
@@ -3985,6 +3985,13 @@ function buildSunsynkConfigFromWizard() {
   Object.keys(entities).forEach((k) => {
     if (!String(entities[k] || '').trim()) delete entities[k]
   })
+  const fullWithAux = String(w.cardstyle || 'full') === 'full' && Boolean(w.show_aux)
+  if (fullWithAux) {
+    delete entities.essential_load3
+    delete entities.essential_load4
+    delete entities.essential_load5
+    delete entities.essential_load6
+  }
 
   return {
     cardstyle: String(w.cardstyle || 'full'),
@@ -4019,7 +4026,7 @@ function buildSunsynkConfigFromWizard() {
     },
     load: {
       colour: String(w.color_load || '#cbd5e1'),
-      additional_loads: Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
+      additional_loads: fullWithAux ? Math.max(0, Math.min(2, Number(w.additional_loads || 2))) : Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
       show_aux: Boolean(w.show_aux),
       essential_name: String(w.load_essential_name || 'Essential'),
       aux_name: String(w.load_aux_name || 'Auxiliary'),
@@ -4089,6 +4096,7 @@ function applyEnergyWizard() {
     const current = raw ? JSON.parse(raw) : {}
     if (current && typeof current === 'object' && !Array.isArray(current)) {
       merged = mergeObjectsDeep(current, cfg)
+      merged.entities = { ...(cfg.entities || {}) }
     }
   } catch (_) {}
   energyForm.value.sunsynk_card_config_json = JSON.stringify(merged, null, 2)
