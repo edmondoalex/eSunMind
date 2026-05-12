@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.185
+- Energy: aggiunti campi UI per rinominare Essential, Auxiliary, Daily Load, Load 1 name, Load 2 name (salvati nel JSON della card).
+- Wrapper: fallback entita per ramo load (essential_power <- home_power se vuoto) e auto dditional_loads quando ci sono essential_load1/2 mappati.
+- Wrapper: icona Grid tower ingrandita e intercettata anche per varianti senza prefisso mdi:.
+
 ## 0.3.184
 - Energy UI: aggiunto selettore icone per tutti i campi load/grid mantenendo input testo libero per valori mdi:... custom.
 
@@ -859,6 +864,7 @@
 - Oggetto debug `station` sempre presente con: `enabled`, `ok`, `used`, `error`, `age_seconds`.
 - `station.used=true`: dati da stazione reale e-Control/Ecowitt.
 - `station.used=false`: fallback MET/Open-Meteo o stazione non valida.
+
 
 
 

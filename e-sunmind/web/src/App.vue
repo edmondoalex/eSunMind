@@ -1125,6 +1125,11 @@
                 <label>Show non-essential<input type="checkbox" v-model="energyWizardForm.grid_show_nonessential" /></label>
                 <label>Grid additional loads<input type="number" min="0" max="3" step="1" v-model.number="energyWizardForm.grid_additional_loads" /></label>
                 <label>Grid name<input type="text" v-model="energyWizardForm.grid_name" /></label>
+                <label>Essential name<input type="text" v-model="energyWizardForm.load_essential_name" /></label>
+                <label>Auxiliary name<input type="text" v-model="energyWizardForm.load_aux_name" /></label>
+                <label>Daily load label<input type="text" v-model="energyWizardForm.load_label_daily" /></label>
+                <label>Load 1 name<input type="text" v-model="energyWizardForm.load1_name" /></label>
+                <label>Load 2 name<input type="text" v-model="energyWizardForm.load2_name" /></label>
                 <label>Label daily buy<input type="text" v-model="energyWizardForm.grid_label_daily_buy" /></label>
                 <label>Label daily sell<input type="text" v-model="energyWizardForm.grid_label_daily_sell" /></label>
                 <label>Non-essential name<input type="text" v-model="energyWizardForm.grid_nonessential_name" /></label>
@@ -1608,6 +1613,11 @@ const energyWizardForm = ref({
   battery_auto_scale: true,
   additional_loads: 2,
   show_aux: false,
+  load_essential_name: 'Essential',
+  load_aux_name: 'Auxiliary',
+  load_label_daily: 'Daily Load',
+  load1_name: '',
+  load2_name: '',
   load_show_daily: true,
   load_animation_speed: 6,
   load_max_power: 9000,
@@ -3737,6 +3747,11 @@ function buildSunsynkConfigFromWizard() {
       colour: String(w.color_load || '#cbd5e1'),
       additional_loads: Math.max(0, Math.min(6, Number(w.additional_loads || 2))),
       show_aux: Boolean(w.show_aux),
+      essential_name: String(w.load_essential_name || 'Essential'),
+      aux_name: String(w.load_aux_name || 'Auxiliary'),
+      label_daily_load: String(w.load_label_daily || 'Daily Load'),
+      load1_name: String(w.load1_name || ''),
+      load2_name: String(w.load2_name || ''),
       show_daily: Boolean(w.load_show_daily),
       animation_speed: Math.max(1, Math.min(20, Number(w.load_animation_speed || 6))),
       max_power: Math.max(100, Number(w.load_max_power || 9000)),
@@ -4202,6 +4217,11 @@ async function loadData() {
           battery_auto_scale: Boolean(battery.auto_scale ?? wizardSeed.battery_auto_scale),
           additional_loads: Number(load.additional_loads ?? wizardSeed.additional_loads),
           show_aux: Boolean(load.show_aux ?? wizardSeed.show_aux),
+          load_essential_name: String(load.essential_name || wizardSeed.load_essential_name),
+          load_aux_name: String(load.aux_name || wizardSeed.load_aux_name),
+          load_label_daily: String(load.label_daily_load || wizardSeed.load_label_daily),
+          load1_name: String(load.load1_name || wizardSeed.load1_name),
+          load2_name: String(load.load2_name || wizardSeed.load2_name),
           load_show_daily: Boolean(load.show_daily ?? wizardSeed.load_show_daily),
           load_animation_speed: Number(load.animation_speed ?? wizardSeed.load_animation_speed),
           load_max_power: Number(load.max_power ?? wizardSeed.load_max_power),
