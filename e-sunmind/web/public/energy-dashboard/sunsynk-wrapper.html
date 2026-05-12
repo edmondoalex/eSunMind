@@ -29,6 +29,10 @@
     </div>
   </div>
 
+  <script>
+    // Compat HA custom-card registry: some environments define customCards as non-array.
+    if (!Array.isArray(window.customCards)) window.customCards = [];
+  </script>
   <script type="module" src="https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js"></script>
   <script>
     const MAP_MODE = new URLSearchParams(window.location.search).get('map') === '1';
@@ -303,7 +307,6 @@
 
     function initCard() {
       seedStates();
-      card.hass = { ...window.hass, states: { ...window.hass.states } };
       cardConfig = normalizeConfigForCard(cardConfig);
       try {
         card.setConfig(cardConfig);

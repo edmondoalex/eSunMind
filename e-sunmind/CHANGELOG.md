@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.171
+
+- Fix crash startup card Sunsynk 6.9.2: inizializzazione `window.customCards` forzata ad array prima del load script (fix errore `push`).
+- Fix render race: rimosso set `hass` prima di `setConfig` nel wrapper per evitare `config/entities undefined` durante il primo ciclo render.
+
 ## 0.3.170
 
 - Hotfix crash runtime Sunsynk (`Cannot read properties of undefined: push/entities`): introdotta normalizzazione hard della config prima di `setConfig`.
