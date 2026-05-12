@@ -1210,173 +1210,105 @@
               </div>
             </div>
           </div>
-          <div class="form-grid">
-            <label>Enabled
-              <input type="checkbox" v-model="energyForm.enabled" />
-            </label>
-            <label>Theme
-              <select v-model="energyForm.theme">
-                <option value="classic_flow">Classic Inverter</option>
-                <option value="technical_dark">Technical Dark</option>
-                <option value="minimal_light">Minimal Light</option>
-              </select>
-            </label>
-            <label>Cardstyle
-              <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
-                <option value="full">full</option>
-                <option value="compact">compact</option>
-                <option value="lite">lite</option>
-                <option value="minimal">minimal</option>
-              </select>
-            </label>
-            <label>Show Solar
-              <input type="checkbox" v-model="energyWizardForm.show_solar" />
-            </label>
-            <label>Show Battery
-              <input type="checkbox" v-model="energyWizardForm.show_battery" />
-            </label>
-            <label>Show Grid
-              <input type="checkbox" v-model="energyWizardForm.show_grid" />
-            </label>
-            <label>Dynamic line width
-              <input type="checkbox" v-model="energyWizardForm.dynamic_line_width" />
-            </label>
-            <label>Line width min
-              <input type="number" min="1" max="6" step="1" v-model.number="energyWizardForm.min_line_width" />
-            </label>
-            <label>Line width max
-              <input type="number" min="1" max="8" step="1" v-model.number="energyWizardForm.max_line_width" />
-            </label>
-            <label>Wide layout
-              <input type="checkbox" v-model="energyWizardForm.wide" />
-            </label>
-            <label>Inverter modern
-              <input type="checkbox" v-model="energyWizardForm.inverter_modern" />
-            </label>
-            <label>Inverter auto-scale
-              <input type="checkbox" v-model="energyWizardForm.inverter_auto_scale" />
-            </label>
-            <label>Inverter three-phase
-              <input type="checkbox" v-model="energyWizardForm.inverter_three_phase" />
-            </label>
-            <label>Solar max power (W)
-              <input type="number" min="100" step="100" v-model.number="energyWizardForm.solar_max_power" />
-            </label>
-            <label>Solar speed
-              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" />
-            </label>
-            <label>Solar show daily
-              <input type="checkbox" v-model="energyWizardForm.solar_show_daily" />
-            </label>
-            <label>Battery capacity (Wh)
-              <input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_energy_wh" />
-            </label>
-            <label>Battery shutdown SOC (%)
-              <input type="number" min="0" max="100" step="1" v-model.number="energyWizardForm.battery_shutdown_soc" />
-            </label>
-            <label>Battery max power (W)
-              <input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_max_power" />
-            </label>
-            <label>Battery speed
-              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.battery_animation_speed" />
-            </label>
-            <label>Battery auto-scale
-              <input type="checkbox" v-model="energyWizardForm.battery_auto_scale" />
-            </label>
-            <label>Battery show daily
-              <input type="checkbox" v-model="energyWizardForm.battery_show_daily" />
-            </label>
-            <label>Load max power (W)
-              <input type="number" min="100" step="100" v-model.number="energyWizardForm.load_max_power" />
-            </label>
-            <label>Load speed
-              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.load_animation_speed" />
-            </label>
-            <label>Load auto-scale
-              <input type="checkbox" v-model="energyWizardForm.load_auto_scale" />
-            </label>
-            <label>Load show daily
-              <input type="checkbox" v-model="energyWizardForm.load_show_daily" />
-            </label>
-            <label>Grid max power (W)
-              <input type="number" min="100" step="100" v-model.number="energyWizardForm.grid_max_power" />
-            </label>
-            <label>Grid speed
-              <input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.grid_animation_speed" />
-            </label>
-            <label>Grid auto-scale
-              <input type="checkbox" v-model="energyWizardForm.grid_auto_scale" />
-            </label>
-            <label>Grid show daily buy
-              <input type="checkbox" v-model="energyWizardForm.grid_show_daily_buy" />
-            </label>
-            <label>PV power entity id
-              <input type="text" v-model="energyForm.pv_power_entity_id" />
-            </label>
-            <label>PV segno
-              <select v-model="energyForm.pv_power_sign">
-                <option value="positive">Positivo (+)</option>
-                <option value="negative">Negativo (-)</option>
-              </select>
-            </label>
-            <label>Home power entity id
-              <input type="text" v-model="energyForm.home_power_entity_id" />
-            </label>
-            <label>Home segno
-              <select v-model="energyForm.home_power_sign">
-                <option value="positive">Positivo (+)</option>
-                <option value="negative">Negativo (-)</option>
-              </select>
-            </label>
-            <label>Grid power entity id
-              <input type="text" v-model="energyForm.grid_power_entity_id" />
-            </label>
-            <label>Grid segno
-              <select v-model="energyForm.grid_power_sign">
-                <option value="positive">Positivo (+)</option>
-                <option value="negative">Negativo (-)</option>
-              </select>
-            </label>
-            <label>Battery power entity id
-              <input type="text" v-model="energyForm.battery_power_entity_id" />
-            </label>
-            <label>Battery segno
-              <select v-model="energyForm.battery_power_sign">
-                <option value="positive">Positivo (+)</option>
-                <option value="negative">Negativo (-)</option>
-              </select>
-            </label>
-            <label>Battery SOC entity id
-              <input type="text" v-model="energyForm.battery_soc_entity_id" />
-            </label>
-            <label>Inverter voltage entity id (V)
-              <input type="text" v-model="energyForm.inverter_voltage_entity_id" />
-            </label>
-            <label>Load frequency entity id (Hz)
-              <input type="text" v-model="energyForm.load_frequency_entity_id" />
-            </label>
-            <label>PV installed kWp
-              <input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" />
-            </label>
-            <label>PV energy today entity id
-              <input type="text" v-model="energyForm.pv_energy_today_entity_id" />
-            </label>
-            <label>Home energy today entity id
-              <input type="text" v-model="energyForm.home_energy_today_entity_id" />
-            </label>
-            <label>Grid import today entity id
-              <input type="text" v-model="energyForm.grid_import_today_entity_id" />
-            </label>
-            <label>Grid export today entity id
-              <input type="text" v-model="energyForm.grid_export_today_entity_id" />
-            </label>
-            <label style="grid-column: 1 / -1;">
-              <small>I flag segno (+/-) regolano la convenzione per ogni entita di potenza nella dashboard.</small>
-            </label>
-            <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
-              <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
-              <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
-            </label>
+          <div class="energy-layout">
+            <section class="energy-group">
+              <h4>Generale</h4>
+              <div class="form-grid">
+                <label>Enabled<input type="checkbox" v-model="energyForm.enabled" /></label>
+                <label>Theme
+                  <select v-model="energyForm.theme">
+                    <option value="classic_flow">Classic Inverter</option>
+                    <option value="technical_dark">Technical Dark</option>
+                    <option value="minimal_light">Minimal Light</option>
+                  </select>
+                </label>
+                <label>Cardstyle
+                  <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
+                    <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
+                  </select>
+                </label>
+                <label>Show Solar<input type="checkbox" v-model="energyWizardForm.show_solar" /></label>
+                <label>Show Battery<input type="checkbox" v-model="energyWizardForm.show_battery" /></label>
+                <label>Show Grid<input type="checkbox" v-model="energyWizardForm.show_grid" /></label>
+                <label>Dynamic line width<input type="checkbox" v-model="energyWizardForm.dynamic_line_width" /></label>
+                <label>Line width min<input type="number" min="1" max="6" step="1" v-model.number="energyWizardForm.min_line_width" /></label>
+                <label>Line width max<input type="number" min="1" max="8" step="1" v-model.number="energyWizardForm.max_line_width" /></label>
+                <label>Wide layout<input type="checkbox" v-model="energyWizardForm.wide" /></label>
+                <label>Inverter modern<input type="checkbox" v-model="energyWizardForm.inverter_modern" /></label>
+                <label>Inverter auto-scale<input type="checkbox" v-model="energyWizardForm.inverter_auto_scale" /></label>
+                <label>Inverter three-phase<input type="checkbox" v-model="energyWizardForm.inverter_three_phase" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>Solar & Battery</h4>
+              <div class="form-grid">
+                <label>Solar max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.solar_max_power" /></label>
+                <label>Solar speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" /></label>
+                <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
+                <label>Battery capacity (Wh)<input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_energy_wh" /></label>
+                <label>Battery shutdown SOC (%)<input type="number" min="0" max="100" step="1" v-model.number="energyWizardForm.battery_shutdown_soc" /></label>
+                <label>Battery max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_max_power" /></label>
+                <label>Battery speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.battery_animation_speed" /></label>
+                <label>Battery auto-scale<input type="checkbox" v-model="energyWizardForm.battery_auto_scale" /></label>
+                <label>Battery show daily<input type="checkbox" v-model="energyWizardForm.battery_show_daily" /></label>
+                <label>PV installed kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>Load & Grid</h4>
+              <div class="form-grid">
+                <label>Load max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.load_max_power" /></label>
+                <label>Load speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.load_animation_speed" /></label>
+                <label>Load auto-scale<input type="checkbox" v-model="energyWizardForm.load_auto_scale" /></label>
+                <label>Load show daily<input type="checkbox" v-model="energyWizardForm.load_show_daily" /></label>
+                <label>Grid max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.grid_max_power" /></label>
+                <label>Grid speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.grid_animation_speed" /></label>
+                <label>Grid auto-scale<input type="checkbox" v-model="energyWizardForm.grid_auto_scale" /></label>
+                <label>Grid show daily buy<input type="checkbox" v-model="energyWizardForm.grid_show_daily_buy" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>Entita Potenza</h4>
+              <div class="form-grid">
+                <label>PV power entity id<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
+                <label>PV segno<select v-model="energyForm.pv_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Home power entity id<input type="text" v-model="energyForm.home_power_entity_id" /></label>
+                <label>Home segno<select v-model="energyForm.home_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Grid power entity id<input type="text" v-model="energyForm.grid_power_entity_id" /></label>
+                <label>Grid segno<select v-model="energyForm.grid_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Battery power entity id<input type="text" v-model="energyForm.battery_power_entity_id" /></label>
+                <label>Battery segno<select v-model="energyForm.battery_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
+                <label>Battery SOC entity id<input type="text" v-model="energyForm.battery_soc_entity_id" /></label>
+                <label>Inverter voltage entity id (V)<input type="text" v-model="energyForm.inverter_voltage_entity_id" /></label>
+                <label>Load frequency entity id (Hz)<input type="text" v-model="energyForm.load_frequency_entity_id" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>Entita Giornaliere</h4>
+              <div class="form-grid">
+                <label>PV energy today entity id<input type="text" v-model="energyForm.pv_energy_today_entity_id" /></label>
+                <label>Home energy today entity id<input type="text" v-model="energyForm.home_energy_today_entity_id" /></label>
+                <label>Grid import today entity id<input type="text" v-model="energyForm.grid_import_today_entity_id" /></label>
+                <label>Grid export today entity id<input type="text" v-model="energyForm.grid_export_today_entity_id" /></label>
+              </div>
+            </section>
+
+            <section class="energy-group">
+              <h4>JSON Avanzato</h4>
+              <div class="form-grid">
+                <label style="grid-column: 1 / -1;">
+                  <small>I flag segno (+/-) regolano la convenzione per ogni entita di potenza nella dashboard.</small>
+                </label>
+                <label style="grid-column: 1 / -1;">Sunsynk card config JSON (wrapper standalone)
+                  <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
+                  <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
+                </label>
+              </div>
+            </section>
           </div>
         </section>
         </template>
@@ -5648,6 +5580,23 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   border-color:#22d3ee;
   box-shadow:inset 0 0 0 1px rgba(34,211,238,.45), 0 0 0 2px rgba(34,211,238,.2);
   background:rgba(8,47,73,.38);
+}
+.energy-layout{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
+.energy-group{
+  border:1px solid rgba(71,85,105,.45);
+  border-radius:10px;
+  background:linear-gradient(180deg,rgba(8,17,33,.72),rgba(4,10,22,.72));
+  padding:10px;
+}
+.energy-group h4{
+  margin:0 0 8px 0;
+  font-size:13px;
+  color:#cfe6ff;
+  letter-spacing:.2px;
 }
 
 @media (max-width: 768px){

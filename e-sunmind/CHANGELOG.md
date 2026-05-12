@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.163
+
+- Restyling pagina Energy: configurazione divisa in blocchi funzionali (`Generale`, `Solar & Battery`, `Load & Grid`, `Entita Potenza`, `Entita Giornaliere`, `JSON Avanzato`).
+- Migliorata leggibilita e spacing della UI, eliminando l'effetto "griglia unica insalata".
+
 ## 0.3.162
 
 - Wizard Energy: `Applica alla card` ora fa merge non distruttivo con il JSON esistente invece di sostituirlo.
