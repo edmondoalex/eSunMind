@@ -179,6 +179,12 @@
         cardConfig.entities.pv2_voltage_111 = '';
         cardConfig.entities.pv2_current_112 = '';
       }
+      const hasPv = Boolean(String(cardConfig.entities.pv1_power_186 || '').trim() || String(cardConfig.entities.pv2_power_187 || '').trim());
+      const hasBattery = Boolean(String(cardConfig.entities.battery_power_190 || '').trim() || String(cardConfig.entities.battery_soc_184 || '').trim());
+      const hasGrid = Boolean(String(cardConfig.entities.grid_power_169 || '').trim() || String(cardConfig.entities.grid_ct_power_172 || '').trim());
+      cardConfig.show_solar = Boolean(cardConfig.show_solar && hasPv);
+      cardConfig.show_battery = Boolean(cardConfig.show_battery && hasBattery);
+      cardConfig.show_grid = Boolean(cardConfig.show_grid && hasGrid);
     }
 
     async function loadCardConfigFromAddonOptions() {
@@ -205,34 +211,7 @@
       }
     }
 
-    function seedStates() {
-      const s = window.hass.states;
-      const put = (k, v, u, extra = {}) => { const id = entityId(k); if (id) s[id] = mkState(v, u, extra); };
-      put('inverter_power_175', 1160, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('grid_power_169', 1150, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('battery_soc_184', 26, '%', { device_class: 'battery', state_class: 'measurement' });
-      put('battery_power_190', -3040, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('battery_current_191', 18.3, 'A', { device_class: 'current', state_class: 'measurement' });
-      put('battery_voltage_183', 52.9, 'V', { device_class: 'voltage', state_class: 'measurement' });
-      put('grid_ct_power_172', 1150, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('grid_connected_status_194', 'on');
-      put('inverter_status_59', 'normal');
-      put('inverter_voltage_154', 231.5, 'V', { device_class: 'voltage', state_class: 'measurement' });
-      put('inverter_current_164', 5.0, 'A', { device_class: 'current', state_class: 'measurement' });
-      put('load_frequency_192', 50.02, 'Hz', { device_class: 'frequency', state_class: 'measurement' });
-      put('pv1_power_186', 2950, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('pv2_power_187', 2420, 'W', { device_class: 'power', state_class: 'measurement' });
-      put('pv1_voltage_109', 370, 'V', { device_class: 'voltage', state_class: 'measurement' });
-      put('pv1_current_110', 8.0, 'A', { device_class: 'current', state_class: 'measurement' });
-      put('pv2_voltage_111', 365, 'V', { device_class: 'voltage', state_class: 'measurement' });
-      put('pv2_current_112', 6.6, 'A', { device_class: 'current', state_class: 'measurement' });
-      put('day_pv_energy_108', 6.7, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-      put('day_battery_charge_70', 3.1, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-      put('day_battery_discharge_71', 0.0, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-      put('day_load_energy_84', 11.9, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-      put('day_grid_import_76', 8.5, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-      put('day_grid_export_77', 0.2, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
-    }
+    function seedStates() {}
 
     const card = document.getElementById('card');
 
@@ -244,8 +223,6 @@
 
     function initCard() {
       seedStates();
-      const gridStatusId = entityId('grid_connected_status_194');
-      if (gridStatusId && !window.hass.states[gridStatusId]) window.hass.states[gridStatusId] = mkState('on');
       card.setConfig(cardConfig);
       forceRender();
       if (MAP_MODE) fitMapMode();
@@ -273,6 +250,7 @@
       const now = new Date().toISOString();
       const set = (id, value, unit, extra = {}) => {
         if (!id) return;
+        if (value == null || (typeof value === 'number' && Number.isNaN(value))) return;
         const prev = s[id] || mkState(0, unit);
         s[id] = {
           ...prev,
@@ -291,7 +269,8 @@
         const mppts = Number(cardConfig?.solar?.mppts || 2);
         if (mppts <= 1) {
           set(entityId('pv1_power_186'), Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
-          set(entityId('pv2_power_187'), 0, 'W', { device_class: 'power', state_class: 'measurement' });
+          const pv2id = entityId('pv2_power_187');
+          if (pv2id) set(pv2id, 0, 'W', { device_class: 'power', state_class: 'measurement' });
         } else {
           const pv1 = Number(newData.solar_power) * 0.52;
           const pv2 = Number(newData.solar_power) * 0.48;
@@ -347,7 +326,7 @@
           const p = num(primary);
           if (p != null) return p;
           const f = num(fallback);
-          return f != null ? f : 0;
+          return f != null ? f : null;
         };
         const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
           const entry = ce?.[cardKey];
@@ -375,30 +354,31 @@
         const pv1 = fromCard('pv1_power_186');
         const pv2 = fromCard('pv2_power_187');
         const solarFallback = (pv1 != null || pv2 != null) ? (Number(pv1 || 0) + Number(pv2 || 0)) : null;
-        const solarPower = pick(n.pv_power_w, solarFallback) * signFix.pv;
-        const batteryPower = pick(n.battery_power_w, fromCard('battery_power_190')) * signFix.battery;
+        const solarRaw = pick(n.pv_power_w, solarFallback);
+        const batteryRaw = pick(n.battery_power_w, fromCard('battery_power_190'));
         const batterySoc = pick(n.battery_soc_pct, fromCard('battery_soc_184'));
-        const gridPower = pick(n.grid_power_w, fromCard('grid_power_169')) * signFix.grid;
-        const inverterPower = pick(n.home_power_w, fromCard('inverter_power_175')) * signFix.home;
+        const gridRaw = pick(n.grid_power_w, fromCard('grid_power_169'));
+        const inverterRaw = pick(n.home_power_w, fromCard('inverter_power_175'));
+        const solarPower = (solarRaw == null ? null : solarRaw * signFix.pv);
+        const batteryPower = (batteryRaw == null ? null : batteryRaw * signFix.battery);
+        const gridPower = (gridRaw == null ? null : gridRaw * signFix.grid);
+        const inverterPower = (inverterRaw == null ? null : inverterRaw * signFix.home);
 
         // campi opzionali: usa valore corrente se non disponibili
-        const inverterVoltage = Number(
+        const inverterVoltageRaw = Number(
           j?.energy?.normalized?.inverter_voltage_v ??
           j?.energy?.inverter_voltage_v ??
           window.hass.states[entityId('inverter_voltage_154')]?.state ??
-          231.5
+          NaN
         );
-        const loadFrequency = Number(
+        const loadFrequencyRaw = Number(
           j?.energy?.normalized?.load_frequency_hz ??
           j?.energy?.load_frequency_hz ??
           window.hass.states[entityId('load_frequency_192')]?.state ??
-          50.0
+          NaN
         );
-        const gridStatusId = entityId('grid_connected_status_194');
-        if (gridStatusId && !window.hass.states[gridStatusId]) {
-          window.hass.states[gridStatusId] = mkState('on');
-        }
-
+        const inverterVoltage = Number.isFinite(inverterVoltageRaw) ? inverterVoltageRaw : null;
+        const loadFrequency = Number.isFinite(loadFrequencyRaw) ? loadFrequencyRaw : null;
         window.updateSensors({
           solar_power: solarPower,
           battery_power: batteryPower,

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.160
+
+- Regola strict mapping nel wrapper energy: se un'entita non e mappata, non vengono piu seedati valori fake e non vengono piu applicati fallback numerici a `0`.
+- Rami Solar/Battery/Grid ora si disattivano automaticamente se le rispettive entita principali non sono configurate.
+- Rimossi fallback forzati di stato grid (`on`) quando l'entita non e presente.
+
 ## 0.3.158
 
 - Mappatura entita realtime semplificata: rimossi marker cliccabili sovrapposti alla card (fonte principale di disallineamento).
