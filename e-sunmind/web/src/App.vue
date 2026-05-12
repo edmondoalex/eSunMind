@@ -4485,6 +4485,8 @@ async function autofillWeatherStationFromDevice() {
 async function saveBaseSettings() {
   baseSaveStatus.value = 'Salvataggio...'
   try {
+    // Ensure wizard edits (icons/topology/entities) are persisted into card JSON before save.
+    applyEnergyWizard()
     const payload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),
@@ -4585,6 +4587,8 @@ async function saveAllSettings() {
   fsSaveStatus.value = ''
   overlaySaveStatus.value = ''
   try {
+    // Ensure wizard edits (icons/topology/entities) are persisted into card JSON before save.
+    applyEnergyWizard()
     const basePayload = {
       latitude: Number(baseForm.value.latitude),
       longitude: Number(baseForm.value.longitude),

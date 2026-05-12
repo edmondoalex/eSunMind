@@ -219,7 +219,11 @@
         cardConfig.grid[k] = String(cardConfig.grid[k] || 'default').trim() || 'default';
       }
       for (const k of ['import_icon', 'export_icon', 'disconnected_icon']) {
-        cardConfig.grid[k] = String(cardConfig.grid[k] || '').trim();
+        const raw = String(cardConfig.grid[k] || '').trim();
+        // Standalone wrapper may not resolve all mdi transmission tower aliases.
+        // Keep icon visible by forcing a safe fallback when mdi tower aliases are used.
+        if (!raw || raw.toLowerCase().startsWith('mdi:transmission-tower')) cardConfig.grid[k] = 'default';
+        else cardConfig.grid[k] = raw;
       }
       const explicitMppts = Number(cardConfig.solar.mppts);
       let mppts = Number.isFinite(explicitMppts) ? explicitMppts : NaN;

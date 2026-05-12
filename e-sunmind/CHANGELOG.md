@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.175
+
+- Persistenza UI Energy corretta: `Salva configurazione Energy` e `Salva tutto` applicano automaticamente il wizard prima del payload, evitando ritorni ai valori precedenti.
+- Wrapper standalone: fallback robusto icone torre rete (`mdi:transmission-tower-*`) a `default` per garantire icona Grid visibile.
+
 ## 0.3.174
 
 - Wizard icone Energy esteso: aggiunti preset aggiuntivi e campi testo custom per tutte le icone Load/Non-Essential.
