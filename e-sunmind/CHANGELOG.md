@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.155
+
+- Mapper dashboard (`map=1`): aggiunto auto-fit dinamico della card Sunsynk al viewport del frame.
+- Rimosse scrollbar interne del frame in modalita mappa e stabilizzato l'allineamento hotspot con resize.
+
 ## 0.3.154
 
 - Mapper entita su dashboard reale: sostituiti hotspot a pixel fissi con coordinate normalizzate (0..1) rispetto alla card.
