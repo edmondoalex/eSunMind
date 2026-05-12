@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.197
+- UI Energy: rimossi i selettori segno duplicati nei blocchi (`Solar`, `Load`, `Grid`, `Battery`).
+- Segno ora centralizzato solo nella sezione unica `Segno Entita (+/-)` per evitare configurazione sparsa/confusa.
+
 ## 0.3.196
 - Segno `+/-` ora configurabile in UI per tutte le principali entita di potenza (PV1..PV6, Home/Essential, Battery1/2, Grid/CT, AUX, Non-Essential, load dedicati).
 - Aggiunta sezione UI `Segno Entita (+/-)` con dropdown per chiave; generazione automatica di `entity_signs_json` (non serve piu scriverlo a mano).

@@ -1104,7 +1104,6 @@
                 <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
                 <label>PV installed kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
                 <label>PV1 potenza (entity_id)<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
-                <label>Segno PV<select v-model="energyForm.pv_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>PV2 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
                 <label>PV2 tensione (V)<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
                 <label>PV2 corrente (A)<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
@@ -1126,7 +1125,6 @@
                 <label>Battery auto-scale<input type="checkbox" v-model="energyWizardForm.battery_auto_scale" /></label>
                 <label>Battery show daily<input type="checkbox" v-model="energyWizardForm.battery_show_daily" /></label>
                 <label>Batteria 1 potenza (entity_id)<input type="text" v-model="energyForm.battery_power_entity_id" /></label>
-                <label>Segno Batteria<select v-model="energyForm.battery_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Batteria 2 potenza (entity_id)<input type="text" v-model="energyWizardForm.battery2_power_190" /></label>
                 <label>Batteria SOC (%) (entity_id)<input type="text" v-model="energyForm.battery_soc_entity_id" /></label>
               </div>
@@ -1136,7 +1134,6 @@
               <h4>Load</h4>
               <div class="form-grid">
                 <label>Casa/Home potenza (entity_id)<input type="text" v-model="energyForm.home_power_entity_id" /></label>
-                <label>Segno Casa/Home<select v-model="energyForm.home_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Colore Load<input type="color" v-model="energyWizardForm.color_load" /></label>
                 <label>Load max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.load_max_power" /></label>
                 <label>Load speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.load_animation_speed" /></label>
@@ -1178,7 +1175,6 @@
               <div class="form-grid">
                 <label>Colore Grid<input type="color" v-model="energyWizardForm.color_grid" /></label>
                 <label>Rete/Grid potenza (entity_id)<input type="text" v-model="energyForm.grid_power_entity_id" /></label>
-                <label>Segno Rete/Grid<select v-model="energyForm.grid_power_sign"><option value="positive">Positivo (+)</option><option value="negative">Negativo (-)</option></select></label>
                 <label>Rete CT potenza (entity_id)<input type="text" v-model="energyWizardForm.grid_ct_power_172" /></label>
                 <label>Rete connessa stato (entity_id)<input type="text" v-model="energyWizardForm.grid_connected_status_194" /></label>
                 <label>Grid max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.grid_max_power" /></label>
