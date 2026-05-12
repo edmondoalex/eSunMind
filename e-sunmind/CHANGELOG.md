@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.205
+- Fix Energy Flow test/mapping: il wrapper ora pubblica direttamente in `window.hass.states` gli stati HA reali letti da `energy.card_entities`, evitando che restino i seed a `0`.
+- Aggiunto log `console.warn` quando il sync Energy fallisce, per non nascondere errori runtime del wrapper.
+- Bump versione addon/backend a `0.3.205`.
+
 ## 0.3.204
 - Fix Energy Flow: aggiunti fallback obbligatori `battery.shutdown_soc`, `battery.energy`, `battery.max_power` e valori equivalenti per `battery2` prima di chiamare `setConfig()` sulla card Sunsynk.
 - Compatibilita Sunsynk Power Flow Card 6.9.2: evitato errore bloccante `Please include the battery shutdown_soc attribute`.

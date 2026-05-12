@@ -621,6 +621,58 @@
           if (n == null) return value;
           return entitySignMap[String(key)] === 'negative' ? -n : n;
         };
+        const publishRawHaEntityState = (entry, fallbackUnit, deviceClass, stateClass) => {
+          const id = String(entry?.entity_id || '').trim();
+          if (!isConfiguredEntity(id) || entry.value == null) return false;
+          const unit = String(entry.unit || fallbackUnit || '');
+          const value = num(entry.value) != null ? num(entry.value) : entry.state;
+          if (value == null) return false;
+          const prev = window.hass.states[id] || mkState(0, unit);
+          const attrs = (entry.attributes && typeof entry.attributes === 'object') ? entry.attributes : {};
+          window.hass.states[id] = {
+            ...prev,
+            entity_id: id,
+            state: String(value),
+            attributes: {
+              ...(prev.attributes || {}),
+              ...attrs,
+              ...(unit ? { unit_of_measurement: unit } : {}),
+              ...(deviceClass ? { device_class: deviceClass } : {}),
+              ...(stateClass ? { state_class: stateClass } : {}),
+            },
+            last_updated: new Date().toISOString(),
+          };
+          return true;
+        };
+        const publishAllRawCardEntityStates = () => {
+          for (const [cardKey, entry] of Object.entries(ce || {})) {
+            let unit = '';
+            let deviceClass = '';
+            let stateClass = '';
+            if (cardKey.includes('energy') || cardKey.startsWith('day_')) {
+              unit = 'kWh';
+              deviceClass = 'energy';
+              stateClass = 'total_increasing';
+            } else if (cardKey.includes('soc')) {
+              unit = '%';
+              deviceClass = 'battery';
+              stateClass = 'measurement';
+            } else if (cardKey.includes('voltage')) {
+              unit = 'V';
+              deviceClass = 'voltage';
+              stateClass = 'measurement';
+            } else if (cardKey.includes('current')) {
+              unit = 'A';
+              deviceClass = 'current';
+              stateClass = 'measurement';
+            } else if (cardKey.includes('power') || cardKey.includes('load') || cardKey.includes('grid') || cardKey.includes('pv')) {
+              unit = 'W';
+              deviceClass = 'power';
+              stateClass = 'measurement';
+            }
+            publishRawHaEntityState(entry, unit, deviceClass, stateClass);
+          }
+        };
         const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
           const entry = ce?.[cardKey];
           if (!entry || entry.value == null) return false;
@@ -643,6 +695,8 @@
           };
           return true;
         };
+
+        publishAllRawCardEntityStates();
 
         const pv1 = fromCard('pv1_power_186');
         const pv2 = fromCard('pv2_power_187');
@@ -738,6 +792,7 @@
 
         forceRender();
       } catch (e) {
+        console.warn('e-SunMind Energy sync failed', e);
       }
     }
 
