@@ -1164,16 +1164,13 @@
                   </div>
                   <div class="energy-live-map">
                     <iframe class="energy-live-frame" src="/energy-dashboard/sunsynk-wrapper.html?map=1&v=live-map" title="Sunsynk Full Preview"></iframe>
-                    <button class="map-hit pv1" @click="editEnergyEntity('pv1_power_186','PV1 Power')">PV1</button>
-                    <button class="map-hit home" @click="editEnergyEntity('inverter_power_175','Home/Inverter Power')">HOME</button>
-                    <button class="map-hit grid" @click="editEnergyEntity('grid_power_169','Grid Power')">GRID</button>
-                    <button class="map-hit batt" @click="editEnergyEntity('battery_power_190','Battery Power')">BATT</button>
-                    <button class="map-hit soc" @click="editEnergyEntity('battery_soc_184','Battery SOC')">SOC</button>
-                    <button class="map-hit volt" @click="editEnergyEntity('inverter_voltage_154','Inverter Voltage')">V</button>
-                    <button class="map-hit hz" @click="editEnergyEntity('load_frequency_192','Load Frequency')">Hz</button>
-                    <button class="map-hit dailypv" @click="editEnergyEntity('day_pv_energy_108','PV Energy Today')">PV kWh</button>
-                    <button class="map-hit dailyload" @click="editEnergyEntity('day_load_energy_84','Load Energy Today')">LOAD kWh</button>
-                    <button class="map-hit dailygrid" @click="editEnergyEntity('day_grid_import_76','Grid Import Today')">GRID kWh</button>
+                    <button
+                      v-for="h in energyHotspots"
+                      :key="h.key"
+                      class="map-hit"
+                      :style="energyHotspotStyle(h)"
+                      @click="editEnergyEntity(h.key, h.label)"
+                    >{{ h.short }}</button>
                   </div>
                 </div>
                 <label>PV1 power entity<input type="text" v-model="energyWizardForm.pv1_power_186" /></label>
@@ -1719,6 +1716,19 @@ const energyMapTargets = [
   { key: 'day_load_energy_84', label: 'Load Energy Today' },
   { key: 'day_grid_import_76', label: 'Grid Import Today' },
 ]
+const energyHotspots = [
+  { key: 'pv1_power_186', label: 'PV1 Power', short: 'PV1', x: 0.03, y: 0.23 },
+  { key: 'day_pv_energy_108', label: 'PV Energy Today', short: 'PV kWh', x: 0.03, y: 0.04 },
+  { key: 'inverter_power_175', label: 'Home/Inverter Power', short: 'HOME', x: 0.33, y: 0.32 },
+  { key: 'day_load_energy_84', label: 'Load Energy Today', short: 'LOAD kWh', x: 0.43, y: 0.14 },
+  { key: 'inverter_voltage_154', label: 'Inverter Voltage', short: 'V', x: 0.46, y: 0.32 },
+  { key: 'load_frequency_192', label: 'Load Frequency', short: 'Hz', x: 0.46, y: 0.40 },
+  { key: 'battery_power_190', label: 'Battery Power', short: 'BATT', x: 0.12, y: 0.62 },
+  { key: 'battery_soc_184', label: 'Battery SOC', short: 'SOC', x: 0.31, y: 0.79 },
+  { key: 'grid_power_169', label: 'Grid Power', short: 'GRID', x: 0.90, y: 0.62 },
+  { key: 'day_grid_import_76', label: 'Grid Import Today', short: 'GRID IN', x: 0.79, y: 0.49 },
+  { key: 'day_grid_export_77', label: 'Grid Export Today', short: 'GRID OUT', x: 0.79, y: 0.56 },
+]
 const realtimeEntityKeys = [
   'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
   'grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59','inverter_power_175',
@@ -1831,6 +1841,15 @@ function editEnergyEntity(key, label) {
   const next = window.prompt(`Entity ID per: ${label}`, current)
   if (next === null) return
   energyWizardForm.value[key] = String(next || '').trim()
+}
+
+function energyHotspotStyle(h) {
+  const x = Math.max(0, Math.min(1, Number(h?.x || 0)));
+  const y = Math.max(0, Math.min(1, Number(h?.y || 0)));
+  return {
+    left: `${(x * 100).toFixed(3)}%`,
+    top: `${(y * 100).toFixed(3)}%`,
+  }
 }
 const localTimestampLabel = computed(() => {
   const raw = data.value?.timestamp_local
@@ -5580,17 +5599,8 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   padding:2px 6px;
   cursor:pointer;
   line-height:1.1;
+  transform: translate(-50%, -50%);
 }
-.map-hit.pv1{ left:28px; top:160px; }
-.map-hit.home{ left:360px; top:248px; }
-.map-hit.grid{ right:42px; top:480px; }
-.map-hit.batt{ left:132px; top:492px; }
-.map-hit.soc{ left:352px; top:596px; }
-.map-hit.volt{ left:500px; top:250px; }
-.map-hit.hz{ left:500px; top:312px; }
-.map-hit.dailypv{ left:20px; top:24px; }
-.map-hit.dailyload{ left:470px; top:130px; }
-.map-hit.dailygrid{ right:86px; top:388px; }
 
 @media (max-width: 768px){
   .topbar{

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.154
+
+- Mapper entita su dashboard reale: sostituiti hotspot a pixel fissi con coordinate normalizzate (0..1) rispetto alla card.
+- Aggiunte mappature dedicate anche per `day_grid_export_77` oltre a `day_grid_import_76`.
+- Risultato: allineamento consistente dei pulsanti su diverse risoluzioni senza ritocchi manuali.
+
 ## 0.3.153
 
 - Popup mappatura energy: aumentata altezza preview card per includere la parte bassa della dashboard.
