@@ -2,6 +2,7 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import threading
 import time
 import uuid
@@ -34,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.216"
+APP_VERSION = "0.3.217"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -258,13 +259,17 @@ def _load_options() -> dict[str, Any]:
             "grid_export_today_entity_id": "",
             "sunsynk_card_config_json": "",
             "entity_signs_json": "",
+            "selected_site_id": "default",
+            "sites": [],
         },
     }
     if not OPTIONS_FILE.exists():
+        _normalize_energy_sites_inplace(defaults["energy"])
         return defaults
     try:
         payload = json.loads(OPTIONS_FILE.read_text(encoding="utf-8"))
     except Exception:
+        _normalize_energy_sites_inplace(defaults["energy"])
         return defaults
     for key in ("latitude", "longitude", "timezone", "coordinates_source_mode", "interval_minutes", "location_query", "pv_actual_entity_id", "external_temp_entity_id", "external_humidity_entity_id"):
         if key in payload:
@@ -340,6 +345,7 @@ def _load_options() -> dict[str, Any]:
     defaults["overlay"]["sectorRadiusM"] = max(30, min(300, int(defaults["overlay"].get("sectorRadiusM", 110) or 110)))
     defaults["overlay"]["sunRadiusM"] = max(30, min(300, int(defaults["overlay"].get("sunRadiusM", 95) or 95)))
     defaults["overlay"]["mapZoom"] = max(14, min(22, int(defaults["overlay"].get("mapZoom", 18) or 18)))
+    _normalize_energy_sites_inplace(defaults["energy"])
     return defaults
 
 
@@ -368,6 +374,79 @@ def _save_local_options_raw(payload: dict[str, Any]) -> None:
 
 def _save_options_raw(payload: dict[str, Any]) -> None:
     OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+ENERGY_SITE_KEYS = (
+    "enabled",
+    "theme",
+    "dashboard_background_color",
+    "pv_power_entity_id",
+    "pv_power_sign",
+    "home_power_entity_id",
+    "home_power_sign",
+    "grid_power_entity_id",
+    "grid_power_sign",
+    "battery_power_entity_id",
+    "battery_power_sign",
+    "battery_soc_entity_id",
+    "inverter_voltage_entity_id",
+    "load_frequency_entity_id",
+    "pv_installed_kwp",
+    "pv_energy_today_entity_id",
+    "home_energy_today_entity_id",
+    "grid_import_today_entity_id",
+    "grid_export_today_entity_id",
+    "sunsynk_card_config_json",
+    "entity_signs_json",
+)
+
+
+def _energy_site_slug(value: Any, fallback: str = "default") -> str:
+    raw = str(value or "").strip().lower()
+    slug = re.sub(r"[^a-z0-9_-]+", "-", raw).strip("-_")
+    return slug or fallback
+
+
+def _energy_site_from_flat(e_cfg: dict[str, Any], site_id: str = "default", name: str = "Impianto 1") -> dict[str, Any]:
+    site = {"id": site_id, "name": name}
+    for key in ENERGY_SITE_KEYS:
+        if key in e_cfg:
+            site[key] = e_cfg.get(key)
+    return site
+
+
+def _normalize_energy_sites_inplace(e_cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    raw_sites = e_cfg.get("sites")
+    sites_in = raw_sites if isinstance(raw_sites, list) else []
+    fallback = _energy_site_from_flat(e_cfg)
+    sites: list[dict[str, Any]] = []
+    used: set[str] = set()
+    for idx, raw in enumerate(sites_in):
+        if not isinstance(raw, dict):
+            continue
+        base = dict(fallback)
+        base.update(raw)
+        sid = _energy_site_slug(base.get("id") or base.get("name"), f"impianto-{idx + 1}")
+        if sid in used:
+            sid = f"{sid}-{idx + 1}"
+        used.add(sid)
+        base["id"] = sid
+        base["name"] = str(base.get("name") or sid).strip() or sid
+        sites.append(base)
+    if not sites:
+        fallback["id"] = _energy_site_slug(e_cfg.get("selected_site_id") or fallback.get("id"), "default")
+        fallback["name"] = str(e_cfg.get("site_name") or fallback.get("name") or "Impianto 1").strip() or "Impianto 1"
+        sites.append(fallback)
+    selected_id = _energy_site_slug(e_cfg.get("selected_site_id") or sites[0].get("id"), str(sites[0].get("id") or "default"))
+    if not any(str(s.get("id")) == selected_id for s in sites):
+        selected_id = str(sites[0].get("id") or "default")
+    selected = next((s for s in sites if str(s.get("id")) == selected_id), sites[0])
+    e_cfg["selected_site_id"] = selected_id
+    e_cfg["sites"] = sites
+    for key in ENERGY_SITE_KEYS:
+        if key in selected:
+            e_cfg[key] = selected.get(key)
+    return sites
 
 
 def _coerce_float(v: Any) -> float | None:
@@ -877,8 +956,7 @@ def _normalize_energy_to_kwh(value: Any, unit: Any) -> float | None:
     return v
 
 
-def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
-    e_cfg = cfg.get("energy") or {}
+def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ok": False,
         "enabled": bool(e_cfg.get("enabled", True)),
@@ -1025,6 +1103,25 @@ def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         out["normalized"]["load_frequency_hz"] = _to_float_or_none((st_hz or {}).get("value"))
 
     out["ok"] = out["normalized"]["pv_power_w"] is not None
+    return out
+
+
+def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
+    e_cfg = dict(cfg.get("energy") or {})
+    sites = _normalize_energy_sites_inplace(e_cfg)
+    selected_id = str(e_cfg.get("selected_site_id") or (sites[0].get("id") if sites else "default"))
+    selected_site = next((s for s in sites if str(s.get("id")) == selected_id), sites[0] if sites else e_cfg)
+    out = _build_energy_site_snapshot(selected_site)
+    out["site_id"] = str(selected_site.get("id") or selected_id or "default")
+    out["site_name"] = str(selected_site.get("name") or out["site_id"])
+    out["selected_site_id"] = out["site_id"]
+    site_out: list[dict[str, Any]] = []
+    for site in sites:
+        snap = _build_energy_site_snapshot(site)
+        snap["site_id"] = str(site.get("id") or "default")
+        snap["site_name"] = str(site.get("name") or snap["site_id"])
+        site_out.append(snap)
+    out["sites"] = site_out
     return out
 
 
@@ -2662,6 +2759,9 @@ async def data_demo():
         "energy": {
             "ok": True,
             "enabled": True,
+            "site_id": "default",
+            "site_name": "Impianto 1",
+            "selected_site_id": "default",
             "theme": "classic_flow",
             "dashboard_background_color": "#080a10",
             "entities": {},
@@ -2678,6 +2778,7 @@ async def data_demo():
                 "grid_export_today_kwh": 9.1,
             },
             "errors": {},
+            "sites": [],
         },
         "tende_map": {"ok": True, "availability": "online", "stale": False, "updated_at": now_local, "source": "demo", "shades": [], "cover_states": {}},
         "demo_mode": True,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.217
+- Energy Setup: aggiunta gestione multi-impianto con dashboard separate per site (`?site=...`).
+- Energy API/Wrapper: `/api/data` espone `energy.sites[]` e la dashboard standalone seleziona sensori/configurazione in base al site richiesto.
+- Bump versione addon/backend a `0.3.217`.
+
 ## 0.3.216
 - Energy Dashboard: aumentata la scala interna dei loghi originali dentro i riquadri responsive, senza modificare i PNG.
 - Bump versione addon/backend a `0.3.216`.

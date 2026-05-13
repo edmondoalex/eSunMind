@@ -172,7 +172,16 @@
     }
   </script>
   <script>
-    const MAP_MODE = new URLSearchParams(window.location.search).get('map') === '1';
+    const QUERY = new URLSearchParams(window.location.search);
+    const MAP_MODE = QUERY.get('map') === '1';
+    const SITE_ID = String(QUERY.get('site') || '').trim();
+    const normalizeSiteId = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    function selectEnergySite(energyRoot) {
+      const sites = Array.isArray(energyRoot?.sites) ? energyRoot.sites : [];
+      if (!sites.length) return energyRoot || {};
+      const wanted = normalizeSiteId(SITE_ID || energyRoot?.selected_site_id || sites[0]?.site_id || sites[0]?.id);
+      return sites.find((s) => normalizeSiteId(s?.site_id || s?.id) === wanted) || sites[0] || energyRoot || {};
+    }
     if (MAP_MODE) {
       document.body.classList.add('map-mode');
       document.documentElement.classList.add('map-mode');
@@ -553,7 +562,8 @@
         const r = await fetch('../api/options', { cache: 'no-store' });
         if (!r.ok) return;
         const j = await r.json();
-        const e = j?.energy || {};
+        const energyRoot = j?.energy || {};
+        const e = selectEnergySite(energyRoot);
         applyDashboardBackgroundColor(e?.dashboard_background_color);
         try {
           Object.keys(entitySignMap).forEach((k) => delete entitySignMap[k]);
@@ -569,7 +579,7 @@
           }
         } catch (_) {}
         applyEnergyEntityFallbacks(e);
-        const raw = j?.energy?.sunsynk_card_config_json;
+        const raw = e?.sunsynk_card_config_json;
         if (raw) {
           const parsed = JSON.parse(String(raw));
           if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
@@ -754,8 +764,10 @@
         const r = await fetch('../api/data', { cache: 'no-store' });
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
-        const n = j?.energy?.normalized || {};
-        const ce = j?.energy?.card_entities || {};
+        const energyRoot = j?.energy || {};
+        const siteEnergy = selectEnergySite(energyRoot);
+        const n = siteEnergy?.normalized || {};
+        const ce = siteEnergy?.card_entities || {};
 
         const num = (v) => {
           const x = Number(v);

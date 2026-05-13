@@ -133,6 +133,19 @@
         <div class="energy-kpi"><span>Import Rete Oggi</span><strong>{{ fmt(energyGridImportTodayKwh) }} kWh</strong></div>
         <div class="energy-kpi"><span>Export Rete Oggi</span><strong>{{ fmt(energyGridExportTodayKwh) }} kWh</strong></div>
       </div>
+      <div v-if="energySiteCards.length > 1" class="energy-site-link-grid">
+        <a
+          v-for="site in energySiteCards"
+          :key="site.id"
+          class="energy-site-link"
+          :href="`energy-dashboard/sunsynk-wrapper.html?site=${site.id}`"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <strong>{{ site.name }}</strong>
+          <span>PV {{ fmtKw(site.pv) }} kW · Casa {{ fmtKw(site.home) }} kW</span>
+        </a>
+      </div>
     </div>
 
 
@@ -1054,6 +1067,52 @@
           <p class="note energy-note">
             Configura prima i sensori principali. Le opzioni tecniche sono divise per area, cosi non devi scorrere una pagina enorme.
           </p>
+          <div class="energy-sites-panel">
+            <div class="energy-sites-head">
+              <div>
+                <strong>Dashboard / impianti</strong>
+                <span>Ogni impianto ha sensori, JSON card, colori e sfondo separati.</span>
+              </div>
+              <div class="energy-site-actions">
+                <button class="btn ghost" type="button" @click="addEnergySite">Aggiungi</button>
+                <button class="btn ghost" type="button" @click="duplicateEnergySite">Duplica</button>
+                <button class="btn ghost" type="button" @click="deleteEnergySite" :disabled="energySites.length <= 1">Elimina</button>
+              </div>
+            </div>
+            <div class="energy-site-tabs">
+              <button
+                v-for="site in energySites"
+                :key="site.id"
+                type="button"
+                class="energy-site-tab"
+                :class="{active: normalizeEnergySiteId(site.id, 'default') === selectedEnergySiteId}"
+                @click="selectEnergySite(site.id)"
+              >
+                <strong>{{ site.name || site.id }}</strong>
+                <small>?site={{ site.id }}</small>
+              </button>
+            </div>
+            <div class="energy-quick-grid">
+              <label>Nome dashboard
+                <input
+                  type="text"
+                  :value="(energySites.find((s) => normalizeEnergySiteId(s.id, 'default') === selectedEnergySiteId) || {}).name || ''"
+                  @input="(ev) => { const s = energySites.find((x) => normalizeEnergySiteId(x.id, 'default') === selectedEnergySiteId); if (s) s.name = ev.target.value }"
+                />
+              </label>
+              <label>ID link
+                <input
+                  type="text"
+                  :value="selectedEnergySiteId"
+                  @change="(ev) => { const oldId = selectedEnergySiteId; const next = normalizeEnergySiteId(ev.target.value, oldId || 'default'); const s = energySites.find((x) => normalizeEnergySiteId(x.id, 'default') === oldId); if (s) s.id = next; selectedEnergySiteId = next }"
+                />
+              </label>
+              <label>Link dashboard
+                <input type="text" readonly :value="`energy-dashboard/sunsynk-wrapper.html?site=${selectedEnergySiteId}`" />
+              </label>
+              <a class="btn ghost" :href="`energy-dashboard/sunsynk-wrapper.html?site=${selectedEnergySiteId}`" target="_blank" rel="noopener noreferrer">Apri questa dashboard</a>
+            </div>
+          </div>
           <div class="energy-quick-panel">
             <div class="energy-quick-head">
               <div>
@@ -1098,7 +1157,7 @@
             <div class="energy-quick-actions">
               <button class="btn ghost" @click="openEnergyEntityPopup('realtime')">Mappa entita da schema</button>
               <button class="btn ghost" @click="syncWizardFromEnergyForm(); applyEnergyWizard()">Genera JSON card</button>
-              <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Apri Energy Flow</a>
+              <a class="btn ghost" :href="`energy-dashboard/sunsynk-wrapper.html?site=${selectedEnergySiteId}`" target="_blank" rel="noopener noreferrer">Apri Energy Flow</a>
             </div>
             <div v-if="energyFullAuxLoadConflict" class="energy-warning">
               Layout full + AUX: la card Sunsynk mostra al massimo 2 load essenziali. Load 3-6 verranno tolti dal JSON generato.
@@ -1642,6 +1701,12 @@ const energyForm = ref({
   sunsynk_card_config_json: '',
   entity_signs_json: '',
 })
+const energySites = ref([])
+const selectedEnergySiteId = ref('default')
+const normalizeEnergySiteId = (value, fallback = 'impianto') => {
+  const slug = String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
+  return slug || fallback
+}
 const energyWizardStep = ref(0)
 const energySetupSection = ref('topology')
 const energySetupSections = [
@@ -1898,6 +1963,124 @@ const energySignFields = [
   { key: 'battery_power_190', label: 'Batteria 1' },
   { key: 'battery2_power_190', label: 'Batteria 2' },
 ]
+
+function makeEnergySiteFromForm(base = {}) {
+  const name = String(base.name || energyForm.value.site_name || 'Impianto 1').trim() || 'Impianto 1'
+  const id = normalizeEnergySiteId(base.id || selectedEnergySiteId.value || name, 'default')
+  return {
+    ...base,
+    id,
+    name,
+    enabled: Boolean(energyForm.value.enabled),
+    theme: String(energyForm.value.theme || 'classic_flow'),
+    dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
+    pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
+    pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
+    home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
+    home_power_sign: String(energyForm.value.home_power_sign || 'positive'),
+    grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
+    grid_power_sign: String(energyForm.value.grid_power_sign || 'positive'),
+    battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
+    battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
+    battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
+    inverter_voltage_entity_id: String(energyForm.value.inverter_voltage_entity_id || ''),
+    load_frequency_entity_id: String(energyForm.value.load_frequency_entity_id || ''),
+    pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
+    pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
+    home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
+    grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
+    grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+    sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
+    entity_signs_json: String(energyForm.value.entity_signs_json || ''),
+  }
+}
+
+function applyEnergySiteToForm(site = {}) {
+  selectedEnergySiteId.value = normalizeEnergySiteId(site.id || site.name || 'default', 'default')
+  energyForm.value = {
+    ...energyForm.value,
+    enabled: Boolean(site.enabled ?? true),
+    theme: String(site.theme || 'classic_flow'),
+    dashboard_background_color: String(site.dashboard_background_color || '#080a10'),
+    cardstyle: 'full',
+    pv_power_entity_id: String(site.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
+    pv_power_sign: String(site.pv_power_sign || 'positive'),
+    home_power_entity_id: String(site.home_power_entity_id || ''),
+    home_power_sign: String(site.home_power_sign || 'positive'),
+    grid_power_entity_id: String(site.grid_power_entity_id || ''),
+    grid_power_sign: String(site.grid_power_sign || 'positive'),
+    battery_power_entity_id: String(site.battery_power_entity_id || ''),
+    battery_power_sign: String(site.battery_power_sign || 'positive'),
+    battery_soc_entity_id: String(site.battery_soc_entity_id || ''),
+    inverter_voltage_entity_id: String(site.inverter_voltage_entity_id || ''),
+    load_frequency_entity_id: String(site.load_frequency_entity_id || ''),
+    pv_installed_kwp: Number(site.pv_installed_kwp ?? 6.6),
+    pv_energy_today_entity_id: String(site.pv_energy_today_entity_id || ''),
+    home_energy_today_entity_id: String(site.home_energy_today_entity_id || ''),
+    grid_import_today_entity_id: String(site.grid_import_today_entity_id || ''),
+    grid_export_today_entity_id: String(site.grid_export_today_entity_id || ''),
+    sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
+    entity_signs_json: String(site.entity_signs_json || ''),
+  }
+  syncEnergySignsUiFromJson()
+  syncWizardFromEnergyForm()
+}
+
+function syncCurrentEnergySiteFromForm() {
+  const currentId = normalizeEnergySiteId(selectedEnergySiteId.value || 'default', 'default')
+  const idx = energySites.value.findIndex((s) => normalizeEnergySiteId(s?.id, 'default') === currentId)
+  const prev = idx >= 0 ? energySites.value[idx] : { id: currentId, name: currentId === 'default' ? 'Impianto 1' : currentId }
+  const next = makeEnergySiteFromForm(prev)
+  if (idx >= 0) energySites.value.splice(idx, 1, next)
+  else energySites.value.push(next)
+  return next
+}
+
+function buildEnergyPayload() {
+  syncCurrentEnergySiteFromForm()
+  const currentId = normalizeEnergySiteId(selectedEnergySiteId.value || 'default', 'default')
+  const sites = energySites.value.map((s, idx) => ({
+    ...s,
+    id: normalizeEnergySiteId(s?.id || s?.name, `impianto-${idx + 1}`),
+    name: String(s?.name || s?.id || `Impianto ${idx + 1}`).trim(),
+  }))
+  const selected = sites.find((s) => s.id === currentId) || sites[0] || makeEnergySiteFromForm({ id: 'default', name: 'Impianto 1' })
+  return {
+    ...selected,
+    selected_site_id: selected.id,
+    sites,
+  }
+}
+
+function selectEnergySite(id) {
+  syncCurrentEnergySiteFromForm()
+  const wanted = normalizeEnergySiteId(id, 'default')
+  const site = energySites.value.find((s) => normalizeEnergySiteId(s?.id, 'default') === wanted)
+  if (site) applyEnergySiteToForm(site)
+}
+
+function addEnergySite() {
+  syncCurrentEnergySiteFromForm()
+  const n = energySites.value.length + 1
+  const site = makeEnergySiteFromForm({ id: `impianto-${n}`, name: `Impianto ${n}` })
+  energySites.value.push(site)
+  applyEnergySiteToForm(site)
+}
+
+function duplicateEnergySite() {
+  syncCurrentEnergySiteFromForm()
+  const n = energySites.value.length + 1
+  const site = makeEnergySiteFromForm({ id: `impianto-${n}`, name: `Impianto ${n}` })
+  energySites.value.push(site)
+  applyEnergySiteToForm(site)
+}
+
+function deleteEnergySite() {
+  if (energySites.value.length <= 1) return
+  const currentId = normalizeEnergySiteId(selectedEnergySiteId.value || 'default', 'default')
+  energySites.value = energySites.value.filter((s) => normalizeEnergySiteId(s?.id, 'default') !== currentId)
+  applyEnergySiteToForm(energySites.value[0])
+}
 
 function syncEnergySignsUiFromJson() {
   let parsed = {}
@@ -2331,6 +2514,15 @@ const pvLiveRatio = computed(() => {
   return Math.max(0, Math.min(1.25, m / f))
 })
 const energyNorm = computed(() => data.value?.energy?.normalized || null)
+const energySiteCards = computed(() => {
+  const rows = Array.isArray(data.value?.energy?.sites) ? data.value.energy.sites : []
+  return rows.map((s, idx) => ({
+    id: normalizeEnergySiteId(s?.site_id || s?.id || `impianto-${idx + 1}`, `impianto-${idx + 1}`),
+    name: String(s?.site_name || s?.name || `Impianto ${idx + 1}`),
+    pv: Number(s?.normalized?.pv_power_w),
+    home: Number(s?.normalized?.home_power_w),
+  }))
+})
 const energyEnabled = computed(() => Boolean(data.value?.energy?.enabled ?? energyForm.value.enabled))
 const energyTheme = computed(() => {
   const qp = new URLSearchParams(window.location.search || '')
@@ -4432,7 +4624,20 @@ async function loadData() {
         topic_availability: String(tmo.topic_availability || 'e-tendeintelligenti/availability'),
         stale_seconds: Number(tmo.stale_seconds ?? 180),
       }
-      const eo = oj?.energy || {}
+      const energyRoot = oj?.energy || {}
+      const rawEnergySites = Array.isArray(energyRoot.sites) ? energyRoot.sites : []
+      const selectedEnergyId = normalizeEnergySiteId(energyRoot.selected_site_id || rawEnergySites[0]?.id || 'default', 'default')
+      energySites.value = rawEnergySites.length
+        ? rawEnergySites.map((s, idx) => ({
+            ...s,
+            id: normalizeEnergySiteId(s?.id || s?.name, `impianto-${idx + 1}`),
+            name: String(s?.name || s?.id || `Impianto ${idx + 1}`).trim(),
+          }))
+        : [{ ...energyRoot, id: selectedEnergyId, name: String(energyRoot.site_name || 'Impianto 1') }]
+      selectedEnergySiteId.value = energySites.value.some((s) => normalizeEnergySiteId(s.id, 'default') === selectedEnergyId)
+        ? selectedEnergyId
+        : normalizeEnergySiteId(energySites.value[0]?.id || 'default', 'default')
+      const eo = energySites.value.find((s) => normalizeEnergySiteId(s.id, 'default') === selectedEnergySiteId.value) || energyRoot
       energyForm.value = {
         enabled: Boolean(eo.enabled ?? true),
         theme: String(eo.theme || 'classic_flow'),
@@ -4745,29 +4950,7 @@ async function saveBaseSettings() {
         topic_availability: String(tendeMapForm.value.topic_availability || ''),
         stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
       },
-      energy: {
-        enabled: Boolean(energyForm.value.enabled),
-        theme: String(energyForm.value.theme || 'classic_flow'),
-        dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
-        pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
-        pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
-        home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
-        home_power_sign: String(energyForm.value.home_power_sign || 'positive'),
-        grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
-        grid_power_sign: String(energyForm.value.grid_power_sign || 'positive'),
-        battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
-        battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
-        battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
-        inverter_voltage_entity_id: String(energyForm.value.inverter_voltage_entity_id || ''),
-        load_frequency_entity_id: String(energyForm.value.load_frequency_entity_id || ''),
-        pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
-        pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
-        home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
-        grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
-        grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
-        sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
-        entity_signs_json: String(energyForm.value.entity_signs_json || ''),
-      },
+      energy: buildEnergyPayload(),
     }
     const r = await fetch('api/options/base', {
       method: 'POST',
@@ -4850,29 +5033,7 @@ async function saveAllSettings() {
         topic_availability: String(tendeMapForm.value.topic_availability || ''),
         stale_seconds: Number(tendeMapForm.value.stale_seconds ?? 180),
       },
-      energy: {
-        enabled: Boolean(energyForm.value.enabled),
-        theme: String(energyForm.value.theme || 'classic_flow'),
-        dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
-        pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
-        pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
-        home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
-        home_power_sign: String(energyForm.value.home_power_sign || 'positive'),
-        grid_power_entity_id: String(energyForm.value.grid_power_entity_id || ''),
-        grid_power_sign: String(energyForm.value.grid_power_sign || 'positive'),
-        battery_power_entity_id: String(energyForm.value.battery_power_entity_id || ''),
-        battery_power_sign: String(energyForm.value.battery_power_sign || 'positive'),
-        battery_soc_entity_id: String(energyForm.value.battery_soc_entity_id || ''),
-        inverter_voltage_entity_id: String(energyForm.value.inverter_voltage_entity_id || ''),
-        load_frequency_entity_id: String(energyForm.value.load_frequency_entity_id || ''),
-        pv_installed_kwp: Number(energyForm.value.pv_installed_kwp ?? 6.6),
-        pv_energy_today_entity_id: String(energyForm.value.pv_energy_today_entity_id || ''),
-        home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
-        grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
-        grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
-        sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
-        entity_signs_json: String(energyForm.value.entity_signs_json || ''),
-      },
+      energy: buildEnergyPayload(),
     }
     const overlayPayload = {
       pathRadiusM: Number(cfg.value.pathRadiusM ?? 102),
@@ -5380,6 +5541,24 @@ input[type='range']{width:100%}
   font-size:28px;
   letter-spacing:-.4px;
 }
+.energy-site-link-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.energy-site-link{
+  text-decoration:none;
+  border:1px solid #d6dbe5;
+  border-radius:12px;
+  background:#fff;
+  color:#121926;
+  padding:12px 14px;
+  display:grid;
+  gap:4px;
+}
+.energy-site-link strong{font-size:16px}
+.energy-site-link span{font-size:13px;color:#5b6574}
 .energy-theme-technical_dark{
   background:radial-gradient(circle at top,#14273d 0%,#0a1320 48%,#060c15 100%);
   color:#d9e8ff;
@@ -5395,7 +5574,8 @@ input[type='range']{width:100%}
 }
 .energy-theme-technical_dark .ef-node,
 .energy-theme-technical_dark .ef-kpi,
-.energy-theme-technical_dark .energy-kpi{
+.energy-theme-technical_dark .energy-kpi,
+.energy-theme-technical_dark .energy-site-link{
   background:#0d1a2b;
   border-color:#355377;
   box-shadow:none;
@@ -5403,12 +5583,14 @@ input[type='range']{width:100%}
 .energy-theme-technical_dark .ef-node .ef-name,
 .energy-theme-technical_dark .ef-node .ef-sub,
 .energy-theme-technical_dark .ef-kpi span,
-.energy-theme-technical_dark .energy-kpi span{
+.energy-theme-technical_dark .energy-kpi span,
+.energy-theme-technical_dark .energy-site-link span{
   color:#9cb7d8;
 }
 .energy-theme-technical_dark .ef-node .ef-val,
 .energy-theme-technical_dark .ef-kpi strong,
-.energy-theme-technical_dark .energy-kpi strong{
+.energy-theme-technical_dark .energy-kpi strong,
+.energy-theme-technical_dark .energy-site-link strong{
   color:#eef6ff;
 }
 .energy-theme-technical_dark .energy-status,
@@ -5988,6 +6170,63 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   padding:16px;
   margin-bottom:16px;
 }
+.energy-sites-panel{
+  border:1px solid rgba(148,163,184,.28);
+  border-radius:14px;
+  background:rgba(15,23,42,.62);
+  padding:16px;
+  margin-bottom:16px;
+}
+.energy-sites-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:12px;
+}
+.energy-sites-head strong{
+  display:block;
+  font-size:18px;
+  color:#e2e8f0;
+}
+.energy-sites-head span{
+  display:block;
+  margin-top:4px;
+  color:#94a3b8;
+  font-size:13px;
+}
+.energy-site-actions,
+.energy-site-tabs{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.energy-site-tabs{
+  margin-bottom:12px;
+}
+.energy-site-tab{
+  appearance:none;
+  text-align:left;
+  border:1px solid rgba(71,85,105,.55);
+  border-radius:12px;
+  background:#0a1424;
+  color:#cbd5e1;
+  padding:10px 12px;
+  min-width:150px;
+  cursor:pointer;
+}
+.energy-site-tab strong,
+.energy-site-tab small{
+  display:block;
+}
+.energy-site-tab small{
+  margin-top:3px;
+  color:#8aa0bb;
+}
+.energy-site-tab.active{
+  border-color:rgba(34,211,238,.85);
+  box-shadow:0 0 0 2px rgba(34,211,238,.16);
+}
 .energy-quick-head{
   display:flex;
   justify-content:space-between;
@@ -6222,6 +6461,16 @@ input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0
   }
   .energy-quick-head{
     flex-direction:column;
+  }
+  .energy-sites-head{
+    flex-direction:column;
+  }
+  .energy-site-actions{
+    width:100%;
+  }
+  .energy-site-tab{
+    min-width:0;
+    flex:1 1 150px;
   }
   .energy-status-pills{
     justify-content:flex-start;
