@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.220
+- Energy Setup: aggiunta select esplicita per scegliere l'impianto attivo oltre ai tab.
+- Energy Setup: quando si cambia impianto il wizard corrente viene serializzato nel JSON del site prima dello switch, evitando perdita dei campi tecnici non ancora salvati.
+- Bump versione addon/backend a `0.3.220`.
+
 ## 0.3.219
 - Energy Setup: aggiunti campi UI per nominale PV1-PV6 (`pv*_max_power`) usati dalla card per calcolare la percentuale stringa.
 - Bump versione addon/backend a `0.3.219`.

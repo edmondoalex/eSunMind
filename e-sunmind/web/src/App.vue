@@ -1093,6 +1093,11 @@
               </button>
             </div>
             <div class="energy-quick-grid">
+              <label>Impianto attivo
+                <select :value="selectedEnergySiteId" @change="selectEnergySite($event.target.value)">
+                  <option v-for="site in energySites" :key="`sel-${site.id}`" :value="site.id">{{ site.name || site.id }}</option>
+                </select>
+              </label>
               <label>Nome dashboard
                 <input
                   type="text"
@@ -2061,7 +2066,13 @@ function applyEnergySiteToForm(site = {}) {
     entity_signs_json: String(site.entity_signs_json || ''),
   }
   syncEnergySignsUiFromJson()
+  hydrateEnergyWizardFromOptions(site)
+}
+
+function persistCurrentEnergySiteFromEditor() {
   syncWizardFromEnergyForm()
+  applyEnergyWizard(true)
+  return syncCurrentEnergySiteFromForm()
 }
 
 function syncCurrentEnergySiteFromForm() {
@@ -2091,14 +2102,14 @@ function buildEnergyPayload() {
 }
 
 function selectEnergySite(id) {
-  syncCurrentEnergySiteFromForm()
+  persistCurrentEnergySiteFromEditor()
   const wanted = normalizeEnergySiteId(id, 'default')
   const site = energySites.value.find((s) => normalizeEnergySiteId(s?.id, 'default') === wanted)
   if (site) applyEnergySiteToForm(site)
 }
 
 function addEnergySite() {
-  syncCurrentEnergySiteFromForm()
+  persistCurrentEnergySiteFromEditor()
   const n = energySites.value.length + 1
   const site = makeEnergySiteFromForm({ id: `impianto-${n}`, name: `Impianto ${n}` })
   energySites.value.push(site)
@@ -2106,7 +2117,7 @@ function addEnergySite() {
 }
 
 function duplicateEnergySite() {
-  syncCurrentEnergySiteFromForm()
+  persistCurrentEnergySiteFromEditor()
   const n = energySites.value.length + 1
   const site = makeEnergySiteFromForm({ id: `impianto-${n}`, name: `Impianto ${n}` })
   energySites.value.push(site)
@@ -2115,9 +2126,125 @@ function duplicateEnergySite() {
 
 function deleteEnergySite() {
   if (energySites.value.length <= 1) return
+  persistCurrentEnergySiteFromEditor()
   const currentId = normalizeEnergySiteId(selectedEnergySiteId.value || 'default', 'default')
   energySites.value = energySites.value.filter((s) => normalizeEnergySiteId(s?.id, 'default') !== currentId)
   applyEnergySiteToForm(energySites.value[0])
+}
+
+function hydrateEnergyWizardFromOptions(eo = {}) {
+  const wizardSeed = {
+    ...energyWizardForm.value,
+    cardstyle: 'full',
+    pv1_power_186: String(eo.pv_power_entity_id || ''),
+    pv2_power_187: '',
+    grid_power_169: String(eo.grid_power_entity_id || ''),
+    inverter_power_175: String(eo.home_power_entity_id || ''),
+    battery_soc_184: String(eo.battery_soc_entity_id || ''),
+    battery_power_190: String(eo.battery_power_entity_id || ''),
+    inverter_voltage_154: String(eo.inverter_voltage_entity_id || ''),
+    load_frequency_192: String(eo.load_frequency_entity_id || ''),
+    day_pv_energy_108: String(eo.pv_energy_today_entity_id || ''),
+    day_load_energy_84: String(eo.home_energy_today_entity_id || ''),
+    day_grid_import_76: String(eo.grid_import_today_entity_id || ''),
+    day_grid_export_77: String(eo.grid_export_today_entity_id || ''),
+  }
+  try {
+    const parsed = JSON.parse(String(eo.sunsynk_card_config_json || '{}'))
+    const ents = parsed?.entities || {}
+    const solar = parsed?.solar || {}
+    const battery = parsed?.battery || {}
+    const load = parsed?.load || {}
+    const grid = parsed?.grid || {}
+    energyWizardForm.value = {
+      ...wizardSeed,
+      cardstyle: String(parsed?.cardstyle || wizardSeed.cardstyle || 'full'),
+      show_solar: Boolean(parsed?.show_solar ?? wizardSeed.show_solar),
+      show_battery: Boolean(parsed?.show_battery ?? wizardSeed.show_battery),
+      show_grid: Boolean(parsed?.show_grid ?? wizardSeed.show_grid),
+      dynamic_line_width: Boolean(parsed?.dynamic_line_width ?? wizardSeed.dynamic_line_width),
+      min_line_width: Number(parsed?.min_line_width ?? wizardSeed.min_line_width),
+      max_line_width: Number(parsed?.max_line_width ?? wizardSeed.max_line_width),
+      wide: Boolean(parsed?.wide ?? wizardSeed.wide),
+      inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
+      inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
+      inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
+      solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts),
+      solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
+      solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
+      solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
+      pv1_name: String(solar.pv1_name || wizardSeed.pv1_name),
+      pv2_name: String(solar.pv2_name || wizardSeed.pv2_name),
+      pv3_name: String(solar.pv3_name || wizardSeed.pv3_name),
+      pv4_name: String(solar.pv4_name || wizardSeed.pv4_name),
+      pv5_name: String(solar.pv5_name || wizardSeed.pv5_name),
+      pv6_name: String(solar.pv6_name || wizardSeed.pv6_name),
+      pv1_max_power: Number(solar.pv1_max_power ?? wizardSeed.pv1_max_power ?? 0),
+      pv2_max_power: Number(solar.pv2_max_power ?? wizardSeed.pv2_max_power ?? 0),
+      pv3_max_power: Number(solar.pv3_max_power ?? wizardSeed.pv3_max_power ?? 0),
+      pv4_max_power: Number(solar.pv4_max_power ?? wizardSeed.pv4_max_power ?? 0),
+      pv5_max_power: Number(solar.pv5_max_power ?? wizardSeed.pv5_max_power ?? 0),
+      pv6_max_power: Number(solar.pv6_max_power ?? wizardSeed.pv6_max_power ?? 0),
+      battery_count: Number(battery.count ?? wizardSeed.battery_count),
+      battery_energy_wh: Number(battery.energy ?? wizardSeed.battery_energy_wh),
+      battery_shutdown_soc: Number(battery.shutdown_soc ?? wizardSeed.battery_shutdown_soc),
+      battery_show_daily: Boolean(battery.show_daily ?? wizardSeed.battery_show_daily),
+      battery_animation_speed: Number(battery.animation_speed ?? wizardSeed.battery_animation_speed),
+      battery_max_power: Number(battery.max_power ?? wizardSeed.battery_max_power),
+      battery_auto_scale: Boolean(battery.auto_scale ?? wizardSeed.battery_auto_scale),
+      additional_loads: Number(load.additional_loads ?? wizardSeed.additional_loads),
+      show_aux: Boolean(load.show_aux ?? wizardSeed.show_aux),
+      load_essential_name: String(load.essential_name || wizardSeed.load_essential_name),
+      load_aux_name: String(load.aux_name || wizardSeed.load_aux_name),
+      load_label_daily: String(load.label_daily_load || wizardSeed.load_label_daily),
+      load1_name: String(load.load1_name || wizardSeed.load1_name),
+      load2_name: String(load.load2_name || wizardSeed.load2_name),
+      load_show_daily: Boolean(load.show_daily ?? wizardSeed.load_show_daily),
+      load_animation_speed: Number(load.animation_speed ?? wizardSeed.load_animation_speed),
+      load_max_power: Number(load.max_power ?? wizardSeed.load_max_power),
+      load_auto_scale: Boolean(load.auto_scale ?? wizardSeed.load_auto_scale),
+      grid_show_daily_buy: Boolean(grid.show_daily_buy ?? wizardSeed.grid_show_daily_buy),
+      grid_show_daily_sell: Boolean(grid.show_daily_sell ?? wizardSeed.grid_show_daily_sell),
+      grid_invert_grid: Boolean(grid.invert_grid ?? wizardSeed.grid_invert_grid),
+      grid_show_absolute: Boolean(grid.show_absolute ?? wizardSeed.grid_show_absolute),
+      grid_show_nonessential: Boolean(grid.show_nonessential ?? wizardSeed.grid_show_nonessential),
+      grid_additional_loads: Number(grid.additional_loads ?? wizardSeed.grid_additional_loads),
+      grid_name: String(grid.grid_name || wizardSeed.grid_name),
+      grid_label_daily_buy: String(grid.label_daily_grid_buy || wizardSeed.grid_label_daily_buy),
+      grid_label_daily_sell: String(grid.label_daily_grid_sell || wizardSeed.grid_label_daily_sell),
+      grid_nonessential_name: String(grid.nonessential_name || wizardSeed.grid_nonessential_name),
+      grid_invert_flow: Boolean(grid.invert_flow ?? wizardSeed.grid_invert_flow),
+      grid_energy_cost_decimals: Number(grid.energy_cost_decimals ?? wizardSeed.grid_energy_cost_decimals),
+      grid_animation_speed: Number(grid.animation_speed ?? wizardSeed.grid_animation_speed),
+      grid_max_power: Number(grid.max_power ?? wizardSeed.grid_max_power),
+      grid_auto_scale: Boolean(grid.auto_scale ?? wizardSeed.grid_auto_scale),
+      color_solar: String(solar.colour || wizardSeed.color_solar),
+      color_battery: String(battery.colour || wizardSeed.color_battery),
+      color_grid: String(grid.colour || wizardSeed.color_grid),
+      color_grid_export: String(grid.export_colour || wizardSeed.color_grid_export),
+      color_grid_off: String(grid.grid_off_colour || wizardSeed.color_grid_off),
+      color_no_grid: String(grid.no_grid_colour || wizardSeed.color_no_grid),
+      color_load: String(load.colour || wizardSeed.color_load),
+      load1_icon: String(load.load1_icon || wizardSeed.load1_icon),
+      load2_icon: String(load.load2_icon || wizardSeed.load2_icon),
+      load3_icon: String(load.load3_icon || wizardSeed.load3_icon),
+      load4_icon: String(load.load4_icon || wizardSeed.load4_icon),
+      load5_icon: String(load.load5_icon || wizardSeed.load5_icon),
+      load6_icon: String(load.load6_icon || wizardSeed.load6_icon),
+      grid_nonessential_icon: String(grid.nonessential_icon || wizardSeed.grid_nonessential_icon),
+      grid_load1_icon: String(grid.load1_icon || wizardSeed.grid_load1_icon),
+      grid_load2_icon: String(grid.load2_icon || wizardSeed.grid_load2_icon),
+      grid_load3_icon: String(grid.load3_icon || wizardSeed.grid_load3_icon),
+      grid_import_icon: String(grid.import_icon || wizardSeed.grid_import_icon),
+      grid_export_icon: String(grid.export_icon || wizardSeed.grid_export_icon),
+      grid_disconnected_icon: String(grid.disconnected_icon || wizardSeed.grid_disconnected_icon),
+      ...Object.fromEntries(realtimeEntityKeys.map((k) => [k, String(ents[k] || wizardSeed[k] || '')])),
+      ...Object.fromEntries(dailyEntityKeys.map((k) => [k, String(ents[k] || wizardSeed[k] || '')])),
+      entities_extra_json: JSON.stringify(Object.fromEntries(Object.entries(ents || {}).filter(([k]) => !knownEnergyEntityKeys.includes(String(k)))), null, 2),
+    }
+  } catch (_) {
+    energyWizardForm.value = wizardSeed
+  }
 }
 
 function syncEnergySignsUiFromJson() {
@@ -4335,7 +4462,7 @@ function mergeObjectsDeep(base, patch) {
   return out
 }
 
-function applyEnergyWizard() {
+function applyEnergyWizard(silent = false) {
   const cfg = buildSunsynkConfigFromWizard()
   let merged = cfg
   try {
@@ -4358,7 +4485,7 @@ function applyEnergyWizard() {
   energyForm.value.home_energy_today_entity_id = String(energyWizardForm.value.day_load_energy_84 || '')
   energyForm.value.grid_import_today_entity_id = String(energyWizardForm.value.day_grid_import_76 || '')
   energyForm.value.grid_export_today_entity_id = String(energyWizardForm.value.day_grid_export_77 || '')
-  baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
+  if (!silent) baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
 function syncWizardFromEnergyForm() {

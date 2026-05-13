@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Setup: aggiunta select impianto attivo e persistenza preventiva del JSON site quando si cambia/crea/duplica/elimina dashboard.
+- Bump versione addon/backend a `0.3.220` con changelog aggiornato.
+
 - Energy Setup: aggiunti campi nominale W per PV1-PV6, salvati nel JSON Sunsynk come `pv*_max_power`.
 - Bump versione addon/backend a `0.3.219` con changelog aggiornato.
 
