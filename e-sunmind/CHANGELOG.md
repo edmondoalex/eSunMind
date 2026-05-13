@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.212
+- Energy Dashboard: aggiunto logo `EnergyMind` nell'area alta libera della card Sunsynk.
+- Il logo e dedicato alla dashboard Energy e non modifica la UI principale.
+- Bump versione addon/backend a `0.3.212`.
+
 ## 0.3.211
 - Energy Dashboard: aggiunta favicon dedicata rosso/blu per `energy-dashboard/sunsynk-wrapper.html`.
 - La favicon della UI principale e-SunMind resta invariata.
