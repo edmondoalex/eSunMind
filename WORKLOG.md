@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Setup: aggiunti campi diretti per nominare PV1-PV6 e per sensori batteria V/A + kWh carica/scarica giornalieri.
+- Bump versione addon/backend a `0.3.218` con changelog aggiornato.
+
 - Energy Setup/API/Wrapper: aggiunta base multi-dashboard Energy con piu impianti, `energy.sites[]` e link standalone `?site=...`.
 - Bump versione addon/backend a `0.3.217` con changelog aggiornato.
 

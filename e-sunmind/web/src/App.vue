@@ -1232,13 +1232,19 @@
                 <label>Solar speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" /></label>
                 <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
                 <label>PV installed kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
+                <label>PV1 nome visuale<input type="text" v-model="energyWizardForm.pv1_name" placeholder="SolarSAS" /></label>
                 <label>PV1 potenza (entity_id)<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
+                <label>PV2 nome visuale<input type="text" v-model="energyWizardForm.pv2_name" placeholder="Pannelli portoni" /></label>
                 <label>PV2 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
                 <label>PV2 tensione (V)<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
                 <label>PV2 corrente (A)<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
+                <label>PV3 nome visuale<input type="text" v-model="energyWizardForm.pv3_name" /></label>
                 <label>PV3 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv3_power_188" /></label>
+                <label>PV4 nome visuale<input type="text" v-model="energyWizardForm.pv4_name" /></label>
                 <label>PV4 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv4_power_189" /></label>
+                <label>PV5 nome visuale<input type="text" v-model="energyWizardForm.pv5_name" /></label>
                 <label>PV5 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv5_power" /></label>
+                <label>PV6 nome visuale<input type="text" v-model="energyWizardForm.pv6_name" /></label>
                 <label>PV6 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv6_power" /></label>
               </div>
             </section>
@@ -1254,8 +1260,12 @@
                 <label>Battery auto-scale<input type="checkbox" v-model="energyWizardForm.battery_auto_scale" /></label>
                 <label>Battery show daily<input type="checkbox" v-model="energyWizardForm.battery_show_daily" /></label>
                 <label>Batteria 1 potenza (entity_id)<input type="text" v-model="energyForm.battery_power_entity_id" /></label>
+                <label>Batteria tensione (V) (entity_id)<input type="text" v-model="energyWizardForm.battery_voltage_183" /></label>
+                <label>Batteria corrente (A) (entity_id)<input type="text" v-model="energyWizardForm.battery_current_191" /></label>
                 <label>Batteria 2 potenza (entity_id)<input type="text" v-model="energyWizardForm.battery2_power_190" /></label>
                 <label>Batteria SOC (%) (entity_id)<input type="text" v-model="energyForm.battery_soc_entity_id" /></label>
+                <label>Carica batteria oggi (kWh) (entity_id)<input type="text" v-model="energyWizardForm.day_battery_charge_70" /></label>
+                <label>Scarica batteria oggi (kWh) (entity_id)<input type="text" v-model="energyWizardForm.day_battery_discharge_71" /></label>
               </div>
             </section>
 
@@ -1342,6 +1352,8 @@
               <h4>Entita Giornaliere</h4>
               <div class="form-grid">
                 <label>PV energy today entity id<input type="text" v-model="energyForm.pv_energy_today_entity_id" /></label>
+                <label>Battery charge today entity id<input type="text" v-model="energyWizardForm.day_battery_charge_70" /></label>
+                <label>Battery discharge today entity id<input type="text" v-model="energyWizardForm.day_battery_discharge_71" /></label>
                 <label>Home energy today entity id<input type="text" v-model="energyForm.home_energy_today_entity_id" /></label>
                 <label>Grid import today entity id<input type="text" v-model="energyForm.grid_import_today_entity_id" /></label>
                 <label>Grid export today entity id<input type="text" v-model="energyForm.grid_export_today_entity_id" /></label>
@@ -1756,9 +1768,13 @@ const energyMapTargets = [
   { key: 'grid_power_169', label: 'Grid Power' },
   { key: 'battery_power_190', label: 'Battery Power' },
   { key: 'battery_soc_184', label: 'Battery SOC' },
+  { key: 'battery_voltage_183', label: 'Battery Voltage' },
+  { key: 'battery_current_191', label: 'Battery Current' },
   { key: 'inverter_voltage_154', label: 'Inverter Voltage' },
   { key: 'load_frequency_192', label: 'Load Frequency' },
   { key: 'day_pv_energy_108', label: 'PV Energy Today' },
+  { key: 'day_battery_charge_70', label: 'Battery Charge Today' },
+  { key: 'day_battery_discharge_71', label: 'Battery Discharge Today' },
   { key: 'day_load_energy_84', label: 'Load Energy Today' },
   { key: 'day_grid_import_76', label: 'Grid Import Today' },
 ]
@@ -1771,6 +1787,10 @@ const energyHotspots = [
   { key: 'load_frequency_192', label: 'Load Frequency' },
   { key: 'battery_power_190', label: 'Battery Power' },
   { key: 'battery_soc_184', label: 'Battery SOC' },
+  { key: 'battery_voltage_183', label: 'Battery Voltage' },
+  { key: 'battery_current_191', label: 'Battery Current' },
+  { key: 'day_battery_charge_70', label: 'Battery Charge Today' },
+  { key: 'day_battery_discharge_71', label: 'Battery Discharge Today' },
   { key: 'grid_power_169', label: 'Grid Power' },
   { key: 'day_grid_import_76', label: 'Grid Import Today' },
   { key: 'day_grid_export_77', label: 'Grid Export Today' },
@@ -1814,6 +1834,12 @@ const energyWizardForm = ref({
   solar_show_daily: true,
   solar_animation_speed: 6,
   solar_max_power: 7000,
+  pv1_name: '',
+  pv2_name: '',
+  pv3_name: '',
+  pv4_name: '',
+  pv5_name: '',
+  pv6_name: '',
   battery_count: 1,
   battery_energy_wh: 15960,
   battery_shutdown_soc: 20,
@@ -4210,6 +4236,12 @@ function buildSunsynkConfigFromWizard() {
       show_daily: Boolean(w.solar_show_daily),
       animation_speed: Math.max(1, Math.min(20, Number(w.solar_animation_speed || 6))),
       max_power: Math.max(100, Number(w.solar_max_power || 7000)),
+      pv1_name: String(w.pv1_name || ''),
+      pv2_name: String(w.pv2_name || ''),
+      pv3_name: String(w.pv3_name || ''),
+      pv4_name: String(w.pv4_name || ''),
+      pv5_name: String(w.pv5_name || ''),
+      pv6_name: String(w.pv6_name || ''),
     },
     battery: {
       count: Math.max(1, Math.min(2, Number(w.battery_count || 1))),
@@ -4703,6 +4735,12 @@ async function loadData() {
           solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
           solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
           solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
+          pv1_name: String(solar.pv1_name || wizardSeed.pv1_name),
+          pv2_name: String(solar.pv2_name || wizardSeed.pv2_name),
+          pv3_name: String(solar.pv3_name || wizardSeed.pv3_name),
+          pv4_name: String(solar.pv4_name || wizardSeed.pv4_name),
+          pv5_name: String(solar.pv5_name || wizardSeed.pv5_name),
+          pv6_name: String(solar.pv6_name || wizardSeed.pv6_name),
           battery_count: Number(battery.count ?? wizardSeed.battery_count),
           battery_energy_wh: Number(battery.energy ?? wizardSeed.battery_energy_wh),
           battery_shutdown_soc: Number(battery.shutdown_soc ?? wizardSeed.battery_shutdown_soc),

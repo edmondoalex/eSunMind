@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.218
+- Energy Setup: aggiunti campi UI per nome visuale PV1-PV6.
+- Energy Setup: aggiunti campi UI Batteria per tensione, corrente, carica giornaliera e scarica giornaliera.
+- Bump versione addon/backend a `0.3.218`.
+
 ## 0.3.217
 - Energy Setup: aggiunta gestione multi-impianto con dashboard separate per site (`?site=...`).
 - Energy API/Wrapper: `/api/data` espone `energy.sites[]` e la dashboard standalone seleziona sensori/configurazione in base al site richiesto.
