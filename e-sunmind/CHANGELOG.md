@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.213
+- Energy Dashboard: aggiunti i PNG originali `energymind.png` in alto e `logo only translucent.png`/EKONEX in basso come overlay responsive.
+- I loghi originali non vengono ridisegnati o filtrati; viene applicato solo dimensionamento/posizionamento CSS per layout full, compact, lite, minimal e mobile.
+- Bump versione addon/backend a `0.3.213`.
+
 ## 0.3.212
 - Energy Dashboard: aggiunto logo `EnergyMind` nell'area alta libera della card Sunsynk.
 - Il logo e dedicato alla dashboard Energy e non modifica la UI principale.

@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Dashboard: sostituiti i loghi ricreati con i PNG originali forniti (`energymind.png` in alto, EKONEX trasparente in basso), gestiti solo con CSS responsive.
+- Bump versione addon/backend a `0.3.213` con changelog aggiornato.
+
 - Energy Dashboard: aggiunto logo `EnergyMind` come overlay nell'area alta libera della card, con asset dedicato e scaling coerente in modalita mappa.
 - Bump versione addon/backend a `0.3.212` con changelog aggiornato.
 
