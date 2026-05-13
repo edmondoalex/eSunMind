@@ -1080,6 +1080,9 @@
                   <option value="minimal_light">Minimal Light</option>
                 </select>
               </label>
+              <label>Sfondo dashboard
+                <input type="color" v-model="energyForm.dashboard_background_color" />
+              </label>
               <label>Layout card
                 <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                   <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
@@ -1132,6 +1135,7 @@
                     <option value="minimal_light">Minimal Light</option>
                   </select>
                 </label>
+                <label>Sfondo dashboard Energy<input type="color" v-model="energyForm.dashboard_background_color" /></label>
                 <label>Cardstyle
                   <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                     <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
@@ -1617,6 +1621,7 @@ const tendeMapForm = ref({
 const energyForm = ref({
   enabled: true,
   theme: 'classic_flow',
+  dashboard_background_color: '#080a10',
   cardstyle: 'full',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   pv_power_sign: 'positive',
@@ -4431,6 +4436,7 @@ async function loadData() {
       energyForm.value = {
         enabled: Boolean(eo.enabled ?? true),
         theme: String(eo.theme || 'classic_flow'),
+        dashboard_background_color: String(eo.dashboard_background_color || '#080a10'),
         cardstyle: 'full',
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         pv_power_sign: String(eo.pv_power_sign || 'positive'),
@@ -4742,6 +4748,7 @@ async function saveBaseSettings() {
       energy: {
         enabled: Boolean(energyForm.value.enabled),
         theme: String(energyForm.value.theme || 'classic_flow'),
+        dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
         pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
@@ -4846,6 +4853,7 @@ async function saveAllSettings() {
       energy: {
         enabled: Boolean(energyForm.value.enabled),
         theme: String(energyForm.value.theme || 'classic_flow'),
+        dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
         pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
         pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
         home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),

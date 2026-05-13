@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Dashboard: corretto crop CSS dei loghi originali per non tagliare icona EnergyMind/EKONEX dopo aumento dimensioni.
+- Energy Setup/Wrapper: aggiunto colore sfondo configurabile per la dashboard Energy, applicato runtime dal wrapper.
+- Bump versione addon/backend a `0.3.215` con changelog aggiornato.
+
 - Energy Dashboard: aumentata dimensione visuale dei loghi originali tramite CSS/crop dello spazio trasparente, mantenendo invariati i PNG sorgente.
 - Bump versione addon/backend a `0.3.214` con changelog aggiornato.
 
