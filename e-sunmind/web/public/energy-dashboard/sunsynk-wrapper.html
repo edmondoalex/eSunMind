@@ -85,7 +85,6 @@
       customElements.define('ha-icon', HaIcon);
     }
   </script>
-  <script type="module" src="https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js"></script>
   <script>
     const MAP_MODE = new URLSearchParams(window.location.search).get('map') === '1';
     if (MAP_MODE) {
@@ -846,8 +845,44 @@
       }
     }
 
-    // avvio
-    const waitCard = setInterval(async () => {
+    function loadSunsynkCardScript() {
+      if (customElements.get('sunsynk-power-flow-card')) return Promise.resolve();
+      const urls = [
+        'https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@v7.3.3/dist/sunsynk-power-flow-card.js',
+        'https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js',
+      ];
+      return new Promise((resolve, reject) => {
+        let idx = 0;
+        const tryNext = () => {
+          const src = urls[idx++];
+          if (!src) {
+            reject(new Error('Sunsynk Power Flow Card non caricata da CDN'));
+            return;
+          }
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = src;
+          script.onload = () => resolve();
+          script.onerror = () => {
+            console.warn('e-SunMind Energy CDN failed', src);
+            script.remove();
+            tryNext();
+          };
+          document.head.appendChild(script);
+        };
+        tryNext();
+      });
+    }
+
+    async function startEnergyCard() {
+      try {
+        await loadSunsynkCardScript();
+      } catch (e) {
+        console.error(e);
+        host.innerHTML = '<div style="padding:18px;color:#fecaca;background:#450a0a;border:1px solid #991b1b;border-radius:12px">Errore caricamento Sunsynk Power Flow Card da CDN.</div>';
+        return;
+      }
+      const waitCard = setInterval(async () => {
       if (customElements.get('sunsynk-power-flow-card')) {
         clearInterval(waitCard);
         await loadCardConfigFromAddonOptions();
@@ -861,6 +896,10 @@
         }
       }
     }, 100);
+    }
+
+    // avvio
+    startEnergyCard();
   </script>
 </body>
 </html>

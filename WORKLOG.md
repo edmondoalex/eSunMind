@@ -1,5 +1,9 @@
 ﻿# WORKLOG
 
+## 2026-05-13
+- Energy Flow wrapper: sostituito caricamento CDN statico Sunsynk con loader a fallback (`v7.3.3`, poi `master`) per evitare pagina rotta su 404 jsDelivr.
+- Bump versione addon/backend a `0.3.210` con changelog aggiornato.
+
 ## 2026-05-12
 - Energy Setup/Flow: corretto caso `full + AUX`, ora il JSON elimina `essential_load3..6` e il wrapper mantiene AUX visibile limitando i load essenziali a 2.
 - Bump versione addon/backend a `0.3.209` con changelog aggiornato.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.210
+- Energy Flow: rimosso script CDN statico su `@master` e aggiunto loader con fallback.
+- Sunsynk Power Flow Card caricata prima da versione pinata `v7.3.3`, poi da `master` se il CDN fallisce.
+- Bump versione addon/backend a `0.3.210`.
+
 ## 0.3.209
 - Energy Setup: in layout `full` con AUX attivo, il generatore JSON rimuove `essential_load3..6` invece di farli tornare al salvataggio.
 - Energy Flow: in layout `full + AUX`, il wrapper mantiene AUX visibile e limita i load essenziali a 2, evitando che la card Sunsynk nasconda AUX.
