@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Dashboard: aumentata dimensione visuale dei loghi originali tramite CSS/crop dello spazio trasparente, mantenendo invariati i PNG sorgente.
+- Bump versione addon/backend a `0.3.214` con changelog aggiornato.
+
 - Energy Dashboard: sostituiti i loghi ricreati con i PNG originali forniti (`energymind.png` in alto, EKONEX trasparente in basso), gestiti solo con CSS responsive.
 - Bump versione addon/backend a `0.3.213` con changelog aggiornato.
 
