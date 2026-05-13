@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.219
+- Energy Setup: aggiunti campi UI per nominale PV1-PV6 (`pv*_max_power`) usati dalla card per calcolare la percentuale stringa.
+- Bump versione addon/backend a `0.3.219`.
+
 ## 0.3.218
 - Energy Setup: aggiunti campi UI per nome visuale PV1-PV6.
 - Energy Setup: aggiunti campi UI Batteria per tensione, corrente, carica giornaliera e scarica giornaliera.

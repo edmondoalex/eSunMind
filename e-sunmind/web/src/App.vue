@@ -1233,18 +1233,24 @@
                 <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
                 <label>PV installed kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
                 <label>PV1 nome visuale<input type="text" v-model="energyWizardForm.pv1_name" placeholder="SolarSAS" /></label>
+                <label>PV1 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv1_max_power" /></label>
                 <label>PV1 potenza (entity_id)<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
                 <label>PV2 nome visuale<input type="text" v-model="energyWizardForm.pv2_name" placeholder="Pannelli portoni" /></label>
+                <label>PV2 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv2_max_power" /></label>
                 <label>PV2 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv2_power_187" /></label>
                 <label>PV2 tensione (V)<input type="text" v-model="energyWizardForm.pv2_voltage_111" /></label>
                 <label>PV2 corrente (A)<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
                 <label>PV3 nome visuale<input type="text" v-model="energyWizardForm.pv3_name" /></label>
+                <label>PV3 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv3_max_power" /></label>
                 <label>PV3 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv3_power_188" /></label>
                 <label>PV4 nome visuale<input type="text" v-model="energyWizardForm.pv4_name" /></label>
+                <label>PV4 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv4_max_power" /></label>
                 <label>PV4 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv4_power_189" /></label>
                 <label>PV5 nome visuale<input type="text" v-model="energyWizardForm.pv5_name" /></label>
+                <label>PV5 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv5_max_power" /></label>
                 <label>PV5 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv5_power" /></label>
                 <label>PV6 nome visuale<input type="text" v-model="energyWizardForm.pv6_name" /></label>
+                <label>PV6 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv6_max_power" /></label>
                 <label>PV6 potenza (entity_id)<input type="text" v-model="energyWizardForm.pv6_power" /></label>
               </div>
             </section>
@@ -1840,6 +1846,12 @@ const energyWizardForm = ref({
   pv4_name: '',
   pv5_name: '',
   pv6_name: '',
+  pv1_max_power: 0,
+  pv2_max_power: 0,
+  pv3_max_power: 0,
+  pv4_max_power: 0,
+  pv5_max_power: 0,
+  pv6_max_power: 0,
   battery_count: 1,
   battery_energy_wh: 15960,
   battery_shutdown_soc: 20,
@@ -4242,6 +4254,12 @@ function buildSunsynkConfigFromWizard() {
       pv4_name: String(w.pv4_name || ''),
       pv5_name: String(w.pv5_name || ''),
       pv6_name: String(w.pv6_name || ''),
+      ...(Number(w.pv1_max_power) > 0 ? { pv1_max_power: Number(w.pv1_max_power) } : {}),
+      ...(Number(w.pv2_max_power) > 0 ? { pv2_max_power: Number(w.pv2_max_power) } : {}),
+      ...(Number(w.pv3_max_power) > 0 ? { pv3_max_power: Number(w.pv3_max_power) } : {}),
+      ...(Number(w.pv4_max_power) > 0 ? { pv4_max_power: Number(w.pv4_max_power) } : {}),
+      ...(Number(w.pv5_max_power) > 0 ? { pv5_max_power: Number(w.pv5_max_power) } : {}),
+      ...(Number(w.pv6_max_power) > 0 ? { pv6_max_power: Number(w.pv6_max_power) } : {}),
     },
     battery: {
       count: Math.max(1, Math.min(2, Number(w.battery_count || 1))),
@@ -4741,6 +4759,12 @@ async function loadData() {
           pv4_name: String(solar.pv4_name || wizardSeed.pv4_name),
           pv5_name: String(solar.pv5_name || wizardSeed.pv5_name),
           pv6_name: String(solar.pv6_name || wizardSeed.pv6_name),
+          pv1_max_power: Number(solar.pv1_max_power ?? wizardSeed.pv1_max_power ?? 0),
+          pv2_max_power: Number(solar.pv2_max_power ?? wizardSeed.pv2_max_power ?? 0),
+          pv3_max_power: Number(solar.pv3_max_power ?? wizardSeed.pv3_max_power ?? 0),
+          pv4_max_power: Number(solar.pv4_max_power ?? wizardSeed.pv4_max_power ?? 0),
+          pv5_max_power: Number(solar.pv5_max_power ?? wizardSeed.pv5_max_power ?? 0),
+          pv6_max_power: Number(solar.pv6_max_power ?? wizardSeed.pv6_max_power ?? 0),
           battery_count: Number(battery.count ?? wizardSeed.battery_count),
           battery_energy_wh: Number(battery.energy ?? wizardSeed.battery_energy_wh),
           battery_shutdown_soc: Number(battery.shutdown_soc ?? wizardSeed.battery_shutdown_soc),
