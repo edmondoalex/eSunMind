@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Dashboard: aggiunta favicon dedicata rosso/blu solo per `sunsynk-wrapper.html`, lasciando invariata la favicon della UI principale.
+- Bump versione addon/backend a `0.3.211` con changelog aggiornato.
+
 - Energy Flow wrapper: sostituito caricamento CDN statico Sunsynk con loader a fallback (`v7.3.3`, poi `master`) per evitare pagina rotta su 404 jsDelivr.
 - Bump versione addon/backend a `0.3.210` con changelog aggiornato.
 

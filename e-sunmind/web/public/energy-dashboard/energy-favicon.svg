@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="58%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".38"/>
+      <stop offset="42%" stop-color="#303647" stop-opacity=".38"/>
+      <stop offset="100%" stop-color="#111827" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="power" x1="34" y1="88" x2="222" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff1f1f"/>
+      <stop offset="47%" stop-color="#f72d6e"/>
+      <stop offset="100%" stop-color="#00a7ff"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="110" y1="56" x2="146" y2="178" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff3b28"/>
+      <stop offset="48%" stop-color="#d9337f"/>
+      <stop offset="100%" stop-color="#126cff"/>
+    </linearGradient>
+    <linearGradient id="brainLeft" x1="63" y1="170" x2="127" y2="204" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff2a1c"/>
+      <stop offset="100%" stop-color="#ff4f87"/>
+    </linearGradient>
+    <linearGradient id="brainRight" x1="129" y1="170" x2="193" y2="204" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2d63ff"/>
+      <stop offset="100%" stop-color="#00b8ff"/>
+    </linearGradient>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 0.25 0 0 0  0 0 1 0 0  0 0 0 .75 0"/>
+      <feBlend in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="url(#glow)"/>
+  <g filter="url(#softGlow)">
+    <path d="M75 133a18 18 0 0 1-18-18c0-20 8-40 23-55a69 69 0 0 1 96 0c15 15 23 35 23 55a18 18 0 0 1-36 0c0-11-4-20-11-28a34 34 0 0 0-48 0c-7 8-11 17-11 28a18 18 0 0 1-18 18Z" fill="url(#power)" opacity=".96"/>
+    <rect x="110" y="52" width="36" height="110" rx="18" fill="url(#stem)" opacity=".96"/>
+    <rect x="53" y="124" width="35" height="76" rx="18" fill="#ff241f" opacity=".9"/>
+    <rect x="168" y="124" width="35" height="76" rx="18" fill="#00a7ff" opacity=".9"/>
+    <path d="M105 171c-8-7-21-4-27 4-7 9-4 23 6 29 8 5 20 5 28-2 8 9 24 7 30-4 7-13-3-28-17-28-7 0-13 3-20 1Z" fill="url(#brainLeft)" stroke="#1d1023" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M151 171c8-7 21-4 27 4 7 9 4 23-6 29-8 5-20 5-28-2-8 9-24 7-30-4-7-13 3-28 17-28 7 0 13 3 20 1Z" fill="url(#brainRight)" stroke="#101a3a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M83 181c11 0 19 4 22 12M101 169c-2 12 6 18 19 19M173 181c-11 0-19 4-22 12M155 169c2 12-6 18-19 19" fill="none" stroke="#151827" stroke-width="6" stroke-linecap="round"/>
+  </g>
+</svg>

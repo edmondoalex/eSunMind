@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.211
+- Energy Dashboard: aggiunta favicon dedicata rosso/blu per `energy-dashboard/sunsynk-wrapper.html`.
+- La favicon della UI principale e-SunMind resta invariata.
+- Bump versione addon/backend a `0.3.211`.
+
 ## 0.3.210
 - Energy Flow: rimosso script CDN statico su `@master` e aggiunto loader con fallback.
 - Sunsynk Power Flow Card caricata prima da versione pinata `v7.3.3`, poi da `master` se il CDN fallisce.
