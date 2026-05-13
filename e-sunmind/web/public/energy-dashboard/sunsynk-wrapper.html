@@ -34,42 +34,45 @@
       object-fit: contain;
       object-position: center;
       display: block;
+      transform-origin: center;
     }
+    .energy-logo-top-box .energy-logo { transform: scale(1.72); }
+    .energy-logo-bottom-box .energy-logo { transform: scale(1.95); }
     .energy-logo-top-box {
       top: clamp(2px, .5vw, 8px);
-      left: clamp(250px, 30%, 375px);
-      width: clamp(300px, 37vw, 520px);
-      aspect-ratio: 16 / 3.4;
-      max-height: 112px;
+      left: clamp(285px, 32%, 405px);
+      width: clamp(340px, 41vw, 560px);
+      aspect-ratio: 16 / 3;
+      max-height: 122px;
     }
     .energy-logo-bottom-box {
       left: clamp(385px, 41%, 500px);
-      bottom: clamp(0px, 1vw, 12px);
-      width: clamp(230px, 30vw, 390px);
-      aspect-ratio: 16 / 4;
-      max-height: 116px;
+      bottom: clamp(0px, .8vw, 10px);
+      width: clamp(260px, 34vw, 430px);
+      aspect-ratio: 16 / 3.8;
+      max-height: 126px;
     }
     body.energy-card-compact .energy-logo-top-box,
     body.energy-card-lite .energy-logo-top-box {
       left: clamp(190px, 27%, 300px);
-      width: clamp(240px, 32vw, 410px);
-      max-height: 92px;
+      width: clamp(280px, 36vw, 460px);
+      max-height: 104px;
     }
     body.energy-card-compact .energy-logo-bottom-box,
     body.energy-card-lite .energy-logo-bottom-box {
       left: clamp(310px, 40%, 430px);
-      width: clamp(170px, 25vw, 290px);
-      max-height: 82px;
+      width: clamp(210px, 29vw, 340px);
+      max-height: 96px;
     }
     body.energy-card-minimal .energy-logo-top-box {
       left: clamp(145px, 24%, 245px);
-      width: clamp(210px, 30vw, 340px);
-      max-height: 78px;
+      width: clamp(245px, 34vw, 380px);
+      max-height: 88px;
     }
     body.energy-card-minimal .energy-logo-bottom-box {
       left: clamp(245px, 38%, 365px);
-      width: clamp(145px, 22vw, 240px);
-      max-height: 66px;
+      width: clamp(180px, 26vw, 280px);
+      max-height: 78px;
     }
     html.map-mode, body.map-mode { width: 100vw; height: 100vh; overflow: hidden; }
     body.map-mode .page { min-height: 100vh; height: 100vh; padding: 0; display: block; overflow: hidden; }
@@ -81,15 +84,15 @@
         top: 6px;
         left: 50%;
         transform: translateX(-50%);
-        width: min(78vw, 340px);
-        max-height: 78px;
+        width: min(86vw, 390px);
+        max-height: 88px;
       }
       .energy-logo-bottom-box {
         left: 50%;
         bottom: 7px;
         transform: translateX(-50%);
-        width: min(58vw, 240px);
-        max-height: 56px;
+        width: min(68vw, 290px);
+        max-height: 68px;
       }
     }
     @media (max-width: 520px) {

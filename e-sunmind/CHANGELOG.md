@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.216
+- Energy Dashboard: aumentata la scala interna dei loghi originali dentro i riquadri responsive, senza modificare i PNG.
+- Bump versione addon/backend a `0.3.216`.
+
 ## 0.3.215
 - Energy Dashboard: corretto crop dei loghi originali per evitare tagli su simbolo EnergyMind e logo EKONEX.
 - Energy Setup: aggiunto colore sfondo configurabile per la dashboard Energy.
