@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.223
+- Energy Setup: aggiunto campo UI `PV totale live (entity_id)` per pilotare direttamente il riquadro totale PV della dashboard.
+- Energy API/Wrapper: `pv_total` ha priorita sul totale PV; se manca, resta il fallback alla somma PV1-PV6.
+- Bump versione addon/backend a `0.3.223`.
+
 ## 0.3.222
 - Energy Dashboard: `?site=...` ora risolve sia l'ID link sia il nome dashboard normalizzato, evitando fallback errati quando il nome e l'ID non coincidono.
 - Bump versione addon/backend a `0.3.222`.

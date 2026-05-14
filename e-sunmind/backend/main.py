@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.222"
+APP_VERSION = "0.3.223"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1072,12 +1072,15 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
     out["normalized"]["inverter_voltage_v"] = _to_float_or_none((out["entities"].get("inverter_voltage_entity_id") or {}).get("value"))
     out["normalized"]["load_frequency_hz"] = _to_float_or_none((out["entities"].get("load_frequency_entity_id") or {}).get("value"))
 
-    # Fallback from Sunsynk card JSON entities when base energy.* entity ids are empty.
-    if _is_missing(out["normalized"]["pv_power_w"]):
-        pv1 = _card_power_w("pv1_power_186")
-        pv2 = _card_power_w("pv2_power_187")
-        if pv1 is not None or pv2 is not None:
-            out["normalized"]["pv_power_w"] = float(pv1 or 0.0) + float(pv2 or 0.0)
+    # PV total: prefer explicit Sunsynk pv_total when configured; otherwise use
+    # the legacy base PV entity and finally sum the mapped PV strings.
+    pv_total = _card_power_w("pv_total")
+    if pv_total is not None:
+        out["normalized"]["pv_power_w"] = pv_total
+    elif _is_missing(out["normalized"]["pv_power_w"]):
+        pv_values = [_card_power_w(k) for k in ("pv1_power_186", "pv2_power_187", "pv3_power_188", "pv4_power_189", "pv5_power", "pv6_power")]
+        if any(v is not None for v in pv_values):
+            out["normalized"]["pv_power_w"] = sum(float(v or 0.0) for v in pv_values)
     if _is_missing(out["normalized"]["home_power_w"]):
         out["normalized"]["home_power_w"] = _card_power_w("inverter_power_175")
     if _is_missing(out["normalized"]["grid_power_w"]):

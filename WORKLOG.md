@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Setup/API/Wrapper: aggiunto `pv_total` configurabile da UI come totale PV live preferito, con fallback automatico alla somma PV1-PV6.
+- Bump versione addon/backend a `0.3.223` con changelog aggiornato.
+
 - Energy Dashboard: risoluzione `?site=...` estesa anche al nome dashboard normalizzato, oltre all'ID link.
 - Bump versione addon/backend a `0.3.222` con changelog aggiornato.
 

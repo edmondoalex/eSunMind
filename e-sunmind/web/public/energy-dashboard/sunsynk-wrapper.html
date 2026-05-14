@@ -230,6 +230,7 @@
       inverter_voltage_154: 'sensor.mock_inverter_voltage',
       inverter_current_164: 'sensor.mock_inverter_current',
       load_frequency_192: 'sensor.mock_load_frequency',
+      pv_total: 'sensor.mock_pv_total',
       pv1_power_186: 'sensor.mock_pv1_power',
       pv2_power_187: 'sensor.mock_pv2_power',
       pv1_voltage_109: 'sensor.mock_pv1_voltage',
@@ -298,7 +299,7 @@
       'inverter_power_175','grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59',
       'battery_soc_184','battery_power_190','battery_current_191','battery_voltage_183',
       'inverter_voltage_154','inverter_current_164','load_frequency_192',
-      'pv1_power_186','pv2_power_187','pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
+      'pv_total','pv1_power_186','pv2_power_187','pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
       'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
       'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6','aux_power_166','aux_load1','aux_load2','non_essential_load1','non_essential_load2','non_essential_load3','battery2_power_190'
     ];
@@ -711,8 +712,10 @@
       };
 
       if (newData.solar_power != null) {
+        const pvTotalId = entityId('pv_total');
+        set(pvTotalId, Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
         // Strict mode: never synthesize PV2+ from total PV.
-        set(entityId('pv1_power_186'), Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
+        if (!pvTotalId) set(entityId('pv1_power_186'), Number(newData.solar_power).toFixed(0), 'W', { device_class: 'power', state_class: 'measurement' });
       }
       if (newData.battery_soc != null) set(entityId('battery_soc_184'), newData.battery_soc, '%', { device_class: 'battery', state_class: 'measurement' });
       if (newData.battery_power != null) set(entityId('battery_power_190'), newData.battery_power, 'W', { device_class: 'power', state_class: 'measurement' });
@@ -866,15 +869,21 @@
 
         publishAllRawCardEntityStates();
 
+        const pvTotal = fromCard('pv_total');
         const pv1 = fromCard('pv1_power_186');
         const pv2 = fromCard('pv2_power_187');
-        const solarFallback = (pv1 != null || pv2 != null) ? (Number(pv1 || 0) + Number(pv2 || 0)) : null;
+        const pv3 = fromCard('pv3_power_188');
+        const pv4 = fromCard('pv4_power_189');
+        const pv5 = fromCard('pv5_power');
+        const pv6 = fromCard('pv6_power');
+        const pvStrings = [pv1, pv2, pv3, pv4, pv5, pv6];
+        const solarFallback = (pvTotal != null) ? pvTotal : (pvStrings.some((v) => v != null) ? pvStrings.reduce((a, v) => a + Number(v || 0), 0) : null);
         const solarRaw = pick(n.pv_power_w, solarFallback);
         const batteryRaw = pick(n.battery_power_w, fromCard('battery_power_190'));
         const batterySoc = pick(n.battery_soc_pct, fromCard('battery_soc_184'));
         const gridRaw = pick(n.grid_power_w, fromCard('grid_power_169'));
         const inverterRaw = pick(n.home_power_w, fromCard('inverter_power_175'));
-        const solarPower = (solarRaw == null ? null : applySignByKey('pv1_power_186', solarRaw));
+        const solarPower = (solarRaw == null ? null : applySignByKey(pvTotal != null ? 'pv_total' : 'pv1_power_186', solarRaw));
         const batteryPower = (batteryRaw == null ? null : applySignByKey('battery_power_190', batteryRaw));
         const gridPower = (gridRaw == null ? null : applySignByKey('grid_power_169', gridRaw));
         const inverterPower = (inverterRaw == null ? null : applySignByKey('inverter_power_175', inverterRaw));
@@ -906,6 +915,7 @@
 
         // Hard override from raw card entities when available.
         // This keeps the original card fields populated even if normalized mapping is partial.
+        setFromCardEntity(entityId('pv_total'), 'pv_total', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv1_power_186'), 'pv1_power_186', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv2_power_187'), 'pv2_power_187', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv1_voltage_109'), 'pv1_voltage_109', 'V', 'voltage', 'measurement');

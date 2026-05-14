@@ -1237,6 +1237,7 @@
                 <label>Solar speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.solar_animation_speed" /></label>
                 <label>Solar show daily<input type="checkbox" v-model="energyWizardForm.solar_show_daily" /></label>
                 <label>PV installed kWp<input type="number" min="0" step="0.1" v-model.number="energyForm.pv_installed_kwp" /></label>
+                <label>PV totale live (entity_id)<input type="text" v-model="energyWizardForm.pv_total" placeholder="sensor.totale_pv" /></label>
                 <label>PV1 nome visuale<input type="text" v-model="energyWizardForm.pv1_name" placeholder="SolarSAS" /></label>
                 <label>PV1 nominale (W)<input type="number" min="0" step="10" v-model.number="energyWizardForm.pv1_max_power" /></label>
                 <label>PV1 potenza (entity_id)<input type="text" v-model="energyForm.pv_power_entity_id" /></label>
@@ -1775,6 +1776,7 @@ const energyEntityPopupMode = ref('realtime')
 const energyEntityPreviewLoading = ref(false)
 const energyEntityPreview = ref({})
 const energyMapTargets = [
+  { key: 'pv_total', label: 'PV Total Power' },
   { key: 'pv1_power_186', label: 'PV1 Power' },
   { key: 'pv2_power_187', label: 'PV2 Power' },
   { key: 'inverter_power_175', label: 'Home/Inverter Power' },
@@ -1792,6 +1794,7 @@ const energyMapTargets = [
   { key: 'day_grid_import_76', label: 'Grid Import Today' },
 ]
 const energyHotspots = [
+  { key: 'pv_total', label: 'PV Total Power' },
   { key: 'pv1_power_186', label: 'PV1 Power' },
   { key: 'day_pv_energy_108', label: 'PV Energy Today' },
   { key: 'inverter_power_175', label: 'Home/Inverter Power' },
@@ -1810,6 +1813,7 @@ const energyHotspots = [
 ]
 const selectedEnergyMapKey = ref('')
 const realtimeEntityKeys = [
+  'pv_total',
   'pv1_power_186','pv2_power_187','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112',
   'pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
   'grid_power_169','grid_ct_power_172','grid_connected_status_194','inverter_status_59','inverter_power_175',
@@ -1932,6 +1936,7 @@ const energyWizardForm = ref({
   inverter_voltage_154: '',
   inverter_current_164: '',
   load_frequency_192: '',
+  pv_total: '',
   pv1_power_186: '',
   pv2_power_187: '',
   pv1_voltage_109: '',
@@ -1982,6 +1987,7 @@ const baseSaveStatus = ref('')
 const overlaySaveStatus = ref('')
 const energyEntitySigns = ref({})
 const energySignFields = [
+  { key: 'pv_total', label: 'PV totale' },
   { key: 'pv1_power_186', label: 'PV1' },
   { key: 'pv2_power_187', label: 'PV2' },
   { key: 'pv3_power_188', label: 'PV3' },
@@ -4309,6 +4315,7 @@ function buildSunsynkConfigFromWizard() {
     battery_power_190: String(w.battery_power_190 || ''),
     battery_current_191: String(w.battery_current_191 || ''),
     battery_voltage_183: String(w.battery_voltage_183 || ''),
+    pv_total: String(w.pv_total || ''),
     pv1_power_186: String(w.pv1_power_186 || ''),
     pv2_power_187: String(w.pv2_power_187 || ''),
     pv1_voltage_109: String(w.pv1_voltage_109 || ''),
@@ -4974,6 +4981,7 @@ async function loadData() {
           battery_power_190: String(ents.battery_power_190 || wizardSeed.battery_power_190),
           battery_current_191: String(ents.battery_current_191 || wizardSeed.battery_current_191),
           battery_voltage_183: String(ents.battery_voltage_183 || wizardSeed.battery_voltage_183),
+          pv_total: String(ents.pv_total || wizardSeed.pv_total),
           pv1_power_186: String(ents.pv1_power_186 || wizardSeed.pv1_power_186),
           pv2_power_187: String(ents.pv2_power_187 || wizardSeed.pv2_power_187),
           pv1_voltage_109: String(ents.pv1_voltage_109 || wizardSeed.pv1_voltage_109),
