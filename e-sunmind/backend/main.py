@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.225"
+APP_VERSION = "0.3.226"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1069,6 +1069,8 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
     out["normalized"]["home_energy_today_kwh"] = _normalize_energy_to_kwh(*_val("home_energy_today_entity_id"))
     out["normalized"]["grid_import_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_import_today_entity_id"))
     out["normalized"]["grid_export_today_kwh"] = _normalize_energy_to_kwh(*_val("grid_export_today_entity_id"))
+    out["normalized"]["battery_charge_today_kwh"] = None
+    out["normalized"]["battery_discharge_today_kwh"] = None
     out["normalized"]["inverter_voltage_v"] = _to_float_or_none((out["entities"].get("inverter_voltage_entity_id") or {}).get("value"))
     out["normalized"]["load_frequency_hz"] = _to_float_or_none((out["entities"].get("load_frequency_entity_id") or {}).get("value"))
 
@@ -1098,6 +1100,10 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
         out["normalized"]["grid_import_today_kwh"] = _card_energy_kwh("day_grid_import_76")
     if _is_missing(out["normalized"]["grid_export_today_kwh"]):
         out["normalized"]["grid_export_today_kwh"] = _card_energy_kwh("day_grid_export_77")
+    if _is_missing(out["normalized"]["battery_charge_today_kwh"]):
+        out["normalized"]["battery_charge_today_kwh"] = _card_energy_kwh("day_battery_charge_70")
+    if _is_missing(out["normalized"]["battery_discharge_today_kwh"]):
+        out["normalized"]["battery_discharge_today_kwh"] = _card_energy_kwh("day_battery_discharge_71")
     if _is_missing(out["normalized"]["inverter_voltage_v"]):
         st_v = _card_state("inverter_voltage_154")
         out["normalized"]["inverter_voltage_v"] = _to_float_or_none((st_v or {}).get("value"))

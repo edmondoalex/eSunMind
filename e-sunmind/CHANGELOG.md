@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.226
+- Energy Wrapper: PV3-PV6 vengono aggiornati esplicitamente dal backend come PV1/PV2, evitando valori a zero quando e configurato `pv_total`.
+- Energy Wrapper: tensione/corrente PV sono trattate come opzionali e vengono rimosse dalla config se non mappate, senza bloccare la potenza del PV.
+- Energy Wrapper/API: aggiunti fallback daily interni per PV/load/grid/batteria e normalizzati `battery_charge_today_kwh`/`battery_discharge_today_kwh`.
+- Bump versione addon/backend a `0.3.226`.
+
 ## 0.3.225
 - Energy Wrapper: ripristinati i default originali della Sunsynk card per colori dinamici (`load.dynamic_colour`, `load.dynamic_icon`, `aux_dynamic_colour`, `solar.dynamic_colour`, battery gradient).
 - Energy Setup: il JSON generato ora include i flag dinamici principali, cosi il nodo casa torna a comportarsi come nella card HASS originale.

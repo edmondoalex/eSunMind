@@ -349,6 +349,26 @@
       return c;
     }
 
+    function ensureInternalDailyEntities() {
+      cardConfig.entities = cardConfig.entities || {};
+      if (cardConfig.solar?.show_daily && !isConfiguredEntity(cardConfig.entities.day_pv_energy_108)) {
+        cardConfig.entities.day_pv_energy_108 = sensorIds.day_pv_energy_108;
+      }
+      if (cardConfig.battery?.show_daily) {
+        if (!isConfiguredEntity(cardConfig.entities.day_battery_charge_70)) cardConfig.entities.day_battery_charge_70 = sensorIds.day_battery_charge_70;
+        if (!isConfiguredEntity(cardConfig.entities.day_battery_discharge_71)) cardConfig.entities.day_battery_discharge_71 = sensorIds.day_battery_discharge_71;
+      }
+      if (cardConfig.load?.show_daily && !isConfiguredEntity(cardConfig.entities.day_load_energy_84)) {
+        cardConfig.entities.day_load_energy_84 = sensorIds.day_load_energy_84;
+      }
+      if (cardConfig.grid?.show_daily_buy && !isConfiguredEntity(cardConfig.entities.day_grid_import_76)) {
+        cardConfig.entities.day_grid_import_76 = sensorIds.day_grid_import_76;
+      }
+      if (cardConfig.grid?.show_daily_sell && !isConfiguredEntity(cardConfig.entities.day_grid_export_77)) {
+        cardConfig.entities.day_grid_export_77 = sensorIds.day_grid_export_77;
+      }
+    }
+
     function applyEnergyEntityFallbacks(e) {
       // Strict mode: no implicit mappings from addon energy_config.
       cardConfig.entities = cardConfig.entities || {};
@@ -442,30 +462,32 @@
       ];
       const mappedCount = pvMapped.filter(Boolean).length;
       cardConfig.solar.mppts = Math.max(1, mappedCount || 1);
+      if (!isConfiguredEntity(cardConfig.entities.pv1_voltage_109)) delete cardConfig.entities.pv1_voltage_109;
+      if (!isConfiguredEntity(cardConfig.entities.pv1_current_110)) delete cardConfig.entities.pv1_current_110;
+      if (!isConfiguredEntity(cardConfig.entities.pv2_voltage_111)) delete cardConfig.entities.pv2_voltage_111;
+      if (!isConfiguredEntity(cardConfig.entities.pv2_current_112)) delete cardConfig.entities.pv2_current_112;
+      if (!isConfiguredEntity(cardConfig.entities.pv3_voltage_113)) delete cardConfig.entities.pv3_voltage_113;
+      if (!isConfiguredEntity(cardConfig.entities.pv3_current_114)) delete cardConfig.entities.pv3_current_114;
+      if (!isConfiguredEntity(cardConfig.entities.pv4_voltage_115)) delete cardConfig.entities.pv4_voltage_115;
+      if (!isConfiguredEntity(cardConfig.entities.pv4_current_116)) delete cardConfig.entities.pv4_current_116;
+      if (!isConfiguredEntity(cardConfig.entities.pv5_voltage)) delete cardConfig.entities.pv5_voltage;
+      if (!isConfiguredEntity(cardConfig.entities.pv5_current)) delete cardConfig.entities.pv5_current;
+      if (!isConfiguredEntity(cardConfig.entities.pv6_voltage)) delete cardConfig.entities.pv6_voltage;
+      if (!isConfiguredEntity(cardConfig.entities.pv6_current)) delete cardConfig.entities.pv6_current;
       if (!pvMapped[1]) {
         delete cardConfig.entities.pv2_power_187;
-        delete cardConfig.entities.pv2_voltage_111;
-        delete cardConfig.entities.pv2_current_112;
       }
       if (!pvMapped[2]) {
         delete cardConfig.entities.pv3_power_188;
-        delete cardConfig.entities.pv3_voltage_113;
-        delete cardConfig.entities.pv3_current_114;
       }
       if (!pvMapped[3]) {
         delete cardConfig.entities.pv4_power_189;
-        delete cardConfig.entities.pv4_voltage_115;
-        delete cardConfig.entities.pv4_current_116;
       }
       if (!pvMapped[4]) {
         delete cardConfig.entities.pv5_power;
-        delete cardConfig.entities.pv5_voltage;
-        delete cardConfig.entities.pv5_current;
       }
       if (!pvMapped[5]) {
         delete cardConfig.entities.pv6_power;
-        delete cardConfig.entities.pv6_voltage;
-        delete cardConfig.entities.pv6_current;
       }
       if (!isConfiguredEntity(cardConfig.entities.battery2_power_190)) {
         cardConfig.battery.count = 1;
@@ -545,6 +567,7 @@
       cardConfig.show_solar = Boolean(cardConfig.show_solar && hasPv);
       cardConfig.show_battery = Boolean(cardConfig.show_battery && hasBattery);
       cardConfig.show_grid = Boolean(cardConfig.show_grid && hasGrid);
+      ensureInternalDailyEntities();
       sanitizeMissingOptionalEntities();
     }
 
@@ -668,6 +691,8 @@
     function initCard() {
       seedStates();
       cardConfig = normalizeConfigForCard(cardConfig);
+      enforceTopologyFromConfig();
+      applySignFlowOverrides();
       syncEnergyCardstyleClass();
       card = document.createElement('sunsynk-power-flow-card');
       try {
@@ -688,6 +713,8 @@
           entities: { ...cardConfig.entities },
         });
         cardConfig = fallback;
+        enforceTopologyFromConfig();
+        applySignFlowOverrides();
         card.setConfig(fallback);
       }
       host.innerHTML = '';
@@ -775,12 +802,16 @@
         await loadCardConfigFromAddonOptions();
         if (card && typeof card.setConfig === 'function') {
           cardConfig = normalizeConfigForCard(cardConfig);
+          enforceTopologyFromConfig();
+          applySignFlowOverrides();
           syncEnergyCardstyleClass();
           try {
             card.setConfig(cardConfig);
           } catch (e) {
             sanitizeMissingOptionalEntities();
             cardConfig = normalizeConfigForCard(cardConfig);
+            enforceTopologyFromConfig();
+            applySignFlowOverrides();
             try {
               card.setConfig(cardConfig);
             } catch (retryError) {
@@ -940,10 +971,22 @@
         setFromCardEntity(entityId('pv_total'), 'pv_total', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv1_power_186'), 'pv1_power_186', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv2_power_187'), 'pv2_power_187', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('pv3_power_188'), 'pv3_power_188', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('pv4_power_189'), 'pv4_power_189', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('pv5_power'), 'pv5_power', 'W', 'power', 'measurement');
+        setFromCardEntity(entityId('pv6_power'), 'pv6_power', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('pv1_voltage_109'), 'pv1_voltage_109', 'V', 'voltage', 'measurement');
         setFromCardEntity(entityId('pv1_current_110'), 'pv1_current_110', 'A', 'current', 'measurement');
         setFromCardEntity(entityId('pv2_voltage_111'), 'pv2_voltage_111', 'V', 'voltage', 'measurement');
         setFromCardEntity(entityId('pv2_current_112'), 'pv2_current_112', 'A', 'current', 'measurement');
+        setFromCardEntity(entityId('pv3_voltage_113'), 'pv3_voltage_113', 'V', 'voltage', 'measurement');
+        setFromCardEntity(entityId('pv3_current_114'), 'pv3_current_114', 'A', 'current', 'measurement');
+        setFromCardEntity(entityId('pv4_voltage_115'), 'pv4_voltage_115', 'V', 'voltage', 'measurement');
+        setFromCardEntity(entityId('pv4_current_116'), 'pv4_current_116', 'A', 'current', 'measurement');
+        setFromCardEntity(entityId('pv5_voltage'), 'pv5_voltage', 'V', 'voltage', 'measurement');
+        setFromCardEntity(entityId('pv5_current'), 'pv5_current', 'A', 'current', 'measurement');
+        setFromCardEntity(entityId('pv6_voltage'), 'pv6_voltage', 'V', 'voltage', 'measurement');
+        setFromCardEntity(entityId('pv6_current'), 'pv6_current', 'A', 'current', 'measurement');
         setFromCardEntity(entityId('inverter_power_175'), 'inverter_power_175', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('grid_power_169'), 'grid_power_169', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('grid_ct_power_172'), 'grid_ct_power_172', 'W', 'power', 'measurement');
@@ -987,6 +1030,8 @@
           };
         };
         setDaily(entityId('day_pv_energy_108'), n.pv_energy_today_kwh);
+        setDaily(entityId('day_battery_charge_70'), n.battery_charge_today_kwh);
+        setDaily(entityId('day_battery_discharge_71'), n.battery_discharge_today_kwh);
         setDaily(entityId('day_load_energy_84'), n.home_energy_today_kwh);
         setDaily(entityId('day_grid_import_76'), n.grid_import_today_kwh);
         setDaily(entityId('day_grid_export_77'), n.grid_export_today_kwh);

@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper/API: corretto update PV3-PV6 con `pv_total`, resi opzionali V/A PV e aggiunti fallback daily interni + normalized batteria daily.
+- Bump versione addon/backend a `0.3.226` con changelog aggiornato.
+
 - Energy Wrapper/Setup: ripristinati default dinamici originali Sunsynk per colori/icona load e gradienti solar/battery.
 - Bump versione addon/backend a `0.3.225` con changelog aggiornato.
 
