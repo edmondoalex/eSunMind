@@ -180,7 +180,10 @@
       const sites = Array.isArray(energyRoot?.sites) ? energyRoot.sites : [];
       if (!sites.length) return energyRoot || {};
       const wanted = normalizeSiteId(SITE_ID || energyRoot?.selected_site_id || sites[0]?.site_id || sites[0]?.id);
-      return sites.find((s) => normalizeSiteId(s?.site_id || s?.id) === wanted) || sites[0] || energyRoot || {};
+      return sites.find((s) =>
+        normalizeSiteId(s?.site_id || s?.id) === wanted ||
+        normalizeSiteId(s?.site_name || s?.name) === wanted
+      ) || sites[0] || energyRoot || {};
     }
     if (MAP_MODE) {
       document.body.classList.add('map-mode');

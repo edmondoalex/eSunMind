@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.222
+- Energy Dashboard: `?site=...` ora risolve sia l'ID link sia il nome dashboard normalizzato, evitando fallback errati quando il nome e l'ID non coincidono.
+- Bump versione addon/backend a `0.3.222`.
+
 ## 0.3.221
 - Performance: la dashboard Energy standalone usa `/api/data?site=...`, evitando di ricostruire tutti gli impianti e snapshot meteo/tende a ogni polling.
 - Performance UI: `loadData()` non ricarica piu `/api/options` a ogni refresh realtime e non esegue piu autofill stazione meteo durante il polling.

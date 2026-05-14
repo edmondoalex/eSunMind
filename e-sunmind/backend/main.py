@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.221"
+APP_VERSION = "0.3.222"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1110,7 +1110,15 @@ def _build_energy_snapshot(cfg: dict[str, Any], selected_site_id: str | None = N
     e_cfg = dict(cfg.get("energy") or {})
     sites = _normalize_energy_sites_inplace(e_cfg)
     selected_id = _energy_site_slug(selected_site_id or e_cfg.get("selected_site_id") or (sites[0].get("id") if sites else "default"), "default")
-    selected_site = next((s for s in sites if str(s.get("id")) == selected_id), sites[0] if sites else e_cfg)
+    selected_site = next(
+        (
+            s
+            for s in sites
+            if str(s.get("id")) == selected_id
+            or _energy_site_slug(s.get("name") or s.get("site_name"), "") == selected_id
+        ),
+        sites[0] if sites else e_cfg,
+    )
     out = _build_energy_site_snapshot(selected_site)
     out["site_id"] = str(selected_site.get("id") or selected_id or "default")
     out["site_name"] = str(selected_site.get("name") or out["site_id"])

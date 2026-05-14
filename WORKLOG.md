@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Energy Dashboard: risoluzione `?site=...` estesa anche al nome dashboard normalizzato, oltre all'ID link.
+- Bump versione addon/backend a `0.3.222` con changelog aggiornato.
+
 - Performance: alleggerito polling Energy con endpoint site-specific e ridotto refresh opzioni/autofill durante `loadData()`.
 - Bump versione addon/backend a `0.3.221` con changelog aggiornato.
 
