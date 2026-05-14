@@ -761,7 +761,8 @@
             }
           }
         }
-        const r = await fetch('../api/data', { cache: 'no-store' });
+        const dataUrl = SITE_ID ? `../api/data?site=${encodeURIComponent(SITE_ID)}` : '../api/data';
+        const r = await fetch(dataUrl, { cache: 'no-store' });
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
         const energyRoot = j?.energy || {};

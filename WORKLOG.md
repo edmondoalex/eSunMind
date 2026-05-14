@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-13
+- Performance: alleggerito polling Energy con endpoint site-specific e ridotto refresh opzioni/autofill durante `loadData()`.
+- Bump versione addon/backend a `0.3.221` con changelog aggiornato.
+
 - Energy Setup: aggiunta select impianto attivo e persistenza preventiva del JSON site quando si cambia/crea/duplica/elimina dashboard.
 - Bump versione addon/backend a `0.3.220` con changelog aggiornato.
 

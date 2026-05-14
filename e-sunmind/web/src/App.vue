@@ -1628,6 +1628,8 @@ const userAutoRefreshMs = 15000
 let loadDataInFlight = false
 let loadDataFailStreak = 0
 let loadDataBackoffUntilTs = 0
+let optionsLoadedOnce = false
+let optionsLastLoadTs = 0
 let mapInitRetryTimer = 0
 let mapInitAttempts = 0
 const MAP_INIT_MAX_RETRIES = 20
@@ -4723,10 +4725,13 @@ async function loadData() {
       // Polling refresh should not start aggressive retry loops on missing containers.
       await ensureMainMapReady('loadData', { retryOnMissing: false })
     }
-    // Keep forms in sync with current persisted options, independent from forecast availability.
-    try {
+    // Keep forms in sync without reloading heavy options on every realtime poll.
+    const shouldLoadOptions = !optionsLoadedOnce || tab.value === 'setting' || tab.value === 'energy_setup' || (Date.now() - optionsLastLoadTs > 60000)
+    if (shouldLoadOptions) try {
       const ro = await fetch('api/options', { cache: 'no-store' })
       const oj = await ro.json()
+      optionsLoadedOnce = true
+      optionsLastLoadTs = Date.now()
       const fso = oj?.forecast_solar || {}
       fsForm.value = {
         enabled: Boolean(fso.enabled),
@@ -4771,9 +4776,7 @@ async function loadData() {
         solar_radiation_entity_id: String(wso.solar_radiation_entity_id || ''),
         vpd_entity_id: String(wso.vpd_entity_id || ''),
       }
-      if (String(weatherStationForm.value.device_id || '').trim()) {
-        await autofillWeatherStationFromDevice()
-      }
+      // Autofill is intentionally not run during periodic refresh; it is triggered by device_id changes.
       const wgo = oj?.weather_guard || {}
       weatherGuardForm.value = {
         enabled: Boolean(wgo.enabled ?? true),

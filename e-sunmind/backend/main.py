@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.220"
+APP_VERSION = "0.3.221"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1106,21 +1106,36 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _build_energy_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
+def _build_energy_snapshot(cfg: dict[str, Any], selected_site_id: str | None = None, include_sites: bool = True) -> dict[str, Any]:
     e_cfg = dict(cfg.get("energy") or {})
     sites = _normalize_energy_sites_inplace(e_cfg)
-    selected_id = str(e_cfg.get("selected_site_id") or (sites[0].get("id") if sites else "default"))
+    selected_id = _energy_site_slug(selected_site_id or e_cfg.get("selected_site_id") or (sites[0].get("id") if sites else "default"), "default")
     selected_site = next((s for s in sites if str(s.get("id")) == selected_id), sites[0] if sites else e_cfg)
     out = _build_energy_site_snapshot(selected_site)
     out["site_id"] = str(selected_site.get("id") or selected_id or "default")
     out["site_name"] = str(selected_site.get("name") or out["site_id"])
     out["selected_site_id"] = out["site_id"]
     site_out: list[dict[str, Any]] = []
-    for site in sites:
-        snap = _build_energy_site_snapshot(site)
-        snap["site_id"] = str(site.get("id") or "default")
-        snap["site_name"] = str(site.get("name") or snap["site_id"])
-        site_out.append(snap)
+    if include_sites:
+        for site in sites:
+            sid = str(site.get("id") or "default")
+            if sid == out["site_id"]:
+                snap = dict(out)
+                snap.pop("sites", None)
+            else:
+                snap = _build_energy_site_snapshot(site)
+                snap["site_id"] = sid
+                snap["site_name"] = str(site.get("name") or snap["site_id"])
+            site_out.append(snap)
+    else:
+        site_out.append({
+            "site_id": out["site_id"],
+            "site_name": out["site_name"],
+            "ok": out.get("ok"),
+            "enabled": out.get("enabled"),
+            "theme": out.get("theme"),
+            "normalized": out.get("normalized"),
+        })
     out["sites"] = site_out
     return out
 
@@ -2610,12 +2625,15 @@ async def sun_live():
 
 
 @app.get("/api/data")
-async def data():
+async def data(site: str | None = None):
     if not DATA_FILE.exists():
         return JSONResponse({"ok": False, "error": "data_not_ready"})
     payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     payload = _attach_weather_cache_for_guard(payload)
     cfg = _load_options()
+    if site:
+        payload["energy"] = _build_energy_snapshot(cfg, site, include_sites=False)
+        return JSONResponse(payload)
     payload["tende_map"] = _build_tende_map_snapshot(cfg)
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
     payload["weather_guard"] = _build_weather_guard(payload, cfg)
