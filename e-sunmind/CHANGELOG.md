@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.225
+- Energy Wrapper: ripristinati i default originali della Sunsynk card per colori dinamici (`load.dynamic_colour`, `load.dynamic_icon`, `aux_dynamic_colour`, `solar.dynamic_colour`, battery gradient).
+- Energy Setup: il JSON generato ora include i flag dinamici principali, cosi il nodo casa torna a comportarsi come nella card HASS originale.
+- Bump versione addon/backend a `0.3.225`.
+
 ## 0.3.224
 - Energy Wrapper: corretta taratura flussi PV per usare anche `pv_total` e PV1-PV6 nei segni/inversioni, non solo PV1.
 - Energy Wrapper: il rilevamento presenza PV ora considera `pv_total` e PV1-PV6, evitando spegnimenti errati della sezione Solar.

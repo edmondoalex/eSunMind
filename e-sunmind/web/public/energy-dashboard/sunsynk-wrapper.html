@@ -327,12 +327,24 @@
       c.battery.max_power = Number.isFinite(Number(c.battery.max_power)) ? Number(c.battery.max_power) : 5000;
       c.battery.animation_speed = Number.isFinite(Number(c.battery.animation_speed)) ? Number(c.battery.animation_speed) : 8;
       c.battery.auto_scale = Boolean(c.battery.auto_scale ?? true);
+      c.battery.dynamic_colour = Boolean(c.battery.dynamic_colour ?? true);
+      c.battery.linear_gradient = Boolean(c.battery.linear_gradient ?? true);
+      c.battery.animate = Boolean(c.battery.animate ?? true);
       c.battery2.energy = Number.isFinite(Number(c.battery2.energy)) ? Number(c.battery2.energy) : c.battery.energy;
       c.battery2.shutdown_soc = Number.isFinite(Number(c.battery2.shutdown_soc)) ? Number(c.battery2.shutdown_soc) : c.battery.shutdown_soc;
       c.battery2.max_power = Number.isFinite(Number(c.battery2.max_power)) ? Number(c.battery2.max_power) : c.battery.max_power;
       c.battery2.animation_speed = Number.isFinite(Number(c.battery2.animation_speed)) ? Number(c.battery2.animation_speed) : c.battery.animation_speed;
       c.battery2.auto_scale = Boolean(c.battery2.auto_scale ?? c.battery.auto_scale);
+      c.battery2.dynamic_colour = Boolean(c.battery2.dynamic_colour ?? c.battery.dynamic_colour);
+      c.battery2.linear_gradient = Boolean(c.battery2.linear_gradient ?? c.battery.linear_gradient);
+      c.battery2.animate = Boolean(c.battery2.animate ?? c.battery.animate);
+      c.solar.dynamic_colour = Boolean(c.solar.dynamic_colour ?? true);
       c.load.additional_loads = Number.isFinite(Number(c.load.additional_loads)) ? Number(c.load.additional_loads) : 0;
+      c.load.dynamic_colour = Boolean(c.load.dynamic_colour ?? true);
+      c.load.dynamic_icon = Boolean(c.load.dynamic_icon ?? true);
+      c.load.aux_dynamic_colour = Boolean(c.load.aux_dynamic_colour ?? true);
+      c.load.off_colour = String(c.load.off_colour || 'grey');
+      c.load.aux_off_colour = String(c.load.aux_off_colour || 'grey');
       c.grid.additional_loads = Number.isFinite(Number(c.grid.additional_loads)) ? Number(c.grid.additional_loads) : 0;
       return c;
     }

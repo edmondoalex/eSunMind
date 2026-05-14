@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper/Setup: ripristinati default dinamici originali Sunsynk per colori/icona load e gradienti solar/battery.
+- Bump versione addon/backend a `0.3.225` con changelog aggiornato.
+
 - Energy Wrapper: audit rapido flussi/stati, corretti segni PV con `pv_total`/PV1-PV6, lookup site-specific V/Hz e guardie su entity id vuoto.
 - Bump versione addon/backend a `0.3.224` con changelog aggiornato.
 
