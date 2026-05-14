@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.227
+- Energy Wrapper: la card Sunsynk ora usa entita interne mirror controllate dal wrapper, mentre il backend continua a leggere le entita reali configurate.
+- Energy Wrapper: separato definitivamente `pv_total` dai PV1-PV6, evitando che il totale azzeri o sporchi i valori dei singoli PV.
+- Energy Wrapper: i daily PV/batteria/load/grid vengono pubblicati sugli stessi ID interni usati dalla card, cosi non restano a zero dopo `setConfig`.
+- Bump versione addon/backend a `0.3.227`.
+
 ## 0.3.226
 - Energy Wrapper: PV3-PV6 vengono aggiornati esplicitamente dal backend come PV1/PV2, evitando valori a zero quando e configurato `pv_total`.
 - Energy Wrapper: tensione/corrente PV sono trattate come opzionali e vengono rimosse dalla config se non mappate, senza bloccare la potenza del PV.

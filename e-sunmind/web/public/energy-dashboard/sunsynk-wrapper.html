@@ -233,10 +233,22 @@
       pv_total: 'sensor.mock_pv_total',
       pv1_power_186: 'sensor.mock_pv1_power',
       pv2_power_187: 'sensor.mock_pv2_power',
+      pv3_power_188: 'sensor.mock_pv3_power',
+      pv4_power_189: 'sensor.mock_pv4_power',
+      pv5_power: 'sensor.mock_pv5_power',
+      pv6_power: 'sensor.mock_pv6_power',
       pv1_voltage_109: 'sensor.mock_pv1_voltage',
       pv1_current_110: 'sensor.mock_pv1_current',
       pv2_voltage_111: 'sensor.mock_pv2_voltage',
       pv2_current_112: 'sensor.mock_pv2_current',
+      pv3_voltage_113: 'sensor.mock_pv3_voltage',
+      pv3_current_114: 'sensor.mock_pv3_current',
+      pv4_voltage_115: 'sensor.mock_pv4_voltage',
+      pv4_current_116: 'sensor.mock_pv4_current',
+      pv5_voltage: 'sensor.mock_pv5_voltage',
+      pv5_current: 'sensor.mock_pv5_current',
+      pv6_voltage: 'sensor.mock_pv6_voltage',
+      pv6_current: 'sensor.mock_pv6_current',
       day_pv_energy_108: 'sensor.mock_day_pv_energy',
       day_battery_charge_70: 'sensor.mock_day_battery_charge',
       day_battery_discharge_71: 'sensor.mock_day_battery_discharge',
@@ -244,6 +256,7 @@
       day_grid_import_76: 'sensor.mock_day_grid_import',
       day_grid_export_77: 'sensor.mock_day_grid_export',
     };
+    const sourceEntityByCardKey = {};
 
     let cardConfig = {
       type: 'custom:sunsynk-power-flow-card',
@@ -282,6 +295,30 @@
       if (isConfiguredEntity(configured)) return String(configured).trim();
       return STRICT_ENTITIES_ONLY ? '' : (sensorIds[cardKey] || '');
     };
+    const internalEntityId = (cardKey) => sensorIds[cardKey] || `sensor.mock_${String(cardKey || '').toLowerCase().replace(/[^a-z0-9_]+/g, '_')}`;
+
+    function captureSourceEntities() {
+      Object.keys(sourceEntityByCardKey).forEach((k) => delete sourceEntityByCardKey[k]);
+      const ents = cardConfig?.entities && typeof cardConfig.entities === 'object' ? cardConfig.entities : {};
+      for (const [key, value] of Object.entries(ents)) {
+        const id = String(value || '').trim();
+        if (!isConfiguredEntity(id)) continue;
+        if (id.startsWith('sensor.mock_')) continue;
+        sourceEntityByCardKey[String(key)] = id;
+      }
+    }
+
+    function mirrorConfiguredEntitiesForCard() {
+      if (!cardConfig.entities || typeof cardConfig.entities !== 'object') cardConfig.entities = {};
+      for (const key of Object.keys(cardConfig.entities)) {
+        const current = String(cardConfig.entities[key] || '').trim();
+        if (!isConfiguredEntity(current)) continue;
+        if (!sourceEntityByCardKey[key] && !current.startsWith('sensor.mock_')) {
+          sourceEntityByCardKey[key] = current;
+        }
+        cardConfig.entities[key] = internalEntityId(key);
+      }
+    }
 
     function deepMerge(target, src) {
       if (!src || typeof src !== 'object') return target;
@@ -634,9 +671,11 @@
             cardConfig = deepMerge(cardConfig, parsed);
           }
         }
+        captureSourceEntities();
         enforceTopologyFromConfig();
         applySignFlowOverrides();
       } catch (_) {
+        captureSourceEntities();
         enforceTopologyFromConfig();
         applySignFlowOverrides();
       }
@@ -693,6 +732,8 @@
       cardConfig = normalizeConfigForCard(cardConfig);
       enforceTopologyFromConfig();
       applySignFlowOverrides();
+      mirrorConfiguredEntitiesForCard();
+      seedStates();
       syncEnergyCardstyleClass();
       card = document.createElement('sunsynk-power-flow-card');
       try {
@@ -715,6 +756,8 @@
         cardConfig = fallback;
         enforceTopologyFromConfig();
         applySignFlowOverrides();
+        mirrorConfiguredEntitiesForCard();
+        seedStates();
         card.setConfig(fallback);
       }
       host.innerHTML = '';
@@ -804,6 +847,8 @@
           cardConfig = normalizeConfigForCard(cardConfig);
           enforceTopologyFromConfig();
           applySignFlowOverrides();
+          mirrorConfiguredEntitiesForCard();
+          seedStates();
           syncEnergyCardstyleClass();
           try {
             card.setConfig(cardConfig);
@@ -812,6 +857,8 @@
             cardConfig = normalizeConfigForCard(cardConfig);
             enforceTopologyFromConfig();
             applySignFlowOverrides();
+            mirrorConfiguredEntitiesForCard();
+            seedStates();
             try {
               card.setConfig(cardConfig);
             } catch (retryError) {

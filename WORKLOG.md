@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper: aggiunto mirror interno delle entita per isolare Sunsynk dai nomi reali HA e separare `pv_total` da PV1-PV6/daily.
+- Bump versione addon/backend a `0.3.227` con changelog aggiornato.
+
 - Energy Wrapper/API: corretto update PV3-PV6 con `pv_total`, resi opzionali V/A PV e aggiunti fallback daily interni + normalized batteria daily.
 - Bump versione addon/backend a `0.3.226` con changelog aggiornato.
 
