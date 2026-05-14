@@ -357,9 +357,10 @@
       cardConfig.grid = cardConfig.grid || {};
 
       const isNegative = (key) => entitySignMap[String(key)] === 'negative';
+      const firstNegative = (keys) => keys.some((key) => isConfiguredEntity(cardConfig.entities?.[key]) && isNegative(key));
       // Keep HA states raw and let the Sunsynk card apply its own inversion
       // flags. Otherwise numbers and animated flow direction can diverge.
-      cardConfig.solar.invert_flow = isNegative('pv1_power_186');
+      cardConfig.solar.invert_flow = firstNegative(['pv_total', 'pv1_power_186', 'pv2_power_187', 'pv3_power_188', 'pv4_power_189', 'pv5_power', 'pv6_power']);
       cardConfig.battery.invert_flow = isNegative('battery_power_190');
       cardConfig.battery2.invert_flow = isNegative('battery2_power_190');
       cardConfig.load.invert_load = isNegative('inverter_power_175') || isNegative('essential_power');
@@ -518,7 +519,15 @@
       if (!isConfiguredEntity(cardConfig.entities.essential_power) && isConfiguredEntity(cardConfig.entities.essential_load1)) {
         cardConfig.entities.essential_power = String(cardConfig.entities.essential_load1);
       }
-      const hasPv = Boolean(isConfiguredEntity(cardConfig.entities.pv1_power_186) || isConfiguredEntity(cardConfig.entities.pv2_power_187));
+      const hasPv = Boolean([
+        'pv_total',
+        'pv1_power_186',
+        'pv2_power_187',
+        'pv3_power_188',
+        'pv4_power_189',
+        'pv5_power',
+        'pv6_power',
+      ].some((k) => isConfiguredEntity(cardConfig.entities?.[k])));
       const hasBattery = Boolean(isConfiguredEntity(cardConfig.entities.battery_power_190) || isConfiguredEntity(cardConfig.entities.battery_soc_184));
       const hasGrid = Boolean(isConfiguredEntity(cardConfig.entities.grid_power_169) || isConfiguredEntity(cardConfig.entities.grid_ct_power_172));
       cardConfig.show_solar = Boolean(cardConfig.show_solar && hasPv);
@@ -845,6 +854,7 @@
           }
         };
         const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
+          if (!sensorId) return false;
           const entry = ce?.[cardKey];
           if (!entry || entry.value == null) return false;
           const raw = entry.value;
@@ -890,14 +900,14 @@
 
         // campi opzionali: usa valore corrente se non disponibili
         const inverterVoltageRaw = Number(
-          j?.energy?.normalized?.inverter_voltage_v ??
-          j?.energy?.inverter_voltage_v ??
+          siteEnergy?.normalized?.inverter_voltage_v ??
+          siteEnergy?.inverter_voltage_v ??
           window.hass.states[entityId('inverter_voltage_154')]?.state ??
           NaN
         );
         const loadFrequencyRaw = Number(
-          j?.energy?.normalized?.load_frequency_hz ??
-          j?.energy?.load_frequency_hz ??
+          siteEnergy?.normalized?.load_frequency_hz ??
+          siteEnergy?.load_frequency_hz ??
           window.hass.states[entityId('load_frequency_192')]?.state ??
           NaN
         );
@@ -954,6 +964,7 @@
         setFromCardEntity(entityId('non_essential_load3'), 'non_essential_load3', 'W', 'power', 'measurement');
 
         const setDaily = (id, value) => {
+          if (!id) return;
           if (value == null || Number.isNaN(Number(value))) return;
           const prev = window.hass.states[id] || mkState(0, 'kWh', { device_class: 'energy', state_class: 'total_increasing' });
           window.hass.states[id] = {

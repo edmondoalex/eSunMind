@@ -1,5 +1,9 @@
 ﻿# WORKLOG
 
+## 2026-05-14
+- Energy Wrapper: audit rapido flussi/stati, corretti segni PV con `pv_total`/PV1-PV6, lookup site-specific V/Hz e guardie su entity id vuoto.
+- Bump versione addon/backend a `0.3.224` con changelog aggiornato.
+
 ## 2026-05-13
 - Energy Setup/API/Wrapper: aggiunto `pv_total` configurabile da UI come totale PV live preferito, con fallback automatico alla somma PV1-PV6.
 - Bump versione addon/backend a `0.3.223` con changelog aggiornato.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.224
+- Energy Wrapper: corretta taratura flussi PV per usare anche `pv_total` e PV1-PV6 nei segni/inversioni, non solo PV1.
+- Energy Wrapper: il rilevamento presenza PV ora considera `pv_total` e PV1-PV6, evitando spegnimenti errati della sezione Solar.
+- Energy Wrapper: corretti lookup site-specific per tensione inverter/frequenza e impedita scrittura di stati HA browser con entity id vuoto.
+- Bump versione addon/backend a `0.3.224`.
+
 ## 0.3.223
 - Energy Setup: aggiunto campo UI `PV totale live (entity_id)` per pilotare direttamente il riquadro totale PV della dashboard.
 - Energy API/Wrapper: `pv_total` ha priorita sul totale PV; se manca, resta il fallback alla somma PV1-PV6.
