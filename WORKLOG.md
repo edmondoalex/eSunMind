@@ -1,6 +1,12 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper: daily PV/batteria/load/grid ora abilita automaticamente `show_daily` quando le entita giornaliere sono configurate.
+- Bump versione addon/backend a `0.3.230` con changelog aggiornato.
+
+- Energy Wrapper: aggiunto fallback lookup `card_entities` per entity_id reale sorgente, oltre che per chiave Sunsynk, per PV singoli e daily.
+- Bump versione addon/backend a `0.3.229` con changelog aggiornato.
+
 - Energy Wrapper: centralizzata preparazione runtime config mirrorata prima di ogni `setConfig()` e aggiunto marker versione wrapper.
 - Bump versione addon/backend a `0.3.228` con changelog aggiornato.
 

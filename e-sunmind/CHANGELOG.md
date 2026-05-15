@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.230
+- Energy Wrapper: se sono configurate entita daily PV/batteria/load/grid, il wrapper forza automaticamente i relativi `show_daily`, cosi i kWh giornalieri non restano nascosti.
+- Bump versione addon/backend a `0.3.230`.
+
+## 0.3.229
+- Energy Wrapper: lookup dei valori runtime reso tollerante anche quando `card_entities` arriva indicizzato per entity_id reale invece che per chiave Sunsynk.
+- Energy Wrapper: PV singoli e daily ora vengono copiati nei mock cercando prima per chiave (`pv1_power_186`) e poi per entity_id sorgente reale salvato prima del mirror.
+- Bump versione addon/backend a `0.3.229`.
+
 ## 0.3.228
 - Energy Wrapper: `setConfig()` ora riceve sempre una copia runtime gia normalizzata e mirrorata, impedendo alla card di ricevere entita reali al posto di `sensor.mock_*`.
 - Energy Wrapper: aggiunto marker `window.energyMindWrapperVersion` per verificare in console la versione del wrapper caricata dal browser/addon.
