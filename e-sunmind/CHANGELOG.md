@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.228
+- Energy Wrapper: `setConfig()` ora riceve sempre una copia runtime gia normalizzata e mirrorata, impedendo alla card di ricevere entita reali al posto di `sensor.mock_*`.
+- Energy Wrapper: aggiunto marker `window.energyMindWrapperVersion` per verificare in console la versione del wrapper caricata dal browser/addon.
+- Bump versione addon/backend a `0.3.228`.
+
 ## 0.3.227
 - Energy Wrapper: la card Sunsynk ora usa entita interne mirror controllate dal wrapper, mentre il backend continua a leggere le entita reali configurate.
 - Energy Wrapper: separato definitivamente `pv_total` dai PV1-PV6, evitando che il totale azzeri o sporchi i valori dei singoli PV.

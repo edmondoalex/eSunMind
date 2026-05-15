@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper: centralizzata preparazione runtime config mirrorata prima di ogni `setConfig()` e aggiunto marker versione wrapper.
+- Bump versione addon/backend a `0.3.228` con changelog aggiornato.
+
 - Energy Wrapper: aggiunto mirror interno delle entita per isolare Sunsynk dai nomi reali HA e separare `pv_total` da PV1-PV6/daily.
 - Bump versione addon/backend a `0.3.227` con changelog aggiornato.
 

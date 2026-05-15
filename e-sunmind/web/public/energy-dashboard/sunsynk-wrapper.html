@@ -173,6 +173,8 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.228';
+    window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
     const normalizeSiteId = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
@@ -318,6 +320,15 @@
         }
         cardConfig.entities[key] = internalEntityId(key);
       }
+    }
+
+    function prepareCardConfigForSetConfig() {
+      cardConfig = normalizeConfigForCard(cardConfig);
+      enforceTopologyFromConfig();
+      applySignFlowOverrides();
+      mirrorConfiguredEntitiesForCard();
+      seedStates();
+      return JSON.parse(JSON.stringify(cardConfig));
     }
 
     function deepMerge(target, src) {
@@ -729,15 +740,11 @@
 
     function initCard() {
       seedStates();
-      cardConfig = normalizeConfigForCard(cardConfig);
-      enforceTopologyFromConfig();
-      applySignFlowOverrides();
-      mirrorConfiguredEntitiesForCard();
-      seedStates();
+      const runtimeConfig = prepareCardConfigForSetConfig();
       syncEnergyCardstyleClass();
       card = document.createElement('sunsynk-power-flow-card');
       try {
-        card.setConfig(cardConfig);
+        card.setConfig(runtimeConfig);
       } catch (_) {
         const fallback = normalizeConfigForCard({
           type: 'custom:sunsynk-power-flow-card',
@@ -754,11 +761,7 @@
           entities: { ...cardConfig.entities },
         });
         cardConfig = fallback;
-        enforceTopologyFromConfig();
-        applySignFlowOverrides();
-        mirrorConfiguredEntitiesForCard();
-        seedStates();
-        card.setConfig(fallback);
+        card.setConfig(prepareCardConfigForSetConfig());
       }
       host.innerHTML = '';
       host.appendChild(card);
@@ -844,23 +847,14 @@
         // Reload options so sign changes in UI are applied without reloading the page.
         await loadCardConfigFromAddonOptions();
         if (card && typeof card.setConfig === 'function') {
-          cardConfig = normalizeConfigForCard(cardConfig);
-          enforceTopologyFromConfig();
-          applySignFlowOverrides();
-          mirrorConfiguredEntitiesForCard();
-          seedStates();
+          const runtimeConfig = prepareCardConfigForSetConfig();
           syncEnergyCardstyleClass();
           try {
-            card.setConfig(cardConfig);
+            card.setConfig(runtimeConfig);
           } catch (e) {
             sanitizeMissingOptionalEntities();
-            cardConfig = normalizeConfigForCard(cardConfig);
-            enforceTopologyFromConfig();
-            applySignFlowOverrides();
-            mirrorConfiguredEntitiesForCard();
-            seedStates();
             try {
-              card.setConfig(cardConfig);
+              card.setConfig(prepareCardConfigForSetConfig());
             } catch (retryError) {
               console.warn('e-SunMind Energy setConfig failed after sanitize', retryError);
             }
