@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.233
+- Energy Wrapper/Setup: la Home non forza piu `load.dynamic_icon=true`, cosi la Sunsynk card usa l'icona load originale invece della casa con freccia dinamica.
+- Energy Wrapper: le icone Grid import/export/disconnected vengono mantenute come configurate (`mdi:transmission-tower-*`) senza riscrittura verso varianti generiche.
+- Bump versione addon/backend a `0.3.233`.
+
 ## 0.3.232
 - Energy Wrapper: con URL `?site=...`, `/api/data?site=...` viene usato direttamente come snapshot principale invece di riselezionare dentro `energy.sites`; risolve PV/load a zero solo nelle dashboard dedicate.
 - Bump versione addon/backend a `0.3.232`.

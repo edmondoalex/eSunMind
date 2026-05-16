@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper/Setup: disattivata forzatura `load.dynamic_icon`, ripristinando l'icona Home/load originale della Sunsynk card; mantenute le icone Grid configurate senza normalizzazione generica.
+- Bump versione addon/backend a `0.3.233` con changelog aggiornato.
+
 - Energy Wrapper: corretta selezione dati per URL dedicati `?site=...`, usando lo snapshot principale gia filtrato da `/api/data?site=...`.
 - Bump versione addon/backend a `0.3.232` con changelog aggiornato.
 

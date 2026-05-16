@@ -173,7 +173,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.232';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.233';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -396,7 +396,7 @@
       c.solar.dynamic_colour = Boolean(c.solar.dynamic_colour ?? true);
       c.load.additional_loads = Number.isFinite(Number(c.load.additional_loads)) ? Number(c.load.additional_loads) : 0;
       c.load.dynamic_colour = Boolean(c.load.dynamic_colour ?? true);
-      c.load.dynamic_icon = Boolean(c.load.dynamic_icon ?? true);
+      c.load.dynamic_icon = Boolean(c.load.dynamic_icon ?? false);
       c.load.aux_dynamic_colour = Boolean(c.load.aux_dynamic_colour ?? true);
       c.load.off_colour = String(c.load.off_colour || 'grey');
       c.load.aux_off_colour = String(c.load.aux_off_colour || 'grey');
@@ -516,15 +516,12 @@
       }
       for (const k of ['import_icon', 'export_icon', 'disconnected_icon']) {
         const raw = String(cardConfig.grid[k] || '').trim();
-        const lc = raw.toLowerCase();
-        // Some tower variants are not present in all mdi packs loaded by browser.
-        // Normalize to known-visible icons instead of dropping to "default".
         if (!raw) {
-          cardConfig.grid[k] = 'mdi:transmission-tower';
-        } else if (lc === 'mdi:transmission-tower-import' || lc === 'mdi:transmission-tower-export') {
-          cardConfig.grid[k] = 'mdi:transmission-tower';
-        } else if (lc === 'mdi:transmission-tower-off') {
-          cardConfig.grid[k] = 'mdi:transmission-tower-off-outline';
+          cardConfig.grid[k] = k === 'import_icon'
+            ? 'mdi:transmission-tower-import'
+            : k === 'export_icon'
+              ? 'mdi:transmission-tower-export'
+              : 'mdi:transmission-tower-off';
         } else {
           cardConfig.grid[k] = raw;
         }
