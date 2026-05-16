@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.237
+- Energy Dashboard: rimosso lo shim custom delle torri rete, cosi le icone passano dalla stessa famiglia MDI usata dalla card Sunsynk.
+- Energy Setup: aggiunti controlli espliciti per dynamic icon/colour, colori/off colour, AUX type/load/icon e nomi load non-essential.
+- Energy Setup: limitato il conteggio batterie UI a 2, coerente con la card Sunsynk.
+- Energy Dashboard: ridotto lo spam console quando l'API addon non risponde.
+- Bump versione addon/backend a `0.3.237`.
+
 ## 0.3.236
 - Energy Setup: riordinate le sezioni Solar, Battery, Load, AUX, Grid e Giornalieri in sottoblocchi leggibili.
 - Energy Setup: ogni PV ora espone Nome, P nominale, entita potenza, entita tensione ed entita corrente.

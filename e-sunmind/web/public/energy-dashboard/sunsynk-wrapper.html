@@ -166,42 +166,8 @@
         static get observedAttributes() { return ['icon']; }
         connectedCallback() { this.render(); }
         attributeChangedCallback() { this.render(); }
-        towerSvg(off = false) {
-          return `
-            <svg viewBox="0 0 24 24" width="100%" height="100%" aria-hidden="true" style="display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;">
-              <path d="M12 3 L16 8 H13.6 L16.8 21 H14.3 L12 14.8 L9.7 21 H7.2 L10.4 8 H8 Z"></path>
-              <path d="M6.5 10.5 H17.5"></path>
-              <path d="M5.5 14.5 H18.5"></path>
-              <path d="M4.5 18.5 H19.5"></path>
-              ${off ? '<path d="M4 4 L20 20"></path>' : ''}
-            </svg>
-          `;
-        }
         render() {
           const raw = String(this.getAttribute('icon') || '').trim();
-          const lc = raw.toLowerCase();
-          if (lc.includes('transmission-tower') && !lc.includes('off')) {
-            this.style.display = 'inline-flex';
-            this.style.alignItems = 'center';
-            this.style.justifyContent = 'center';
-            this.style.width = 'var(--grid-tower-size)';
-            this.style.height = 'var(--grid-tower-size)';
-            this.style.minWidth = 'var(--grid-tower-size)';
-            this.style.minHeight = 'var(--grid-tower-size)';
-            this.innerHTML = this.towerSvg(false);
-            return;
-          }
-          if (lc.includes('transmission-tower') && lc.includes('off')) {
-            this.style.display = 'inline-flex';
-            this.style.alignItems = 'center';
-            this.style.justifyContent = 'center';
-            this.style.width = 'var(--grid-tower-size)';
-            this.style.height = 'var(--grid-tower-size)';
-            this.style.minWidth = 'var(--grid-tower-size)';
-            this.style.minHeight = 'var(--grid-tower-size)';
-            this.innerHTML = this.towerSvg(true);
-            return;
-          }
           this.style.removeProperty('width');
           this.style.removeProperty('height');
           this.style.removeProperty('min-width');
@@ -216,7 +182,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.236';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.237';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -324,7 +290,7 @@
         inverter: { modern: true, auto_scale: true, three_phase: false },
         solar: { mppts: 2, show_daily: true, animation_speed: 6, max_power: 7000 },
         battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
-        load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true, dynamic_icon: true },
+        load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true },
         grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
         entities: {},
       };
@@ -865,6 +831,7 @@
     const host = document.getElementById('host');
     const energyFrame = document.getElementById('energyFrame');
     let card = null;
+    let lastSyncWarnTs = 0;
 
     function syncEnergyCardstyleClass() {
       const style = String(cardConfig?.cardstyle || 'full').toLowerCase();
@@ -1235,7 +1202,11 @@
 
         forceRender();
       } catch (e) {
-        console.warn('e-SunMind Energy sync failed', e);
+        const now = Date.now();
+        if (now - lastSyncWarnTs > 30000) {
+          lastSyncWarnTs = now;
+          console.warn('e-SunMind Energy sync failed', e);
+        }
       }
     }
 
