@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.238
+- Energy Dashboard standalone: aggiunto fallback `ha-icon` con path SVG MDI nativi per rete/import/export/off e icone load comuni.
+- Energy Dashboard: ripristinata la visibilita delle icone rete quando la card Sunsynk usa `import_icon`, `export_icon` o `disconnected_icon`.
+- Bump versione addon/backend a `0.3.238`.
+
 ## 0.3.237
 - Energy Dashboard: rimosso lo shim custom delle torri rete, cosi le icone passano dalla stessa famiglia MDI usata dalla card Sunsynk.
 - Energy Setup: aggiunti controlli espliciti per dynamic icon/colour, colori/off colour, AUX type/load/icon e nomi load non-essential.
