@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.240
+- Energy Dashboard: aggiunto sotto la Sunsynk card il grafico live `ha-sankey-chart` v5.0.1, caricato localmente da `energy-dashboard/vendor`.
+- Sankey: il grafico e separato per `site`, usa gli stessi sensori mock del wrapper e include PV, rete, batteria, casa, export/carica batteria e tutti i carichi `load`, `AUX` e `non-essential` mappati.
+- Bump versione addon/backend a `0.3.240`.
+
 ## 0.3.239
 - Energy Dashboard: vendorizzata e caricata localmente la Sunsynk Power Flow Card `v6.9.2`, allineata alla versione installata in Home Assistant.
 - Energy Dashboard: i CDN restano solo come fallback dopo la copia locale.

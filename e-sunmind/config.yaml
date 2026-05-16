@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.239"
+version: "0.3.240"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services

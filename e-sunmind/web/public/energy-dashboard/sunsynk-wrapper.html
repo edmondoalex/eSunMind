@@ -15,9 +15,28 @@
       --secondary-text-color: #94a3b8;
     }
     html, body { margin: 0; background: var(--addon-bg); color: var(--primary-text-color); font-family: Inter, Segoe UI, sans-serif; }
-    .page { min-height: 100vh; display: grid; place-items: center; padding: 12px; }
+    .page { min-height: 100vh; display: grid; justify-items: center; align-content: center; gap: 14px; padding: 12px; box-sizing: border-box; }
     .energy-frame { position: relative; width: min(1200px, 98vw); }
     .host { width: 100%; }
+    .sankey-section {
+      width: min(1200px, 98vw);
+      box-sizing: border-box;
+    }
+    .sankey-section[hidden] { display: none; }
+    .sankey-host,
+    .sankey-host sankey-chart,
+    .sankey-host ha-card {
+      display: block;
+      width: 100%;
+    }
+    .sankey-host ha-card {
+      box-sizing: border-box;
+      background: color-mix(in srgb, var(--addon-bg) 74%, #1f2937);
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 8px;
+      box-shadow: none;
+      overflow: hidden;
+    }
     .energy-logo-box {
       position: absolute;
       z-index: 4;
@@ -114,6 +133,7 @@
     body.map-mode .energy-frame { width: 100vw; height: 100vh; max-width: 100vw; transform-origin: top left; }
     body.map-mode .host { width: 100%; height: 100%; }
     body.map-mode sunsynk-power-flow-card { display: block; }
+    body.map-mode .sankey-section { display: none; }
     @media (max-width: 760px) {
       .energy-logo-top-box {
         top: 6px;
@@ -155,6 +175,9 @@
       </div>
       <div class="host" id="host"></div>
     </div>
+    <section class="sankey-section" id="sankeySection" hidden>
+      <div class="sankey-host" id="sankeyHost"></div>
+    </section>
   </div>
 
   <script>
@@ -202,10 +225,18 @@
       }
       customElements.define('ha-icon', HaIcon);
     }
+    if (!customElements.get('ha-card')) {
+      class HaCard extends HTMLElement {
+        connectedCallback() {
+          this.style.display = this.style.display || 'block';
+        }
+      }
+      customElements.define('ha-card', HaCard);
+    }
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.239';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.240';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -236,6 +267,7 @@
       language: 'it',
       selectedLanguage: 'it',
       locale: { language: 'it-IT', number_format: 'decimal_comma' },
+      config: { unit_system: { length: 'km' } },
       themes: { dark: true, default_theme: 'default', themes: {} },
       states: {},
       localize: (key) => String(key || ''),
@@ -243,6 +275,9 @@
       formatEntityState: (s) => String(s?.state ?? ''),
       formatEntityAttributeValue: (_s, _a, v) => String(v ?? ''),
     };
+    if (typeof window.loadCardHelpers !== 'function') {
+      window.loadCardHelpers = async () => ({});
+    }
 
     function mkState(state, unit = '', extra = {}) {
       return {
@@ -296,6 +331,21 @@
       day_load_energy_84: 'sensor.mock_day_load_energy',
       day_grid_import_76: 'sensor.mock_day_grid_import',
       day_grid_export_77: 'sensor.mock_day_grid_export',
+    };
+    const sankeyIds = {
+      pv: 'sensor.mock_sankey_pv_power',
+      gridImport: 'sensor.mock_sankey_grid_import_power',
+      batteryDischarge: 'sensor.mock_sankey_battery_discharge_power',
+      unknownSource: 'sensor.mock_sankey_unknown_source_power',
+      home: 'sensor.mock_sankey_home_power',
+      gridExport: 'sensor.mock_sankey_grid_export_power',
+      batteryCharge: 'sensor.mock_sankey_battery_charge_power',
+      pvToHome: 'sensor.mock_sankey_pv_to_home_power',
+      pvToGrid: 'sensor.mock_sankey_pv_to_grid_power',
+      pvToBattery: 'sensor.mock_sankey_pv_to_battery_power',
+      gridToHome: 'sensor.mock_sankey_grid_to_home_power',
+      batteryToHome: 'sensor.mock_sankey_battery_to_home_power',
+      unknownToHome: 'sensor.mock_sankey_unknown_to_home_power',
     };
     const sourceEntityByCardKey = {};
 
@@ -507,6 +557,10 @@
       const label = String(site?.site_name || site?.name || site?.id || site?.site_id || SITE_ID || '').trim();
       el.textContent = label;
       el.style.display = label ? 'block' : 'none';
+    }
+
+    function siteLabel(site) {
+      return String(site?.site_name || site?.name || site?.id || site?.site_id || SITE_ID || '').trim();
     }
 
     function applySignFlowOverrides() {
@@ -852,8 +906,12 @@
     }
 
     const host = document.getElementById('host');
+    const sankeyHost = document.getElementById('sankeyHost');
+    const sankeySection = document.getElementById('sankeySection');
     const energyFrame = document.getElementById('energyFrame');
     let card = null;
+    let sankeyCard = null;
+    let sankeyReady = false;
     let lastSyncWarnTs = 0;
 
     function syncEnergyCardstyleClass() {
@@ -863,10 +921,17 @@
     }
 
     function forceRender() {
-      if (!card) return;
+      if (!card && !sankeyCard) return;
       // nuovo riferimento per trigger update lit
-      card.hass = { ...window.hass, states: { ...window.hass.states } };
-      if (typeof card.requestUpdate === 'function') card.requestUpdate();
+      const nextHass = { ...window.hass, states: { ...window.hass.states } };
+      if (card) {
+        card.hass = nextHass;
+        if (typeof card.requestUpdate === 'function') card.requestUpdate();
+      }
+      if (sankeyCard) {
+        sankeyCard.hass = nextHass;
+        if (typeof sankeyCard.requestUpdate === 'function') sankeyCard.requestUpdate();
+      }
     }
 
     function initCard() {
@@ -898,6 +963,164 @@
       host.appendChild(card);
       forceRender();
       if (MAP_MODE) fitMapMode();
+    }
+
+    function readNumericState(id) {
+      const v = Number(window.hass.states[String(id || '').trim()]?.state);
+      return Number.isFinite(v) ? v : 0;
+    }
+
+    function setSyntheticPowerState(id, value, name = '') {
+      const entityId = String(id || '').trim();
+      if (!entityId) return;
+      const n = Number(value);
+      const now = new Date().toISOString();
+      const prev = window.hass.states[entityId] || mkState(0, 'W', { entity_id: entityId, device_class: 'power', state_class: 'measurement' });
+      window.hass.states[entityId] = {
+        ...prev,
+        entity_id: entityId,
+        state: String(Number.isFinite(n) ? Math.max(0, n).toFixed(0) : 0),
+        attributes: {
+          ...(prev.attributes || {}),
+          unit_of_measurement: 'W',
+          device_class: 'power',
+          state_class: 'measurement',
+          ...(name ? { friendly_name: name } : {}),
+        },
+        last_changed: prev.last_changed || now,
+        last_updated: now,
+      };
+    }
+
+    function configuredLoadNode(key, name, color) {
+      const id = entityId(key);
+      if (!isConfiguredEntity(id)) return null;
+      return { id, section: 2, name, color };
+    }
+
+    function getSankeyLoadNodes() {
+      const nodes = [];
+      const load = cardConfig.load || {};
+      const grid = cardConfig.grid || {};
+      const push = (node) => { if (node && !nodes.some((n) => n.id === node.id)) nodes.push(node); };
+      for (let i = 1; i <= 6; i += 1) {
+        push(configuredLoadNode(`essential_load${i}`, String(load[`load${i}_name`] || `Load ${i}`), String(load.colour || '#f59e0b')));
+      }
+      push(configuredLoadNode('aux_power_166', String(load.aux_name || 'AUX'), String(load.aux_colour || '#94a3b8')));
+      push(configuredLoadNode('aux_load1', String(load.aux_load1_name || 'AUX load 1'), String(load.aux_colour || '#94a3b8')));
+      push(configuredLoadNode('aux_load2', String(load.aux_load2_name || 'AUX load 2'), String(load.aux_colour || '#94a3b8')));
+      push(configuredLoadNode('nonessential_power', String(grid.nonessential_name || 'Non Essential'), String(grid.colour || '#38bdf8')));
+      for (let i = 1; i <= 3; i += 1) {
+        push(configuredLoadNode(`non_essential_load${i}`, String(grid[`load${i}_name`] || `Non-essential ${i}`), String(grid.colour || '#38bdf8')));
+      }
+      return nodes;
+    }
+
+    function buildSankeyConfig(siteEnergy = {}) {
+      const loadNodes = getSankeyLoadNodes();
+      const solarColor = String(cardConfig?.solar?.colour || '#f59e0b');
+      const gridColor = String(cardConfig?.grid?.colour || '#06b6d4');
+      const batteryColor = String(cardConfig?.battery?.colour || '#6366f1');
+      const loadColor = String(cardConfig?.load?.colour || '#e2e8f0');
+      return {
+        type: 'custom:sankey-chart',
+        title: `Flussi energia - Live${siteLabel(siteEnergy) ? ` (${siteLabel(siteEnergy)})` : ''}`,
+        layout: 'horizontal',
+        height: 260,
+        wide: true,
+        unit_prefix: 'k',
+        round: 2,
+        min_state: 1,
+        show_names: true,
+        show_states: true,
+        show_units: true,
+        ignore_missing_entities: true,
+        throttle: 1000,
+        nodes: [
+          { id: sankeyIds.pv, section: 0, name: 'FV', color: solarColor },
+          { id: sankeyIds.gridImport, section: 0, name: 'Import rete', color: gridColor },
+          { id: sankeyIds.batteryDischarge, section: 0, name: 'Scarica batteria', color: batteryColor },
+          { id: sankeyIds.unknownSource, section: 0, name: 'Altro ingresso', color: '#64748b' },
+          {
+            id: sankeyIds.home,
+            section: 1,
+            name: 'Carico casa',
+            color: loadColor,
+            children_sum: { should_be: 'equal_or_less', reconcile_to: 'max' },
+          },
+          { id: sankeyIds.gridExport, section: 1, name: 'Export rete', color: gridColor },
+          { id: sankeyIds.batteryCharge, section: 1, name: 'Carica batteria', color: batteryColor },
+          ...loadNodes,
+          { id: 'mock_sankey_other_loads', section: 2, type: 'remaining_parent_state', name: 'Altri carichi', color: '#475569' },
+        ],
+        links: [
+          { source: sankeyIds.pv, target: sankeyIds.home, value: sankeyIds.pvToHome },
+          { source: sankeyIds.pv, target: sankeyIds.gridExport, value: sankeyIds.pvToGrid },
+          { source: sankeyIds.pv, target: sankeyIds.batteryCharge, value: sankeyIds.pvToBattery },
+          { source: sankeyIds.gridImport, target: sankeyIds.home, value: sankeyIds.gridToHome },
+          { source: sankeyIds.batteryDischarge, target: sankeyIds.home, value: sankeyIds.batteryToHome },
+          { source: sankeyIds.unknownSource, target: sankeyIds.home, value: sankeyIds.unknownToHome },
+          ...loadNodes.map((node) => ({ source: sankeyIds.home, target: node.id, value: node.id })),
+          { source: sankeyIds.home, target: 'mock_sankey_other_loads' },
+        ],
+      };
+    }
+
+    function updateSankeyChart(siteEnergy = {}) {
+      if (!sankeyReady || !sankeyCard || MAP_MODE) return;
+      const pv = Math.max(0, readNumericState(entityId('pv_total')) || ['pv1_power_186', 'pv2_power_187', 'pv3_power_188', 'pv4_power_189', 'pv5_power', 'pv6_power'].reduce((sum, key) => sum + Math.max(0, readNumericState(entityId(key))), 0));
+      const grid = readNumericState(entityId('grid_power_169')) || readNumericState(entityId('grid_ct_power_172'));
+      const battery = readNumericState(entityId('battery_power_190'));
+      const homeRaw = readNumericState(entityId('essential_power')) || readNumericState(entityId('inverter_power_175'));
+      const loadNodes = getSankeyLoadNodes();
+      const loadSum = loadNodes.reduce((sum, node) => sum + Math.max(0, readNumericState(node.id)), 0);
+      const home = Math.max(0, homeRaw, loadSum);
+      const gridExport = Math.max(0, grid);
+      const gridImport = Math.max(0, -grid);
+      const batteryDischarge = Math.max(0, battery);
+      const batteryCharge = Math.max(0, -battery);
+      const pvToBattery = Math.min(pv, batteryCharge);
+      const pvAfterBattery = Math.max(0, pv - pvToBattery);
+      const pvToGrid = Math.min(pvAfterBattery, gridExport);
+      const pvToHome = Math.min(home, Math.max(0, pvAfterBattery - pvToGrid));
+      const gridToHome = Math.min(home, gridImport);
+      const batteryToHome = Math.min(home, batteryDischarge);
+      const knownToHome = pvToHome + gridToHome + batteryToHome;
+      const unknownToHome = Math.max(0, home - knownToHome);
+
+      setSyntheticPowerState(sankeyIds.pv, pv, 'FV');
+      setSyntheticPowerState(sankeyIds.gridImport, gridImport, 'Import rete');
+      setSyntheticPowerState(sankeyIds.batteryDischarge, batteryDischarge, 'Scarica batteria');
+      setSyntheticPowerState(sankeyIds.unknownSource, unknownToHome, 'Altro ingresso');
+      setSyntheticPowerState(sankeyIds.home, home, 'Carico casa');
+      setSyntheticPowerState(sankeyIds.gridExport, gridExport, 'Export rete');
+      setSyntheticPowerState(sankeyIds.batteryCharge, batteryCharge, 'Carica batteria');
+      setSyntheticPowerState(sankeyIds.pvToHome, pvToHome, 'FV verso casa');
+      setSyntheticPowerState(sankeyIds.pvToGrid, pvToGrid, 'FV verso rete');
+      setSyntheticPowerState(sankeyIds.pvToBattery, pvToBattery, 'FV verso batteria');
+      setSyntheticPowerState(sankeyIds.gridToHome, gridToHome, 'Rete verso casa');
+      setSyntheticPowerState(sankeyIds.batteryToHome, batteryToHome, 'Batteria verso casa');
+      setSyntheticPowerState(sankeyIds.unknownToHome, unknownToHome, 'Altro verso casa');
+
+      try {
+        sankeyCard.setConfig(buildSankeyConfig(siteEnergy));
+      } catch (e) {
+        console.warn('e-SunMind Sankey config failed', e);
+        return;
+      }
+      sankeySection.hidden = false;
+      forceRender();
+    }
+
+    function initSankeyCard(siteEnergy = {}) {
+      if (MAP_MODE || !customElements.get('sankey-chart') || !sankeyHost) return;
+      sankeyReady = true;
+      if (!sankeyCard) {
+        sankeyCard = document.createElement('sankey-chart');
+        sankeyHost.innerHTML = '';
+        sankeyHost.appendChild(sankeyCard);
+      }
+      updateSankeyChart(siteEnergy);
     }
 
     function fitMapMode() {
@@ -1223,6 +1446,7 @@
         setDaily(entityId('day_grid_import_76'), n.grid_import_today_kwh);
         setDaily(entityId('day_grid_export_77'), n.grid_export_today_kwh);
 
+        updateSankeyChart(siteEnergy);
         forceRender();
       } catch (e) {
         const now = Date.now();
@@ -1264,6 +1488,35 @@
       });
     }
 
+    function loadSankeyChartScript() {
+      if (MAP_MODE || customElements.get('sankey-chart')) return Promise.resolve();
+      const urls = [
+        './vendor/ha-sankey-chart-v5.0.1.js',
+        'https://github.com/MindFreeze/ha-sankey-chart/releases/download/v5.0.1/ha-sankey-chart.js',
+      ];
+      return new Promise((resolve, reject) => {
+        let idx = 0;
+        const tryNext = () => {
+          const src = urls[idx++];
+          if (!src) {
+            reject(new Error('ha-sankey-chart non caricato'));
+            return;
+          }
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = src;
+          script.onload = () => resolve();
+          script.onerror = () => {
+            console.warn('e-SunMind Sankey CDN failed', src);
+            script.remove();
+            tryNext();
+          };
+          document.head.appendChild(script);
+        };
+        tryNext();
+      });
+    }
+
     async function startEnergyCard() {
       try {
         await loadSunsynkCardScript();
@@ -1277,6 +1530,12 @@
         clearInterval(waitCard);
         await loadCardConfigFromAddonOptions();
         initCard();
+        try {
+          await loadSankeyChartScript();
+          initSankeyCard();
+        } catch (e) {
+          console.warn('e-SunMind Sankey disabled', e);
+        }
         syncFromAddonApi();
         setInterval(syncFromAddonApi, 2000);
         if (MAP_MODE) {
