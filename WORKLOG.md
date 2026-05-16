@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Dashboard: ridimensionati i box logo alto/basso secondo i riquadri richiesti e aggiunto nome site/dashboard responsive in overlay.
+- Bump versione addon/backend a `0.3.235` con changelog aggiornato.
+
 - Energy multi-site: isolati i siti backend senza eredita delle entita top-level e aggiunto test `tools/check_energy_site_isolation.py`.
 - Energy Wrapper: config ricreata da base pulita e stati mock azzerati prima dei dati live per impedire residui tra `?site=...`; ripristinato `load.dynamic_icon=true` per icone Sunsynk originali.
 - Bump versione addon/backend a `0.3.234` con changelog aggiornato.

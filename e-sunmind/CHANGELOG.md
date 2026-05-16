@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.235
+- Energy Dashboard: aumentati i riquadri responsive dei loghi EnergyMind/EKONEX per occupare lo spazio indicato nel layout.
+- Energy Dashboard: aggiunta etichetta overlay con nome site/dashboard corrente, letta da `site_name`/`name`/`id`.
+- Bump versione addon/backend a `0.3.235`.
+
 ## 0.3.234
 - Energy multi-site: ogni dashboard usa solo le entita del proprio sito; rimosso il fallback che poteva far ereditare a `privato` i sensori del sito selezionato/top-level.
 - Energy Wrapper: la config Sunsynk viene ricreata da base pulita a ogni reload opzioni, evitando residui di entita/config tra dashboard diverse.
