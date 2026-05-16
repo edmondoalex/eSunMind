@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper: esteso lookup valori mirror anche a `siteEnergy.entities` top-level per correggere PV singoli letti dai campi rapidi.
+- Bump versione addon/backend a `0.3.231` con changelog aggiornato.
+
 - Energy Wrapper: daily PV/batteria/load/grid ora abilita automaticamente `show_daily` quando le entita giornaliere sono configurate.
 - Bump versione addon/backend a `0.3.230` con changelog aggiornato.
 

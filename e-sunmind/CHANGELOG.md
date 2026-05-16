@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.231
+- Energy Wrapper: il lookup dei valori mirror ora cerca anche in `energy.entities` top-level, non solo in `card_entities`; risolve PV singoli a zero quando l'entita reale e letta come `pv_power_entity_id`/campo rapido.
+- Bump versione addon/backend a `0.3.231`.
+
 ## 0.3.230
 - Energy Wrapper: se sono configurate entita daily PV/batteria/load/grid, il wrapper forza automaticamente i relativi `show_daily`, cosi i kWh giornalieri non restano nascosti.
 - Bump versione addon/backend a `0.3.230`.

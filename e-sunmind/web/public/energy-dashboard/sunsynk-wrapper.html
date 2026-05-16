@@ -173,7 +173,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.230';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.231';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -891,6 +891,7 @@
         const siteEnergy = selectEnergySite(energyRoot);
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
+        const apiEntities = siteEnergy?.entities || {};
 
         const num = (v) => {
           const x = Number(v);
@@ -901,7 +902,11 @@
           if (byKey) return byKey;
           const sourceId = String(sourceEntityByCardKey?.[cardKey] || '').trim();
           if (!sourceId) return null;
-          return Object.values(ce || {}).find((entry) => String(entry?.entity_id || '').trim() === sourceId) || null;
+          return (
+            Object.values(ce || {}).find((entry) => String(entry?.entity_id || '').trim() === sourceId) ||
+            Object.values(apiEntities || {}).find((entry) => String(entry?.entity_id || '').trim() === sourceId) ||
+            null
+          );
         };
         const fromCard = (k) => num(cardEntry(k)?.value);
         const pick = (primary, fallback) => {
