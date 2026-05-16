@@ -1,6 +1,9 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Wrapper: corretta selezione dati per URL dedicati `?site=...`, usando lo snapshot principale gia filtrato da `/api/data?site=...`.
+- Bump versione addon/backend a `0.3.232` con changelog aggiornato.
+
 - Energy Wrapper: esteso lookup valori mirror anche a `siteEnergy.entities` top-level per correggere PV singoli letti dai campi rapidi.
 - Bump versione addon/backend a `0.3.231` con changelog aggiornato.
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.232
+- Energy Wrapper: con URL `?site=...`, `/api/data?site=...` viene usato direttamente come snapshot principale invece di riselezionare dentro `energy.sites`; risolve PV/load a zero solo nelle dashboard dedicate.
+- Bump versione addon/backend a `0.3.232`.
+
 ## 0.3.231
 - Energy Wrapper: il lookup dei valori mirror ora cerca anche in `energy.entities` top-level, non solo in `card_entities`; risolve PV singoli a zero quando l'entita reale e letta come `pv_power_entity_id`/campo rapido.
 - Bump versione addon/backend a `0.3.231`.

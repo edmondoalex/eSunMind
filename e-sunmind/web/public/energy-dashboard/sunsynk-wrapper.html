@@ -173,7 +173,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.231';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.232';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -186,6 +186,13 @@
         normalizeSiteId(s?.site_id || s?.id) === wanted ||
         normalizeSiteId(s?.site_name || s?.name) === wanted
       ) || sites[0] || energyRoot || {};
+    }
+    function selectEnergyDataSnapshot(energyRoot) {
+      if (!energyRoot || typeof energyRoot !== 'object') return {};
+      if (SITE_ID && normalizeSiteId(energyRoot.site_id || energyRoot.id) === normalizeSiteId(SITE_ID)) {
+        return energyRoot;
+      }
+      return selectEnergySite(energyRoot);
     }
     if (MAP_MODE) {
       document.body.classList.add('map-mode');
@@ -888,7 +895,7 @@
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
         const energyRoot = j?.energy || {};
-        const siteEnergy = selectEnergySite(energyRoot);
+        const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
         const apiEntities = siteEnergy?.entities || {};
