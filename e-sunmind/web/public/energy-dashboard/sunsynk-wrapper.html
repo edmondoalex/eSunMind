@@ -216,7 +216,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.235';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.236';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -504,6 +504,12 @@
       const color = /^#[0-9a-f]{6}$/i.test(raw) ? raw : '#080a10';
       document.documentElement.style.setProperty('--addon-bg', color);
       document.documentElement.style.setProperty('--primary-background-color', color);
+      document.documentElement.style.setProperty('--lovelace-background', color);
+      document.documentElement.style.setProperty('--ha-card-background', color);
+      document.documentElement.style.backgroundColor = color;
+      document.body.style.backgroundColor = color;
+      document.querySelector('.page')?.style.setProperty('background', color);
+      document.querySelector('.energy-frame')?.style.setProperty('background', color);
     }
 
     function setDashboardSiteName(site) {
@@ -1002,6 +1008,7 @@
         const energyRoot = j?.energy || {};
         const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         setDashboardSiteName(siteEnergy);
+        applyDashboardBackgroundColor(siteEnergy?.dashboard_background_color);
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
         const apiEntities = siteEnergy?.entities || {};

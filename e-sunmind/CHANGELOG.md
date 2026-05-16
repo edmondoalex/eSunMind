@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.236
+- Energy Setup: riordinate le sezioni Solar, Battery, Load, AUX, Grid e Giornalieri in sottoblocchi leggibili.
+- Energy Setup: ogni PV ora espone Nome, P nominale, entita potenza, entita tensione ed entita corrente.
+- Energy Setup: batterie 1/2/3 con Nome, potenza, tensione, corrente e SOC; i contatori kWh giornalieri sono solo nella sezione Giornalieri.
+- Energy Dashboard: il colore sfondo configurato viene applicato anche a pagina/body/frame e variabili HA mock.
+- Bump versione addon/backend a `0.3.236`.
+
 ## 0.3.235
 - Energy Dashboard: aumentati i riquadri responsive dei loghi EnergyMind/EKONEX per occupare lo spazio indicato nel layout.
 - Energy Dashboard: aggiunta etichetta overlay con nome site/dashboard corrente, letta da `site_name`/`name`/`id`.

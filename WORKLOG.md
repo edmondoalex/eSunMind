@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy Setup: riordinata configurazione in sottoblocchi PV1-PV6, Batteria 1-3, carichi, AUX, Grid e Giornalieri.
+- Energy Dashboard: sfondo configurabile applicato anche a body/frame e variabili HA mock.
+- Bump versione addon/backend a `0.3.236` con changelog aggiornato.
+
 - Energy Dashboard: ridimensionati i box logo alto/basso secondo i riquadri richiesti e aggiunto nome site/dashboard responsive in overlay.
 - Bump versione addon/backend a `0.3.235` con changelog aggiornato.
 
