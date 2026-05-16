@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.239
+- Energy Dashboard: vendorizzata e caricata localmente la Sunsynk Power Flow Card `v6.9.2`, allineata alla versione installata in Home Assistant.
+- Energy Dashboard: i CDN restano solo come fallback dopo la copia locale.
+- Bump versione addon/backend a `0.3.239`.
+
 ## 0.3.238
 - Energy Dashboard standalone: aggiunto fallback `ha-icon` con path SVG MDI nativi per rete/import/export/off e icone load comuni.
 - Energy Dashboard: ripristinata la visibilita delle icone rete quando la card Sunsynk usa `import_icon`, `export_icon` o `disconnected_icon`.

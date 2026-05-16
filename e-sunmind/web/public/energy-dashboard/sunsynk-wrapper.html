@@ -205,7 +205,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.238';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.239';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1236,6 +1236,8 @@
     function loadSunsynkCardScript() {
       if (customElements.get('sunsynk-power-flow-card')) return Promise.resolve();
       const urls = [
+        './vendor/sunsynk-power-flow-card-v6.9.2.js',
+        'https://github.com/slipx06/sunsynk-power-flow-card/releases/download/v6.9.2/sunsynk-power-flow-card.js',
         'https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@v7.3.3/dist/sunsynk-power-flow-card.js',
         'https://cdn.jsdelivr.net/gh/slipx06/sunsynk-power-flow-card@master/dist/sunsynk-power-flow-card.js',
       ];
