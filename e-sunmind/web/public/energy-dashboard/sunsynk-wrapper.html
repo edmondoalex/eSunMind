@@ -173,7 +173,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.233';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.234';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -267,23 +267,27 @@
     };
     const sourceEntityByCardKey = {};
 
-    let cardConfig = {
-      type: 'custom:sunsynk-power-flow-card',
-      cardstyle: 'full',
-      show_solar: true,
-      show_battery: true,
-      show_grid: true,
-      dynamic_line_width: true,
-      min_line_width: 1,
-      max_line_width: 4,
-      wide: false,
-      inverter: { modern: true, auto_scale: true, three_phase: false },
-      solar: { mppts: 2, show_daily: true, animation_speed: 6, max_power: 7000 },
-      battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
-      load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true },
-      grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
-      entities: {},
-    };
+    function createBaseCardConfig() {
+      return {
+        type: 'custom:sunsynk-power-flow-card',
+        cardstyle: 'full',
+        show_solar: true,
+        show_battery: true,
+        show_grid: true,
+        dynamic_line_width: true,
+        min_line_width: 1,
+        max_line_width: 4,
+        wide: false,
+        inverter: { modern: true, auto_scale: true, three_phase: false },
+        solar: { mppts: 2, show_daily: true, animation_speed: 6, max_power: 7000 },
+        battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
+        load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true, dynamic_icon: true },
+        grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
+        entities: {},
+      };
+    }
+
+    let cardConfig = createBaseCardConfig();
     const entitySignMap = {};
     const signOf = (key, fallback = 'positive') => {
       const v = String(entitySignMap[String(key)] || fallback).toLowerCase();
@@ -396,7 +400,7 @@
       c.solar.dynamic_colour = Boolean(c.solar.dynamic_colour ?? true);
       c.load.additional_loads = Number.isFinite(Number(c.load.additional_loads)) ? Number(c.load.additional_loads) : 0;
       c.load.dynamic_colour = Boolean(c.load.dynamic_colour ?? true);
-      c.load.dynamic_icon = Boolean(c.load.dynamic_icon ?? false);
+      c.load.dynamic_icon = Boolean(c.load.dynamic_icon ?? true);
       c.load.aux_dynamic_colour = Boolean(c.load.aux_dynamic_colour ?? true);
       c.load.off_colour = String(c.load.off_colour || 'grey');
       c.load.aux_off_colour = String(c.load.aux_off_colour || 'grey');
@@ -702,6 +706,7 @@
           }
         } catch (_) {}
         applyEnergyEntityFallbacks(e);
+        cardConfig = createBaseCardConfig();
         const raw = e?.sunsynk_card_config_json;
         if (raw) {
           const parsed = JSON.parse(String(raw));
@@ -746,6 +751,57 @@
           window.hass.states[id] = mkState(0, '', { entity_id: id });
         }
       }
+    }
+
+    function resetInternalMockStates() {
+      const now = new Date().toISOString();
+      for (const [key, id] of Object.entries(sensorIds)) {
+        if (!isConfiguredEntity(id)) continue;
+        let unit = '';
+        let deviceClass = '';
+        let stateClass = 'measurement';
+        if (String(key).startsWith('day_')) {
+          unit = 'kWh';
+          deviceClass = 'energy';
+          stateClass = 'total_increasing';
+        } else if (String(key).includes('soc')) {
+          unit = '%';
+          deviceClass = 'battery';
+        } else if (String(key).includes('voltage')) {
+          unit = 'V';
+          deviceClass = 'voltage';
+        } else if (String(key).includes('current')) {
+          unit = 'A';
+          deviceClass = 'current';
+        } else if (String(key).includes('frequency')) {
+          unit = 'Hz';
+          deviceClass = 'frequency';
+        } else {
+          unit = 'W';
+          deviceClass = 'power';
+        }
+        window.hass.states[id] = {
+          entity_id: id,
+          state: '0',
+          attributes: { unit_of_measurement: unit, device_class: deviceClass, state_class: stateClass },
+          last_changed: window.hass.states[id]?.last_changed || now,
+          last_updated: now,
+        };
+      }
+      window.hass.states[sensorIds.grid_connected_status_194] = {
+        entity_id: sensorIds.grid_connected_status_194,
+        state: 'on',
+        attributes: { device_class: 'power' },
+        last_changed: window.hass.states[sensorIds.grid_connected_status_194]?.last_changed || now,
+        last_updated: now,
+      };
+      window.hass.states[sensorIds.inverter_status_59] = {
+        entity_id: sensorIds.inverter_status_59,
+        state: 'Normal',
+        attributes: {},
+        last_changed: window.hass.states[sensorIds.inverter_status_59]?.last_changed || now,
+        last_updated: now,
+      };
     }
 
     const host = document.getElementById('host');
@@ -896,6 +952,7 @@
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
         const apiEntities = siteEnergy?.entities || {};
+        resetInternalMockStates();
 
         const num = (v) => {
           const x = Number(v);

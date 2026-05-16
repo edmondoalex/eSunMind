@@ -1,6 +1,10 @@
 ﻿# WORKLOG
 
 ## 2026-05-14
+- Energy multi-site: isolati i siti backend senza eredita delle entita top-level e aggiunto test `tools/check_energy_site_isolation.py`.
+- Energy Wrapper: config ricreata da base pulita e stati mock azzerati prima dei dati live per impedire residui tra `?site=...`; ripristinato `load.dynamic_icon=true` per icone Sunsynk originali.
+- Bump versione addon/backend a `0.3.234` con changelog aggiornato.
+
 - Energy Wrapper/Setup: disattivata forzatura `load.dynamic_icon`, ripristinando l'icona Home/load originale della Sunsynk card; mantenute le icone Grid configurate senza normalizzazione generica.
 - Bump versione addon/backend a `0.3.233` con changelog aggiornato.
 

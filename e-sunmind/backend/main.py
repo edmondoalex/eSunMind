@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.233"
+APP_VERSION = "0.3.234"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -424,7 +424,14 @@ def _normalize_energy_sites_inplace(e_cfg: dict[str, Any]) -> list[dict[str, Any
     for idx, raw in enumerate(sites_in):
         if not isinstance(raw, dict):
             continue
-        base = dict(fallback)
+        # Once multi-site is enabled, each site must be isolated. Do not
+        # inherit entity mappings from the selected/top-level site, otherwise
+        # dashboards can leak PV/load/grid values into each other.
+        base = {
+            "enabled": raw.get("enabled", e_cfg.get("enabled", True)),
+            "theme": raw.get("theme", e_cfg.get("theme", "classic_flow")),
+            "dashboard_background_color": raw.get("dashboard_background_color", e_cfg.get("dashboard_background_color", "#080a10")),
+        }
         base.update(raw)
         sid = _energy_site_slug(base.get("id") or base.get("name"), f"impianto-{idx + 1}")
         if sid in used:

@@ -4425,7 +4425,7 @@ function buildSunsynkConfigFromWizard() {
       max_power: Math.max(100, Number(w.load_max_power || 9000)),
       auto_scale: Boolean(w.load_auto_scale),
       dynamic_colour: true,
-      dynamic_icon: false,
+      dynamic_icon: true,
       aux_dynamic_colour: true,
       off_colour: 'grey',
       aux_off_colour: 'grey',

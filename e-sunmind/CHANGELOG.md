@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.234
+- Energy multi-site: ogni dashboard usa solo le entita del proprio sito; rimosso il fallback che poteva far ereditare a `privato` i sensori del sito selezionato/top-level.
+- Energy Wrapper: la config Sunsynk viene ricreata da base pulita a ogni reload opzioni, evitando residui di entita/config tra dashboard diverse.
+- Energy Wrapper: reset degli stati mock interni prima di applicare i dati live del sito, cosi valori mancanti non restano appesi dal sito precedente.
+- Energy icone: ripristinato `load.dynamic_icon=true` come default Sunsynk per usare le icone dinamiche originali della card.
+- Test: aggiunto controllo `tools/check_energy_site_isolation.py` per bloccare regressioni su `?site=privato`/`?site=sas`.
+- Bump versione addon/backend a `0.3.234`.
+
 ## 0.3.233
 - Energy Wrapper/Setup: la Home non forza piu `load.dynamic_icon=true`, cosi la Sunsynk card usa l'icona load originale invece della casa con freccia dinamica.
 - Energy Wrapper: le icone Grid import/export/disconnected vengono mantenute come configurate (`mdi:transmission-tower-*`) senza riscrittura verso varianti generiche.
