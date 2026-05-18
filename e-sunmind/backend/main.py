@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.243"
+APP_VERSION = "0.3.244"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -400,6 +400,7 @@ ENERGY_SITE_KEYS = (
     "grid_export_today_entity_id",
     "sunsynk_card_config_json",
     "entity_signs_json",
+    "sankey_extra_loads",
 )
 
 

@@ -236,7 +236,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.243';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.244';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -999,6 +999,23 @@
       return { id, section: 2, name, color };
     }
 
+    function configuredSankeyExtraLoadNodes(siteEnergy = {}) {
+      const raw = Array.isArray(siteEnergy?.sankey_extra_loads) ? siteEnergy.sankey_extra_loads : [];
+      return raw.slice(0, 16)
+        .map((item, idx) => {
+          const id = String(item?.entity_id || item?.entity || '').trim();
+          if (!isConfiguredEntity(id)) return null;
+          return {
+            id,
+            section: 2,
+            name: String(item?.name || `Extra load ${idx + 1}`).trim() || `Extra load ${idx + 1}`,
+            color: String(item?.color || '#64748b').trim() || '#64748b',
+            extra: true,
+          };
+        })
+        .filter(Boolean);
+    }
+
     function getSankeyLoadNodes() {
       const nodes = [];
       const load = cardConfig.load || {};
@@ -1018,7 +1035,7 @@
     }
 
     function buildSankeyConfig(siteEnergy = {}) {
-      const loadNodes = getSankeyLoadNodes();
+      const loadNodes = [...getSankeyLoadNodes(), ...configuredSankeyExtraLoadNodes(siteEnergy)];
       const solarColor = String(cardConfig?.solar?.colour || '#f59e0b');
       const gridColor = String(cardConfig?.grid?.colour || '#06b6d4');
       const batteryColor = String(cardConfig?.battery?.colour || '#6366f1');
@@ -1073,7 +1090,7 @@
       const grid = readNumericState(entityId('grid_power_169')) || readNumericState(entityId('grid_ct_power_172'));
       const battery = readNumericState(entityId('battery_power_190'));
       const homeRaw = readNumericState(entityId('essential_power')) || readNumericState(entityId('inverter_power_175'));
-      const loadNodes = getSankeyLoadNodes();
+      const loadNodes = [...getSankeyLoadNodes(), ...configuredSankeyExtraLoadNodes(siteEnergy)];
       const loadRawValues = loadNodes.map((node) => Math.max(0, readNumericState(node.id)));
       const loadSum = loadRawValues.reduce((sum, value) => sum + value, 0);
       const home = Math.max(0, homeRaw);
@@ -1322,6 +1339,22 @@
             publishRawHaEntityState(entry, unit, deviceClass, stateClass);
           }
         };
+        const publishConfiguredExtraSankeyLoads = () => {
+          const extraLoads = Array.isArray(siteEnergy?.sankey_extra_loads) ? siteEnergy.sankey_extra_loads.slice(0, 16) : [];
+          for (const item of extraLoads) {
+            const id = String(item?.entity_id || item?.entity || '').trim();
+            if (!isConfiguredEntity(id)) continue;
+            const entry =
+              Object.values(apiEntities || {}).find((e) => String(e?.entity_id || '').trim() === id) ||
+              Object.values(ce || {}).find((e) => String(e?.entity_id || '').trim() === id) ||
+              null;
+            if (entry && entry.value != null) {
+              publishRawHaEntityState(entry, 'W', 'power', 'measurement');
+            } else if (!window.hass.states[id]) {
+              window.hass.states[id] = mkState(0, 'W', { entity_id: id, device_class: 'power', state_class: 'measurement' });
+            }
+          }
+        };
         const setFromCardEntity = (sensorId, cardKey, fallbackUnit, deviceClass, stateClass) => {
           if (!sensorId) return false;
           const entry = cardEntry(cardKey);
@@ -1347,6 +1380,7 @@
         };
 
         publishAllRawCardEntityStates();
+        publishConfiguredExtraSankeyLoads();
 
         const pvTotal = fromCard('pv_total');
         const pv1 = fromCard('pv1_power_186');

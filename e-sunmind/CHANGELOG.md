@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.244
+- Energy Sankey: aggiunti 16 carichi extra per ogni site, configurabili da UI con nome, entity_id e colore, usati solo dal grafico Sankey.
+- Energy Sankey: gli extra load vengono letti dal wrapper come sensori di potenza aggiuntivi senza modificare la card Sunsynk.
+- Bump versione addon/backend a `0.3.244`.
+
 ## 0.3.243
 - Energy Sankey: il totale `Carico casa` non viene piu gonfiato dai figli load duplicati; i figli vengono scalati quando superano il totale reale.
 - Energy Setup: aggiunto flag per-site `Mostra Sankey Card` per abilitare/disabilitare il Sankey su ogni dashboard.

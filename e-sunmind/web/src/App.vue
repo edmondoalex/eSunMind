@@ -1218,6 +1218,18 @@
                 <label>Numero batterie<input type="number" min="1" max="2" v-model.number="energyWizardForm.battery_count" /></label>
                 <label>Numero carichi casa (additional_loads)<input type="number" min="0" max="6" v-model.number="energyWizardForm.additional_loads" /></label>
               </div>
+              <div class="energy-subblock">
+                <h4>Carichi extra solo Sankey</h4>
+                <small>Fino a 16 sensori di potenza aggiunti solo al grafico Sankey, senza comparire nella card Sunsynk.</small>
+                <div class="energy-repeat-grid">
+                  <div v-for="n in 16" :key="`sankey-extra-${n}`" class="energy-mini-block">
+                    <strong>Extra {{ n }}</strong>
+                    <label>Nome<input type="text" v-model="energyForm.sankey_extra_loads[n - 1].name" /></label>
+                    <label>Entity ID<input type="text" v-model="energyForm.sankey_extra_loads[n - 1].entity_id" placeholder="sensor..." /></label>
+                    <label>Colore<input type="color" v-model="energyForm.sankey_extra_loads[n - 1].color" /></label>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section class="energy-group" v-show="energySetupSection === 'inverter'">
@@ -1863,12 +1875,24 @@ const energyForm = ref({
   grid_export_today_entity_id: '',
   sunsynk_card_config_json: '',
   entity_signs_json: '',
+  sankey_extra_loads: Array.from({ length: 16 }, () => ({ name: '', entity_id: '', color: '#64748b' })),
 })
 const energySites = ref([])
 const selectedEnergySiteId = ref('default')
 const normalizeEnergySiteId = (value, fallback = 'impianto') => {
   const slug = String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '')
   return slug || fallback
+}
+const normalizeSankeyExtraLoads = (value) => {
+  const src = Array.isArray(value) ? value : []
+  return Array.from({ length: 16 }, (_, idx) => {
+    const item = src[idx] || {}
+    return {
+      name: String(item?.name || '').trim(),
+      entity_id: String(item?.entity_id || item?.entity || '').trim(),
+      color: /^#[0-9a-f]{6}$/i.test(String(item?.color || '').trim()) ? String(item.color).trim() : '#64748b',
+    }
+  })
 }
 const energyWizardStep = ref(0)
 const energySetupSection = ref('topology')
@@ -2216,6 +2240,8 @@ function makeEnergySiteFromForm(base = {}) {
     grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
     sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
     entity_signs_json: String(energyForm.value.entity_signs_json || ''),
+    sankey_extra_loads: normalizeSankeyExtraLoads(energyForm.value.sankey_extra_loads)
+      .filter((item) => item.entity_id || item.name),
   }
 }
 
@@ -2246,6 +2272,7 @@ function applyEnergySiteToForm(site = {}) {
     grid_export_today_entity_id: String(site.grid_export_today_entity_id || ''),
     sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
     entity_signs_json: String(site.entity_signs_json || ''),
+    sankey_extra_loads: normalizeSankeyExtraLoads(site.sankey_extra_loads),
   }
   syncEnergySignsUiFromJson()
   hydrateEnergyWizardFromOptions(site)
@@ -5079,8 +5106,9 @@ async function loadData() {
             id: normalizeEnergySiteId(s?.id || s?.name, `impianto-${idx + 1}`),
             name: String(s?.name || s?.id || `Impianto ${idx + 1}`).trim(),
             show_sankey: Boolean(s?.show_sankey ?? true),
+            sankey_extra_loads: normalizeSankeyExtraLoads(s?.sankey_extra_loads),
           }))
-        : [{ ...energyRoot, id: selectedEnergyId, name: String(energyRoot.site_name || 'Impianto 1'), show_sankey: Boolean(energyRoot.show_sankey ?? true) }]
+        : [{ ...energyRoot, id: selectedEnergyId, name: String(energyRoot.site_name || 'Impianto 1'), show_sankey: Boolean(energyRoot.show_sankey ?? true), sankey_extra_loads: normalizeSankeyExtraLoads(energyRoot.sankey_extra_loads) }]
       selectedEnergySiteId.value = energySites.value.some((s) => normalizeEnergySiteId(s.id, 'default') === selectedEnergyId)
         ? selectedEnergyId
         : normalizeEnergySiteId(energySites.value[0]?.id || 'default', 'default')
@@ -5109,6 +5137,7 @@ async function loadData() {
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
         entity_signs_json: String(eo.entity_signs_json || ''),
+        sankey_extra_loads: normalizeSankeyExtraLoads(eo.sankey_extra_loads),
       }
       syncEnergySignsUiFromJson()
       const wizardSeed = {
