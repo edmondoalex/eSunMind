@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.243
+- Energy Sankey: il totale `Carico casa` non viene piu gonfiato dai figli load duplicati; i figli vengono scalati quando superano il totale reale.
+- Energy Setup: aggiunto flag per-site `Mostra Sankey Card` per abilitare/disabilitare il Sankey su ogni dashboard.
+- Bump versione addon/backend a `0.3.243`.
+
 ## 0.3.242
 - Energy Sankey: corretta la lettura import/export rete rispettando `grid.invert_grid`, cosi il grid positivo configurato come import alimenta il ramo `Import rete` invece di sparire.
 - Energy Sankey: abbassata la soglia minima e riallocati i flussi live in ordine FV, rete, batteria verso casa, con eccedenza FV verso batteria/export.

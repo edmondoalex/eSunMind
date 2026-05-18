@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.242"
+APP_VERSION = "0.3.243"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -241,6 +241,7 @@ def _load_options() -> dict[str, Any]:
             "enabled": True,
             "theme": "classic_flow",
             "dashboard_background_color": "#080a10",
+            "show_sankey": True,
             "pv_power_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
             "pv_power_sign": "positive",
             "home_power_entity_id": "",
@@ -380,6 +381,7 @@ ENERGY_SITE_KEYS = (
     "enabled",
     "theme",
     "dashboard_background_color",
+    "show_sankey",
     "pv_power_entity_id",
     "pv_power_sign",
     "home_power_entity_id",
@@ -431,6 +433,7 @@ def _normalize_energy_sites_inplace(e_cfg: dict[str, Any]) -> list[dict[str, Any
             "enabled": raw.get("enabled", e_cfg.get("enabled", True)),
             "theme": raw.get("theme", e_cfg.get("theme", "classic_flow")),
             "dashboard_background_color": raw.get("dashboard_background_color", e_cfg.get("dashboard_background_color", "#080a10")),
+            "show_sankey": raw.get("show_sankey", e_cfg.get("show_sankey", True)),
         }
         base.update(raw)
         sid = _energy_site_slug(base.get("id") or base.get("name"), f"impianto-{idx + 1}")
@@ -967,6 +970,7 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
     out: dict[str, Any] = {
         "ok": False,
         "enabled": bool(e_cfg.get("enabled", True)),
+        "show_sankey": bool(e_cfg.get("show_sankey", True)),
         "entities": {},
         "card_entities": {},
         "normalized": {

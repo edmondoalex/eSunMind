@@ -236,7 +236,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.242';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.243';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1074,9 +1074,11 @@
       const battery = readNumericState(entityId('battery_power_190'));
       const homeRaw = readNumericState(entityId('essential_power')) || readNumericState(entityId('inverter_power_175'));
       const loadNodes = getSankeyLoadNodes();
-      const loadSum = loadNodes.reduce((sum, node) => sum + Math.max(0, readNumericState(node.id)), 0);
-      const home = Math.max(0, homeRaw, loadSum);
-      const otherLoads = Math.max(0, home - loadSum);
+      const loadRawValues = loadNodes.map((node) => Math.max(0, readNumericState(node.id)));
+      const loadSum = loadRawValues.reduce((sum, value) => sum + value, 0);
+      const home = Math.max(0, homeRaw);
+      const loadScale = loadSum > home && home > 0 ? home / loadSum : 1;
+      const otherLoads = Math.max(0, home - (loadSum * loadScale));
       const gridImportPositive = Boolean(cardConfig?.grid?.invert_grid);
       const batteryChargePositive = Boolean(cardConfig?.battery?.invert_flow);
       const gridImport = gridImportPositive ? Math.max(0, grid) : Math.max(0, -grid);
@@ -1110,6 +1112,9 @@
       setSyntheticPowerState(sankeyIds.batteryToHome, batteryToHome, 'Batteria verso casa');
       setSyntheticPowerState(sankeyIds.unknownToHome, unknownToHome, 'Altro verso casa');
       setSyntheticPowerState(sankeyIds.otherLoads, otherLoads, 'Altri carichi');
+      loadNodes.forEach((node, idx) => {
+        setSyntheticPowerState(node.id, loadRawValues[idx] * loadScale, node.name || node.id);
+      });
 
       try {
         sankeyCard.setConfig(buildSankeyConfig(siteEnergy));
@@ -1231,6 +1236,8 @@
         const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         setDashboardSiteName(siteEnergy);
         applyDashboardBackgroundColor(siteEnergy?.dashboard_background_color);
+        const showSankey = siteEnergy?.show_sankey !== false && siteEnergy?.sankey_enabled !== false;
+        if (!showSankey && sankeySection) sankeySection.hidden = true;
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
         const apiEntities = siteEnergy?.entities || {};
@@ -1455,7 +1462,7 @@
         setDaily(entityId('day_grid_import_76'), n.grid_import_today_kwh);
         setDaily(entityId('day_grid_export_77'), n.grid_export_today_kwh);
 
-        updateSankeyChart(siteEnergy);
+        if (showSankey) updateSankeyChart(siteEnergy);
         forceRender();
       } catch (e) {
         const now = Date.now();

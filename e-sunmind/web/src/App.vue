@@ -1147,6 +1147,7 @@
               <label>Sfondo dashboard
                 <input type="color" v-model="energyForm.dashboard_background_color" />
               </label>
+              <label class="toggle-line">Mostra Sankey<input type="checkbox" v-model="energyForm.show_sankey" /></label>
               <label>Layout card
                 <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                   <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
@@ -1200,6 +1201,7 @@
                   </select>
                 </label>
                 <label>Sfondo dashboard Energy<input type="color" v-model="energyForm.dashboard_background_color" /></label>
+                <label>Mostra Sankey Card<input type="checkbox" v-model="energyForm.show_sankey" /></label>
                 <label>Cardstyle
                   <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                     <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
@@ -1841,6 +1843,7 @@ const energyForm = ref({
   enabled: true,
   theme: 'classic_flow',
   dashboard_background_color: '#080a10',
+  show_sankey: true,
   cardstyle: 'full',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   pv_power_sign: 'positive',
@@ -2194,6 +2197,7 @@ function makeEnergySiteFromForm(base = {}) {
     enabled: Boolean(energyForm.value.enabled),
     theme: String(energyForm.value.theme || 'classic_flow'),
     dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
+    show_sankey: Boolean(energyForm.value.show_sankey ?? true),
     pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
     pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
     home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
@@ -2222,6 +2226,7 @@ function applyEnergySiteToForm(site = {}) {
     enabled: Boolean(site.enabled ?? true),
     theme: String(site.theme || 'classic_flow'),
     dashboard_background_color: String(site.dashboard_background_color || '#080a10'),
+    show_sankey: Boolean(site.show_sankey ?? true),
     cardstyle: 'full',
     pv_power_entity_id: String(site.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
     pv_power_sign: String(site.pv_power_sign || 'positive'),
@@ -5073,8 +5078,9 @@ async function loadData() {
             ...s,
             id: normalizeEnergySiteId(s?.id || s?.name, `impianto-${idx + 1}`),
             name: String(s?.name || s?.id || `Impianto ${idx + 1}`).trim(),
+            show_sankey: Boolean(s?.show_sankey ?? true),
           }))
-        : [{ ...energyRoot, id: selectedEnergyId, name: String(energyRoot.site_name || 'Impianto 1') }]
+        : [{ ...energyRoot, id: selectedEnergyId, name: String(energyRoot.site_name || 'Impianto 1'), show_sankey: Boolean(energyRoot.show_sankey ?? true) }]
       selectedEnergySiteId.value = energySites.value.some((s) => normalizeEnergySiteId(s.id, 'default') === selectedEnergyId)
         ? selectedEnergyId
         : normalizeEnergySiteId(energySites.value[0]?.id || 'default', 'default')
@@ -5083,6 +5089,7 @@ async function loadData() {
         enabled: Boolean(eo.enabled ?? true),
         theme: String(eo.theme || 'classic_flow'),
         dashboard_background_color: String(eo.dashboard_background_color || '#080a10'),
+        show_sankey: Boolean(eo.show_sankey ?? true),
         cardstyle: 'full',
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         pv_power_sign: String(eo.pv_power_sign || 'positive'),

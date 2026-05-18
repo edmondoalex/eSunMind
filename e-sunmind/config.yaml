@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.242"
+version: "0.3.243"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -85,6 +85,7 @@ options:
     enabled: true
     theme: "classic_flow"
     dashboard_background_color: "#080a10"
+    show_sankey: true
     pv_power_entity_id: "sensor.zcs_easas_1_activepower_pv_ext"
     pv_power_sign: "positive"
     home_power_entity_id: ""
@@ -171,6 +172,7 @@ schema:
     enabled: bool
     theme: list(classic_flow|technical_dark|minimal_light)
     dashboard_background_color: str?
+    show_sankey: bool
     pv_power_entity_id: str?
     pv_power_sign: list(positive|negative)
     home_power_entity_id: str?
