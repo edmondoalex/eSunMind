@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.241
+- Energy Sankey: sostituito il nodo speciale `remaining_parent_state` con un sensore esplicito `Altri carichi`, cosi il grafico standalone mostra correttamente i rami sotto `Carico casa`.
+- Bump versione addon/backend a `0.3.241`.
+
 ## 0.3.240
 - Energy Dashboard: aggiunto sotto la Sunsynk card il grafico live `ha-sankey-chart` v5.0.1, caricato localmente da `energy-dashboard/vendor`.
 - Sankey: il grafico e separato per `site`, usa gli stessi sensori mock del wrapper e include PV, rete, batteria, casa, export/carica batteria e tutti i carichi `load`, `AUX` e `non-essential` mappati.
