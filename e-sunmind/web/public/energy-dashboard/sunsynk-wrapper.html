@@ -236,7 +236,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.241';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.242';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1031,7 +1031,7 @@
         wide: true,
         unit_prefix: 'k',
         round: 2,
-        min_state: 1,
+        min_state: 0.1,
         show_names: true,
         show_states: true,
         show_units: true,
@@ -1077,16 +1077,22 @@
       const loadSum = loadNodes.reduce((sum, node) => sum + Math.max(0, readNumericState(node.id)), 0);
       const home = Math.max(0, homeRaw, loadSum);
       const otherLoads = Math.max(0, home - loadSum);
-      const gridExport = Math.max(0, grid);
-      const gridImport = Math.max(0, -grid);
-      const batteryDischarge = Math.max(0, battery);
-      const batteryCharge = Math.max(0, -battery);
-      const pvToBattery = Math.min(pv, batteryCharge);
-      const pvAfterBattery = Math.max(0, pv - pvToBattery);
-      const pvToGrid = Math.min(pvAfterBattery, gridExport);
-      const pvToHome = Math.min(home, Math.max(0, pvAfterBattery - pvToGrid));
-      const gridToHome = Math.min(home, gridImport);
-      const batteryToHome = Math.min(home, batteryDischarge);
+      const gridImportPositive = Boolean(cardConfig?.grid?.invert_grid);
+      const batteryChargePositive = Boolean(cardConfig?.battery?.invert_flow);
+      const gridImport = gridImportPositive ? Math.max(0, grid) : Math.max(0, -grid);
+      const gridExport = gridImportPositive ? Math.max(0, -grid) : Math.max(0, grid);
+      const batteryCharge = batteryChargePositive ? Math.max(0, battery) : Math.max(0, -battery);
+      const batteryDischarge = batteryChargePositive ? Math.max(0, -battery) : Math.max(0, battery);
+
+      let remainingHome = home;
+      const pvToHome = Math.min(remainingHome, pv);
+      remainingHome = Math.max(0, remainingHome - pvToHome);
+      const gridToHome = Math.min(remainingHome, gridImport);
+      remainingHome = Math.max(0, remainingHome - gridToHome);
+      const batteryToHome = Math.min(remainingHome, batteryDischarge);
+      const pvAfterHome = Math.max(0, pv - pvToHome);
+      const pvToBattery = Math.min(pvAfterHome, batteryCharge);
+      const pvToGrid = Math.min(Math.max(0, pvAfterHome - pvToBattery), gridExport);
       const knownToHome = pvToHome + gridToHome + batteryToHome;
       const unknownToHome = Math.max(0, home - knownToHome);
 

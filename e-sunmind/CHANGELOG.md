@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.242
+- Energy Sankey: corretta la lettura import/export rete rispettando `grid.invert_grid`, cosi il grid positivo configurato come import alimenta il ramo `Import rete` invece di sparire.
+- Energy Sankey: abbassata la soglia minima e riallocati i flussi live in ordine FV, rete, batteria verso casa, con eccedenza FV verso batteria/export.
+- Bump versione addon/backend a `0.3.242`.
+
 ## 0.3.241
 - Energy Sankey: sostituito il nodo speciale `remaining_parent_state` con un sensore esplicito `Altri carichi`, cosi il grafico standalone mostra correttamente i rami sotto `Carico casa`.
 - Bump versione addon/backend a `0.3.241`.
