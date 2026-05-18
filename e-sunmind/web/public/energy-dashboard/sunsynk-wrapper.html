@@ -346,6 +346,7 @@
       gridToHome: 'sensor.mock_sankey_grid_to_home_power',
       batteryToHome: 'sensor.mock_sankey_battery_to_home_power',
       unknownToHome: 'sensor.mock_sankey_unknown_to_home_power',
+      otherLoads: 'sensor.mock_sankey_other_loads_power',
     };
     const sourceEntityByCardKey = {};
 
@@ -1051,7 +1052,7 @@
           { id: sankeyIds.gridExport, section: 1, name: 'Export rete', color: gridColor },
           { id: sankeyIds.batteryCharge, section: 1, name: 'Carica batteria', color: batteryColor },
           ...loadNodes,
-          { id: 'mock_sankey_other_loads', section: 2, type: 'remaining_parent_state', name: 'Altri carichi', color: '#475569' },
+          { id: sankeyIds.otherLoads, section: 2, name: 'Altri carichi', color: '#475569' },
         ],
         links: [
           { source: sankeyIds.pv, target: sankeyIds.home, value: sankeyIds.pvToHome },
@@ -1061,7 +1062,7 @@
           { source: sankeyIds.batteryDischarge, target: sankeyIds.home, value: sankeyIds.batteryToHome },
           { source: sankeyIds.unknownSource, target: sankeyIds.home, value: sankeyIds.unknownToHome },
           ...loadNodes.map((node) => ({ source: sankeyIds.home, target: node.id, value: node.id })),
-          { source: sankeyIds.home, target: 'mock_sankey_other_loads' },
+          { source: sankeyIds.home, target: sankeyIds.otherLoads, value: sankeyIds.otherLoads },
         ],
       };
     }
@@ -1075,6 +1076,7 @@
       const loadNodes = getSankeyLoadNodes();
       const loadSum = loadNodes.reduce((sum, node) => sum + Math.max(0, readNumericState(node.id)), 0);
       const home = Math.max(0, homeRaw, loadSum);
+      const otherLoads = Math.max(0, home - loadSum);
       const gridExport = Math.max(0, grid);
       const gridImport = Math.max(0, -grid);
       const batteryDischarge = Math.max(0, battery);
@@ -1101,6 +1103,7 @@
       setSyntheticPowerState(sankeyIds.gridToHome, gridToHome, 'Rete verso casa');
       setSyntheticPowerState(sankeyIds.batteryToHome, batteryToHome, 'Batteria verso casa');
       setSyntheticPowerState(sankeyIds.unknownToHome, unknownToHome, 'Altro verso casa');
+      setSyntheticPowerState(sankeyIds.otherLoads, otherLoads, 'Altri carichi');
 
       try {
         sankeyCard.setConfig(buildSankeyConfig(siteEnergy));
