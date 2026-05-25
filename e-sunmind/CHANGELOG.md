@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.270
+- Energy Dashboard K Flow: aggiunta icona casa `Villa moderna` con sfondo trasparente.
+- Energy Setup K Flow: aggiunta la scelta `Villa moderna` nel menu `Icona casa`.
+- Bump versione addon/backend a `0.3.270`.
+
 ## 0.3.269
 - Energy Setup K Flow: `Icona casa` ora e una scelta tra default K Flow, smart-glass e smart-glass 2 piani.
 - Energy Dashboard K Flow: ripristinata l'icona casa default originale come default base, mantenendo entrambe le varianti smart-glass selezionabili.
