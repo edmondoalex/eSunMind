@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.254
+- Energy Dashboard K Flow: il backend ora legge anche le entita inserite nel JSON/config K Flow, cosi temperature e riquadri custom ricevono valori reali invece di restare a zero.
+- Bump versione addon/backend a `0.3.254`.
+
 ## 0.3.253
 - Energy Setup K Flow: rinominato `Total PV generation` in `PV totale storico`, per distinguerlo dai valori giornalieri gia presenti.
 - Energy Setup K Flow: resi personalizzabili i due riquadri bassi sinistra/centro con label + entity, cosi possono mostrare sensori diversi da min/max cell voltage.

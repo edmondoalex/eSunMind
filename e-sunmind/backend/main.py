@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.253"
+APP_VERSION = "0.3.254"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1041,6 +1041,39 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
                 card_entities = parsed.get("entities") or {}
     except Exception:
         card_entities = {}
+
+    def _collect_config_entity_ids(value: Any, prefix: str = "") -> dict[str, str]:
+        found: dict[str, str] = {}
+        if isinstance(value, dict):
+            for k, v in value.items():
+                key = str(k or "").strip()
+                child_prefix = key or prefix
+                for ck, ent in _collect_config_entity_ids(v, child_prefix).items():
+                    out_key = ck
+                    n = 2
+                    while out_key in found and found[out_key] != ent:
+                        out_key = f"{ck}_{n}"
+                        n += 1
+                    found[out_key] = ent
+        elif isinstance(value, list):
+            for i, item in enumerate(value):
+                for ck, ent in _collect_config_entity_ids(item, f"{prefix}_{i}" if prefix else str(i)).items():
+                    found[ck] = ent
+        else:
+            ent = str(value or "").strip()
+            if re.match(r"^[a-z0-9_]+\.[a-z0-9_]+$", ent, re.I):
+                found[prefix or ent.replace(".", "_")] = ent
+        return found
+
+    try:
+        raw_kflow_cfg = str(e_cfg.get("k_flow_card_config_json") or "").strip()
+        if raw_kflow_cfg:
+            parsed_kflow = json.loads(raw_kflow_cfg)
+            if isinstance(parsed_kflow, dict):
+                for card_key, ent in _collect_config_entity_ids(parsed_kflow).items():
+                    card_entities.setdefault(card_key, ent)
+    except Exception:
+        pass
 
     def _card_state(card_key: str) -> dict[str, Any] | None:
         ent = str(card_entities.get(card_key) or "").strip()
