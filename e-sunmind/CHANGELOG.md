@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.262
+- Energy Dashboard K Flow: gli Ampere batteria visualizzati sono calcolati da potenza/tensione quando disponibili, evitando valori uguali o stale dal sensore corrente.
+- Bump versione addon/backend a `0.3.262`.
+
 ## 0.3.261
 - Energy Dashboard K Flow: import/export rete usano frecce orizzontali (`←` import, `→` export) e la potenza sotto il traliccio usa frecce verticali (`↓` entra, `↑` esce).
 - Bump versione addon/backend a `0.3.261`.
