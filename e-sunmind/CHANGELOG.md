@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.251
+- Energy Setup: aggiunti campi UI K Flow per entita opzionali mancanti e flag `Inverti verso batteria` / `Inverti verso rete`, sincronizzati nel JSON override K Flow.
+- Bump versione addon/backend a `0.3.251`.
+
 ## 0.3.250
 - Energy Dashboard K Flow: l'arco sole usa `sun_times` e `sun_position` reali di e-SunMind da `/api/data`, non piu solo il mock `sun.sun`.
 - Bump versione addon/backend a `0.3.250`.

@@ -1549,8 +1549,21 @@
                   <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
                   <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
                 </label>
+                <div class="energy-subblock" style="grid-column: 1 / -1;">
+                  <strong>Entita aggiuntive K Flow</strong>
+                  <div class="form-grid energy-entity-grid">
+                    <label class="toggle-line">Inverti verso batteria<input type="checkbox" v-model="energyForm.k_flow_invert_battery_power" @change="syncKFlowJsonFromUi" /></label>
+                    <label class="toggle-line">Inverti verso rete<input type="checkbox" v-model="energyForm.k_flow_invert_grid_power" @change="syncKFlowJsonFromUi" /></label>
+                    <label>Total PV generation<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
+                    <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
+                    <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
+                    <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
+                    <label>Min cell voltage<input type="text" v-model="energyForm.k_flow_battery_min_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_min_cell_voltage" /></label>
+                    <label>Max cell voltage<input type="text" v-model="energyForm.k_flow_battery_max_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_max_cell_voltage" /></label>
+                  </div>
+                </div>
                 <label style="grid-column: 1 / -1;">K Flow card config JSON (override opzionale)
-                  <textarea v-model="energyForm.k_flow_card_config_json" rows="8" placeholder='{"_show_ev":false,"pv_max_power":7500}'></textarea>
+                  <textarea v-model="energyForm.k_flow_card_config_json" rows="8" placeholder='{"_show_ev":false,"pv_max_power":7500}' @change="syncKFlowUiFromJson"></textarea>
                   <small>Override per `custom:k-flow-card`. Se vuoto, viene generato dai campi sopra e dal JSON Sunsynk.</small>
                 </label>
                 <label style="grid-column: 1 / -1;">Entita extra JSON (chiave -> entity_id)
@@ -1886,6 +1899,14 @@ const energyForm = ref({
   grid_export_today_entity_id: '',
   sunsynk_card_config_json: '',
   k_flow_card_config_json: '',
+  k_flow_invert_battery_power: false,
+  k_flow_invert_grid_power: false,
+  k_flow_total_pv_gen_entity: '',
+  k_flow_battery_temp1: '',
+  k_flow_battery_temp2: '',
+  k_flow_battery_mos: '',
+  k_flow_battery_min_cell: '',
+  k_flow_battery_max_cell: '',
   entity_signs_json: '',
   sankey_extra_loads: Array.from({ length: 16 }, () => ({ name: '', entity_id: '', color: '#64748b' })),
 })
@@ -2224,6 +2245,7 @@ const energySignFields = [
 ]
 
 function makeEnergySiteFromForm(base = {}) {
+  syncKFlowJsonFromUi()
   const name = String(base.name || energyForm.value.site_name || 'Impianto 1').trim() || 'Impianto 1'
   const id = normalizeEnergySiteId(base.id || selectedEnergySiteId.value || name, 'default')
   return {
@@ -2287,10 +2309,19 @@ function applyEnergySiteToForm(site = {}) {
     grid_export_today_entity_id: String(site.grid_export_today_entity_id || ''),
     sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(site.k_flow_card_config_json || ''),
+    k_flow_invert_battery_power: false,
+    k_flow_invert_grid_power: false,
+    k_flow_total_pv_gen_entity: '',
+    k_flow_battery_temp1: '',
+    k_flow_battery_temp2: '',
+    k_flow_battery_mos: '',
+    k_flow_battery_min_cell: '',
+    k_flow_battery_max_cell: '',
     entity_signs_json: String(site.entity_signs_json || ''),
     sankey_extra_loads: normalizeSankeyExtraLoads(site.sankey_extra_loads),
   }
   syncEnergySignsUiFromJson()
+  syncKFlowUiFromJson()
   hydrateEnergyWizardFromOptions(site)
 }
 
@@ -2525,6 +2556,47 @@ function syncEnergySignsJsonFromUi() {
     else out[f.key] = 'positive'
   }
   energyForm.value.entity_signs_json = JSON.stringify(out, null, 2)
+}
+
+const kFlowUiKeys = {
+  k_flow_total_pv_gen_entity: 'total_pv_gen_entity',
+  k_flow_battery_temp1: 'battery_temp1',
+  k_flow_battery_temp2: 'battery_temp2',
+  k_flow_battery_mos: 'battery_mos',
+  k_flow_battery_min_cell: 'battery_min_cell',
+  k_flow_battery_max_cell: 'battery_max_cell',
+}
+
+function parseKFlowConfigJson() {
+  try {
+    const raw = String(energyForm.value?.k_flow_card_config_json || '').trim()
+    if (!raw) return {}
+    const obj = JSON.parse(raw)
+    return obj && typeof obj === 'object' && !Array.isArray(obj) ? obj : {}
+  } catch (_) {
+    return {}
+  }
+}
+
+function syncKFlowUiFromJson() {
+  const obj = parseKFlowConfigJson()
+  energyForm.value.k_flow_invert_battery_power = Boolean(obj.invert_battery_power)
+  energyForm.value.k_flow_invert_grid_power = Boolean(obj.invert_grid_power)
+  for (const [formKey, jsonKey] of Object.entries(kFlowUiKeys)) {
+    energyForm.value[formKey] = String(obj[jsonKey] || '')
+  }
+}
+
+function syncKFlowJsonFromUi() {
+  const obj = parseKFlowConfigJson()
+  obj.invert_battery_power = Boolean(energyForm.value.k_flow_invert_battery_power)
+  obj.invert_grid_power = Boolean(energyForm.value.k_flow_invert_grid_power)
+  for (const [formKey, jsonKey] of Object.entries(kFlowUiKeys)) {
+    const value = String(energyForm.value[formKey] || '').trim()
+    if (value) obj[jsonKey] = value
+    else delete obj[jsonKey]
+  }
+  energyForm.value.k_flow_card_config_json = JSON.stringify(obj, null, 2)
 }
 
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
@@ -5154,10 +5226,19 @@ async function loadData() {
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
         k_flow_card_config_json: String(eo.k_flow_card_config_json || ''),
+        k_flow_invert_battery_power: false,
+        k_flow_invert_grid_power: false,
+        k_flow_total_pv_gen_entity: '',
+        k_flow_battery_temp1: '',
+        k_flow_battery_temp2: '',
+        k_flow_battery_mos: '',
+        k_flow_battery_min_cell: '',
+        k_flow_battery_max_cell: '',
         entity_signs_json: String(eo.entity_signs_json || ''),
         sankey_extra_loads: normalizeSankeyExtraLoads(eo.sankey_extra_loads),
       }
       syncEnergySignsUiFromJson()
+      syncKFlowUiFromJson()
       const wizardSeed = {
         ...energyWizardForm.value,
         cardstyle: 'full',
