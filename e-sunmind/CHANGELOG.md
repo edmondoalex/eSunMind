@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.266
+- Energy Dashboard K Flow: l'animazione rete parte anche esattamente a `10 W` in ingresso/uscita, non solo sopra i `10 W`.
+- Bump versione addon/backend a `0.3.266`.
+
 ## 0.3.265
 - Energy Dashboard K Flow: invertita la freccia verticale della potenza rete sotto il traliccio per allinearla alla direzione visiva del flusso.
 - Bump versione addon/backend a `0.3.265`.
