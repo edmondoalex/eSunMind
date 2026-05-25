@@ -704,6 +704,9 @@ class KFlowCard extends HTMLElement {
       grid_import_energy: 'sensor.goodwe_today_energy_import',
       grid_export_energy: '',
       consump: 'sensor.goodwe_house_consumption',
+      aux_power: '',
+      aux_name: 'AUX',
+      home_icon: 'home-icon.png',
       today_pv: 'sensor.goodwe_today_s_pv_generation',
       today_batt_chg: 'sensor.goodwe_today_battery_charge',
       today_load: 'sensor.goodwe_today_load',
@@ -924,6 +927,13 @@ class KFlowCard extends HTMLElement {
     const ev   = !!(this.config._show_ev);
     const showPvExtra = !!(this.config._show_pv_extra);
     const iconPath = new URL('./k-flow-card', import.meta.url).toString();
+    const resolveIconHref = (value, fallback) => {
+      const raw = String(value || fallback || '').trim();
+      if (!raw) return `${iconPath}/${fallback}`;
+      if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('data:')) return raw;
+      return `${iconPath}/${raw}`;
+    };
+    const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
     const pv3txt = showPvExtra ? `<text id="pv3label" x="8" y="424" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="8" y="438" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
     const pv4txt = showPvExtra ? `<text id="pv4label" x="8" y="456" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="8" y="470" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
@@ -1093,8 +1103,10 @@ class KFlowCard extends HTMLElement {
       ${pv3txt}
       ${pv4txt}
 
-      <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${iconPath}/home-icon.png" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
+      <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${homeIconHref}" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
       <text id="fcLoadVal" x="178" y="403" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
+      <text id="auxLoadLabel" x="342" y="420" text-anchor="start" font-size="9" font-weight="700" fill="#8b949e" letter-spacing="1" style="display:none">AUX</text>
+      <text id="auxLoadVal" x="342" y="436" text-anchor="start" font-size="12" font-weight="700" fill="#cbd5e1" style="display:none">-- W</text>
       ${evtxt}
       </svg></div>`+
 
@@ -1157,6 +1169,7 @@ class KFlowCard extends HTMLElement {
     const gridImport = _n(this._val(this.config.grid_import_energy));
     const gridExport = _n(this._val(this.config.grid_export_energy));
     const load = _n(this._val(this.config.consump, true));
+    const auxLoad = _n(this._val(this.config.aux_power, true));
     // Fix #9: store raw null so we can show '--' and use toFixed(2) to avoid float artefacts
     const _todayPvRaw = this._val(this.config.today_pv);
     const _todayBattChgRaw = this._val(this.config.today_batt_chg);
@@ -1411,6 +1424,14 @@ class KFlowCard extends HTMLElement {
 
     setText('fcLoadVal', load >= 1000 ? (load / 1000).toFixed(2) + ' kW' : load.toFixed(0) + ' W');
     setAttr('fcLoadVal', 'fill', load > 10 ? loadFlowColor : '#8b949e');
+    const hasAuxLoad = !!String(this.config.aux_power || '').trim();
+    setDisplay('auxLoadLabel', hasAuxLoad);
+    setDisplay('auxLoadVal', hasAuxLoad);
+    if (hasAuxLoad) {
+      setText('auxLoadLabel', String(this.config.aux_name || 'AUX').toUpperCase());
+      setText('auxLoadVal', auxLoad >= 1000 ? (auxLoad / 1000).toFixed(2) + ' kW' : auxLoad.toFixed(0) + ' W');
+      setAttr('auxLoadVal', 'fill', auxLoad > 10 ? '#f59e0b' : '#8b949e');
+    }
 
     const hasPv1 = !!String(this.config.pv1_power || this.config.pv_total_power || '').trim();
     const hasPv2 = !!String(this.config.pv2_power || '').trim();

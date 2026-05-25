@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.262';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.263';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -454,6 +454,7 @@
       const batteryPower = kEntity('battery_power_190');
       const gridPower = kEntity('grid_power_169') || kEntity('grid_ct_power_172');
       const loadPower = kEntity('inverter_power_175') || kEntity('essential_power');
+      const auxPower = kEntity('aux_power_166') || kEntity('aux_load1') || kEntity('aux_load2');
       return {
         type: 'custom:k-flow-card',
         inverter_name: siteLabel(siteEnergy) || 'Inverter',
@@ -478,6 +479,9 @@
         grid_power_alt: kEntity('grid_ct_power_172'),
         invert_grid_power: Boolean(cardConfig?.grid?.invert_grid),
         consump: loadPower,
+        aux_power: auxPower,
+        aux_name: String(cardConfig?.load?.aux_name || 'AUX'),
+        home_icon: 'home-icon.png',
         _show_battery: Boolean(batteryPower || kEntity('battery_soc_184')),
         battery_soc: kEntity('battery_soc_184'),
         battery_power: batteryPower,

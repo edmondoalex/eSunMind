@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.263
+- Energy Dashboard K Flow: aggiunta visualizzazione AUX opzionale vicino alla casa con nome e potenza.
+- Energy Setup K Flow: aggiunti campi `AUX nome`, `AUX potenza` e `Icona casa`.
+- Energy Dashboard K Flow: l'icona casa puo essere sovrascritta con un file locale o URL custom.
+- Bump versione addon/backend a `0.3.263`.
+
 ## 0.3.262
 - Energy Dashboard K Flow: gli Ampere batteria visualizzati sono calcolati da potenza/tensione quando disponibili, evitando valori uguali o stale dal sensore corrente.
 - Bump versione addon/backend a `0.3.262`.
