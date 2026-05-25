@@ -530,14 +530,14 @@ class KFlowCardEditor extends HTMLElement {
     const bmsTempActive    = _labelChanged('label_bms_temp',         'BMS TEMP');
     const minCellActive    = _labelChanged('label_min_cell',         'Min Cell');
     const maxCellActive    = _labelChanged('label_max_cell',         'Max Cell');
-    const battDisActive    = _labelChanged('label_batt_dis',         'Batt Dis.');
+    const battDisActive    = _labelChanged('label_batt_dis',         'Scarica oggi');
     const totalPvGenActive = _labelChanged('label_total_pv_gen',     'TOTAL PV GEN.');
     // Lock flags for Battery section pickers (stricter — requires entity also set)
     const cellTempLocked   = _labelLocked('label_cell_temp_minmax', 'CELL TEMP MIN/MAX', 'label_entity_cell_temp');
     const bmsTempLocked    = _labelLocked('label_bms_temp',         'BMS TEMP',          'label_entity_bms_temp');
     const minCellLocked    = _labelLocked('label_min_cell',         'Min Cell',          'label_entity_min_cell');
     const maxCellLocked    = _labelLocked('label_max_cell',         'Max Cell',          'label_entity_max_cell');
-    const battDisLocked    = _labelLocked('label_batt_dis',         'Batt Dis.',         'label_entity_batt_dis');
+    const battDisLocked    = _labelLocked('label_batt_dis',         'Scarica oggi',     'label_entity_batt_dis');
 
     // Label rows — text field + entity picker with live state preview
     const labelRow = (textKey, textLabel, textPlaceholder, entityKey, active = false) => {
@@ -599,7 +599,7 @@ class KFlowCardEditor extends HTMLElement {
       labelRow('label_bms_temp',         'BMS Temp label',          'BMS TEMP',          'label_entity_bms_temp',  bmsTempActive),
       labelRow('label_min_cell',         'Min Cell label',          'Min Cell',          'label_entity_min_cell',  minCellActive),
       labelRow('label_max_cell',         'Max Cell label',          'Max Cell',          'label_entity_max_cell',  maxCellActive),
-      labelRow('label_batt_dis',         'Batt Dis label',          'Batt Dis.',         'label_entity_batt_dis',  battDisActive),
+      labelRow('label_batt_dis',         'Scarica oggi label',      'Scarica oggi',     'label_entity_batt_dis',  battDisActive),
       labelRow('label_total_pv_gen',     'Total PV Gen label',      'TOTAL PV GEN.',     'total_pv_gen_entity',    totalPvGenActive),
     ], { toggleKey: '_labels_custom_entities', toggleOn: labelsEnabled, hidden: !labelsEnabled }));
 
@@ -749,7 +749,7 @@ class KFlowCard extends HTMLElement {
       label_endurance: 'ENDURANCE',
       label_min_cell: 'Min Cell',
       label_max_cell: 'Max Cell',
-      label_batt_dis: 'Batt Dis.',
+      label_batt_dis: 'Scarica oggi',
       total_pv_gen_entity: 'sensor.goodwe_total_pv_generation',
       label_total_pv_gen: 'TOTAL PV GEN.',
       label_entity_cell_temp: '',
@@ -1111,7 +1111,7 @@ class KFlowCard extends HTMLElement {
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:4px">
         <div class="st"><div class="l">${this.config.label_min_cell || 'Min Cell'}</div><div class="v" id="bMinCell">-- V</div></div>
         <div class="st"><div class="l">${this.config.label_max_cell || 'Max Cell'}</div><div class="v" id="bMaxCell">-- V</div></div>
-        <div class="st"><div class="l">${this.config.label_batt_dis || 'Batt Dis.'}</div><div class="v" id="bBattDis">-- kWh</div></div>
+        <div class="st"><div class="l">${this.config.label_batt_dis || 'Scarica oggi'}</div><div class="v" id="bBattDis">-- kWh</div></div>
       </div>
       <div style="margin-top:4px">
         <div class="st" style="display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;gap:8px;padding:4px 9px 5px;width:100%;box-sizing:border-box">
@@ -1554,7 +1554,7 @@ class KFlowCard extends HTMLElement {
     const maxCellUnit  = maxCellCustom ? _readUnit('label_entity_max_cell') : 'V';
 
     // Batt dis tile
-    const battDisCustom = _rowActive('label_batt_dis', 'Batt Dis.') && this.config.label_entity_batt_dis;
+    const battDisCustom = _rowActive('label_batt_dis', 'Scarica oggi') && this.config.label_entity_batt_dis;
     const _battDisRaw = battDisCustom ? _readVal('label_entity_batt_dis') : null;
     const battDisFinal = (_battDisRaw && !_battDisRaw.isText) ? _battDisRaw.val : battDis1;
     const battDisUnit  = battDisCustom ? _readUnit('label_entity_batt_dis') : 'kWh';

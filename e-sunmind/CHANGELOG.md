@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.258
+- Energy Dashboard K Flow: rinominato il riquadro `BATT DIS.` in `SCARICA OGGI` per chiarire che legge la scarica giornaliera, non il valore istantaneo/residuo della batteria.
+- Bump versione addon/backend a `0.3.258`.
+
 ## 0.3.257
 - Energy Dashboard K Flow: il riquadro inverter centrale mostra tensione e frequenza al posto della temperatura.
 - Energy Dashboard K Flow: la percentuale centrale ora e etichettata come `CARICO`, cioe carico casa rispetto alla potenza massima inverter.
