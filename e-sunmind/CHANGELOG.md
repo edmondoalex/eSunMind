@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.253
+- Energy Setup K Flow: rinominato `Total PV generation` in `PV totale storico`, per distinguerlo dai valori giornalieri gia presenti.
+- Energy Setup K Flow: resi personalizzabili i due riquadri bassi sinistra/centro con label + entity, cosi possono mostrare sensori diversi da min/max cell voltage.
+- Bump versione addon/backend a `0.3.253`.
+
 ## 0.3.252
 - Energy Setup: aggiunta scheda dedicata `K Flow` in Configurazione completa per mostrare chiaramente entita mancanti e flag inversione rete/batteria.
 - Bump versione addon/backend a `0.3.252`.

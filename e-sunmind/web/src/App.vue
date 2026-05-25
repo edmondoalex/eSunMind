@@ -1551,12 +1551,14 @@
               <div class="energy-subblock">
                 <strong>Entita mancanti K Flow</strong>
                 <div class="form-grid energy-entity-grid">
-                  <label>Total PV generation<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
+                  <label>PV totale storico<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
                   <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
                   <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
                   <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
-                  <label>Min cell voltage<input type="text" v-model="energyForm.k_flow_battery_min_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_min_cell_voltage" /></label>
-                  <label>Max cell voltage<input type="text" v-model="energyForm.k_flow_battery_max_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_max_cell_voltage" /></label>
+                  <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
+                  <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
+                  <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
+                  <label>Riquadro basso centro entity<input type="text" v-model="energyForm.k_flow_max_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                 </div>
               </div>
             </section>
@@ -1576,12 +1578,14 @@
                   <div class="form-grid energy-entity-grid">
                     <label class="toggle-line">Inverti verso batteria<input type="checkbox" v-model="energyForm.k_flow_invert_battery_power" @change="syncKFlowJsonFromUi" /></label>
                     <label class="toggle-line">Inverti verso rete<input type="checkbox" v-model="energyForm.k_flow_invert_grid_power" @change="syncKFlowJsonFromUi" /></label>
-                    <label>Total PV generation<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
+                    <label>PV totale storico<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
                     <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
                     <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
                     <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
-                    <label>Min cell voltage<input type="text" v-model="energyForm.k_flow_battery_min_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_min_cell_voltage" /></label>
-                    <label>Max cell voltage<input type="text" v-model="energyForm.k_flow_battery_max_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_max_cell_voltage" /></label>
+                    <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
+                    <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
+                    <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
+                    <label>Riquadro basso centro entity<input type="text" v-model="energyForm.k_flow_max_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                   </div>
                 </div>
                 <label style="grid-column: 1 / -1;">K Flow card config JSON (override opzionale)
@@ -1927,8 +1931,10 @@ const energyForm = ref({
   k_flow_battery_temp1: '',
   k_flow_battery_temp2: '',
   k_flow_battery_mos: '',
-  k_flow_battery_min_cell: '',
-  k_flow_battery_max_cell: '',
+  k_flow_min_cell_label: '',
+  k_flow_min_cell_entity: '',
+  k_flow_max_cell_label: '',
+  k_flow_max_cell_entity: '',
   entity_signs_json: '',
   sankey_extra_loads: Array.from({ length: 16 }, () => ({ name: '', entity_id: '', color: '#64748b' })),
 })
@@ -2338,8 +2344,10 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_battery_temp1: '',
     k_flow_battery_temp2: '',
     k_flow_battery_mos: '',
-    k_flow_battery_min_cell: '',
-    k_flow_battery_max_cell: '',
+    k_flow_min_cell_label: '',
+    k_flow_min_cell_entity: '',
+    k_flow_max_cell_label: '',
+    k_flow_max_cell_entity: '',
     entity_signs_json: String(site.entity_signs_json || ''),
     sankey_extra_loads: normalizeSankeyExtraLoads(site.sankey_extra_loads),
   }
@@ -2586,8 +2594,10 @@ const kFlowUiKeys = {
   k_flow_battery_temp1: 'battery_temp1',
   k_flow_battery_temp2: 'battery_temp2',
   k_flow_battery_mos: 'battery_mos',
-  k_flow_battery_min_cell: 'battery_min_cell',
-  k_flow_battery_max_cell: 'battery_max_cell',
+  k_flow_min_cell_label: 'label_min_cell',
+  k_flow_min_cell_entity: 'label_entity_min_cell',
+  k_flow_max_cell_label: 'label_max_cell',
+  k_flow_max_cell_entity: 'label_entity_max_cell',
 }
 
 function parseKFlowConfigJson() {
@@ -2619,6 +2629,8 @@ function syncKFlowJsonFromUi() {
     if (value) obj[jsonKey] = value
     else delete obj[jsonKey]
   }
+  if (obj.label_entity_min_cell && !obj.label_min_cell) obj.label_min_cell = 'Dato 1'
+  if (obj.label_entity_max_cell && !obj.label_max_cell) obj.label_max_cell = 'Dato 2'
   energyForm.value.k_flow_card_config_json = JSON.stringify(obj, null, 2)
 }
 
@@ -5255,8 +5267,10 @@ async function loadData() {
         k_flow_battery_temp1: '',
         k_flow_battery_temp2: '',
         k_flow_battery_mos: '',
-        k_flow_battery_min_cell: '',
-        k_flow_battery_max_cell: '',
+        k_flow_min_cell_label: '',
+        k_flow_min_cell_entity: '',
+        k_flow_max_cell_label: '',
+        k_flow_max_cell_entity: '',
         entity_signs_json: String(eo.entity_signs_json || ''),
         sankey_extra_loads: normalizeSankeyExtraLoads(eo.sankey_extra_loads),
       }
