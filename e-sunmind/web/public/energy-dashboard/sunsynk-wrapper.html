@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.246';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.247';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1021,6 +1021,7 @@
     let sankeyCard = null;
     let sankeyReady = false;
     let lastSyncWarnTs = 0;
+    let lastKFlowConfigJson = '';
 
     function syncEnergyCardstyleClass() {
       const style = String(cardConfig?.cardstyle || 'full').toLowerCase();
@@ -1048,7 +1049,12 @@
       syncEnergyCardstyleClass();
       card = document.createElement(energyDashboardLayout === 'k_flow' ? 'k-flow-card' : 'sunsynk-power-flow-card');
       try {
-        card.setConfig(energyDashboardLayout === 'k_flow' ? kFlowCardConfig : prepareCardConfigForSetConfig());
+        if (energyDashboardLayout === 'k_flow') {
+          lastKFlowConfigJson = JSON.stringify(kFlowCardConfig || {});
+          card.setConfig(kFlowCardConfig);
+        } else {
+          card.setConfig(prepareCardConfigForSetConfig());
+        }
       } catch (_) {
         if (energyDashboardLayout === 'k_flow') throw _;
         const fallback = normalizeConfigForCard({
@@ -1347,7 +1353,15 @@
         if (card && typeof card.setConfig === 'function') {
           syncEnergyCardstyleClass();
           try {
-            card.setConfig(energyDashboardLayout === 'k_flow' ? kFlowCardConfig : prepareCardConfigForSetConfig());
+            if (energyDashboardLayout === 'k_flow') {
+              const nextKFlowConfigJson = JSON.stringify(kFlowCardConfig || {});
+              if (nextKFlowConfigJson !== lastKFlowConfigJson) {
+                lastKFlowConfigJson = nextKFlowConfigJson;
+                card.setConfig(kFlowCardConfig);
+              }
+            } else {
+              card.setConfig(prepareCardConfigForSetConfig());
+            }
           } catch (e) {
             if (energyDashboardLayout === 'k_flow') {
               console.warn('e-SunMind K Flow setConfig failed', e);

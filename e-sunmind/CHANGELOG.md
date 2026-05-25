@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.247
+- Energy Dashboard K Flow: evitato il reset visuale a ogni polling API; `setConfig()` ora viene richiamato solo se cambia davvero la configurazione.
+- Energy Dashboard K Flow: vendorizzate anche le icone PNG e corretto il path asset per standalone addon.
+- Bump versione addon/backend a `0.3.247`.
+
 ## 0.3.246
 - Energy Dashboard K Flow: la config automatica usa direttamente gli entity_id reali della vecchia configurazione Sunsynk, evitando valori a zero nei mirror `sensor.mock_*`.
 - Bump versione addon/backend a `0.3.246`.
