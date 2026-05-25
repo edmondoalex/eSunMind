@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.246
+- Energy Dashboard K Flow: la config automatica usa direttamente gli entity_id reali della vecchia configurazione Sunsynk, evitando valori a zero nei mirror `sensor.mock_*`.
+- Bump versione addon/backend a `0.3.246`.
+
 ## 0.3.245
 - Energy Dashboard: aggiunta scelta layout per-site tra Sunsynk Power Flow e `k-flow-card`.
 - Energy Dashboard: vendorizzata `k-flow-card` e generata automaticamente la config dai campi energy/Sunsynk, con override JSON dedicato.
