@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.265
+- Energy Dashboard K Flow: invertita la freccia verticale della potenza rete sotto il traliccio per allinearla alla direzione visiva del flusso.
+- Bump versione addon/backend a `0.3.265`.
+
 ## 0.3.264
 - Energy Dashboard K Flow: AUX supporta fino a tre righe separate (`aux_power_166`, `aux_load1`, `aux_load2`) invece di un solo valore.
 - Energy Setup K Flow: aggiunti override separati per `AUX 1` e `AUX 2`.
