@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.257
+- Energy Dashboard K Flow: il riquadro inverter centrale mostra tensione e frequenza al posto della temperatura.
+- Energy Dashboard K Flow: la percentuale centrale ora e etichettata come `CARICO`, cioe carico casa rispetto alla potenza massima inverter.
+- Energy Setup K Flow: aggiunto campo `Label barra potenza`; il default standalone e `BATT` al posto di `PWR`.
+- Bump versione addon/backend a `0.3.257`.
+
 ## 0.3.256
 - Energy Setup Batterie: default `Soglia scarica batterie` portato al 10% e reso esplicito in UI.
 - Energy Dashboard K Flow: `ENDURANCE` e `Remaining` calcolano l'energia utilizzabile fino alla soglia scarica configurata.

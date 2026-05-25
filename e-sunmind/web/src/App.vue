@@ -1555,6 +1555,7 @@
                   <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
                   <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
                   <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
+                  <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                   <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                   <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                   <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
@@ -1582,6 +1583,7 @@
                     <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
                     <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
                     <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
+                    <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                     <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                     <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                     <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
@@ -1931,6 +1933,7 @@ const energyForm = ref({
   k_flow_battery_temp1: '',
   k_flow_battery_temp2: '',
   k_flow_battery_mos: '',
+  k_flow_pwr_bar_label: '',
   k_flow_min_cell_label: '',
   k_flow_min_cell_entity: '',
   k_flow_max_cell_label: '',
@@ -2344,6 +2347,7 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_battery_temp1: '',
     k_flow_battery_temp2: '',
     k_flow_battery_mos: '',
+    k_flow_pwr_bar_label: '',
     k_flow_min_cell_label: '',
     k_flow_min_cell_entity: '',
     k_flow_max_cell_label: '',
@@ -2594,6 +2598,7 @@ const kFlowUiKeys = {
   k_flow_battery_temp1: 'battery_temp1',
   k_flow_battery_temp2: 'battery_temp2',
   k_flow_battery_mos: 'battery_mos',
+  k_flow_pwr_bar_label: 'label_pwr_bar',
   k_flow_min_cell_label: 'label_min_cell',
   k_flow_min_cell_entity: 'label_entity_min_cell',
   k_flow_max_cell_label: 'label_max_cell',
@@ -5303,6 +5308,7 @@ async function loadData() {
         k_flow_battery_temp1: '',
         k_flow_battery_temp2: '',
         k_flow_battery_mos: '',
+        k_flow_pwr_bar_label: '',
         k_flow_min_cell_label: '',
         k_flow_min_cell_entity: '',
         k_flow_max_cell_label: '',

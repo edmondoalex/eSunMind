@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.256';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.257';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -467,6 +467,8 @@
         today_pv: kEntity('day_pv_energy_108'),
         total_pv_gen_entity: '',
         inv_temp: '',
+        inverter_voltage: kEntity('inverter_voltage_154'),
+        load_frequency: kEntity('load_frequency_192'),
         today_batt_chg: kEntity('day_battery_charge_70'),
         today_load: kEntity('day_load_energy_84'),
         sun: 'sun.sun',
@@ -502,6 +504,7 @@
         _show_ev: false,
         _show_limits: false,
         inverter_max_power: Number(cardConfig?.inverter?.max_power || cardConfig?.load?.max_power || 0) || '',
+        label_pwr_bar: 'BATT',
         _labels_custom_entities: true,
         label_batt_dis: 'BATT DIS.',
         label_entity_batt_dis: kEntity('day_battery_discharge_71'),

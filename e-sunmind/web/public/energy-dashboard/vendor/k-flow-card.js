@@ -1,4 +1,4 @@
-// k-flow-card.js – Unified Edition v1.1.3
+﻿// k-flow-card.js – Unified Edition v1.1.3
 // Changes v1.1.0 (full audit pass):
 //   FIX  – 8-digit hex #f39c4bff in svgPulseOrange → 6-digit #f5b06a.
 //   FIX  – Grid idle color #3a3a3a (invisible on dark bg) → #8b949e.
@@ -733,6 +733,9 @@ class KFlowCard extends HTMLElement {
       battery2_full_wh: 0,
       inverter_max_power: 6000,
       pv_max_power: 7500,
+      inverter_voltage: '',
+      load_frequency: '',
+      label_pwr_bar: 'PWR',
       charger_state: '',
       charger_current: '',
       charger_power: '',
@@ -1079,8 +1082,9 @@ class KFlowCard extends HTMLElement {
 
       <rect id="fcInvRect" x="205" y="155" width="110" height="110" rx="18" fill="#161b22" stroke="#f4a93b" stroke-width="4"/>
       <text id="invNameLabel" x="260" y="203" text-anchor="middle" font-size="14" font-weight="800" fill="#f4a93b" letter-spacing="1">INV</text>
-      <text id="invTempFlow" x="260" y="222" text-anchor="middle" font-size="12" font-weight="700" fill="#58a6ff">-- °C</text>
-      <text id="invLoadPctFlow" x="260" y="240" text-anchor="middle" font-size="12" font-weight="700" fill="#3ce878">--%</text>
+      <text id="invVoltageFlow" x="260" y="219" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- V</text>
+      <text id="invFrequencyFlow" x="260" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- Hz</text>
+      <text id="invLoadPctFlow" x="260" y="249" text-anchor="middle" font-size="11" font-weight="700" fill="#3ce878">CARICO --%</text>
 
       <text id="pv1label" x="8" y="360" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
       <text id="pv1FlowVal" x="8" y="374" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
@@ -1096,7 +1100,7 @@ class KFlowCard extends HTMLElement {
 
       `<div style="display:flex;gap:8px;align-items:center;margin-top:10px">
         <div style="flex:1;display:flex;align-items:center;gap:4px"><span style="font-size:.42rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase">PV</span><div style="flex:1;display:flex;gap:2px;align-items:flex-end;height:10px" id="pvBlocks"></div></div>
-        <div style="flex:1;display:flex;align-items:center;gap:4px"><span style="font-size:.42rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase">Pwr</span><div style="flex:1;background:#21262d;border-radius:20px;height:9px;overflow:hidden;position:relative"><div id="pwrBar" style="position:absolute;inset:0;right:auto;width:0%;border-radius:20px;background:#3fb950;transition:width .4s,background .4s"></div></div></div>
+        <div style="flex:1;display:flex;align-items:center;gap:4px"><span id="pwrBarLabel" style="font-size:.42rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase">${this.config.label_pwr_bar || 'PWR'}</span><div style="flex:1;background:#21262d;border-radius:20px;height:9px;overflow:hidden;position:relative"><div id="pwrBar" style="position:absolute;inset:0;right:auto;width:0%;border-radius:20px;background:#3fb950;transition:width .4s,background .4s"></div></div></div>
       </div>
       <div class="dv"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-top:5px">
@@ -1174,6 +1178,8 @@ class KFlowCard extends HTMLElement {
     const battDis1Raw = this._val(this.config.batt_dis);
     const battDis1 = _n(battDis1Raw);
     const invTemp = _n(this._val(this.config.inv_temp));
+    const invVoltage = _n(this._val(this.config.inverter_voltage));
+    const loadFrequency = _n(this._val(this.config.load_frequency));
 
     // System limits – direct numbers
     // battery_cap_unit: 'ah' uses battery_full_ah; 'kwh' uses battery_full_wh (stored as kWh, converted to Wh internally)
@@ -1381,12 +1387,14 @@ class KFlowCard extends HTMLElement {
     const badge = getEl('battStatusBadge');
     if (badge) { badge.textContent = absPwr1 < 50 ? 'IDLE' : isCharging1 ? 'CHG' : 'DISCHG'; badge.style.color = absPwr1 < 50 ? '#8b949e' : isCharging1 ? '#00d7ff' : '#3ce878'; }
 
-    setText('invTempFlow', invTemp.toFixed(1) + ' °C');
+    setText('invVoltageFlow', invVoltage > 0 ? invVoltage.toFixed(1) + ' V' : '-- V');
+    setText('invFrequencyFlow', loadFrequency > 0 ? loadFrequency.toFixed(2) + ' Hz' : '-- Hz');
     setText('invNameLabel', this.config.inverter_name || 'INV');
-    setAttr('invTempFlow', 'fill', invTemp <= 45 ? '#58a6ff' : invTemp <= 55 ? '#f39c4b' : '#f85149');
+    setAttr('invVoltageFlow', 'fill', invVoltage > 0 ? '#58a6ff' : '#8b949e');
+    setAttr('invFrequencyFlow', 'fill', loadFrequency > 0 ? '#58a6ff' : '#8b949e');
     const invLoadPct = Math.min(load / invMax * 100, 100).toFixed(0);
     // Fix #8: toFixed() returns a string; use Number() for the colour comparison
-    setText('invLoadPctFlow', invLoadPct + '%'); setAttr('invLoadPctFlow', 'fill', Number(invLoadPct) <= 50 ? '#3fb950' : '#f39c4b');
+    setText('invLoadPctFlow', 'CARICO ' + invLoadPct + '%'); setAttr('invLoadPctFlow', 'fill', Number(invLoadPct) <= 50 ? '#3fb950' : '#f39c4b');
 
     const gridDir = gridActive > 10 ? '▼ ' : gridActive < -10 ? '▲ ' : '';
     // Fix #7: grid power now auto-switches to kW like load/PV (was always showing W)
