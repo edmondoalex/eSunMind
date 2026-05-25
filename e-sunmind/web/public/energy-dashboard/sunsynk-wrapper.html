@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.247';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.248';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1700,7 +1700,7 @@
     function loadKFlowCardScript() {
       if (customElements.get('k-flow-card')) return Promise.resolve();
       const urls = [
-        './vendor/k-flow-card.js',
+        `./vendor/k-flow-card.js?v=${encodeURIComponent(ENERGYMIND_WRAPPER_VERSION)}`,
         'https://raw.githubusercontent.com/thekhan1122/k-flow-card/main/dist/k-flow-card.js',
       ];
       return new Promise((resolve, reject) => {

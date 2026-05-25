@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.248
+- Energy Dashboard K Flow: aggiunto cache-buster al modulo `k-flow-card.js` per evitare che il browser riusi la versione con path icone HACS `/local/community/k-flow-card`.
+- Bump versione addon/backend a `0.3.248`.
+
 ## 0.3.247
 - Energy Dashboard K Flow: evitato il reset visuale a ogni polling API; `setConfig()` ora viene richiamato solo se cambia davvero la configurazione.
 - Energy Dashboard K Flow: vendorizzate anche le icone PNG e corretto il path asset per standalone addon.
