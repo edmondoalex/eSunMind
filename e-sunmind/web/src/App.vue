@@ -1558,6 +1558,10 @@
                   <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                   <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                   <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
+                  <label>AUX 1 nome<input type="text" v-model="energyForm.k_flow_aux_load1_name" @change="syncKFlowJsonFromUi" placeholder="AUX 1" /></label>
+                  <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
+                  <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
+                  <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
                   <label>Icona casa<input type="text" v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi" placeholder="home-icon.png o /local/..." /></label>
                   <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                   <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
@@ -1589,6 +1593,10 @@
                     <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                     <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                     <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
+                    <label>AUX 1 nome<input type="text" v-model="energyForm.k_flow_aux_load1_name" @change="syncKFlowJsonFromUi" placeholder="AUX 1" /></label>
+                    <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
+                    <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
+                    <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
                     <label>Icona casa<input type="text" v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi" placeholder="home-icon.png o /local/..." /></label>
                     <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                     <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
@@ -1942,6 +1950,10 @@ const energyForm = ref({
   k_flow_pwr_bar_label: '',
   k_flow_aux_name: '',
   k_flow_aux_power: '',
+  k_flow_aux_load1_name: '',
+  k_flow_aux_load1: '',
+  k_flow_aux_load2_name: '',
+  k_flow_aux_load2: '',
   k_flow_home_icon: '',
   k_flow_min_cell_label: '',
   k_flow_min_cell_entity: '',
@@ -2359,6 +2371,10 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_pwr_bar_label: '',
     k_flow_aux_name: '',
     k_flow_aux_power: '',
+    k_flow_aux_load1_name: '',
+    k_flow_aux_load1: '',
+    k_flow_aux_load2_name: '',
+    k_flow_aux_load2: '',
     k_flow_home_icon: '',
     k_flow_min_cell_label: '',
     k_flow_min_cell_entity: '',
@@ -2613,6 +2629,10 @@ const kFlowUiKeys = {
   k_flow_pwr_bar_label: 'label_pwr_bar',
   k_flow_aux_name: 'aux_name',
   k_flow_aux_power: 'aux_power',
+  k_flow_aux_load1_name: 'aux_load1_name',
+  k_flow_aux_load1: 'aux_load1',
+  k_flow_aux_load2_name: 'aux_load2_name',
+  k_flow_aux_load2: 'aux_load2',
   k_flow_home_icon: 'home_icon',
   k_flow_min_cell_label: 'label_min_cell',
   k_flow_min_cell_entity: 'label_entity_min_cell',
@@ -5326,6 +5346,10 @@ async function loadData() {
         k_flow_pwr_bar_label: '',
         k_flow_aux_name: '',
         k_flow_aux_power: '',
+        k_flow_aux_load1_name: '',
+        k_flow_aux_load1: '',
+        k_flow_aux_load2_name: '',
+        k_flow_aux_load2: '',
         k_flow_home_icon: '',
         k_flow_min_cell_label: '',
         k_flow_min_cell_entity: '',

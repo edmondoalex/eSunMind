@@ -705,7 +705,12 @@ class KFlowCard extends HTMLElement {
       grid_export_energy: '',
       consump: 'sensor.goodwe_house_consumption',
       aux_power: '',
+      aux_load1: '',
+      aux_load2: '',
       aux_name: 'AUX',
+      aux_load1_name: 'AUX 1',
+      aux_load2_name: 'AUX 2',
+      _show_aux: false,
       home_icon: 'home-icon.png',
       today_pv: 'sensor.goodwe_today_s_pv_generation',
       today_batt_chg: 'sensor.goodwe_today_battery_charge',
@@ -1105,8 +1110,9 @@ class KFlowCard extends HTMLElement {
 
       <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${homeIconHref}" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
       <text id="fcLoadVal" x="178" y="403" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
-      <text id="auxLoadLabel" x="342" y="420" text-anchor="start" font-size="9" font-weight="700" fill="#8b949e" letter-spacing="1" style="display:none">AUX</text>
-      <text id="auxLoadVal" x="342" y="436" text-anchor="start" font-size="12" font-weight="700" fill="#cbd5e1" style="display:none">-- W</text>
+      <text id="auxLoadLine1" x="342" y="408" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX -- W</text>
+      <text id="auxLoadLine2" x="342" y="425" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX 1 -- W</text>
+      <text id="auxLoadLine3" x="342" y="442" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX 2 -- W</text>
       ${evtxt}
       </svg></div>`+
 
@@ -1169,7 +1175,12 @@ class KFlowCard extends HTMLElement {
     const gridImport = _n(this._val(this.config.grid_import_energy));
     const gridExport = _n(this._val(this.config.grid_export_energy));
     const load = _n(this._val(this.config.consump, true));
-    const auxLoad = _n(this._val(this.config.aux_power, true));
+    const auxLoadRaw = this._val(this.config.aux_power, true);
+    const auxLoad = _n(auxLoadRaw);
+    const auxLoad1Raw = this._val(this.config.aux_load1, true);
+    const auxLoad1 = _n(auxLoad1Raw);
+    const auxLoad2Raw = this._val(this.config.aux_load2, true);
+    const auxLoad2 = _n(auxLoad2Raw);
     // Fix #9: store raw null so we can show '--' and use toFixed(2) to avoid float artefacts
     const _todayPvRaw = this._val(this.config.today_pv);
     const _todayBattChgRaw = this._val(this.config.today_batt_chg);
@@ -1424,13 +1435,22 @@ class KFlowCard extends HTMLElement {
 
     setText('fcLoadVal', load >= 1000 ? (load / 1000).toFixed(2) + ' kW' : load.toFixed(0) + ' W');
     setAttr('fcLoadVal', 'fill', load > 10 ? loadFlowColor : '#8b949e');
-    const hasAuxLoad = !!String(this.config.aux_power || '').trim();
-    setDisplay('auxLoadLabel', hasAuxLoad);
-    setDisplay('auxLoadVal', hasAuxLoad);
-    if (hasAuxLoad) {
-      setText('auxLoadLabel', String(this.config.aux_name || 'AUX').toUpperCase());
-      setText('auxLoadVal', auxLoad >= 1000 ? (auxLoad / 1000).toFixed(2) + ' kW' : auxLoad.toFixed(0) + ' W');
-      setAttr('auxLoadVal', 'fill', auxLoad > 10 ? '#f59e0b' : '#8b949e');
+    const fmtAuxPower = (raw, value) => raw === null ? '-- W' : (value >= 1000 ? (value / 1000).toFixed(2) + ' kW' : value.toFixed(0) + ' W');
+    const shortAuxName = (value, fallback) => String(value || fallback || 'AUX').trim().toUpperCase().slice(0, 10);
+    const auxRows = [
+      { configured: !!String(this.config.aux_power || '').trim(), name: this.config.aux_name, fallback: 'AUX', raw: auxLoadRaw, value: auxLoad },
+      { configured: !!String(this.config.aux_load1 || '').trim(), name: this.config.aux_load1_name, fallback: 'AUX 1', raw: auxLoad1Raw, value: auxLoad1 },
+      { configured: !!String(this.config.aux_load2 || '').trim(), name: this.config.aux_load2_name, fallback: 'AUX 2', raw: auxLoad2Raw, value: auxLoad2 },
+    ].filter((row) => row.configured);
+    if (!auxRows.length && this.config._show_aux) auxRows.push({ configured: true, name: this.config.aux_name, fallback: 'AUX', raw: null, value: 0 });
+    for (let i = 0; i < 3; i += 1) {
+      const row = auxRows[i];
+      const id = 'auxLoadLine' + (i + 1);
+      setDisplay(id, !!row);
+      if (row) {
+        setText(id, shortAuxName(row.name, row.fallback) + ' ' + fmtAuxPower(row.raw, row.value));
+        setAttr(id, 'fill', row.value > 10 ? '#f59e0b' : '#8b949e');
+      }
     }
 
     const hasPv1 = !!String(this.config.pv1_power || this.config.pv_total_power || '').trim();

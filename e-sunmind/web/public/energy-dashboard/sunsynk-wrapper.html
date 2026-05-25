@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.263';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.264';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -454,7 +454,9 @@
       const batteryPower = kEntity('battery_power_190');
       const gridPower = kEntity('grid_power_169') || kEntity('grid_ct_power_172');
       const loadPower = kEntity('inverter_power_175') || kEntity('essential_power');
-      const auxPower = kEntity('aux_power_166') || kEntity('aux_load1') || kEntity('aux_load2');
+      const auxPower = kEntity('aux_power_166');
+      const auxLoad1 = kEntity('aux_load1');
+      const auxLoad2 = kEntity('aux_load2');
       return {
         type: 'custom:k-flow-card',
         inverter_name: siteLabel(siteEnergy) || 'Inverter',
@@ -480,7 +482,12 @@
         invert_grid_power: Boolean(cardConfig?.grid?.invert_grid),
         consump: loadPower,
         aux_power: auxPower,
+        aux_load1: auxLoad1,
+        aux_load2: auxLoad2,
         aux_name: String(cardConfig?.load?.aux_name || 'AUX'),
+        aux_load1_name: String(cardConfig?.load?.aux_load1_name || 'AUX 1'),
+        aux_load2_name: String(cardConfig?.load?.aux_load2_name || 'AUX 2'),
+        _show_aux: Boolean(cardConfig?.load?.show_aux || auxPower || auxLoad1 || auxLoad2),
         home_icon: 'home-icon.png',
         _show_battery: Boolean(batteryPower || kEntity('battery_soc_184')),
         battery_soc: kEntity('battery_soc_184'),
