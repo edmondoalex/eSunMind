@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.248';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.249';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -481,16 +481,30 @@
         battery_power: batteryPower,
         battery_current: kEntity('battery_current_191'),
         battery_voltage: kEntity('battery_voltage_183'),
+        battery_temp1: kEntity('battery_temp_182'),
+        battery_temp2: kEntity('battery2_temp_182'),
+        battery_mos: kEntity('dc_transformer_temp_90') || kEntity('radiator_temp_91'),
+        battery_min_cell: kEntity('battery_min_cell'),
+        battery_max_cell: kEntity('battery_max_cell'),
         batt_dis: kEntity('day_battery_discharge_71'),
-        battery_full_wh: Number(cardConfig?.battery?.energy || 0) || '',
+        battery_cap_unit: 'kwh',
+        battery_full_wh: (Number(cardConfig?.battery?.energy || 0) / 1000) || '',
         goodwe_battery_soc: kEntity('battery_soc_184'),
         goodwe_battery_curr: kEntity('battery_current_191'),
         invert_battery_power: Boolean(cardConfig?.battery?.invert_flow),
         _show_battery2: Boolean(kEntity('battery2_power_190')),
+        battery2_soc: kEntity('battery2_soc_184'),
         battery2_power: kEntity('battery2_power_190'),
+        battery2_current: kEntity('battery2_current_191'),
+        battery2_voltage: kEntity('battery2_voltage_183'),
+        battery2_full_wh: (Number(cardConfig?.battery2?.energy || cardConfig?.battery?.energy || 0) / 1000) || '',
         _show_ev: false,
         _show_limits: false,
         inverter_max_power: Number(cardConfig?.inverter?.max_power || cardConfig?.load?.max_power || 0) || '',
+        _labels_custom_entities: true,
+        label_batt_dis: 'BATT DIS.',
+        label_entity_batt_dis: kEntity('day_battery_discharge_71'),
+        total_pv_gen_entity: kEntity('total_pv_generation'),
       };
     }
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.249
+- Energy Dashboard K Flow: corretta la capacita batteria automatica in kWh, cosi `Remaining` non resta `-- Ah`.
+- Energy Dashboard K Flow: aggiunti mapping opzionali da Sunsynk per temperature batteria/inverter, seconda batteria, discharge e total PV generation quando presenti nel JSON.
+- Bump versione addon/backend a `0.3.249`.
+
 ## 0.3.248
 - Energy Dashboard K Flow: aggiunto cache-buster al modulo `k-flow-card.js` per evitare che il browser riusi la versione con path icone HACS `/local/community/k-flow-card`.
 - Bump versione addon/backend a `0.3.248`.
