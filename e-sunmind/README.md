@@ -135,20 +135,23 @@ Le unita vengono normalizzate:
 - rain rate sempre in `mm/h`;
 - pioggia 1h sempre in `mm`.
 
-## Energy Dashboard Standalone (Sunsynk Wrapper)
+## Energy Dashboard Standalone
 
 Da .3.118 la dashboard energia usa di default un wrapper standalone basato sulla card originale di Slipx06 (sunsynk-power-flow-card) eseguita senza Home Assistant installato.
+Da .3.245 ogni impianto puo scegliere il layout dashboard tra Sunsynk Power Flow e `k-flow-card`.
 
 - Entry point: web/public/energy-dashboard/sunsynk-wrapper.html
 - Routing default: web/public/energy-dashboard/index.html (redirect al wrapper)
 - Runtime: mock window.hass con states, localize(), 	hemes e API minime necessarie
 - Aggiornamento dati: funzione globale updateSensors(newData) per integrazione backend real-time
+- Layout per-site: `energy_dashboard_layout` (`sunsynk` oppure `k_flow`)
 
 
-### Config card Sunsynk da UI Addon
+### Config card da UI Addon
 
 In Setting > Energy e disponibile il campo JSON sunsynk_card_config_json per impostare tutta la cardConfig del wrapper (solar, attery, load, grid, entities, ecc.) senza modificare file statici.
 Il wrapper sunsynk-wrapper.html legge questa configurazione da /api/options all'avvio e la applica automaticamente.
+Per `k-flow-card` il wrapper genera automaticamente la configurazione dai campi Energy/Sunsynk; il campo `k_flow_card_config_json` permette override avanzati.
 
 ### Wizard Energy (Sunsynk)
 

@@ -134,6 +134,15 @@
     body.map-mode .host { width: 100%; height: 100%; }
     body.map-mode sunsynk-power-flow-card { display: block; }
     body.map-mode .sankey-section { display: none; }
+    body.energy-layout-k-flow .energy-logo-box,
+    body.energy-layout-k-flow .energy-site-name { display: none; }
+    body.energy-layout-k-flow .energy-frame {
+      width: min(980px, 98vw);
+    }
+    body.energy-layout-k-flow k-flow-card {
+      display: block;
+      width: 100%;
+    }
     @media (max-width: 760px) {
       .energy-logo-top-box {
         top: 6px;
@@ -236,11 +245,13 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.244';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.245';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
+    let energyDashboardLayout = 'sunsynk';
     const normalizeSiteId = (value) => String(value || '').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+    const normalizeDashboardLayout = (value) => String(value || '').trim().toLowerCase() === 'k_flow' ? 'k_flow' : 'sunsynk';
     function selectEnergySite(energyRoot) {
       const sites = Array.isArray(energyRoot?.sites) ? energyRoot.sites : [];
       if (!sites.length) return energyRoot || {};
@@ -349,6 +360,7 @@
       otherLoads: 'sensor.mock_sankey_other_loads_power',
     };
     const sourceEntityByCardKey = {};
+    let kFlowCardConfig = {};
 
     function createBaseCardConfig() {
       return {
@@ -423,6 +435,73 @@
       mirrorConfiguredEntitiesForCard();
       seedStates();
       return JSON.parse(JSON.stringify(cardConfig));
+    }
+
+    function sourceOrInternalEntityId(cardKey) {
+      const source = sourceEntityByCardKey[String(cardKey)] || cardConfig?.entities?.[cardKey];
+      return isConfiguredEntity(source) ? internalEntityId(cardKey) : '';
+    }
+
+    function createBaseKFlowConfig(siteEnergy = {}) {
+      const pv1 = sourceOrInternalEntityId('pv1_power_186') || sourceOrInternalEntityId('pv_total');
+      const pv2 = sourceOrInternalEntityId('pv2_power_187');
+      const pvTotal = sourceOrInternalEntityId('pv_total') || pv1;
+      const batteryPower = sourceOrInternalEntityId('battery_power_190');
+      const gridPower = sourceOrInternalEntityId('grid_power_169') || sourceOrInternalEntityId('grid_ct_power_172');
+      const loadPower = sourceOrInternalEntityId('inverter_power_175') || sourceOrInternalEntityId('essential_power');
+      return {
+        type: 'custom:k-flow-card',
+        inverter_name: siteLabel(siteEnergy) || 'Inverter',
+        pv1_power: pv1,
+        pv2_power: pv2,
+        pv3_power: sourceOrInternalEntityId('pv3_power_188'),
+        pv4_power: sourceOrInternalEntityId('pv4_power_189'),
+        pv_total_power: pvTotal,
+        pv_max_power: Number(cardConfig?.solar?.max_power || siteEnergy?.pv_installed_kwp * 1000 || 7000),
+        today_pv: sourceOrInternalEntityId('day_pv_energy_108'),
+        total_pv_gen_entity: '',
+        inv_temp: '',
+        today_batt_chg: sourceOrInternalEntityId('day_battery_charge_70'),
+        today_load: sourceOrInternalEntityId('day_load_energy_84'),
+        sun: 'sun.sun',
+        grid_active_power: gridPower,
+        grid_import_energy: sourceOrInternalEntityId('day_grid_import_76'),
+        grid_export_energy: sourceOrInternalEntityId('day_grid_export_77'),
+        grid_power_alt: sourceOrInternalEntityId('grid_ct_power_172'),
+        invert_grid_power: Boolean(cardConfig?.grid?.invert_grid),
+        consump: loadPower,
+        _show_battery: Boolean(batteryPower || sourceOrInternalEntityId('battery_soc_184')),
+        battery_soc: sourceOrInternalEntityId('battery_soc_184'),
+        battery_power: batteryPower,
+        battery_current: sourceOrInternalEntityId('battery_current_191'),
+        battery_voltage: sourceOrInternalEntityId('battery_voltage_183'),
+        batt_dis: sourceOrInternalEntityId('day_battery_discharge_71'),
+        battery_full_wh: Number(cardConfig?.battery?.energy || 0) || '',
+        goodwe_battery_soc: sourceOrInternalEntityId('battery_soc_184'),
+        goodwe_battery_curr: sourceOrInternalEntityId('battery_current_191'),
+        invert_battery_power: Boolean(cardConfig?.battery?.invert_flow),
+        _show_battery2: Boolean(sourceOrInternalEntityId('battery2_power_190')),
+        battery2_power: sourceOrInternalEntityId('battery2_power_190'),
+        _show_ev: false,
+        _show_limits: false,
+        inverter_max_power: Number(cardConfig?.inverter?.max_power || cardConfig?.load?.max_power || 0) || '',
+      };
+    }
+
+    function buildKFlowConfig(siteEnergy = {}) {
+      let cfg = createBaseKFlowConfig(siteEnergy);
+      const raw = String(siteEnergy?.k_flow_card_config_json || '').trim();
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            cfg = deepMerge(cfg, parsed);
+          }
+        } catch (e) {
+          console.warn('e-SunMind K Flow config JSON non valido', e);
+        }
+      }
+      return JSON.parse(JSON.stringify(cfg));
     }
 
     function deepMerge(target, src) {
@@ -550,6 +629,11 @@
       document.body.style.backgroundColor = color;
       document.querySelector('.page')?.style.setProperty('background', color);
       document.querySelector('.energy-frame')?.style.setProperty('background', color);
+    }
+
+    function applyDashboardLayoutClass() {
+      document.body.classList.remove('energy-layout-sunsynk', 'energy-layout-k-flow');
+      document.body.classList.add(`energy-layout-${energyDashboardLayout === 'k_flow' ? 'k-flow' : 'sunsynk'}`);
     }
 
     function setDashboardSiteName(site) {
@@ -792,6 +876,8 @@
         const j = await r.json();
         const energyRoot = j?.energy || {};
         const e = selectEnergySite(energyRoot);
+        energyDashboardLayout = normalizeDashboardLayout(e?.energy_dashboard_layout);
+        applyDashboardLayoutClass();
         setDashboardSiteName(e);
         applyDashboardBackgroundColor(e?.dashboard_background_color);
         try {
@@ -819,15 +905,30 @@
         captureSourceEntities();
         enforceTopologyFromConfig();
         applySignFlowOverrides();
+        kFlowCardConfig = buildKFlowConfig(e);
       } catch (_) {
         captureSourceEntities();
         enforceTopologyFromConfig();
         applySignFlowOverrides();
+        kFlowCardConfig = buildKFlowConfig({});
       }
     }
 
     function seedStates() {
       const now = new Date().toISOString();
+      if (!window.hass.states['sun.sun']) {
+        window.hass.states['sun.sun'] = {
+          entity_id: 'sun.sun',
+          state: 'above_horizon',
+          attributes: {
+            next_rising: new Date(Date.now() + 18 * 60 * 60 * 1000).toISOString(),
+            next_setting: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
+            elevation: 35,
+          },
+          last_changed: now,
+          last_updated: now,
+        };
+      }
       const all = cardConfig?.entities && typeof cardConfig.entities === 'object' ? cardConfig.entities : {};
       for (const v of Object.values(all)) {
         const id = String(v || '').trim();
@@ -937,12 +1038,13 @@
 
     function initCard() {
       seedStates();
-      const runtimeConfig = prepareCardConfigForSetConfig();
+      applyDashboardLayoutClass();
       syncEnergyCardstyleClass();
-      card = document.createElement('sunsynk-power-flow-card');
+      card = document.createElement(energyDashboardLayout === 'k_flow' ? 'k-flow-card' : 'sunsynk-power-flow-card');
       try {
-        card.setConfig(runtimeConfig);
+        card.setConfig(energyDashboardLayout === 'k_flow' ? kFlowCardConfig : prepareCardConfigForSetConfig());
       } catch (_) {
+        if (energyDashboardLayout === 'k_flow') throw _;
         const fallback = normalizeConfigForCard({
           type: 'custom:sunsynk-power-flow-card',
           cardstyle: 'full',
@@ -1230,13 +1332,21 @@
     async function syncFromAddonApi() {
       try {
         // Reload options so sign changes in UI are applied without reloading the page.
+        const previousLayout = energyDashboardLayout;
         await loadCardConfigFromAddonOptions();
+        if (previousLayout !== energyDashboardLayout) {
+          window.location.reload();
+          return;
+        }
         if (card && typeof card.setConfig === 'function') {
-          const runtimeConfig = prepareCardConfigForSetConfig();
           syncEnergyCardstyleClass();
           try {
-            card.setConfig(runtimeConfig);
+            card.setConfig(energyDashboardLayout === 'k_flow' ? kFlowCardConfig : prepareCardConfigForSetConfig());
           } catch (e) {
+            if (energyDashboardLayout === 'k_flow') {
+              console.warn('e-SunMind K Flow setConfig failed', e);
+              return;
+            }
             sanitizeMissingOptionalEntities();
             try {
               card.setConfig(prepareCardConfigForSetConfig());
@@ -1253,7 +1363,7 @@
         const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         setDashboardSiteName(siteEnergy);
         applyDashboardBackgroundColor(siteEnergy?.dashboard_background_color);
-        const showSankey = siteEnergy?.show_sankey !== false && siteEnergy?.sankey_enabled !== false;
+        const showSankey = energyDashboardLayout !== 'k_flow' && siteEnergy?.show_sankey !== false && siteEnergy?.sankey_enabled !== false;
         if (!showSankey && sankeySection) sankeySection.hidden = true;
         const n = siteEnergy?.normalized || {};
         const ce = siteEnergy?.card_entities || {};
@@ -1567,24 +1677,59 @@
       });
     }
 
+    function loadKFlowCardScript() {
+      if (customElements.get('k-flow-card')) return Promise.resolve();
+      const urls = [
+        './vendor/k-flow-card.js',
+        'https://raw.githubusercontent.com/thekhan1122/k-flow-card/main/dist/k-flow-card.js',
+      ];
+      return new Promise((resolve, reject) => {
+        let idx = 0;
+        const tryNext = () => {
+          const src = urls[idx++];
+          if (!src) {
+            reject(new Error('K Flow Card non caricata'));
+            return;
+          }
+          const script = document.createElement('script');
+          script.type = 'module';
+          script.src = src;
+          script.onload = () => resolve();
+          script.onerror = () => {
+            console.warn('e-SunMind K Flow failed', src);
+            script.remove();
+            tryNext();
+          };
+          document.head.appendChild(script);
+        };
+        tryNext();
+      });
+    }
+
     async function startEnergyCard() {
+      await loadCardConfigFromAddonOptions();
       try {
-        await loadSunsynkCardScript();
+        if (energyDashboardLayout === 'k_flow') await loadKFlowCardScript();
+        else await loadSunsynkCardScript();
       } catch (e) {
         console.error(e);
-        host.innerHTML = '<div style="padding:18px;color:#fecaca;background:#450a0a;border:1px solid #991b1b;border-radius:12px">Errore caricamento Sunsynk Power Flow Card da CDN.</div>';
+        host.innerHTML = '<div style="padding:18px;color:#fecaca;background:#450a0a;border:1px solid #991b1b;border-radius:12px">Errore caricamento layout Energy Flow.</div>';
         return;
       }
       const waitCard = setInterval(async () => {
-      if (customElements.get('sunsynk-power-flow-card')) {
+      const tagReady = energyDashboardLayout === 'k_flow'
+        ? customElements.get('k-flow-card')
+        : customElements.get('sunsynk-power-flow-card');
+      if (tagReady) {
         clearInterval(waitCard);
-        await loadCardConfigFromAddonOptions();
         initCard();
-        try {
-          await loadSankeyChartScript();
-          initSankeyCard();
-        } catch (e) {
-          console.warn('e-SunMind Sankey disabled', e);
+        if (energyDashboardLayout !== 'k_flow') {
+          try {
+            await loadSankeyChartScript();
+            initSankeyCard();
+          } catch (e) {
+            console.warn('e-SunMind Sankey disabled', e);
+          }
         }
         syncFromAddonApi();
         setInterval(syncFromAddonApi, 2000);

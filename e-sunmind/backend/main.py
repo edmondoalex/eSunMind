@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.244"
+APP_VERSION = "0.3.245"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -242,6 +242,7 @@ def _load_options() -> dict[str, Any]:
             "theme": "classic_flow",
             "dashboard_background_color": "#080a10",
             "show_sankey": True,
+            "energy_dashboard_layout": "sunsynk",
             "pv_power_entity_id": "sensor.zcs_easas_1_activepower_pv_ext",
             "pv_power_sign": "positive",
             "home_power_entity_id": "",
@@ -259,6 +260,7 @@ def _load_options() -> dict[str, Any]:
             "grid_import_today_entity_id": "",
             "grid_export_today_entity_id": "",
             "sunsynk_card_config_json": "",
+            "k_flow_card_config_json": "",
             "entity_signs_json": "",
             "selected_site_id": "default",
             "sites": [],
@@ -382,6 +384,7 @@ ENERGY_SITE_KEYS = (
     "theme",
     "dashboard_background_color",
     "show_sankey",
+    "energy_dashboard_layout",
     "pv_power_entity_id",
     "pv_power_sign",
     "home_power_entity_id",
@@ -399,6 +402,7 @@ ENERGY_SITE_KEYS = (
     "grid_import_today_entity_id",
     "grid_export_today_entity_id",
     "sunsynk_card_config_json",
+    "k_flow_card_config_json",
     "entity_signs_json",
     "sankey_extra_loads",
 )
@@ -972,6 +976,7 @@ def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
         "ok": False,
         "enabled": bool(e_cfg.get("enabled", True)),
         "show_sankey": bool(e_cfg.get("show_sankey", True)),
+        "energy_dashboard_layout": "k_flow" if str(e_cfg.get("energy_dashboard_layout") or "sunsynk").strip().lower() == "k_flow" else "sunsynk",
         "entities": {},
         "card_entities": {},
         "normalized": {

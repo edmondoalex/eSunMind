@@ -1148,6 +1148,12 @@
                 <input type="color" v-model="energyForm.dashboard_background_color" />
               </label>
               <label class="toggle-line">Mostra Sankey<input type="checkbox" v-model="energyForm.show_sankey" /></label>
+              <label>Layout dashboard
+                <select v-model="energyForm.energy_dashboard_layout">
+                  <option value="sunsynk">Sunsynk Power Flow</option>
+                  <option value="k_flow">K Flow Card</option>
+                </select>
+              </label>
               <label>Layout card
                 <select v-model="energyWizardForm.cardstyle" @change="onEnergyCardstyleChange">
                   <option value="full">full</option><option value="compact">compact</option><option value="lite">lite</option><option value="minimal">minimal</option>
@@ -1543,6 +1549,10 @@
                   <textarea v-model="energyForm.sunsynk_card_config_json" rows="10" placeholder='{"solar":{"mppts":2},"battery":{"count":1},"load":{"additional_loads":2}}'></textarea>
                   <small>Configurazione completa card Sunsynk. Valido JSON object. Viene applicata al wrapper `energy-dashboard/sunsynk-wrapper.html`.</small>
                 </label>
+                <label style="grid-column: 1 / -1;">K Flow card config JSON (override opzionale)
+                  <textarea v-model="energyForm.k_flow_card_config_json" rows="8" placeholder='{"_show_ev":false,"pv_max_power":7500}'></textarea>
+                  <small>Override per `custom:k-flow-card`. Se vuoto, viene generato dai campi sopra e dal JSON Sunsynk.</small>
+                </label>
                 <label style="grid-column: 1 / -1;">Entita extra JSON (chiave -> entity_id)
                   <textarea v-model="energyWizardForm.entities_extra_json" rows="5" placeholder='{"pv3_power_188":"sensor.xxx","use_timer_248":"sensor.yyy"}'></textarea>
                   <small>Qui puoi mappare qualsiasi chiave entities supportata dalla card, anche se non ha ancora un campo dedicato sopra.</small>
@@ -1856,6 +1866,7 @@ const energyForm = ref({
   theme: 'classic_flow',
   dashboard_background_color: '#080a10',
   show_sankey: true,
+  energy_dashboard_layout: 'sunsynk',
   cardstyle: 'full',
   pv_power_entity_id: 'sensor.zcs_easas_1_activepower_pv_ext',
   pv_power_sign: 'positive',
@@ -1874,6 +1885,7 @@ const energyForm = ref({
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
   sunsynk_card_config_json: '',
+  k_flow_card_config_json: '',
   entity_signs_json: '',
   sankey_extra_loads: Array.from({ length: 16 }, () => ({ name: '', entity_id: '', color: '#64748b' })),
 })
@@ -2222,6 +2234,7 @@ function makeEnergySiteFromForm(base = {}) {
     theme: String(energyForm.value.theme || 'classic_flow'),
     dashboard_background_color: String(energyForm.value.dashboard_background_color || '#080a10'),
     show_sankey: Boolean(energyForm.value.show_sankey ?? true),
+    energy_dashboard_layout: String(energyForm.value.energy_dashboard_layout || 'sunsynk') === 'k_flow' ? 'k_flow' : 'sunsynk',
     pv_power_entity_id: String(energyForm.value.pv_power_entity_id || ''),
     pv_power_sign: String(energyForm.value.pv_power_sign || 'positive'),
     home_power_entity_id: String(energyForm.value.home_power_entity_id || ''),
@@ -2239,6 +2252,7 @@ function makeEnergySiteFromForm(base = {}) {
     grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
     grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
     sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
+    k_flow_card_config_json: String(energyForm.value.k_flow_card_config_json || ''),
     entity_signs_json: String(energyForm.value.entity_signs_json || ''),
     sankey_extra_loads: normalizeSankeyExtraLoads(energyForm.value.sankey_extra_loads)
       .filter((item) => item.entity_id || item.name),
@@ -2253,6 +2267,7 @@ function applyEnergySiteToForm(site = {}) {
     theme: String(site.theme || 'classic_flow'),
     dashboard_background_color: String(site.dashboard_background_color || '#080a10'),
     show_sankey: Boolean(site.show_sankey ?? true),
+    energy_dashboard_layout: String(site.energy_dashboard_layout || 'sunsynk') === 'k_flow' ? 'k_flow' : 'sunsynk',
     cardstyle: 'full',
     pv_power_entity_id: String(site.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
     pv_power_sign: String(site.pv_power_sign || 'positive'),
@@ -2271,6 +2286,7 @@ function applyEnergySiteToForm(site = {}) {
     grid_import_today_entity_id: String(site.grid_import_today_entity_id || ''),
     grid_export_today_entity_id: String(site.grid_export_today_entity_id || ''),
     sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
+    k_flow_card_config_json: String(site.k_flow_card_config_json || ''),
     entity_signs_json: String(site.entity_signs_json || ''),
     sankey_extra_loads: normalizeSankeyExtraLoads(site.sankey_extra_loads),
   }
@@ -5118,6 +5134,7 @@ async function loadData() {
         theme: String(eo.theme || 'classic_flow'),
         dashboard_background_color: String(eo.dashboard_background_color || '#080a10'),
         show_sankey: Boolean(eo.show_sankey ?? true),
+        energy_dashboard_layout: String(eo.energy_dashboard_layout || 'sunsynk') === 'k_flow' ? 'k_flow' : 'sunsynk',
         cardstyle: 'full',
         pv_power_entity_id: String(eo.pv_power_entity_id || 'sensor.zcs_easas_1_activepower_pv_ext'),
         pv_power_sign: String(eo.pv_power_sign || 'positive'),
@@ -5136,6 +5153,7 @@ async function loadData() {
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
+        k_flow_card_config_json: String(eo.k_flow_card_config_json || ''),
         entity_signs_json: String(eo.entity_signs_json || ''),
         sankey_extra_loads: normalizeSankeyExtraLoads(eo.sankey_extra_loads),
       }

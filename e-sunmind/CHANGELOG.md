@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.245
+- Energy Dashboard: aggiunta scelta layout per-site tra Sunsynk Power Flow e `k-flow-card`.
+- Energy Dashboard: vendorizzata `k-flow-card` e generata automaticamente la config dai campi energy/Sunsynk, con override JSON dedicato.
+- Energy Sankey: aggiunti 16 carichi extra per ogni site, configurabili da UI con nome, entity_id e colore, usati solo dal grafico Sankey.
+- Energy Sankey: gli extra load vengono letti dal wrapper come sensori di potenza aggiuntivi senza modificare la card Sunsynk.
+- Bump versione addon/backend a `0.3.245`.
+
 ## 0.3.244
 - Energy Sankey: aggiunti 16 carichi extra per ogni site, configurabili da UI con nome, entity_id e colore, usati solo dal grafico Sankey.
 - Energy Sankey: gli extra load vengono letti dal wrapper come sensori di potenza aggiuntivi senza modificare la card Sunsynk.
