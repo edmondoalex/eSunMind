@@ -1396,14 +1396,14 @@ class KFlowCard extends HTMLElement {
     // Fix #8: toFixed() returns a string; use Number() for the colour comparison
     setText('invLoadPctFlow', 'CARICO ' + invLoadPct + '%'); setAttr('invLoadPctFlow', 'fill', Number(invLoadPct) <= 50 ? '#3fb950' : '#f39c4b');
 
-    const gridDir = gridActive > 10 ? '▼ ' : gridActive < -10 ? '▲ ' : '';
+    const gridDir = gridActive > 10 ? '↓ ' : gridActive < -10 ? '↑ ' : '';
     // Fix #7: grid power now auto-switches to kW like load/PV (was always showing W)
     const absGrid2 = Math.abs(gridActive);
     setText('fcGridVal', gridDir + (absGrid2 >= 1000 ? (absGrid2 / 1000).toFixed(2) + ' kW' : absGrid2.toFixed(0) + ' W'));
     setAttr('fcGridVal', 'fill', gridActive > 10 ? '#FF2929' : gridActive < -10 ? '#2ecc71' : '#8b949e');
-    setText('gridImportVal', '▼ ' + gridImport.toFixed(2) + ' kWh');
+    setText('gridImportVal', '← ' + gridImport.toFixed(2) + ' kWh');
     setDisplay('gridExportVal', gridExport > 0);
-    if (gridExport > 0) setText('gridExportVal', '▲ ' + gridExport.toFixed(2) + ' kWh');
+    if (gridExport > 0) setText('gridExportVal', '→ ' + gridExport.toFixed(2) + ' kWh');
 
     setText('fcLoadVal', load >= 1000 ? (load / 1000).toFixed(2) + ' kW' : load.toFixed(0) + ' W');
     setAttr('fcLoadVal', 'fill', load > 10 ? loadFlowColor : '#8b949e');

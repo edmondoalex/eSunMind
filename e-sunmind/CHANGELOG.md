@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.261
+- Energy Dashboard K Flow: import/export rete usano frecce orizzontali (`←` import, `→` export) e la potenza sotto il traliccio usa frecce verticali (`↓` entra, `↑` esce).
+- Bump versione addon/backend a `0.3.261`.
+
 ## 0.3.260
 - Energy Dashboard K Flow: nascosti PV2/PV3/PV4 quando la relativa entita `pvX_power` non e configurata, evitando righe a `0 W` su impianti con un solo PV.
 - Bump versione addon/backend a `0.3.260`.
