@@ -1408,14 +1408,22 @@ class KFlowCard extends HTMLElement {
     setText('fcLoadVal', load >= 1000 ? (load / 1000).toFixed(2) + ' kW' : load.toFixed(0) + ' W');
     setAttr('fcLoadVal', 'fill', load > 10 ? loadFlowColor : '#8b949e');
 
-    setText('pv1FlowVal', pv1 >= 1000 ? (pv1 / 1000).toFixed(2) + ' kW' : pv1.toFixed(0) + ' W');
-    setText('pv2FlowVal', pv2 >= 1000 ? (pv2 / 1000).toFixed(2) + ' kW' : pv2.toFixed(0) + ' W');
-    setDisplay('pv3label', this.config._show_pv_extra);
-    setDisplay('pv3FlowVal', this.config._show_pv_extra);
-    if (this.config._show_pv_extra) setText('pv3FlowVal', pv3 >= 1000 ? (pv3 / 1000).toFixed(2) + ' kW' : pv3.toFixed(0) + ' W');
-    setDisplay('pv4label', this.config._show_pv_extra);
-    setDisplay('pv4FlowVal', this.config._show_pv_extra);
-    if (this.config._show_pv_extra) setText('pv4FlowVal', pv4 >= 1000 ? (pv4 / 1000).toFixed(2) + ' kW' : pv4.toFixed(0) + ' W');
+    const hasPv1 = !!String(this.config.pv1_power || this.config.pv_total_power || '').trim();
+    const hasPv2 = !!String(this.config.pv2_power || '').trim();
+    const hasPv3 = !!String(this.config.pv3_power || '').trim();
+    const hasPv4 = !!String(this.config.pv4_power || '').trim();
+    setDisplay('pv1label', hasPv1);
+    setDisplay('pv1FlowVal', hasPv1);
+    if (hasPv1) setText('pv1FlowVal', pv1 >= 1000 ? (pv1 / 1000).toFixed(2) + ' kW' : pv1.toFixed(0) + ' W');
+    setDisplay('pv2label', hasPv2);
+    setDisplay('pv2FlowVal', hasPv2);
+    if (hasPv2) setText('pv2FlowVal', pv2 >= 1000 ? (pv2 / 1000).toFixed(2) + ' kW' : pv2.toFixed(0) + ' W');
+    setDisplay('pv3label', hasPv3);
+    setDisplay('pv3FlowVal', hasPv3);
+    if (hasPv3) setText('pv3FlowVal', pv3 >= 1000 ? (pv3 / 1000).toFixed(2) + ' kW' : pv3.toFixed(0) + ' W');
+    setDisplay('pv4label', hasPv4);
+    setDisplay('pv4FlowVal', hasPv4);
+    if (hasPv4) setText('pv4FlowVal', pv4 >= 1000 ? (pv4 / 1000).toFixed(2) + ' kW' : pv4.toFixed(0) + ' W');
 
     // Fix #9: use toFixed(2) to prevent floating-point artefacts; show '--' when sensor unavailable
     setText('invTodayPv',      _todayPvRaw      !== null ? todayPv.toFixed(2)      + ' kWh' : '-- kWh');

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.260
+- Energy Dashboard K Flow: nascosti PV2/PV3/PV4 quando la relativa entita `pvX_power` non e configurata, evitando righe a `0 W` su impianti con un solo PV.
+- Bump versione addon/backend a `0.3.260`.
+
 ## 0.3.259
 - Energy Dashboard K Flow: rimosso il nome sito sovrapposto all'arco sole; il nome resta solo nel riquadro inverter centrale.
 - Energy Dashboard K Flow: spostata e ridimensionata l'icona casa per evitare il taglio nella parte bassa della card.
