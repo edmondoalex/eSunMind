@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.269
+- Energy Setup K Flow: `Icona casa` ora e una scelta tra default K Flow, smart-glass e smart-glass 2 piani.
+- Energy Dashboard K Flow: ripristinata l'icona casa default originale come default base, mantenendo entrambe le varianti smart-glass selezionabili.
+- Bump versione addon/backend a `0.3.269`.
+
 ## 0.3.268
 - Energy Dashboard K Flow: sostituita l'icona casa smart-glass con una versione compatta a due piani stile alloggio.
 - Bump versione addon/backend a `0.3.268`.

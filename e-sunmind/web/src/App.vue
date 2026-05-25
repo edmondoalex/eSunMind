@@ -1562,7 +1562,14 @@
                   <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
                   <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
                   <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
-                  <label>Icona casa<input type="text" v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi" placeholder="home-icon.png o /local/..." /></label>
+                  <label>Icona casa
+                    <select v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi">
+                      <option value="">Default</option>
+                      <option value="home-icon.png">Default K Flow</option>
+                      <option value="home-smart-glass.png">Smart glass</option>
+                      <option value="home-smart-glass-2floor.png">Smart glass 2 piani</option>
+                    </select>
+                  </label>
                   <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                   <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                   <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
@@ -1597,7 +1604,14 @@
                     <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
                     <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
                     <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
-                    <label>Icona casa<input type="text" v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi" placeholder="home-icon.png o /local/..." /></label>
+                    <label>Icona casa
+                      <select v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi">
+                        <option value="">Default</option>
+                        <option value="home-icon.png">Default K Flow</option>
+                        <option value="home-smart-glass.png">Smart glass</option>
+                        <option value="home-smart-glass-2floor.png">Smart glass 2 piani</option>
+                      </select>
+                    </label>
                     <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
                     <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                     <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>

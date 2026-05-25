@@ -711,7 +711,7 @@ class KFlowCard extends HTMLElement {
       aux_load1_name: 'AUX 1',
       aux_load2_name: 'AUX 2',
       _show_aux: false,
-      home_icon: 'home-smart-glass.png',
+      home_icon: 'home-icon.png',
       today_pv: 'sensor.goodwe_today_s_pv_generation',
       today_batt_chg: 'sensor.goodwe_today_battery_charge',
       today_load: 'sensor.goodwe_today_load',
@@ -938,7 +938,7 @@ class KFlowCard extends HTMLElement {
       if (/^(https?:)?\/\//i.test(raw) || raw.startsWith('/') || raw.startsWith('data:')) return raw;
       return `${iconPath}/${raw}`;
     };
-    const homeIconHref = resolveIconHref(this.config.home_icon, 'home-smart-glass.png');
+    const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
     const pv3txt = showPvExtra ? `<text id="pv3label" x="8" y="424" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="8" y="438" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
     const pv4txt = showPvExtra ? `<text id="pv4label" x="8" y="456" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="8" y="470" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
