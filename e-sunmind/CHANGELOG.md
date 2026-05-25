@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.252
+- Energy Setup: aggiunta scheda dedicata `K Flow` in Configurazione completa per mostrare chiaramente entita mancanti e flag inversione rete/batteria.
+- Bump versione addon/backend a `0.3.252`.
+
 ## 0.3.251
 - Energy Setup: aggiunti campi UI K Flow per entita opzionali mancanti e flag `Inverti verso batteria` / `Inverti verso rete`, sincronizzati nel JSON override K Flow.
 - Bump versione addon/backend a `0.3.251`.

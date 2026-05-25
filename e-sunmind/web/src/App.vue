@@ -1539,6 +1539,28 @@
               </div>
             </section>
 
+            <section class="energy-group" v-show="energySetupSection === 'kflow'">
+              <h4>K Flow</h4>
+              <div class="energy-subblock">
+                <strong>Versi flusso</strong>
+                <div class="form-grid energy-entity-grid">
+                  <label class="toggle-line">Inverti verso batteria<input type="checkbox" v-model="energyForm.k_flow_invert_battery_power" @change="syncKFlowJsonFromUi" /></label>
+                  <label class="toggle-line">Inverti verso rete<input type="checkbox" v-model="energyForm.k_flow_invert_grid_power" @change="syncKFlowJsonFromUi" /></label>
+                </div>
+              </div>
+              <div class="energy-subblock">
+                <strong>Entita mancanti K Flow</strong>
+                <div class="form-grid energy-entity-grid">
+                  <label>Total PV generation<input type="text" v-model="energyForm.k_flow_total_pv_gen_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_total_pv_generation" /></label>
+                  <label>Battery temp 1<input type="text" v-model="energyForm.k_flow_battery_temp1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_1" /></label>
+                  <label>Battery temp 2<input type="text" v-model="energyForm.k_flow_battery_temp2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_temp_2" /></label>
+                  <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
+                  <label>Min cell voltage<input type="text" v-model="energyForm.k_flow_battery_min_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_min_cell_voltage" /></label>
+                  <label>Max cell voltage<input type="text" v-model="energyForm.k_flow_battery_max_cell" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_max_cell_voltage" /></label>
+                </div>
+              </div>
+            </section>
+
             <section class="energy-group" v-show="energySetupSection === 'json'">
               <h4>JSON Avanzato</h4>
               <div class="form-grid">
@@ -1939,6 +1961,7 @@ const energySetupSections = [
   { key: 'signs', label: 'Segni', hint: '+ / - valori' },
   { key: 'inverter', label: 'Inverter', hint: 'V, Hz, stato' },
   { key: 'aux', label: 'AUX', hint: 'ramo extra' },
+  { key: 'kflow', label: 'K Flow', hint: 'extra e versi' },
   { key: 'json', label: 'JSON', hint: 'avanzato' },
 ]
 const energyWizardSteps = [
