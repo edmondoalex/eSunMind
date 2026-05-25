@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.259
+- Energy Dashboard K Flow: rimosso il nome sito sovrapposto all'arco sole; il nome resta solo nel riquadro inverter centrale.
+- Energy Dashboard K Flow: spostata e ridimensionata l'icona casa per evitare il taglio nella parte bassa della card.
+- Bump versione addon/backend a `0.3.259`.
+
 ## 0.3.258
 - Energy Dashboard K Flow: rinominato il riquadro `BATT DIS.` in `SCARICA OGGI` per chiarire che legge la scarica giornaliera, non il valore istantaneo/residuo della batteria.
 - Bump versione addon/backend a `0.3.258`.

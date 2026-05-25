@@ -1093,8 +1093,8 @@ class KFlowCard extends HTMLElement {
       ${pv3txt}
       ${pv4txt}
 
-      <g id="homeIconImg" transform="translate(179,339)" style="opacity:1"><image href="${iconPath}/home-icon.png" x="0" y="0" width="160" height="160" preserveAspectRatio="xMidYMid meet"/></g>
-      <text id="fcLoadVal" x="174" y="420" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
+      <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${iconPath}/home-icon.png" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
+      <text id="fcLoadVal" x="178" y="403" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
       ${evtxt}
       </svg></div>`+
 

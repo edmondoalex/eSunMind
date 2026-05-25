@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.258';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.259';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -663,6 +663,11 @@
     function setDashboardSiteName(site) {
       const el = document.getElementById('energySiteName');
       if (!el) return;
+      if (energyDashboardLayout === 'k_flow') {
+        el.textContent = '';
+        el.style.display = 'none';
+        return;
+      }
       const label = String(site?.site_name || site?.name || site?.id || site?.site_id || SITE_ID || '').trim();
       el.textContent = label;
       el.style.display = label ? 'block' : 'none';
