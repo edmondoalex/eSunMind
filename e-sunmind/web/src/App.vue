@@ -1262,7 +1262,7 @@
                   <label>PV totale live (entity_id)<input type="text" v-model="energyWizardForm.pv_total" placeholder="sensor.totale_pv" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 1">
                 <strong>PV1</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv1_name" placeholder="Privato" /></label>
@@ -1272,7 +1272,7 @@
                   <label>Entita corrente<input type="text" v-model="energyWizardForm.pv1_current_110" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 2">
                 <strong>PV2</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv2_name" placeholder="Portoni" /></label>
@@ -1282,7 +1282,7 @@
                   <label>Entita corrente<input type="text" v-model="energyWizardForm.pv2_current_112" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 3">
                 <strong>PV3</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv3_name" placeholder="Legnaia" /></label>
@@ -1292,7 +1292,7 @@
                   <label>Entita corrente<input type="text" v-model="energyWizardForm.pv3_current_114" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 4">
                 <strong>PV4</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv4_name" /></label>
@@ -1302,7 +1302,7 @@
                   <label>Entita corrente<input type="text" v-model="energyWizardForm.pv4_current_116" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 5">
                 <strong>PV5</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv5_name" /></label>
@@ -1312,7 +1312,7 @@
                   <label>Entita corrente<input type="text" v-model="energyWizardForm.pv5_current" /></label>
                 </div>
               </div>
-              <div class="energy-subblock">
+              <div class="energy-subblock" v-if="solarMpptCount >= 6">
                 <strong>PV6</strong>
                 <div class="form-grid energy-entity-grid">
                   <label>Nome<input type="text" v-model="energyWizardForm.pv6_name" /></label>
@@ -2458,7 +2458,7 @@ function hydrateEnergyWizardFromOptions(eo = {}) {
       inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
       inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
       inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
-      solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts),
+      solar_mppts: inferSolarMpptsFromEntities(ents, solar.mppts ?? wizardSeed.solar_mppts),
       solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
       solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
       solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
@@ -2634,7 +2634,21 @@ function syncKFlowJsonFromUi() {
   energyForm.value.k_flow_card_config_json = JSON.stringify(obj, null, 2)
 }
 
+function inferSolarMpptsFromEntities(entities = {}, fallback = 1) {
+  const pvKeys = ['pv1_power_186', 'pv2_power_187', 'pv3_power_188', 'pv4_power_189', 'pv5_power', 'pv6_power']
+  let highest = 0
+  pvKeys.forEach((key, index) => {
+    if (String(entities?.[key] || '').trim()) highest = index + 1
+  })
+  return Math.max(1, Math.min(6, highest || Number(fallback || 1)))
+}
+
+function entityFromConfig(entities = {}, key) {
+  return String(Object.prototype.hasOwnProperty.call(entities || {}, key) ? entities[key] || '' : '')
+}
+
 const pretty = computed(() => (data.value ? JSON.stringify(data.value, null, 2) : 'Nessun dato'))
+const solarMpptCount = computed(() => Math.max(1, Math.min(6, Number(energyWizardForm.value?.solar_mppts || 1))))
 const energyRealtimeMappedCount = computed(() => realtimeEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
 const energyDailyMappedCount = computed(() => dailyEntityKeys.filter((k) => String(energyWizardForm.value?.[k] || '').trim()).length)
 const energyQuickMappedCount = computed(() => [
@@ -4722,6 +4736,7 @@ function buildSunsynkConfigFromWizard() {
     delete entities.essential_load5
     delete entities.essential_load6
   }
+  const solarMppts = inferSolarMpptsFromEntities(entities, w.solar_mppts || 1)
 
   return {
     cardstyle: String(w.cardstyle || 'full'),
@@ -4738,7 +4753,7 @@ function buildSunsynkConfigFromWizard() {
       three_phase: Boolean(w.inverter_three_phase),
     },
     solar: {
-      mppts: Math.max(1, Math.min(6, Number(w.solar_mppts || 2))),
+      mppts: solarMppts,
       colour: String(w.color_solar || '#f59e0b'),
       show_daily: Boolean(w.solar_show_daily),
       animation_speed: Math.max(1, Math.min(20, Number(w.solar_animation_speed || 6))),
@@ -4880,6 +4895,26 @@ function mergeObjectsDeep(base, patch) {
   return out
 }
 
+function pruneSunsynkPvByMppts(cfg) {
+  const mppts = Math.max(1, Math.min(6, Number(cfg?.solar?.mppts || 1)))
+  const byPv = {
+    2: ['pv2_power_187', 'pv2_voltage_111', 'pv2_current_112'],
+    3: ['pv3_power_188', 'pv3_voltage_113', 'pv3_current_114'],
+    4: ['pv4_power_189', 'pv4_voltage_115', 'pv4_current_116'],
+    5: ['pv5_power', 'pv5_voltage', 'pv5_current'],
+    6: ['pv6_power', 'pv6_voltage', 'pv6_current'],
+  }
+  cfg.entities = (cfg.entities && typeof cfg.entities === 'object' && !Array.isArray(cfg.entities)) ? cfg.entities : {}
+  cfg.solar = (cfg.solar && typeof cfg.solar === 'object' && !Array.isArray(cfg.solar)) ? cfg.solar : {}
+  for (let n = 2; n <= 6; n += 1) {
+    if (n <= mppts) continue
+    for (const key of byPv[n] || []) delete cfg.entities[key]
+    delete cfg.solar[`pv${n}_name`]
+    delete cfg.solar[`pv${n}_max_power`]
+  }
+  return cfg
+}
+
 function applyEnergyWizard(silent = false) {
   const cfg = buildSunsynkConfigFromWizard()
   let merged = cfg
@@ -4891,6 +4926,7 @@ function applyEnergyWizard(silent = false) {
       merged.entities = { ...(cfg.entities || {}) }
     }
   } catch (_) {}
+  pruneSunsynkPvByMppts(merged)
   energyForm.value.sunsynk_card_config_json = JSON.stringify(merged, null, 2)
   energyForm.value.pv_power_entity_id = String(energyWizardForm.value.pv1_power_186 || '')
   energyForm.value.home_power_entity_id = String(energyWizardForm.value.inverter_power_175 || '')
@@ -5314,7 +5350,7 @@ async function loadData() {
           inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
           inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
           inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
-          solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts),
+          solar_mppts: inferSolarMpptsFromEntities(ents, solar.mppts ?? wizardSeed.solar_mppts),
           solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
           solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
           solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
@@ -5409,60 +5445,60 @@ async function loadData() {
           grid_import_icon: String(grid.import_icon || wizardSeed.grid_import_icon),
           grid_export_icon: String(grid.export_icon || wizardSeed.grid_export_icon),
           grid_disconnected_icon: String(grid.disconnected_icon || wizardSeed.grid_disconnected_icon),
-          inverter_status_59: String(ents.inverter_status_59 || wizardSeed.inverter_status_59),
-          inverter_power_175: String(ents.inverter_power_175 || wizardSeed.inverter_power_175),
-          inverter_voltage_154: String(ents.inverter_voltage_154 || wizardSeed.inverter_voltage_154),
-          inverter_current_164: String(ents.inverter_current_164 || wizardSeed.inverter_current_164),
-          load_frequency_192: String(ents.load_frequency_192 || wizardSeed.load_frequency_192),
-          grid_power_169: String(ents.grid_power_169 || wizardSeed.grid_power_169),
-          grid_ct_power_172: String(ents.grid_ct_power_172 || wizardSeed.grid_ct_power_172),
-          grid_connected_status_194: String(ents.grid_connected_status_194 || wizardSeed.grid_connected_status_194),
-          essential_power: String(ents.essential_power || wizardSeed.essential_power),
-          nonessential_power: String(ents.nonessential_power || wizardSeed.nonessential_power),
-          essential_load1: String(ents.essential_load1 || wizardSeed.essential_load1),
-          essential_load2: String(ents.essential_load2 || wizardSeed.essential_load2),
-          essential_load3: String(ents.essential_load3 || wizardSeed.essential_load3),
-          essential_load4: String(ents.essential_load4 || wizardSeed.essential_load4),
-          essential_load5: String(ents.essential_load5 || wizardSeed.essential_load5),
-          essential_load6: String(ents.essential_load6 || wizardSeed.essential_load6),
-          aux_power_166: String(ents.aux_power_166 || wizardSeed.aux_power_166),
-          aux_load1: String(ents.aux_load1 || wizardSeed.aux_load1),
-          aux_load2: String(ents.aux_load2 || wizardSeed.aux_load2),
-          non_essential_load1: String(ents.non_essential_load1 || wizardSeed.non_essential_load1),
-          non_essential_load2: String(ents.non_essential_load2 || wizardSeed.non_essential_load2),
-          non_essential_load3: String(ents.non_essential_load3 || wizardSeed.non_essential_load3),
-          battery_soc_184: String(ents.battery_soc_184 || wizardSeed.battery_soc_184),
-          battery_power_190: String(ents.battery_power_190 || wizardSeed.battery_power_190),
-          battery_current_191: String(ents.battery_current_191 || wizardSeed.battery_current_191),
-          battery_voltage_183: String(ents.battery_voltage_183 || wizardSeed.battery_voltage_183),
-          pv_total: String(ents.pv_total || wizardSeed.pv_total),
-          pv1_power_186: String(ents.pv1_power_186 || wizardSeed.pv1_power_186),
-          pv2_power_187: String(ents.pv2_power_187 || wizardSeed.pv2_power_187),
-          pv1_voltage_109: String(ents.pv1_voltage_109 || wizardSeed.pv1_voltage_109),
-          pv1_current_110: String(ents.pv1_current_110 || wizardSeed.pv1_current_110),
-          pv2_voltage_111: String(ents.pv2_voltage_111 || wizardSeed.pv2_voltage_111),
-          pv2_current_112: String(ents.pv2_current_112 || wizardSeed.pv2_current_112),
-          pv3_power_188: String(ents.pv3_power_188 || wizardSeed.pv3_power_188),
-          pv4_power_189: String(ents.pv4_power_189 || wizardSeed.pv4_power_189),
-          pv5_power: String(ents.pv5_power || wizardSeed.pv5_power),
-          pv6_power: String(ents.pv6_power || wizardSeed.pv6_power),
-          pv3_voltage_113: String(ents.pv3_voltage_113 || wizardSeed.pv3_voltage_113),
-          pv3_current_114: String(ents.pv3_current_114 || wizardSeed.pv3_current_114),
-          pv4_voltage_115: String(ents.pv4_voltage_115 || wizardSeed.pv4_voltage_115),
-          pv4_current_116: String(ents.pv4_current_116 || wizardSeed.pv4_current_116),
-          pv5_voltage: String(ents.pv5_voltage || wizardSeed.pv5_voltage),
-          pv5_current: String(ents.pv5_current || wizardSeed.pv5_current),
-          pv6_voltage: String(ents.pv6_voltage || wizardSeed.pv6_voltage),
-          pv6_current: String(ents.pv6_current || wizardSeed.pv6_current),
-          battery2_power_190: String(ents.battery2_power_190 || wizardSeed.battery2_power_190),
-          use_timer_248: String(ents.use_timer_248 || wizardSeed.use_timer_248),
-          priority_load_243: String(ents.priority_load_243 || wizardSeed.priority_load_243),
-          day_pv_energy_108: String(ents.day_pv_energy_108 || wizardSeed.day_pv_energy_108),
-          day_battery_charge_70: String(ents.day_battery_charge_70 || wizardSeed.day_battery_charge_70),
-          day_battery_discharge_71: String(ents.day_battery_discharge_71 || wizardSeed.day_battery_discharge_71),
-          day_load_energy_84: String(ents.day_load_energy_84 || wizardSeed.day_load_energy_84),
-          day_grid_import_76: String(ents.day_grid_import_76 || wizardSeed.day_grid_import_76),
-          day_grid_export_77: String(ents.day_grid_export_77 || wizardSeed.day_grid_export_77),
+          inverter_status_59: entityFromConfig(ents, 'inverter_status_59'),
+          inverter_power_175: entityFromConfig(ents, 'inverter_power_175'),
+          inverter_voltage_154: entityFromConfig(ents, 'inverter_voltage_154'),
+          inverter_current_164: entityFromConfig(ents, 'inverter_current_164'),
+          load_frequency_192: entityFromConfig(ents, 'load_frequency_192'),
+          grid_power_169: entityFromConfig(ents, 'grid_power_169'),
+          grid_ct_power_172: entityFromConfig(ents, 'grid_ct_power_172'),
+          grid_connected_status_194: entityFromConfig(ents, 'grid_connected_status_194'),
+          essential_power: entityFromConfig(ents, 'essential_power'),
+          nonessential_power: entityFromConfig(ents, 'nonessential_power'),
+          essential_load1: entityFromConfig(ents, 'essential_load1'),
+          essential_load2: entityFromConfig(ents, 'essential_load2'),
+          essential_load3: entityFromConfig(ents, 'essential_load3'),
+          essential_load4: entityFromConfig(ents, 'essential_load4'),
+          essential_load5: entityFromConfig(ents, 'essential_load5'),
+          essential_load6: entityFromConfig(ents, 'essential_load6'),
+          aux_power_166: entityFromConfig(ents, 'aux_power_166'),
+          aux_load1: entityFromConfig(ents, 'aux_load1'),
+          aux_load2: entityFromConfig(ents, 'aux_load2'),
+          non_essential_load1: entityFromConfig(ents, 'non_essential_load1'),
+          non_essential_load2: entityFromConfig(ents, 'non_essential_load2'),
+          non_essential_load3: entityFromConfig(ents, 'non_essential_load3'),
+          battery_soc_184: entityFromConfig(ents, 'battery_soc_184'),
+          battery_power_190: entityFromConfig(ents, 'battery_power_190'),
+          battery_current_191: entityFromConfig(ents, 'battery_current_191'),
+          battery_voltage_183: entityFromConfig(ents, 'battery_voltage_183'),
+          pv_total: entityFromConfig(ents, 'pv_total'),
+          pv1_power_186: entityFromConfig(ents, 'pv1_power_186'),
+          pv2_power_187: entityFromConfig(ents, 'pv2_power_187'),
+          pv1_voltage_109: entityFromConfig(ents, 'pv1_voltage_109'),
+          pv1_current_110: entityFromConfig(ents, 'pv1_current_110'),
+          pv2_voltage_111: entityFromConfig(ents, 'pv2_voltage_111'),
+          pv2_current_112: entityFromConfig(ents, 'pv2_current_112'),
+          pv3_power_188: entityFromConfig(ents, 'pv3_power_188'),
+          pv4_power_189: entityFromConfig(ents, 'pv4_power_189'),
+          pv5_power: entityFromConfig(ents, 'pv5_power'),
+          pv6_power: entityFromConfig(ents, 'pv6_power'),
+          pv3_voltage_113: entityFromConfig(ents, 'pv3_voltage_113'),
+          pv3_current_114: entityFromConfig(ents, 'pv3_current_114'),
+          pv4_voltage_115: entityFromConfig(ents, 'pv4_voltage_115'),
+          pv4_current_116: entityFromConfig(ents, 'pv4_current_116'),
+          pv5_voltage: entityFromConfig(ents, 'pv5_voltage'),
+          pv5_current: entityFromConfig(ents, 'pv5_current'),
+          pv6_voltage: entityFromConfig(ents, 'pv6_voltage'),
+          pv6_current: entityFromConfig(ents, 'pv6_current'),
+          battery2_power_190: entityFromConfig(ents, 'battery2_power_190'),
+          use_timer_248: entityFromConfig(ents, 'use_timer_248'),
+          priority_load_243: entityFromConfig(ents, 'priority_load_243'),
+          day_pv_energy_108: entityFromConfig(ents, 'day_pv_energy_108'),
+          day_battery_charge_70: entityFromConfig(ents, 'day_battery_charge_70'),
+          day_battery_discharge_71: entityFromConfig(ents, 'day_battery_discharge_71'),
+          day_load_energy_84: entityFromConfig(ents, 'day_load_energy_84'),
+          day_grid_import_76: entityFromConfig(ents, 'day_grid_import_76'),
+          day_grid_export_77: entityFromConfig(ents, 'day_grid_export_77'),
           ...Object.fromEntries(realtimeEntityKeys.map((k) => [k, String(ents[k] || wizardSeed[k] || '')])),
           ...Object.fromEntries(dailyEntityKeys.map((k) => [k, String(ents[k] || wizardSeed[k] || '')])),
           entities_extra_json: JSON.stringify(Object.fromEntries(Object.entries(ents || {}).filter(([k]) => !knownEnergyEntityKeys.includes(String(k)))), null, 2),

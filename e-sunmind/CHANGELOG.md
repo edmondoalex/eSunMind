@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.255
+- Energy Setup Solar: i blocchi PV1-PV6 ora sono mostrati in base al valore `Numero stringhe solari (MPPT)`, cosi un impianto con 1 PV mostra solo PV1.
+- Generazione JSON Energy: quando `MPPT` e inferiore, le vecchie entita PV2-PV6 e i relativi nomi/potenze vengono rimossi dal JSON salvato invece di tornare alla riapertura.
+- Energy Setup: le entita cancellate dal JSON non vengono piu ripopolate dal vecchio stato della UI.
+- Bump versione addon/backend a `0.3.255`.
+
 ## 0.3.254
 - Energy Dashboard K Flow: il backend ora legge anche le entita inserite nel JSON/config K Flow, cosi temperature e riquadri custom ricevono valori reali invece di restare a zero.
 - Bump versione addon/backend a `0.3.254`.
