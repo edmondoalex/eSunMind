@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.249';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.250';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -976,6 +976,30 @@
       }
     }
 
+    function updateSunStateFromESunMind(payload = {}) {
+      const times = payload?.sun_times && typeof payload.sun_times === 'object' ? payload.sun_times : {};
+      const position = payload?.sun_position && typeof payload.sun_position === 'object' ? payload.sun_position : {};
+      const sunrise = String(times.sunrise || '').trim();
+      const sunset = String(times.sunset || '').trim();
+      const elevation = Number(position.altitude_deg);
+      if (!sunrise && !sunset && !Number.isFinite(elevation)) return;
+      const now = new Date().toISOString();
+      const prev = window.hass.states['sun.sun'] || mkState('above_horizon', '', { entity_id: 'sun.sun' });
+      window.hass.states['sun.sun'] = {
+        ...prev,
+        entity_id: 'sun.sun',
+        state: Number.isFinite(elevation) && elevation < 0 ? 'below_horizon' : 'above_horizon',
+        attributes: {
+          ...(prev.attributes || {}),
+          ...(sunrise ? { next_rising: sunrise } : {}),
+          ...(sunset ? { next_setting: sunset } : {}),
+          ...(Number.isFinite(elevation) ? { elevation } : {}),
+          ...(Number.isFinite(Number(position.azimuth_compass_deg)) ? { azimuth: Number(position.azimuth_compass_deg) } : {}),
+        },
+        last_updated: now,
+      };
+    }
+
     function resetInternalMockStates() {
       const now = new Date().toISOString();
       for (const [key, id] of Object.entries(sensorIds)) {
@@ -1393,6 +1417,7 @@
         const r = await fetch(dataUrl, { cache: 'no-store' });
         if (!r.ok) throw new Error(`api_data_http_${r.status}`);
         const j = await r.json();
+        updateSunStateFromESunMind(j);
         const energyRoot = j?.energy || {};
         const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         setDashboardSiteName(siteEnergy);

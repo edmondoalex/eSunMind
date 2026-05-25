@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.250
+- Energy Dashboard K Flow: l'arco sole usa `sun_times` e `sun_position` reali di e-SunMind da `/api/data`, non piu solo il mock `sun.sun`.
+- Bump versione addon/backend a `0.3.250`.
+
 ## 0.3.249
 - Energy Dashboard K Flow: corretta la capacita batteria automatica in kWh, cosi `Remaining` non resta `-- Ah`.
 - Energy Dashboard K Flow: aggiunti mapping opzionali da Sunsynk per temperature batteria/inverter, seconda batteria, discharge e total PV generation quando presenti nel JSON.
