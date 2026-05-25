@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.266';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.267';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -488,7 +488,7 @@
         aux_load1_name: String(cardConfig?.load?.aux_load1_name || 'AUX 1'),
         aux_load2_name: String(cardConfig?.load?.aux_load2_name || 'AUX 2'),
         _show_aux: Boolean(cardConfig?.load?.show_aux || auxPower || auxLoad1 || auxLoad2),
-        home_icon: 'home-icon.png',
+        home_icon: 'home-smart-glass.png',
         _show_battery: Boolean(batteryPower || kEntity('battery_soc_184')),
         battery_soc: kEntity('battery_soc_184'),
         battery_power: batteryPower,
