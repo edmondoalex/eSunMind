@@ -1332,7 +1332,7 @@
                   <label>Colore Battery<input type="color" v-model="energyWizardForm.color_battery" /></label>
                   <label>Numero batterie<input type="number" min="1" max="2" v-model.number="energyWizardForm.battery_count" /></label>
                   <label>Battery capacity (Wh)<input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_energy_wh" /></label>
-                  <label>Battery shutdown SOC (%)<input type="number" min="0" max="100" step="1" v-model.number="energyWizardForm.battery_shutdown_soc" /></label>
+                  <label>Soglia scarica batterie (%)<input type="number" min="0" max="100" step="1" v-model.number="energyWizardForm.battery_shutdown_soc" /></label>
                   <label>Battery max power (W)<input type="number" min="100" step="100" v-model.number="energyWizardForm.battery_max_power" /></label>
                   <label>Battery speed<input type="number" min="1" max="20" step="1" v-model.number="energyWizardForm.battery_animation_speed" /></label>
                   <label>Battery auto-scale<input type="checkbox" v-model="energyWizardForm.battery_auto_scale" /></label>
@@ -2090,7 +2090,7 @@ const energyWizardForm = ref({
   pv6_max_power: 0,
   battery_count: 1,
   battery_energy_wh: 15960,
-  battery_shutdown_soc: 20,
+  battery_shutdown_soc: 10,
   battery_show_daily: true,
   battery_animation_speed: 8,
   battery_max_power: 5000,
@@ -4777,7 +4777,7 @@ function buildSunsynkConfigFromWizard() {
       colour: String(w.color_battery || '#a855f7'),
       name: String(w.battery1_name || ''),
       energy: Math.max(100, Number(w.battery_energy_wh || 15960)),
-      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc || 20))),
+      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc ?? 10))),
       show_daily: Boolean(w.battery_show_daily),
       animation_speed: Math.max(1, Math.min(20, Number(w.battery_animation_speed || 8))),
       max_power: Math.max(100, Number(w.battery_max_power || 5000)),
@@ -4789,7 +4789,7 @@ function buildSunsynkConfigFromWizard() {
     battery2: {
       name: String(w.battery2_name || ''),
       energy: Math.max(100, Number(w.battery_energy_wh || 15960)),
-      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc || 20))),
+      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc ?? 10))),
       max_power: Math.max(100, Number(w.battery_max_power || 5000)),
       animation_speed: Math.max(1, Math.min(20, Number(w.battery_animation_speed || 8))),
       auto_scale: Boolean(w.battery_auto_scale),
@@ -4800,7 +4800,7 @@ function buildSunsynkConfigFromWizard() {
     battery3: {
       name: String(w.battery3_name || ''),
       energy: Math.max(100, Number(w.battery_energy_wh || 15960)),
-      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc || 20))),
+      shutdown_soc: Math.max(0, Math.min(100, Number(w.battery_shutdown_soc ?? 10))),
       max_power: Math.max(100, Number(w.battery_max_power || 5000)),
       animation_speed: Math.max(1, Math.min(20, Number(w.battery_animation_speed || 8))),
       auto_scale: Boolean(w.battery_auto_scale),

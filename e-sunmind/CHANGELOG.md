@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.256
+- Energy Setup Batterie: default `Soglia scarica batterie` portato al 10% e reso esplicito in UI.
+- Energy Dashboard K Flow: `ENDURANCE` e `Remaining` calcolano l'energia utilizzabile fino alla soglia scarica configurata.
+- Energy Dashboard K Flow: il riquadro `Chg / Dis` ora mostra `CARICA:` e `SCARICA:` davanti ai valori.
+- Bump versione addon/backend a `0.3.256`.
+
 ## 0.3.255
 - Energy Setup Solar: i blocchi PV1-PV6 ora sono mostrati in base al valore `Numero stringhe solari (MPPT)`, cosi un impianto con 1 PV mostra solo PV1.
 - Generazione JSON Energy: quando `MPPT` e inferiore, le vecchie entita PV2-PV6 e i relativi nomi/potenze vengono rimossi dal JSON salvato invece di tornare alla riapertura.

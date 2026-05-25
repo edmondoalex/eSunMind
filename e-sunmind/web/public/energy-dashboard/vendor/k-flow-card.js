@@ -728,6 +728,7 @@ class KFlowCard extends HTMLElement {
       battery_full_ah: 0,
       battery_full_wh: 0,
       battery_cap_unit: 'ah',
+      battery_shutdown_soc: 10,
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,
@@ -1186,13 +1187,16 @@ class KFlowCard extends HTMLElement {
                                       : (fullAh > 0 && _voltForCap > 0 ? fullAh * _voltForCap : 0);
     const invMax = Number(this.config.inverter_max_power) || 6000;
     const pvMax  = Number(this.config.pv_max_power)       || 7500;
+    const shutdownSoc = Math.max(0, Math.min(100, Number(this.config.battery_shutdown_soc ?? 10)));
+    const usableSoc1 = Math.max(0, battSoc1 - shutdownSoc);
 
-    const remCap1 = fullAh > 0 ? (battSoc1 / 100) * fullAh : 0;
+    const remCap1 = fullAh > 0 ? (usableSoc1 / 100) * fullAh : 0;
     // Fix #14: dual-battery charging ETA — battery2_full_wh entered in kWh, ×1000 for internal Wh
     const fullWh2 = Number(this.config.battery2_full_wh) > 0 ? Number(this.config.battery2_full_wh) * 1000 : fullWh;
 
     const dual = !!(this.config._show_battery2);
     const battSoc2 = dual ? _n(this._val(this.config.battery2_soc)) : 0;
+    const usableSoc2 = Math.max(0, battSoc2 - shutdownSoc);
     let battPwr2 = dual ? _nullOr0(this._val(this.config.battery2_power, true)) : 0;
     let battCurr2 = dual ? _nullOr0(this._val(this.config.battery2_current)) : 0;
     if (dual && this.config.invert_battery_power) { battPwr2 = -battPwr2; battCurr2 = -battCurr2; }
@@ -1321,7 +1325,8 @@ class KFlowCard extends HTMLElement {
     let endHours = null, endText = '--', endColor = '#8b949e', isETA = false;
     const _socPct = battSoc1;  // use SOC directly for colour
     if (dual) {
-      const totalRemWh = (battSoc1 / 100) * fullWh + (battSoc2 / 100) * fullWh2;
+      const totalRemWh = (usableSoc1 / 100) * fullWh + (usableSoc2 / 100) * fullWh2;
+      const totalStoredWh = (battSoc1 / 100) * fullWh + (battSoc2 / 100) * fullWh2;
       const totalCapWh = fullWh + fullWh2;
       const totalPower = battPwr1 + battPwr2;
       if (totalCapWh > 0) {
@@ -1329,22 +1334,24 @@ class KFlowCard extends HTMLElement {
           endHours = totalRemWh / Math.abs(totalPower);
           endText = this._fmtEndurance(endHours); endColor = this._remCapColor(_socPct);
         } else if (totalPower > 10) {
-          const missingWh = totalCapWh - totalRemWh;
+          const missingWh = totalCapWh - totalStoredWh;
           endHours = Math.max(0, missingWh / totalPower);
           endText = this._fmtEndurance(endHours); endColor = '#00d7ff'; isETA = true;
         }
       }
     } else {
       // simpler: remWh from SOC × fullWh; if fullWh=0 (not configured), try Ah×V fallback
-      const remWhFinal = fullWh > 0 ? (battSoc1 / 100) * fullWh
+      const remWhFinal = fullWh > 0 ? (usableSoc1 / 100) * fullWh
                                     : (fullAh > 0 && battVolt1 > 0 ? remCap1 * battVolt1 : 0);
+      const storedWhFinal = fullWh > 0 ? (battSoc1 / 100) * fullWh
+                                       : (fullAh > 0 && battVolt1 > 0 ? ((battSoc1 / 100) * fullAh) * battVolt1 : 0);
       if (battPwr1 < -10 && remWhFinal > 0) {
         endHours = remWhFinal / Math.abs(battPwr1);
         endText = this._fmtEndurance(endHours); endColor = this._remCapColor(_socPct);
       } else if (battPwr1 > 10) {
         const capWh = fullWh > 0 ? fullWh : (fullAh > 0 && battVolt1 > 0 ? fullAh * battVolt1 : 0);
         if (capWh > 0) {
-          const missingWh = capWh - remWhFinal;
+          const missingWh = capWh - storedWhFinal;
           endHours = Math.max(0, missingWh / Math.abs(battPwr1));
           endText = this._fmtEndurance(endHours); endColor = '#00d7ff'; isETA = true;
         }
@@ -1404,19 +1411,19 @@ class KFlowCard extends HTMLElement {
 
     // Fix #9: use toFixed(2) to prevent floating-point artefacts; show '--' when sensor unavailable
     setText('invTodayPv',      _todayPvRaw      !== null ? todayPv.toFixed(2)      + ' kWh' : '-- kWh');
-    setText('invTodayBattChg', _todayBattChgRaw !== null ? todayBattChg.toFixed(2) + ' kWh' : '-- kWh');
-    setText('invTodayBattDis', battDis1Raw      !== null ? battDis1.toFixed(2)     + ' kWh' : '-- kWh');
+    setText('invTodayBattChg', _todayBattChgRaw !== null ? 'CARICA: ' + todayBattChg.toFixed(2) + ' kWh' : 'CARICA: -- kWh');
+    setText('invTodayBattDis', battDis1Raw      !== null ? 'SCARICA: ' + battDis1.toFixed(2)     + ' kWh' : 'SCARICA: -- kWh');
     setText('invTodayLoad',    _todayLoadRaw    !== null ? todayLoad.toFixed(2)    + ' kWh' : '-- kWh');
     // ── Remaining Ah + kWh ──
     // Each battery uses its OWN Ah capacity; battery2_full_ah defaults to fullAh if not set
     const fullAh2 = capUnit === 'ah'
       ? (Number(this.config.battery2_full_ah) > 0 ? Number(this.config.battery2_full_ah) : fullAh)
       : 0;
-    const remCap2 = fullAh2 > 0 ? (battSoc2 / 100) * fullAh2 : 0;
+    const remCap2 = fullAh2 > 0 ? (usableSoc2 / 100) * fullAh2 : 0;
     const totalRemAh = fullAh > 0 ? remCap1 + (dual ? remCap2 : 0) : null;
     // kWh remaining: always SOC-based from configured capacity — never voltage-dependent
     const totalRemKwh = fullWh > 0
-      ? ((battSoc1 / 100) * fullWh + (dual ? (battSoc2 / 100) * fullWh2 : 0)) / 1000
+      ? ((usableSoc1 / 100) * fullWh + (dual ? (usableSoc2 / 100) * fullWh2 : 0)) / 1000
       : null;
     const invRemCapEl = getEl('invRemCap');
     const invRemKwhEl = getEl('invRemKwh');

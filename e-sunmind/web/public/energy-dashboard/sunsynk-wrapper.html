@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.255';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.256';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -375,7 +375,7 @@
         wide: false,
         inverter: { modern: true, auto_scale: true, three_phase: false },
         solar: { mppts: 2, show_daily: true, animation_speed: 6, max_power: 7000 },
-        battery: { energy: 15960, shutdown_soc: 20, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
+        battery: { energy: 15960, shutdown_soc: 10, show_daily: true, animation_speed: 8, max_power: 5000, auto_scale: true },
         load: { show_daily: true, show_aux: false, animation_speed: 6, max_power: 9000, auto_scale: true },
         grid: { show_daily_buy: true, animation_speed: 9, max_power: 8000, auto_scale: true },
         entities: {},
@@ -489,6 +489,7 @@
         batt_dis: kEntity('day_battery_discharge_71'),
         battery_cap_unit: 'kwh',
         battery_full_wh: (Number(cardConfig?.battery?.energy || 0) / 1000) || '',
+        battery_shutdown_soc: Math.max(0, Math.min(100, Number(cardConfig?.battery?.shutdown_soc ?? 10))),
         goodwe_battery_soc: kEntity('battery_soc_184'),
         goodwe_battery_curr: kEntity('battery_current_191'),
         invert_battery_power: Boolean(cardConfig?.battery?.invert_flow),
@@ -564,7 +565,7 @@
       }
       c.solar.mppts = Number.isFinite(Number(c.solar.mppts)) ? Number(c.solar.mppts) : 1;
       c.battery.energy = Number.isFinite(Number(c.battery.energy)) ? Number(c.battery.energy) : 15960;
-      c.battery.shutdown_soc = Number.isFinite(Number(c.battery.shutdown_soc)) ? Number(c.battery.shutdown_soc) : 20;
+      c.battery.shutdown_soc = Number.isFinite(Number(c.battery.shutdown_soc)) ? Number(c.battery.shutdown_soc) : 10;
       c.battery.max_power = Number.isFinite(Number(c.battery.max_power)) ? Number(c.battery.max_power) : 5000;
       c.battery.animation_speed = Number.isFinite(Number(c.battery.animation_speed)) ? Number(c.battery.animation_speed) : 8;
       c.battery.auto_scale = Boolean(c.battery.auto_scale ?? true);
@@ -1102,8 +1103,8 @@
           show_battery: true,
           show_grid: true,
           solar: { mppts: 1 },
-          battery: { energy: 15960, shutdown_soc: 20, max_power: 5000, animation_speed: 8, auto_scale: true },
-          battery2: { energy: 15960, shutdown_soc: 20, max_power: 5000, animation_speed: 8, auto_scale: true },
+          battery: { energy: 15960, shutdown_soc: 10, max_power: 5000, animation_speed: 8, auto_scale: true },
+          battery2: { energy: 15960, shutdown_soc: 10, max_power: 5000, animation_speed: 8, auto_scale: true },
           load: {},
           grid: {},
           inverter: {},
