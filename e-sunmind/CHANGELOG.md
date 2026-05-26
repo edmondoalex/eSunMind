@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.277
+- Energy Dashboard K Flow: aumento globale font `1.7x` su tutta la card (testi SVG + riquadri HTML) per migliorare la leggibilita.
+- Bump versione addon/backend a `0.3.277`.
+
 ## 0.3.276
 - Energy Setup K Flow: aggiunto campo `Min SOC entity (%)` per pilotare la soglia minima batteria da sensore.
 - Energy Dashboard K Flow: `Remaining` mostra la soglia attiva come `MIN SOC xx%` e usa il sensore quando configurato.

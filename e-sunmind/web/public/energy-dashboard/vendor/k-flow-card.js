@@ -1158,6 +1158,31 @@ class KFlowCard extends HTMLElement {
         <div class="pvi"><div class="ico">🏡</div><div class="lbl">Today Load</div><div class="val" id="invTodayLoad">-- kWh</div></div>
       </div>
     </div>`;
+
+    this._applyGlobalTextScale(1.7);
+  }
+
+  _applyGlobalTextScale(scale = 1.7) {
+    if (!this.shadowRoot) return;
+    const s = Number(scale);
+    if (!Number.isFinite(s) || s <= 0) return;
+
+    const scaleFont = (el) => {
+      if (!el) return;
+      const tagKey = 'kflowBasePx';
+      let base = Number(el.dataset?.[tagKey] || '');
+      if (!Number.isFinite(base) || base <= 0) {
+        const computed = window.getComputedStyle(el).fontSize || '';
+        const parsed = parseFloat(computed);
+        if (!Number.isFinite(parsed) || parsed <= 0) return;
+        base = parsed;
+        if (el.dataset) el.dataset[tagKey] = String(base);
+      }
+      el.style.fontSize = `${(base * s).toFixed(2)}px`;
+    };
+
+    this.shadowRoot.querySelectorAll('#flowSvg text').forEach((el) => scaleFont(el));
+    this.shadowRoot.querySelectorAll('.ct, .st .l, .st .v, .pvi .ico, .pvi .lbl, .pvi .val, #battStatusBadge, #pwrBarLabel, #bEnduranceStat, #bEnduranceTime').forEach((el) => scaleFont(el));
   }
 
   _updateDynamic() {
