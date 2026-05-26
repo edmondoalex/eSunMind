@@ -1183,6 +1183,21 @@ class KFlowCard extends HTMLElement {
 
     this.shadowRoot.querySelectorAll('#flowSvg text').forEach((el) => scaleFont(el));
     this.shadowRoot.querySelectorAll('.ct, .st .l, .st .v, .pvi .ico, .pvi .lbl, .pvi .val, #battStatusBadge, #pwrBarLabel, #bEnduranceStat, #bEnduranceTime').forEach((el) => scaleFont(el));
+
+    // Force-scale key SVG values that must remain readable.
+    const criticalSvgIds = [
+      'battPwrFlow', 'battCurrFlow', 'battPwrFlow1', 'battPwrFlow2', 'battCurrFlow1', 'battCurrFlow2',
+      'fcBattVal', 'fcBattVal1', 'fcBattVal2', 'battVoltageFlow', 'battVoltageFlow1', 'battVoltageFlow2',
+      'invNameLabel', 'invVoltageFlow', 'invFrequencyFlow', 'invLoadPctFlow',
+      'fcGridVal', 'gridImportVal', 'gridExportVal', 'fcLoadVal',
+      'pv1label', 'pv1FlowVal', 'pv2label', 'pv2FlowVal', 'pv3label', 'pv3FlowVal', 'pv4label', 'pv4FlowVal',
+      'auxLoadLine1', 'auxLoadLine2', 'auxLoadLine3', 'auxLoadLine4', 'auxLoadLine5', 'auxLoadLine6', 'auxLoadLine7', 'auxLoadLine8',
+      'arcPvLabelText', 'arcRiseLabel', 'arcSetLabel',
+    ];
+    criticalSvgIds.forEach((id) => {
+      const el = this.shadowRoot.getElementById(id);
+      scaleFont(el);
+    });
   }
 
   _updateDynamic() {

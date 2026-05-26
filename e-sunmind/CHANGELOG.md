@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.278
+- Energy Dashboard K Flow: applicato scaling font globale `1.7x` a tutti i testi principali (SVG + riquadri HTML) con override esplicito dei valori critici.
+- Bump versione addon/backend a `0.3.278`.
+
 ## 0.3.277
 - Energy Dashboard K Flow: aumento globale font `1.7x` su tutta la card (testi SVG + riquadri HTML) per migliorare la leggibilita.
 - Bump versione addon/backend a `0.3.277`.
