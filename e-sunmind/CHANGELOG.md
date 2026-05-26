@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.272
+- Energy Dashboard K Flow: migliorata leggibilita della percentuale batteria con testo bianco e contorno scuro anche a SOC basso.
+- Bump versione addon/backend a `0.3.272`.
+
 ## 0.3.271
 - Energy Dashboard K Flow: aggiunte 8 nuove varianti icona casa generate dai riferimenti forniti.
 - Energy Setup K Flow: le nuove varianti sono selezionabili dal menu `Icona casa`.
