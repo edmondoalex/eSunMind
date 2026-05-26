@@ -747,6 +747,7 @@ class KFlowCard extends HTMLElement {
       battery_full_wh: 0,
       battery_cap_unit: 'ah',
       battery_shutdown_soc: 10,
+      battery_shutdown_soc_entity: '',
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,
@@ -1153,7 +1154,7 @@ class KFlowCard extends HTMLElement {
       <div class="pvf">
         <div class="pvi"><div class="ico">☀️</div><div class="lbl">Today PV</div><div class="val yw" id="invTodayPv">-- kWh</div></div>
         <div class="pvi"><div class="ico">🔋</div><div class="lbl">Chg / Dis</div><div class="val" id="invTodayBattChg">-- kWh</div><div class="val" id="invTodayBattDis" style="margin-top:1px">-- kWh</div></div>
-        <div class="pvi"><div class="ico">⚡</div><div class="lbl">Remaining</div><div class="val" id="invRemCap">-- Ah</div><div class="val" id="invRemKwh" style="font-size:.62rem;color:#8b949e;margin-top:1px">-- kWh</div></div>
+        <div class="pvi"><div class="ico">⚡</div><div class="lbl" id="invRemLbl">Remaining</div><div class="val" id="invRemCap">-- Ah</div><div class="val" id="invRemKwh" style="font-size:.62rem;color:#8b949e;margin-top:1px">-- kWh</div></div>
         <div class="pvi"><div class="ico">🏡</div><div class="lbl">Today Load</div><div class="val" id="invTodayLoad">-- kWh</div></div>
       </div>
     </div>`;
@@ -1234,7 +1235,12 @@ class KFlowCard extends HTMLElement {
                                       : (fullAh > 0 && _voltForCap > 0 ? fullAh * _voltForCap : 0);
     const invMax = Number(this.config.inverter_max_power) || 6000;
     const pvMax  = Number(this.config.pv_max_power)       || 7500;
-    const shutdownSoc = Math.max(0, Math.min(100, Number(this.config.battery_shutdown_soc ?? 10)));
+    const shutdownSocEntityRaw = this._val(this.config.battery_shutdown_soc_entity);
+    const shutdownSocEntityNum = shutdownSocEntityRaw === null ? NaN : Number(shutdownSocEntityRaw);
+    const shutdownSocSource = Number.isFinite(shutdownSocEntityNum)
+      ? shutdownSocEntityNum
+      : Number(this.config.battery_shutdown_soc ?? 10);
+    const shutdownSoc = Math.max(0, Math.min(100, shutdownSocSource));
     const usableSoc1 = Math.max(0, battSoc1 - shutdownSoc);
 
     const remCap1 = fullAh > 0 ? (usableSoc1 / 100) * fullAh : 0;
@@ -1502,7 +1508,9 @@ class KFlowCard extends HTMLElement {
       : null;
     const invRemCapEl = getEl('invRemCap');
     const invRemKwhEl = getEl('invRemKwh');
+    const invRemLblEl = getEl('invRemLbl');
     const remColor = this._remCapColor(battSoc1);
+    if (invRemLblEl) invRemLblEl.textContent = `Remaining (MIN SOC ${shutdownSoc.toFixed(0)}%)`;
     if (capUnit === 'ah') {
       // Ah mode: integer, no decimal, left-padded with plain spaces to 3 chars wide
       if (invRemCapEl) {

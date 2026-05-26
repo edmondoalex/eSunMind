@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.276
+- Energy Setup K Flow: aggiunto campo `Min SOC entity (%)` per pilotare la soglia minima batteria da sensore.
+- Energy Dashboard K Flow: `Remaining` mostra la soglia attiva come `MIN SOC xx%` e usa il sensore quando configurato.
+- Bump versione addon/backend a `0.3.276`.
+
 ## 0.3.275
 - Energy Setup K Flow: aggiunti `Riquadro basso destra label/entity` per personalizzare `SCARICA OGGI` come Min/Max cell.
 - Energy Dashboard K Flow: uniformata la dimensione testo `CARICA` e `SCARICA` nella card `CHG / DIS`.
