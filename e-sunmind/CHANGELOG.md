@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.273
+- UI Admin: rimossi i due pulsanti separati `Energy Flow` e `Energy` dalla topbar.
+- UI Admin: aggiunta pagina interna unica `Energy` con accesso alle dashboard Energy Flow dei siti configurati.
+- Bump versione addon/backend a `0.3.273`.
+
 ## 0.3.272
 - Energy Dashboard K Flow: migliorata leggibilita della percentuale batteria con testo bianco e contorno scuro anche a SOC basso.
 - Bump versione addon/backend a `0.3.272`.

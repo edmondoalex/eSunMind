@@ -14,8 +14,7 @@
       <div class="actions">
         <button class="btn ghost" :class="{active: tab==='user'}" @click="tab='user'">UI Admin</button>
         <a class="btn ghost" href="?view=user">UI User</a>
-        <a class="btn ghost" href="energy-dashboard/sunsynk-wrapper.html" target="_blank" rel="noopener noreferrer">Energy Flow</a>
-        <a class="btn ghost" href="?view=energy">Energy</a>
+        <button class="btn ghost" :class="{active: tab==='energy'}" @click="tab='energy'">Energy</button>
         <button class="btn ghost" :class="{active: tab==='energy_setup'}" @click="tab='energy_setup'">Energy Setup</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
@@ -88,7 +87,19 @@
       </div>
     </div>
 
-    <div v-show="tab==='energy_public'" class="energy-public" :class="energyThemeClass">
+    <div v-show="tab==='energy_public' || tab==='energy'" class="energy-public" :class="energyThemeClass">
+      <div v-if="tab==='energy'" class="energy-page-head">
+        <div>
+          <h2>Energy</h2>
+          <p>Riepilogo impianto e accesso alle dashboard Energy Flow configurate.</p>
+        </div>
+        <a
+          class="btn"
+          :href="`energy-dashboard/sunsynk-wrapper.html?site=${selectedEnergySiteId}`"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Apri Energy Flow</a>
+      </div>
       <div class="energy-hero">
         <div class="energy-status">Status: <strong>{{ energyEnabled ? 'Normal' : 'Spento' }}</strong></div>
         <div class="energy-temp">{{ fmt(externalTempC) }}°C</div>
@@ -133,7 +144,7 @@
         <div class="energy-kpi"><span>Import Rete Oggi</span><strong>{{ fmt(energyGridImportTodayKwh) }} kWh</strong></div>
         <div class="energy-kpi"><span>Export Rete Oggi</span><strong>{{ fmt(energyGridExportTodayKwh) }} kWh</strong></div>
       </div>
-      <div v-if="energySiteCards.length > 1" class="energy-site-link-grid">
+      <div v-if="tab==='energy' || energySiteCards.length > 1" class="energy-site-link-grid">
         <a
           v-for="site in energySiteCards"
           :key="site.id"
@@ -5894,7 +5905,8 @@ onMounted(() => {
     const qp = new URLSearchParams(window.location.search || '')
     const view = String(qp.get('view') || '').trim().toLowerCase()
     if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
-    if (view === 'energy' || view === 'ui-energy' || view === 'energy_public') tab.value = 'energy_public'
+    if (view === 'energy' || view === 'ui-energy') tab.value = 'energy'
+    if (view === 'energy_public') tab.value = 'energy_public'
     if (view === 'energy_setup' || view === 'energy-setup' || view === 'ui-energy-setup') {
       tab.value = 'energy_setup'
     }
@@ -6203,6 +6215,27 @@ input[type='range']{width:100%}
   min-height:100dvh;
   color:#1f2733;
 }
+.energy-page-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin-bottom:14px;
+  padding:12px 14px;
+  border:1px solid #d6dbe5;
+  border-radius:12px;
+  background:#fff;
+}
+.energy-page-head h2{
+  margin:0;
+  font-size:24px;
+  letter-spacing:0;
+  color:#121926;
+}
+.energy-page-head p{
+  margin:3px 0 0;
+  color:#5b6574;
+}
 .energy-hero{
   display:flex;
   justify-content:space-between;
@@ -6334,6 +6367,16 @@ input[type='range']{width:100%}
 .energy-theme-technical_dark{
   background:radial-gradient(circle at top,#14273d 0%,#0a1320 48%,#060c15 100%);
   color:#d9e8ff;
+}
+.energy-theme-technical_dark .energy-page-head{
+  background:#0f1b2e;
+  border-color:#355377;
+}
+.energy-theme-technical_dark .energy-page-head h2{
+  color:#f2f7ff;
+}
+.energy-theme-technical_dark .energy-page-head p{
+  color:#9fb7d3;
 }
 .energy-theme-technical_dark .energy-flow-board{
   background:linear-gradient(180deg,#0f1b2e 0%,#0a1422 100%);
