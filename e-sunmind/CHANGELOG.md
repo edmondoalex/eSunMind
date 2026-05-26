@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.271
+- Energy Dashboard K Flow: aggiunte 8 nuove varianti icona casa generate dai riferimenti forniti.
+- Energy Setup K Flow: le nuove varianti sono selezionabili dal menu `Icona casa`.
+- Bump versione addon/backend a `0.3.271`.
+
 ## 0.3.270
 - Energy Dashboard K Flow: aggiunta icona casa `Villa moderna` con sfondo trasparente.
 - Energy Setup K Flow: aggiunta la scelta `Villa moderna` nel menu `Icona casa`.

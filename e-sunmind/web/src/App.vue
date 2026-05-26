@@ -1569,6 +1569,14 @@
                       <option value="home-smart-glass.png">Smart glass</option>
                       <option value="home-smart-glass-2floor.png">Smart glass 2 piani</option>
                       <option value="home-modern-villa.png">Villa moderna</option>
+                      <option value="home-ref-farmhouse.png">Farmhouse classica</option>
+                      <option value="home-ref-modern-orange.png">Moderna arancio</option>
+                      <option value="home-ref-angular-luxury.png">Luxury angolare</option>
+                      <option value="home-ref-flat-roof.png">Tetto piano</option>
+                      <option value="home-ref-orange-cottage.png">Cottage arancio</option>
+                      <option value="home-ref-suburban-garage.png">Villetta garage</option>
+                      <option value="home-ref-isometric-cottage.png">Cottage isometrico</option>
+                      <option value="home-ref-flat-roof-alt.png">Tetto piano alt</option>
                     </select>
                   </label>
                   <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
@@ -1612,6 +1620,14 @@
                         <option value="home-smart-glass.png">Smart glass</option>
                         <option value="home-smart-glass-2floor.png">Smart glass 2 piani</option>
                         <option value="home-modern-villa.png">Villa moderna</option>
+                        <option value="home-ref-farmhouse.png">Farmhouse classica</option>
+                        <option value="home-ref-modern-orange.png">Moderna arancio</option>
+                        <option value="home-ref-angular-luxury.png">Luxury angolare</option>
+                        <option value="home-ref-flat-roof.png">Tetto piano</option>
+                        <option value="home-ref-orange-cottage.png">Cottage arancio</option>
+                        <option value="home-ref-suburban-garage.png">Villetta garage</option>
+                        <option value="home-ref-isometric-cottage.png">Cottage isometrico</option>
+                        <option value="home-ref-flat-roof-alt.png">Tetto piano alt</option>
                       </select>
                     </label>
                     <label>Riquadro basso sinistra label<input type="text" v-model="energyForm.k_flow_min_cell_label" @change="syncKFlowJsonFromUi" placeholder="Min cell" /></label>
