@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.275
+- Energy Setup K Flow: aggiunti `Riquadro basso destra label/entity` per personalizzare `SCARICA OGGI` come Min/Max cell.
+- Energy Dashboard K Flow: uniformata la dimensione testo `CARICA` e `SCARICA` nella card `CHG / DIS`.
+- Bump versione addon/backend a `0.3.275`.
+
 ## 0.3.274
 - Energy Setup: estesi gli AUX a 8 totali per dashboard (`AUX principale` + `AUX load 1-7`).
 - Energy Dashboard K Flow: visualizza fino a 8 righe AUX configurate.

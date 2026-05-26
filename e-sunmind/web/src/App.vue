@@ -1593,6 +1593,8 @@
                   <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                   <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
                   <label>Riquadro basso centro entity<input type="text" v-model="energyForm.k_flow_max_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
+                  <label>Riquadro basso destra label<input type="text" v-model="energyForm.k_flow_batt_dis_label" @change="syncKFlowJsonFromUi" placeholder="Scarica oggi" /></label>
+                  <label>Riquadro basso destra entity<input type="text" v-model="energyForm.k_flow_batt_dis_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                 </div>
               </div>
             </section>
@@ -1644,6 +1646,8 @@
                     <label>Riquadro basso sinistra entity<input type="text" v-model="energyForm.k_flow_min_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                     <label>Riquadro basso centro label<input type="text" v-model="energyForm.k_flow_max_cell_label" @change="syncKFlowJsonFromUi" placeholder="Max cell" /></label>
                     <label>Riquadro basso centro entity<input type="text" v-model="energyForm.k_flow_max_cell_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
+                    <label>Riquadro basso destra label<input type="text" v-model="energyForm.k_flow_batt_dis_label" @change="syncKFlowJsonFromUi" placeholder="Scarica oggi" /></label>
+                    <label>Riquadro basso destra entity<input type="text" v-model="energyForm.k_flow_batt_dis_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                   </div>
                 </div>
                 <label style="grid-column: 1 / -1;">K Flow card config JSON (override opzionale)
@@ -2011,6 +2015,8 @@ const energyForm = ref({
   k_flow_min_cell_entity: '',
   k_flow_max_cell_label: '',
   k_flow_max_cell_entity: '',
+  k_flow_batt_dis_label: '',
+  k_flow_batt_dis_entity: '',
   entity_signs_json: '',
   sankey_extra_loads: Array.from({ length: 16 }, () => ({ name: '', entity_id: '', color: '#64748b' })),
 })
@@ -2462,6 +2468,8 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_min_cell_entity: '',
     k_flow_max_cell_label: '',
     k_flow_max_cell_entity: '',
+    k_flow_batt_dis_label: '',
+    k_flow_batt_dis_entity: '',
     entity_signs_json: String(site.entity_signs_json || ''),
     sankey_extra_loads: normalizeSankeyExtraLoads(site.sankey_extra_loads),
   }
@@ -2740,6 +2748,8 @@ const kFlowUiKeys = {
   k_flow_min_cell_entity: 'label_entity_min_cell',
   k_flow_max_cell_label: 'label_max_cell',
   k_flow_max_cell_entity: 'label_entity_max_cell',
+  k_flow_batt_dis_label: 'label_batt_dis',
+  k_flow_batt_dis_entity: 'label_entity_batt_dis',
 }
 
 function parseKFlowConfigJson() {
@@ -2773,6 +2783,7 @@ function syncKFlowJsonFromUi() {
   }
   if (obj.label_entity_min_cell && !obj.label_min_cell) obj.label_min_cell = 'Dato 1'
   if (obj.label_entity_max_cell && !obj.label_max_cell) obj.label_max_cell = 'Dato 2'
+  if (obj.label_entity_batt_dis && !obj.label_batt_dis) obj.label_batt_dis = 'Scarica oggi'
   energyForm.value.k_flow_card_config_json = JSON.stringify(obj, null, 2)
 }
 
@@ -5482,6 +5493,8 @@ async function loadData() {
         k_flow_min_cell_entity: '',
         k_flow_max_cell_label: '',
         k_flow_max_cell_entity: '',
+        k_flow_batt_dis_label: '',
+        k_flow_batt_dis_entity: '',
         entity_signs_json: String(eo.entity_signs_json || ''),
         sankey_extra_loads: normalizeSankeyExtraLoads(eo.sankey_extra_loads),
       }
