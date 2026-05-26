@@ -245,7 +245,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.273';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.274';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -455,8 +455,9 @@
       const gridPower = kEntity('grid_power_169') || kEntity('grid_ct_power_172');
       const loadPower = kEntity('inverter_power_175') || kEntity('essential_power');
       const auxPower = kEntity('aux_power_166');
-      const auxLoad1 = kEntity('aux_load1');
-      const auxLoad2 = kEntity('aux_load2');
+      const auxLoads = {};
+      for (let i = 1; i <= 7; i += 1) auxLoads[`aux_load${i}`] = kEntity(`aux_load${i}`);
+      const hasAuxLoad = Object.values(auxLoads).some(Boolean);
       return {
         type: 'custom:k-flow-card',
         inverter_name: siteLabel(siteEnergy) || 'Inverter',
@@ -482,12 +483,13 @@
         invert_grid_power: Boolean(cardConfig?.grid?.invert_grid),
         consump: loadPower,
         aux_power: auxPower,
-        aux_load1: auxLoad1,
-        aux_load2: auxLoad2,
+        ...auxLoads,
         aux_name: String(cardConfig?.load?.aux_name || 'AUX'),
-        aux_load1_name: String(cardConfig?.load?.aux_load1_name || 'AUX 1'),
-        aux_load2_name: String(cardConfig?.load?.aux_load2_name || 'AUX 2'),
-        _show_aux: Boolean(cardConfig?.load?.show_aux || auxPower || auxLoad1 || auxLoad2),
+        ...Object.fromEntries(Array.from({ length: 7 }, (_, idx) => {
+          const i = idx + 1;
+          return [`aux_load${i}_name`, String(cardConfig?.load?.[`aux_load${i}_name`] || `AUX ${i}`)];
+        })),
+        _show_aux: Boolean(cardConfig?.load?.show_aux || auxPower || hasAuxLoad),
         home_icon: 'home-icon.png',
         _show_battery: Boolean(batteryPower || kEntity('battery_soc_184')),
         battery_soc: kEntity('battery_soc_184'),
@@ -557,7 +559,7 @@
       'inverter_voltage_154','inverter_current_164','load_frequency_192',
       'pv_total','pv1_power_186','pv2_power_187','pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv1_voltage_109','pv1_current_110','pv2_voltage_111','pv2_current_112','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
       'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
-      'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6','aux_power_166','aux_load1','aux_load2','non_essential_load1','non_essential_load2','non_essential_load3','battery2_power_190'
+      'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6','aux_power_166','aux_load1','aux_load2','aux_load3','aux_load4','aux_load5','aux_load6','aux_load7','non_essential_load1','non_essential_load2','non_essential_load3','battery2_power_190'
     ];
     function normalizeConfigForCard(input) {
       const c = (input && typeof input === 'object' && !Array.isArray(input)) ? input : {};
@@ -833,13 +835,13 @@
 
       const auxMapped = [
         isConfiguredEntity(cardConfig.entities.aux_power_166),
-        isConfiguredEntity(cardConfig.entities.aux_load1),
-        isConfiguredEntity(cardConfig.entities.aux_load2),
+        ...Array.from({ length: 7 }, (_, idx) => isConfiguredEntity(cardConfig.entities[`aux_load${idx + 1}`])),
       ];
       cardConfig.load.show_aux = auxMapped.some(Boolean) && Boolean(cardConfig.load.show_aux);
       if (!auxMapped[0]) delete cardConfig.entities.aux_power_166;
-      if (!auxMapped[1]) delete cardConfig.entities.aux_load1;
-      if (!auxMapped[2]) delete cardConfig.entities.aux_load2;
+      for (let i = 1; i <= 7; i += 1) {
+        if (!auxMapped[i]) delete cardConfig.entities[`aux_load${i}`];
+      }
 
       const nonEssentialMapped = [
         isConfiguredEntity(cardConfig.entities.non_essential_load1),
@@ -1197,8 +1199,9 @@
         push(configuredLoadNode(`essential_load${i}`, String(load[`load${i}_name`] || `Load ${i}`), String(load.colour || '#f59e0b')));
       }
       push(configuredLoadNode('aux_power_166', String(load.aux_name || 'AUX'), String(load.aux_colour || '#94a3b8')));
-      push(configuredLoadNode('aux_load1', String(load.aux_load1_name || 'AUX load 1'), String(load.aux_colour || '#94a3b8')));
-      push(configuredLoadNode('aux_load2', String(load.aux_load2_name || 'AUX load 2'), String(load.aux_colour || '#94a3b8')));
+      for (let i = 1; i <= 7; i += 1) {
+        push(configuredLoadNode(`aux_load${i}`, String(load[`aux_load${i}_name`] || `AUX load ${i}`), String(load.aux_colour || '#94a3b8')));
+      }
       push(configuredLoadNode('nonessential_power', String(grid.nonessential_name || 'Non Essential'), String(grid.colour || '#38bdf8')));
       for (let i = 1; i <= 3; i += 1) {
         push(configuredLoadNode(`non_essential_load${i}`, String(grid[`load${i}_name`] || `Non-essential ${i}`), String(grid.colour || '#38bdf8')));
@@ -1660,8 +1663,9 @@
         setFromCardEntity(entityId('essential_load5'), 'essential_load5', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('essential_load6'), 'essential_load6', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('aux_power_166'), 'aux_power_166', 'W', 'power', 'measurement');
-        setFromCardEntity(entityId('aux_load1'), 'aux_load1', 'W', 'power', 'measurement');
-        setFromCardEntity(entityId('aux_load2'), 'aux_load2', 'W', 'power', 'measurement');
+        for (let i = 1; i <= 7; i += 1) {
+          setFromCardEntity(entityId(`aux_load${i}`), `aux_load${i}`, 'W', 'power', 'measurement');
+        }
         setFromCardEntity(entityId('nonessential_power'), 'nonessential_power', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('non_essential_load1'), 'non_essential_load1', 'W', 'power', 'measurement');
         setFromCardEntity(entityId('non_essential_load2'), 'non_essential_load2', 'W', 'power', 'measurement');

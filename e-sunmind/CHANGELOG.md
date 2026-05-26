@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.274
+- Energy Setup: estesi gli AUX a 8 totali per dashboard (`AUX principale` + `AUX load 1-7`).
+- Energy Dashboard K Flow: visualizza fino a 8 righe AUX configurate.
+- Bump versione addon/backend a `0.3.274`.
+
 ## 0.3.273
 - UI Admin: rimossi i due pulsanti separati `Energy Flow` e `Energy` dalla topbar.
 - UI Admin: aggiunta pagina interna unica `Energy` con accesso alle dashboard Energy Flow dei siti configurati.

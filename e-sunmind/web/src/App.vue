@@ -1440,14 +1440,13 @@
                   <label>AUX dynamic colour<input type="checkbox" v-model="energyWizardForm.load_aux_dynamic_colour" /></label>
                   <label>AUX show absolute<input type="checkbox" v-model="energyWizardForm.load_show_absolute_aux" /></label>
                   <label>AUX show daily<input type="checkbox" v-model="energyWizardForm.load_show_daily_aux" /></label>
-                  <label>Numero AUX load<input type="number" min="0" max="2" step="1" v-model.number="energyWizardForm.load_aux_loads" /></label>
+                  <label>Numero AUX load<input type="number" min="0" max="7" step="1" v-model.number="energyWizardForm.load_aux_loads" /></label>
                   <label>AUX principale (entity_id)<input type="text" v-model="energyWizardForm.aux_power_166" /></label>
-                  <label>AUX load 1 nome<input type="text" v-model="energyWizardForm.load_aux_load1_name" /></label>
-                  <label>AUX load 1 entity_id<input type="text" v-model="energyWizardForm.aux_load1" /></label>
-                  <label>AUX load 1 icon<input type="text" v-model="energyWizardForm.load_aux_load1_icon" placeholder="default oppure mdi:..." /></label>
-                  <label>AUX load 2 nome<input type="text" v-model="energyWizardForm.load_aux_load2_name" /></label>
-                  <label>AUX load 2 entity_id<input type="text" v-model="energyWizardForm.aux_load2" /></label>
-                  <label>AUX load 2 icon<input type="text" v-model="energyWizardForm.load_aux_load2_icon" placeholder="default oppure mdi:..." /></label>
+                  <template v-for="n in 7" :key="`aux-wizard-${n}`">
+                    <label>AUX load {{ n }} nome<input type="text" v-model="energyWizardForm[`load_aux_load${n}_name`]" /></label>
+                    <label>AUX load {{ n }} entity_id<input type="text" v-model="energyWizardForm[`aux_load${n}`]" /></label>
+                    <label>AUX load {{ n }} icon<input type="text" v-model="energyWizardForm[`load_aux_load${n}_icon`]" placeholder="default oppure mdi:..." /></label>
+                  </template>
                 </div>
               </div>
             </section>
@@ -1569,10 +1568,10 @@
                   <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                   <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                   <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
-                  <label>AUX 1 nome<input type="text" v-model="energyForm.k_flow_aux_load1_name" @change="syncKFlowJsonFromUi" placeholder="AUX 1" /></label>
-                  <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
-                  <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
-                  <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
+                  <template v-for="n in 7" :key="`kflow-aux-${n}`">
+                    <label>AUX {{ n }} nome<input type="text" v-model="energyForm[`k_flow_aux_load${n}_name`]" @change="syncKFlowJsonFromUi" :placeholder="`AUX ${n}`" /></label>
+                    <label>AUX {{ n }} potenza<input type="text" v-model="energyForm[`k_flow_aux_load${n}`]" @change="syncKFlowJsonFromUi" :placeholder="`sensor.xxx_aux_${n}`" /></label>
+                  </template>
                   <label>Icona casa
                     <select v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi">
                       <option value="">Default</option>
@@ -1620,10 +1619,10 @@
                     <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                     <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                     <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
-                    <label>AUX 1 nome<input type="text" v-model="energyForm.k_flow_aux_load1_name" @change="syncKFlowJsonFromUi" placeholder="AUX 1" /></label>
-                    <label>AUX 1 potenza<input type="text" v-model="energyForm.k_flow_aux_load1" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_1" /></label>
-                    <label>AUX 2 nome<input type="text" v-model="energyForm.k_flow_aux_load2_name" @change="syncKFlowJsonFromUi" placeholder="AUX 2" /></label>
-                    <label>AUX 2 potenza<input type="text" v-model="energyForm.k_flow_aux_load2" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_2" /></label>
+                    <template v-for="n in 7" :key="`json-kflow-aux-${n}`">
+                      <label>AUX {{ n }} nome<input type="text" v-model="energyForm[`k_flow_aux_load${n}_name`]" @change="syncKFlowJsonFromUi" :placeholder="`AUX ${n}`" /></label>
+                      <label>AUX {{ n }} potenza<input type="text" v-model="energyForm[`k_flow_aux_load${n}`]" @change="syncKFlowJsonFromUi" :placeholder="`sensor.xxx_aux_${n}`" /></label>
+                    </template>
                     <label>Icona casa
                       <select v-model="energyForm.k_flow_home_icon" @change="syncKFlowJsonFromUi">
                         <option value="">Default</option>
@@ -1997,6 +1996,16 @@ const energyForm = ref({
   k_flow_aux_load1: '',
   k_flow_aux_load2_name: '',
   k_flow_aux_load2: '',
+  k_flow_aux_load3_name: '',
+  k_flow_aux_load3: '',
+  k_flow_aux_load4_name: '',
+  k_flow_aux_load4: '',
+  k_flow_aux_load5_name: '',
+  k_flow_aux_load5: '',
+  k_flow_aux_load6_name: '',
+  k_flow_aux_load6: '',
+  k_flow_aux_load7_name: '',
+  k_flow_aux_load7: '',
   k_flow_home_icon: '',
   k_flow_min_cell_label: '',
   k_flow_min_cell_entity: '',
@@ -2112,7 +2121,7 @@ const realtimeEntityKeys = [
   'battery3_power_190','battery3_soc_184','battery3_current_191','battery3_voltage_183',
   'essential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6',
   'nonessential_power','non_essential_load1','non_essential_load2','non_essential_load3',
-  'aux_power_166','aux_load1','aux_load2',
+  'aux_power_166','aux_load1','aux_load2','aux_load3','aux_load4','aux_load5','aux_load6','aux_load7',
 ]
 const dailyEntityKeys = [
   'day_pv_energy_108','day_battery_charge_70','day_battery_discharge_71','day_load_energy_84','day_grid_import_76','day_grid_export_77',
@@ -2122,7 +2131,7 @@ const knownEnergyEntityKeys = [
   ...dailyEntityKeys,
   'essential_power','nonessential_power','essential_load1','essential_load2','essential_load3','essential_load4','essential_load5','essential_load6',
   'non_essential_load1','non_essential_load2','non_essential_load3',
-  'aux_power_166','aux_load1','aux_load2','battery2_power_190','battery2_soc_184','battery2_current_191','battery2_voltage_183',
+  'aux_power_166','aux_load1','aux_load2','aux_load3','aux_load4','aux_load5','aux_load6','aux_load7','battery2_power_190','battery2_soc_184','battery2_current_191','battery2_voltage_183',
   'battery3_power_190','battery3_soc_184','battery3_current_191','battery3_voltage_183',
   'pv3_power_188','pv4_power_189','pv5_power','pv6_power','pv3_voltage_113','pv3_current_114','pv4_voltage_115','pv4_current_116','pv5_voltage','pv5_current','pv6_voltage','pv6_current',
   'use_timer_248','priority_load_243',
@@ -2191,8 +2200,18 @@ const energyWizardForm = ref({
   load_aux_loads: 0,
   load_aux_load1_name: '',
   load_aux_load2_name: '',
+  load_aux_load3_name: '',
+  load_aux_load4_name: '',
+  load_aux_load5_name: '',
+  load_aux_load6_name: '',
+  load_aux_load7_name: '',
   load_aux_load1_icon: 'default',
   load_aux_load2_icon: 'default',
+  load_aux_load3_icon: 'default',
+  load_aux_load4_icon: 'default',
+  load_aux_load5_icon: 'default',
+  load_aux_load6_icon: 'default',
+  load_aux_load7_icon: 'default',
   grid_show_daily_buy: true,
   grid_show_daily_sell: true,
   grid_invert_grid: false,
@@ -2244,6 +2263,11 @@ const energyWizardForm = ref({
   aux_power_166: '',
   aux_load1: '',
   aux_load2: '',
+  aux_load3: '',
+  aux_load4: '',
+  aux_load5: '',
+  aux_load6: '',
+  aux_load7: '',
   non_essential_load1: '',
   non_essential_load2: '',
   non_essential_load3: '',
@@ -2330,6 +2354,11 @@ const energySignFields = [
   { key: 'aux_power_166', label: 'AUX principale' },
   { key: 'aux_load1', label: 'AUX load 1' },
   { key: 'aux_load2', label: 'AUX load 2' },
+  { key: 'aux_load3', label: 'AUX load 3' },
+  { key: 'aux_load4', label: 'AUX load 4' },
+  { key: 'aux_load5', label: 'AUX load 5' },
+  { key: 'aux_load6', label: 'AUX load 6' },
+  { key: 'aux_load7', label: 'AUX load 7' },
   { key: 'grid_power_169', label: 'Rete/Grid' },
   { key: 'grid_ct_power_172', label: 'Rete CT' },
   { key: 'nonessential_power', label: 'Non-Essential principale' },
@@ -2418,6 +2447,16 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_aux_load1: '',
     k_flow_aux_load2_name: '',
     k_flow_aux_load2: '',
+    k_flow_aux_load3_name: '',
+    k_flow_aux_load3: '',
+    k_flow_aux_load4_name: '',
+    k_flow_aux_load4: '',
+    k_flow_aux_load5_name: '',
+    k_flow_aux_load5: '',
+    k_flow_aux_load6_name: '',
+    k_flow_aux_load6: '',
+    k_flow_aux_load7_name: '',
+    k_flow_aux_load7: '',
     k_flow_home_icon: '',
     k_flow_min_cell_label: '',
     k_flow_min_cell_entity: '',
@@ -2588,8 +2627,18 @@ function hydrateEnergyWizardFromOptions(eo = {}) {
       load_aux_loads: Number(load.aux_loads ?? wizardSeed.load_aux_loads),
       load_aux_load1_name: String(load.aux_load1_name || wizardSeed.load_aux_load1_name),
       load_aux_load2_name: String(load.aux_load2_name || wizardSeed.load_aux_load2_name),
+      load_aux_load3_name: String(load.aux_load3_name || wizardSeed.load_aux_load3_name),
+      load_aux_load4_name: String(load.aux_load4_name || wizardSeed.load_aux_load4_name),
+      load_aux_load5_name: String(load.aux_load5_name || wizardSeed.load_aux_load5_name),
+      load_aux_load6_name: String(load.aux_load6_name || wizardSeed.load_aux_load6_name),
+      load_aux_load7_name: String(load.aux_load7_name || wizardSeed.load_aux_load7_name),
       load_aux_load1_icon: String(load.aux_load1_icon || wizardSeed.load_aux_load1_icon),
       load_aux_load2_icon: String(load.aux_load2_icon || wizardSeed.load_aux_load2_icon),
+      load_aux_load3_icon: String(load.aux_load3_icon || wizardSeed.load_aux_load3_icon),
+      load_aux_load4_icon: String(load.aux_load4_icon || wizardSeed.load_aux_load4_icon),
+      load_aux_load5_icon: String(load.aux_load5_icon || wizardSeed.load_aux_load5_icon),
+      load_aux_load6_icon: String(load.aux_load6_icon || wizardSeed.load_aux_load6_icon),
+      load_aux_load7_icon: String(load.aux_load7_icon || wizardSeed.load_aux_load7_icon),
       grid_show_daily_buy: Boolean(grid.show_daily_buy ?? wizardSeed.grid_show_daily_buy),
       grid_show_daily_sell: Boolean(grid.show_daily_sell ?? wizardSeed.grid_show_daily_sell),
       grid_invert_grid: Boolean(grid.invert_grid ?? wizardSeed.grid_invert_grid),
@@ -2676,6 +2725,16 @@ const kFlowUiKeys = {
   k_flow_aux_load1: 'aux_load1',
   k_flow_aux_load2_name: 'aux_load2_name',
   k_flow_aux_load2: 'aux_load2',
+  k_flow_aux_load3_name: 'aux_load3_name',
+  k_flow_aux_load3: 'aux_load3',
+  k_flow_aux_load4_name: 'aux_load4_name',
+  k_flow_aux_load4: 'aux_load4',
+  k_flow_aux_load5_name: 'aux_load5_name',
+  k_flow_aux_load5: 'aux_load5',
+  k_flow_aux_load6_name: 'aux_load6_name',
+  k_flow_aux_load6: 'aux_load6',
+  k_flow_aux_load7_name: 'aux_load7_name',
+  k_flow_aux_load7: 'aux_load7',
   k_flow_home_icon: 'home_icon',
   k_flow_min_cell_label: 'label_min_cell',
   k_flow_min_cell_entity: 'label_entity_min_cell',
@@ -4757,6 +4816,11 @@ function buildSunsynkConfigFromWizard() {
     aux_power_166: String(w.aux_power_166 || ''),
     aux_load1: String(w.aux_load1 || ''),
     aux_load2: String(w.aux_load2 || ''),
+    aux_load3: String(w.aux_load3 || ''),
+    aux_load4: String(w.aux_load4 || ''),
+    aux_load5: String(w.aux_load5 || ''),
+    aux_load6: String(w.aux_load6 || ''),
+    aux_load7: String(w.aux_load7 || ''),
     non_essential_load1: String(w.non_essential_load1 || ''),
     non_essential_load2: String(w.non_essential_load2 || ''),
     non_essential_load3: String(w.non_essential_load3 || ''),
@@ -4919,11 +4983,21 @@ function buildSunsynkConfigFromWizard() {
       aux_type: String(w.load_aux_type || 'default'),
       show_absolute_aux: Boolean(w.load_show_absolute_aux),
       show_daily_aux: Boolean(w.load_show_daily_aux),
-      aux_loads: Math.max(0, Math.min(2, Number(w.load_aux_loads || 0))),
+      aux_loads: Math.max(0, Math.min(7, Number(w.load_aux_loads || 0))),
       aux_load1_name: String(w.load_aux_load1_name || ''),
       aux_load2_name: String(w.load_aux_load2_name || ''),
+      aux_load3_name: String(w.load_aux_load3_name || ''),
+      aux_load4_name: String(w.load_aux_load4_name || ''),
+      aux_load5_name: String(w.load_aux_load5_name || ''),
+      aux_load6_name: String(w.load_aux_load6_name || ''),
+      aux_load7_name: String(w.load_aux_load7_name || ''),
       aux_load1_icon: String(w.load_aux_load1_icon || 'default'),
       aux_load2_icon: String(w.load_aux_load2_icon || 'default'),
+      aux_load3_icon: String(w.load_aux_load3_icon || 'default'),
+      aux_load4_icon: String(w.load_aux_load4_icon || 'default'),
+      aux_load5_icon: String(w.load_aux_load5_icon || 'default'),
+      aux_load6_icon: String(w.load_aux_load6_icon || 'default'),
+      aux_load7_icon: String(w.load_aux_load7_icon || 'default'),
       load1_icon: String(w.load1_icon || 'default'),
       load2_icon: String(w.load2_icon || 'default'),
       load3_icon: String(w.load3_icon || 'default'),
@@ -5393,6 +5467,16 @@ async function loadData() {
         k_flow_aux_load1: '',
         k_flow_aux_load2_name: '',
         k_flow_aux_load2: '',
+        k_flow_aux_load3_name: '',
+        k_flow_aux_load3: '',
+        k_flow_aux_load4_name: '',
+        k_flow_aux_load4: '',
+        k_flow_aux_load5_name: '',
+        k_flow_aux_load5: '',
+        k_flow_aux_load6_name: '',
+        k_flow_aux_load6: '',
+        k_flow_aux_load7_name: '',
+        k_flow_aux_load7: '',
         k_flow_home_icon: '',
         k_flow_min_cell_label: '',
         k_flow_min_cell_entity: '',
@@ -5496,8 +5580,18 @@ async function loadData() {
           load_aux_loads: Number(load.aux_loads ?? wizardSeed.load_aux_loads),
           load_aux_load1_name: String(load.aux_load1_name || wizardSeed.load_aux_load1_name),
           load_aux_load2_name: String(load.aux_load2_name || wizardSeed.load_aux_load2_name),
+          load_aux_load3_name: String(load.aux_load3_name || wizardSeed.load_aux_load3_name),
+          load_aux_load4_name: String(load.aux_load4_name || wizardSeed.load_aux_load4_name),
+          load_aux_load5_name: String(load.aux_load5_name || wizardSeed.load_aux_load5_name),
+          load_aux_load6_name: String(load.aux_load6_name || wizardSeed.load_aux_load6_name),
+          load_aux_load7_name: String(load.aux_load7_name || wizardSeed.load_aux_load7_name),
           load_aux_load1_icon: String(load.aux_load1_icon || wizardSeed.load_aux_load1_icon),
           load_aux_load2_icon: String(load.aux_load2_icon || wizardSeed.load_aux_load2_icon),
+          load_aux_load3_icon: String(load.aux_load3_icon || wizardSeed.load_aux_load3_icon),
+          load_aux_load4_icon: String(load.aux_load4_icon || wizardSeed.load_aux_load4_icon),
+          load_aux_load5_icon: String(load.aux_load5_icon || wizardSeed.load_aux_load5_icon),
+          load_aux_load6_icon: String(load.aux_load6_icon || wizardSeed.load_aux_load6_icon),
+          load_aux_load7_icon: String(load.aux_load7_icon || wizardSeed.load_aux_load7_icon),
           grid_show_daily_buy: Boolean(grid.show_daily_buy ?? wizardSeed.grid_show_daily_buy),
           grid_show_daily_sell: Boolean(grid.show_daily_sell ?? wizardSeed.grid_show_daily_sell),
           grid_invert_grid: Boolean(grid.invert_grid ?? wizardSeed.grid_invert_grid),
@@ -5555,6 +5649,11 @@ async function loadData() {
           aux_power_166: entityFromConfig(ents, 'aux_power_166'),
           aux_load1: entityFromConfig(ents, 'aux_load1'),
           aux_load2: entityFromConfig(ents, 'aux_load2'),
+          aux_load3: entityFromConfig(ents, 'aux_load3'),
+          aux_load4: entityFromConfig(ents, 'aux_load4'),
+          aux_load5: entityFromConfig(ents, 'aux_load5'),
+          aux_load6: entityFromConfig(ents, 'aux_load6'),
+          aux_load7: entityFromConfig(ents, 'aux_load7'),
           non_essential_load1: entityFromConfig(ents, 'non_essential_load1'),
           non_essential_load2: entityFromConfig(ents, 'non_essential_load2'),
           non_essential_load3: entityFromConfig(ents, 'non_essential_load3'),

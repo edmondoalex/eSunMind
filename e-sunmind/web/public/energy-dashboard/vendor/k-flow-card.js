@@ -707,9 +707,19 @@ class KFlowCard extends HTMLElement {
       aux_power: '',
       aux_load1: '',
       aux_load2: '',
+      aux_load3: '',
+      aux_load4: '',
+      aux_load5: '',
+      aux_load6: '',
+      aux_load7: '',
       aux_name: 'AUX',
       aux_load1_name: 'AUX 1',
       aux_load2_name: 'AUX 2',
+      aux_load3_name: 'AUX 3',
+      aux_load4_name: 'AUX 4',
+      aux_load5_name: 'AUX 5',
+      aux_load6_name: 'AUX 6',
+      aux_load7_name: 'AUX 7',
       _show_aux: false,
       home_icon: 'home-icon.png',
       today_pv: 'sensor.goodwe_today_s_pv_generation',
@@ -1110,9 +1120,7 @@ class KFlowCard extends HTMLElement {
 
       <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${homeIconHref}" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
       <text id="fcLoadVal" x="178" y="403" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
-      <text id="auxLoadLine1" x="342" y="408" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX -- W</text>
-      <text id="auxLoadLine2" x="342" y="425" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX 1 -- W</text>
-      <text id="auxLoadLine3" x="342" y="442" text-anchor="start" font-size="10" font-weight="700" fill="#cbd5e1" style="display:none">AUX 2 -- W</text>
+      ${Array.from({ length: 8 }, (_, idx) => `<text id="auxLoadLine${idx + 1}" x="342" y="${340 + (idx * 14)}" text-anchor="start" font-size="8.5" font-weight="700" fill="#cbd5e1" style="display:none">AUX -- W</text>`).join('')}
       ${evtxt}
       </svg></div>`+
 
@@ -1177,10 +1185,17 @@ class KFlowCard extends HTMLElement {
     const load = _n(this._val(this.config.consump, true));
     const auxLoadRaw = this._val(this.config.aux_power, true);
     const auxLoad = _n(auxLoadRaw);
-    const auxLoad1Raw = this._val(this.config.aux_load1, true);
-    const auxLoad1 = _n(auxLoad1Raw);
-    const auxLoad2Raw = this._val(this.config.aux_load2, true);
-    const auxLoad2 = _n(auxLoad2Raw);
+    const auxExtraRows = Array.from({ length: 7 }, (_, idx) => {
+      const i = idx + 1;
+      const raw = this._val(this.config[`aux_load${i}`], true);
+      return {
+        configured: !!String(this.config[`aux_load${i}`] || '').trim(),
+        name: this.config[`aux_load${i}_name`],
+        fallback: `AUX ${i}`,
+        raw,
+        value: _n(raw),
+      };
+    });
     // Fix #9: store raw null so we can show '--' and use toFixed(2) to avoid float artefacts
     const _todayPvRaw = this._val(this.config.today_pv);
     const _todayBattChgRaw = this._val(this.config.today_batt_chg);
@@ -1439,11 +1454,10 @@ class KFlowCard extends HTMLElement {
     const shortAuxName = (value, fallback) => String(value || fallback || 'AUX').trim().toUpperCase().slice(0, 10);
     const auxRows = [
       { configured: !!String(this.config.aux_power || '').trim(), name: this.config.aux_name, fallback: 'AUX', raw: auxLoadRaw, value: auxLoad },
-      { configured: !!String(this.config.aux_load1 || '').trim(), name: this.config.aux_load1_name, fallback: 'AUX 1', raw: auxLoad1Raw, value: auxLoad1 },
-      { configured: !!String(this.config.aux_load2 || '').trim(), name: this.config.aux_load2_name, fallback: 'AUX 2', raw: auxLoad2Raw, value: auxLoad2 },
+      ...auxExtraRows,
     ].filter((row) => row.configured);
     if (!auxRows.length && this.config._show_aux) auxRows.push({ configured: true, name: this.config.aux_name, fallback: 'AUX', raw: null, value: 0 });
-    for (let i = 0; i < 3; i += 1) {
+    for (let i = 0; i < 8; i += 1) {
       const row = auxRows[i];
       const id = 'auxLoadLine' + (i + 1);
       setDisplay(id, !!row);
