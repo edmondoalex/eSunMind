@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.279
+- Energy Dashboard K Flow: fix definitivo scaling font globale `1.7x` (forzato anche su `font-size` SVG).
+- Energy Dashboard K Flow: rimosso override runtime che riportava piccolo il testo secondario `Remaining`.
+- Bump versione addon/backend a `0.3.279`.
+
 ## 0.3.278
 - Energy Dashboard K Flow: applicato scaling font globale `1.7x` a tutti i testi principali (SVG + riquadri HTML) con override esplicito dei valori critici.
 - Bump versione addon/backend a `0.3.278`.

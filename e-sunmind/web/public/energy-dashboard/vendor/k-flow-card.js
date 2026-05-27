@@ -1172,13 +1172,25 @@ class KFlowCard extends HTMLElement {
       const tagKey = 'kflowBasePx';
       let base = Number(el.dataset?.[tagKey] || '');
       if (!Number.isFinite(base) || base <= 0) {
-        const computed = window.getComputedStyle(el).fontSize || '';
-        const parsed = parseFloat(computed);
+        let parsed = NaN;
+        // SVG text often defines size via font-size attribute.
+        if (typeof el.getAttribute === 'function') {
+          const attrSize = el.getAttribute('font-size');
+          if (attrSize) parsed = parseFloat(attrSize);
+        }
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          const computed = window.getComputedStyle(el).fontSize || '';
+          parsed = parseFloat(computed);
+        }
         if (!Number.isFinite(parsed) || parsed <= 0) return;
         base = parsed;
         if (el.dataset) el.dataset[tagKey] = String(base);
       }
-      el.style.fontSize = `${(base * s).toFixed(2)}px`;
+      const scaled = `${(base * s).toFixed(2)}px`;
+      el.style.fontSize = scaled;
+      if (typeof el.setAttribute === 'function' && el.tagName && el.tagName.toLowerCase() === 'text') {
+        el.setAttribute('font-size', scaled);
+      }
     };
 
     this.shadowRoot.querySelectorAll('#flowSvg text').forEach((el) => scaleFont(el));
@@ -1568,7 +1580,7 @@ class KFlowCard extends HTMLElement {
         invRemKwhEl.textContent = totalRemKwh !== null ? totalRemKwh.toFixed(2) + ' kWh' : '-- kWh';
         invRemKwhEl.style.color = remColor;
         invRemKwhEl.style.display = '';
-        invRemKwhEl.style.fontSize = '.76rem';
+        invRemKwhEl.style.fontSize = '';
         invRemKwhEl.style.fontWeight = '700';
         invRemKwhEl.style.marginTop = '0';
       }
