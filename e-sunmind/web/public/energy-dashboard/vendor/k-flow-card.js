@@ -749,7 +749,7 @@ class KFlowCard extends HTMLElement {
       battery_shutdown_soc: 10,
       battery_shutdown_soc_entity: '',
       battery_shutdown_soc_manual: '',
-      brand_logo: '',
+      brand_logo: 'logo only translucent.png',
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,
@@ -1207,7 +1207,6 @@ class KFlowCard extends HTMLElement {
       'fcBattVal', 'fcBattVal1', 'fcBattVal2', 'battVoltageFlow', 'battVoltageFlow1', 'battVoltageFlow2',
       'invNameLabel', 'invVoltageFlow', 'invFrequencyFlow', 'invLoadPctFlow',
       'fcGridVal', 'gridImportVal', 'gridExportVal', 'fcLoadVal',
-      'pv1label', 'pv1FlowVal', 'pv2label', 'pv2FlowVal', 'pv3label', 'pv3FlowVal', 'pv4label', 'pv4FlowVal',
       'auxLoadLine1', 'auxLoadLine2', 'auxLoadLine3', 'auxLoadLine4', 'auxLoadLine5', 'auxLoadLine6', 'auxLoadLine7', 'auxLoadLine8',
       'arcPvLabelText', 'arcRiseLabel', 'arcSetLabel',
     ];

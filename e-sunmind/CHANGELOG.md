@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.285
+- Energy Dashboard K Flow: righe PV (`PV1..PV4`) escluse dallo scaling globale per evitare testi ammassati/sovrapposti.
+- Energy Dashboard K Flow: logo alto default impostato su `logo only translucent.png` (asset interno addon).
+- Bump versione addon/backend a `0.3.285`.
+
 ## 0.3.284
 - Energy Setup K Flow: aggiunto campo `Logo alto (URL o /local/...)` per mostrare un logo personalizzato in testata card.
 - Energy Dashboard K Flow: area logo dedicata in alto e badge PV riposizionato con margine superiore per evitare sovrapposizioni.
