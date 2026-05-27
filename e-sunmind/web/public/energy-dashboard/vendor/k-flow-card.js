@@ -748,6 +748,7 @@ class KFlowCard extends HTMLElement {
       battery_cap_unit: 'ah',
       battery_shutdown_soc: 10,
       battery_shutdown_soc_entity: '',
+      battery_shutdown_soc_manual: '',
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,
@@ -951,8 +952,8 @@ class KFlowCard extends HTMLElement {
     };
     const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
-    const pv3txt = showPvExtra ? `<text id="pv3label" x="8" y="446" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="8" y="462" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
-    const pv4txt = showPvExtra ? `<text id="pv4label" x="8" y="478" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="8" y="494" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv3txt = showPvExtra ? `<text id="pv3label" x="6" y="458" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="6" y="476" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv4txt = showPvExtra ? `<text id="pv4label" x="6" y="490" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="6" y="508" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
 
     // EV placement inline with home and grid
     const evX = 462 - 39.5;   // centre of grid icon
@@ -1081,8 +1082,8 @@ class KFlowCard extends HTMLElement {
         <circle id="moonGlow" cx="260" cy="72" r="12" fill="rgba(180,205,255,.18)"/>
         <circle id="moonDot" cx="260" cy="72" r="6" fill="rgba(220,235,255,.92)" stroke="rgba(240,248,255,.9)" stroke-width="1.2"/>
       </g>
-      <rect id="arcPvLabelRect" x="162" y="30" width="96" height="26" rx="13" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
-      <text id="arcPvLabelText" x="210" y="47" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
+      <rect id="arcPvLabelRect" x="150" y="44" width="128" height="34" rx="17" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
+      <text id="arcPvLabelText" x="214" y="66" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
       <g id="pvFlowGroup"></g>
 
       ${battGhostPath}
@@ -1112,10 +1113,10 @@ class KFlowCard extends HTMLElement {
       <text id="invFrequencyFlow" x="260" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- Hz</text>
       <text id="invLoadPctFlow" x="260" y="249" text-anchor="middle" font-size="11" font-weight="700" fill="#3ce878">CARICO --%</text>
 
-      <text id="pv1label" x="8" y="366" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
-      <text id="pv1FlowVal" x="8" y="382" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
-      <text id="pv2label" x="8" y="406" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
-      <text id="pv2FlowVal" x="8" y="422" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv1label" x="6" y="372" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
+      <text id="pv1FlowVal" x="6" y="390" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv2label" x="6" y="414" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
+      <text id="pv2FlowVal" x="6" y="432" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
       ${pv3txt}
       ${pv4txt}
 
@@ -1289,9 +1290,10 @@ class KFlowCard extends HTMLElement {
     const pvMax  = Number(this.config.pv_max_power)       || 7500;
     const shutdownSocEntityRaw = this._val(this.config.battery_shutdown_soc_entity);
     const shutdownSocEntityNum = shutdownSocEntityRaw === null ? NaN : Number(shutdownSocEntityRaw);
+    const shutdownSocManualNum = Number(this.config.battery_shutdown_soc_manual);
     const shutdownSocSource = Number.isFinite(shutdownSocEntityNum)
       ? shutdownSocEntityNum
-      : Number(this.config.battery_shutdown_soc ?? 10);
+      : (Number.isFinite(shutdownSocManualNum) ? shutdownSocManualNum : Number(this.config.battery_shutdown_soc ?? 10));
     const shutdownSoc = Math.max(0, Math.min(100, shutdownSocSource));
     const usableSoc1 = Math.max(0, battSoc1 - shutdownSoc);
 

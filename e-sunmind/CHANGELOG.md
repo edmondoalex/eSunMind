@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.281
+- Energy Dashboard K Flow: migliorato layout blocco PV (righe distanziate e riposizionate) per evitare sovrapposizioni.
+- Energy Dashboard K Flow: badge produzione istantanea sopra il sole abbassato e allargato per non risultare schiacciato/tagliato.
+- Energy Setup K Flow: aggiunto campo `Min SOC manuale (%)`.
+- Energy Dashboard K Flow: priorita soglia SOC minima = entity > manuale > valore base battery.
+- Bump versione addon/backend a `0.3.281`.
+
 ## 0.3.280
 - Energy Dashboard K Flow: aumentata la spaziatura delle righe PV a sinistra per evitare sovrapposizioni.
 - Energy Dashboard K Flow: abbassata la label produzione istantanea sopra il sole per evitare taglio superiore.
