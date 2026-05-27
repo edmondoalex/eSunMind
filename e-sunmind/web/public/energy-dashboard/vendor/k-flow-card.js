@@ -951,8 +951,8 @@ class KFlowCard extends HTMLElement {
     };
     const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
-    const pv3txt = showPvExtra ? `<text id="pv3label" x="8" y="424" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="8" y="438" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
-    const pv4txt = showPvExtra ? `<text id="pv4label" x="8" y="456" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="8" y="470" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv3txt = showPvExtra ? `<text id="pv3label" x="8" y="446" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="8" y="462" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv4txt = showPvExtra ? `<text id="pv4label" x="8" y="478" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="8" y="494" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
 
     // EV placement inline with home and grid
     const evX = 462 - 39.5;   // centre of grid icon
@@ -1081,8 +1081,8 @@ class KFlowCard extends HTMLElement {
         <circle id="moonGlow" cx="260" cy="72" r="12" fill="rgba(180,205,255,.18)"/>
         <circle id="moonDot" cx="260" cy="72" r="6" fill="rgba(220,235,255,.92)" stroke="rgba(240,248,255,.9)" stroke-width="1.2"/>
       </g>
-      <rect id="arcPvLabelRect" x="162" y="22" width="96" height="26" rx="13" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
-      <text id="arcPvLabelText" x="210" y="39" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
+      <rect id="arcPvLabelRect" x="162" y="30" width="96" height="26" rx="13" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
+      <text id="arcPvLabelText" x="210" y="47" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
       <g id="pvFlowGroup"></g>
 
       ${battGhostPath}
@@ -1112,10 +1112,10 @@ class KFlowCard extends HTMLElement {
       <text id="invFrequencyFlow" x="260" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- Hz</text>
       <text id="invLoadPctFlow" x="260" y="249" text-anchor="middle" font-size="11" font-weight="700" fill="#3ce878">CARICO --%</text>
 
-      <text id="pv1label" x="8" y="360" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
-      <text id="pv1FlowVal" x="8" y="374" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
-      <text id="pv2label" x="8" y="392" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
-      <text id="pv2FlowVal" x="8" y="406" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv1label" x="8" y="366" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
+      <text id="pv1FlowVal" x="8" y="382" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv2label" x="8" y="406" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
+      <text id="pv2FlowVal" x="8" y="422" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
       ${pv3txt}
       ${pv4txt}
 
@@ -1154,7 +1154,7 @@ class KFlowCard extends HTMLElement {
       <div class="pvf">
         <div class="pvi"><div class="ico">☀️</div><div class="lbl">Today PV</div><div class="val yw" id="invTodayPv">-- kWh</div></div>
         <div class="pvi"><div class="ico">🔋</div><div class="lbl">Chg / Dis</div><div class="val" id="invTodayBattChg">-- kWh</div><div class="val" id="invTodayBattDis" style="margin-top:1px">-- kWh</div></div>
-        <div class="pvi"><div class="ico">⚡</div><div class="lbl" id="invRemLbl">Remaining</div><div class="val" id="invRemCap">-- Ah</div><div class="val" id="invRemKwh" style="font-size:.62rem;color:#8b949e;margin-top:1px">-- kWh</div></div>
+        <div class="pvi"><div class="ico">⚡</div><div class="lbl" id="invRemLbl">Remaining</div><div class="val" id="invRemCap">-- Ah</div><div class="val" id="invRemKwh" style="color:#8b949e;margin-top:1px">-- kWh</div></div>
         <div class="pvi"><div class="ico">🏡</div><div class="lbl">Today Load</div><div class="val" id="invTodayLoad">-- kWh</div></div>
       </div>
     </div>`;
@@ -1580,7 +1580,7 @@ class KFlowCard extends HTMLElement {
         invRemKwhEl.textContent = totalRemKwh !== null ? totalRemKwh.toFixed(2) + ' kWh' : '-- kWh';
         invRemKwhEl.style.color = remColor;
         invRemKwhEl.style.display = '';
-        invRemKwhEl.style.fontSize = '';
+        invRemKwhEl.style.fontSize = '1.29rem';
         invRemKwhEl.style.fontWeight = '700';
         invRemKwhEl.style.marginTop = '0';
       }

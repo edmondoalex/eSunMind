@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.280
+- Energy Dashboard K Flow: aumentata la spaziatura delle righe PV a sinistra per evitare sovrapposizioni.
+- Energy Dashboard K Flow: abbassata la label produzione istantanea sopra il sole per evitare taglio superiore.
+- Energy Dashboard K Flow: `Remaining` reso alla stessa dimensione dei valori principali.
+- Bump versione addon/backend a `0.3.280`.
+
 ## 0.3.279
 - Energy Dashboard K Flow: fix definitivo scaling font globale `1.7x` (forzato anche su `font-size` SVG).
 - Energy Dashboard K Flow: rimosso override runtime che riportava piccolo il testo secondario `Remaining`.
