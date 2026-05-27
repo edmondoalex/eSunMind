@@ -1567,6 +1567,7 @@
                   <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
                   <label>Min SOC entity (%)<input type="text" v-model="energyForm.k_flow_battery_shutdown_soc_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_min_soc" /></label>
                   <label>Min SOC manuale (%)<input type="number" min="0" max="100" step="1" v-model.number="energyForm.k_flow_battery_shutdown_soc_manual" @change="syncKFlowJsonFromUi" placeholder="10" /></label>
+                  <label>Logo alto (URL o /local/...)<input type="text" v-model="energyForm.k_flow_brand_logo" @change="syncKFlowJsonFromUi" placeholder="/local/ekonex-logo.png" /></label>
                   <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                   <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                   <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
@@ -1622,6 +1623,7 @@
                     <label>BMS / MOS temp<input type="text" v-model="energyForm.k_flow_battery_mos" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_bms_temp" /></label>
                     <label>Min SOC entity (%)<input type="text" v-model="energyForm.k_flow_battery_shutdown_soc_entity" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_battery_min_soc" /></label>
                     <label>Min SOC manuale (%)<input type="number" min="0" max="100" step="1" v-model.number="energyForm.k_flow_battery_shutdown_soc_manual" @change="syncKFlowJsonFromUi" placeholder="10" /></label>
+                    <label>Logo alto (URL o /local/...)<input type="text" v-model="energyForm.k_flow_brand_logo" @change="syncKFlowJsonFromUi" placeholder="/local/ekonex-logo.png" /></label>
                     <label>Label barra potenza<input type="text" v-model="energyForm.k_flow_pwr_bar_label" @change="syncKFlowJsonFromUi" placeholder="BATT" /></label>
                     <label>AUX nome<input type="text" v-model="energyForm.k_flow_aux_name" @change="syncKFlowJsonFromUi" placeholder="AUX" /></label>
                     <label>AUX potenza<input type="text" v-model="energyForm.k_flow_aux_power" @change="syncKFlowJsonFromUi" placeholder="sensor.xxx_aux_power" /></label>
@@ -1999,6 +2001,7 @@ const energyForm = ref({
   k_flow_battery_mos: '',
   k_flow_battery_shutdown_soc_entity: '',
   k_flow_battery_shutdown_soc_manual: '',
+  k_flow_brand_logo: '',
   k_flow_pwr_bar_label: '',
   k_flow_aux_name: '',
   k_flow_aux_power: '',
@@ -2454,6 +2457,7 @@ function applyEnergySiteToForm(site = {}) {
     k_flow_battery_mos: '',
     k_flow_battery_shutdown_soc_entity: '',
     k_flow_battery_shutdown_soc_manual: '',
+    k_flow_brand_logo: '',
     k_flow_pwr_bar_label: '',
     k_flow_aux_name: '',
     k_flow_aux_power: '',
@@ -2736,6 +2740,7 @@ const kFlowUiKeys = {
   k_flow_battery_mos: 'battery_mos',
   k_flow_battery_shutdown_soc_entity: 'battery_shutdown_soc_entity',
   k_flow_battery_shutdown_soc_manual: 'battery_shutdown_soc_manual',
+  k_flow_brand_logo: 'brand_logo',
   k_flow_pwr_bar_label: 'label_pwr_bar',
   k_flow_aux_name: 'aux_name',
   k_flow_aux_power: 'aux_power',
@@ -5483,6 +5488,7 @@ async function loadData() {
         k_flow_battery_mos: '',
         k_flow_battery_shutdown_soc_entity: '',
         k_flow_battery_shutdown_soc_manual: '',
+        k_flow_brand_logo: '',
         k_flow_pwr_bar_label: '',
         k_flow_aux_name: '',
         k_flow_aux_power: '',

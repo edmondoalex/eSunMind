@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.284
+- Energy Setup K Flow: aggiunto campo `Logo alto (URL o /local/...)` per mostrare un logo personalizzato in testata card.
+- Energy Dashboard K Flow: area logo dedicata in alto e badge PV riposizionato con margine superiore per evitare sovrapposizioni.
+- Bump versione addon/backend a `0.3.284`.
+
 ## 0.3.283
 - Energy Dashboard K Flow: fix clipping testo `PV3/PV4` (riposizionamento verticale nel canvas).
 - Bump versione addon/backend a `0.3.283`.
