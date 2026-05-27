@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.283
+- Energy Dashboard K Flow: fix clipping testo `PV3/PV4` (riposizionamento verticale nel canvas).
+- Bump versione addon/backend a `0.3.283`.
+
 ## 0.3.282
 - Energy Setup/Wizard: rimossa inferenza automatica PV da entita mappate (`pv2/pv3/...`).
 - I campi PV lasciati vuoti in UI restano vuoti, senza ripopolamento automatico.

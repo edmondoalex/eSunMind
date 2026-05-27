@@ -952,8 +952,8 @@ class KFlowCard extends HTMLElement {
     };
     const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
-    const pv3txt = showPvExtra ? `<text id="pv3label" x="6" y="458" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="6" y="476" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
-    const pv4txt = showPvExtra ? `<text id="pv4label" x="6" y="490" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="6" y="508" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv3txt = showPvExtra ? `<text id="pv3label" x="10" y="404" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="10" y="422" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv4txt = showPvExtra ? `<text id="pv4label" x="10" y="430" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="10" y="448" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
 
     // EV placement inline with home and grid
     const evX = 462 - 39.5;   // centre of grid icon
@@ -1024,7 +1024,7 @@ class KFlowCard extends HTMLElement {
     this.shadowRoot.innerHTML = `<style>
       :host{display:block} @keyframes svgPulseOrange{0%,100%{filter:drop-shadow(0 0 5px #f39c4b)}50%{filter:drop-shadow(0 0 8px #f5b06a)}}
       .st{background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:7px 9px}
-      .st .l{font-size:.48rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+      .st .l{font-size:.60rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
       .st .v{font-size:.8rem;font-weight:600;color:#c9d1d9}
       .dv{height:1px;background:#21262d;margin:8px 0}
       .ct{font-size:.56rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8b949e;margin-bottom:10px;display:flex;align-items:center;gap:7px}
@@ -1032,7 +1032,7 @@ class KFlowCard extends HTMLElement {
       .pvf{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:2px}
       .pvi{text-align:center;background:#0d1117;border:1px solid #21262d;border-radius:8px;padding:6px 2px}
       .pvi .ico{font-size:.95rem;margin-bottom:2px}
-      .pvi .lbl{font-size:.44rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+      .pvi .lbl{font-size:.58rem;color:#8b949e;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
       .pvi .val{font-size:.76rem;font-weight:700;color:#c9d1d9}
       .pvi .val.yw{color:#f4d03f} text{font-family:'Segoe UI',Arial,sans-serif}
     </style>
@@ -1082,8 +1082,8 @@ class KFlowCard extends HTMLElement {
         <circle id="moonGlow" cx="260" cy="72" r="12" fill="rgba(180,205,255,.18)"/>
         <circle id="moonDot" cx="260" cy="72" r="6" fill="rgba(220,235,255,.92)" stroke="rgba(240,248,255,.9)" stroke-width="1.2"/>
       </g>
-      <rect id="arcPvLabelRect" x="150" y="44" width="128" height="34" rx="17" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
-      <text id="arcPvLabelText" x="214" y="66" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
+      <rect id="arcPvLabelRect" x="154" y="34" width="120" height="30" rx="15" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
+      <text id="arcPvLabelText" x="214" y="54" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
       <g id="pvFlowGroup"></g>
 
       ${battGhostPath}
@@ -1113,10 +1113,10 @@ class KFlowCard extends HTMLElement {
       <text id="invFrequencyFlow" x="260" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- Hz</text>
       <text id="invLoadPctFlow" x="260" y="249" text-anchor="middle" font-size="11" font-weight="700" fill="#3ce878">CARICO --%</text>
 
-      <text id="pv1label" x="6" y="372" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
-      <text id="pv1FlowVal" x="6" y="390" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
-      <text id="pv2label" x="6" y="414" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
-      <text id="pv2FlowVal" x="6" y="432" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv1label" x="10" y="352" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
+      <text id="pv1FlowVal" x="10" y="370" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv2label" x="10" y="384" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
+      <text id="pv2FlowVal" x="10" y="402" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
       ${pv3txt}
       ${pv4txt}
 
@@ -1211,6 +1211,18 @@ class KFlowCard extends HTMLElement {
       const el = this.shadowRoot.getElementById(id);
       scaleFont(el);
     });
+
+    // Keep inverter center block a bit smaller to avoid crowded text.
+    const reduceCenter = (id, ratio = 0.82) => {
+      const el = this.shadowRoot.getElementById(id);
+      if (!el) return;
+      const cur = parseFloat((el.getAttribute('font-size') || '').replace('px', '')) || parseFloat(window.getComputedStyle(el).fontSize || '');
+      if (!Number.isFinite(cur) || cur <= 0) return;
+      const target = `${(cur * ratio).toFixed(2)}px`;
+      el.style.fontSize = target;
+      el.setAttribute('font-size', target);
+    };
+    ['invNameLabel', 'invVoltageFlow', 'invFrequencyFlow', 'invLoadPctFlow'].forEach((id) => reduceCenter(id));
   }
 
   _updateDynamic() {
