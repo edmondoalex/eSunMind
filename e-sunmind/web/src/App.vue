@@ -2588,7 +2588,7 @@ function hydrateEnergyWizardFromOptions(eo = {}) {
       inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
       inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
       inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
-      solar_mppts: inferSolarMpptsFromEntities(ents, solar.mppts ?? wizardSeed.solar_mppts),
+      solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts ?? 1),
       solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
       solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
       solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),
@@ -4904,7 +4904,7 @@ function buildSunsynkConfigFromWizard() {
     delete entities.essential_load5
     delete entities.essential_load6
   }
-  const solarMppts = inferSolarMpptsFromEntities(entities, w.solar_mppts || 1)
+  const solarMppts = Math.max(1, Math.min(6, Number(w.solar_mppts || 1)))
 
   return {
     cardstyle: String(w.cardstyle || 'full'),
@@ -5550,7 +5550,7 @@ async function loadData() {
           inverter_modern: Boolean(parsed?.inverter?.modern ?? wizardSeed.inverter_modern),
           inverter_auto_scale: Boolean(parsed?.inverter?.auto_scale ?? wizardSeed.inverter_auto_scale),
           inverter_three_phase: Boolean(parsed?.inverter?.three_phase ?? wizardSeed.inverter_three_phase),
-          solar_mppts: inferSolarMpptsFromEntities(ents, solar.mppts ?? wizardSeed.solar_mppts),
+          solar_mppts: Number(solar.mppts ?? wizardSeed.solar_mppts ?? 1),
           solar_show_daily: Boolean(solar.show_daily ?? wizardSeed.solar_show_daily),
           solar_animation_speed: Number(solar.animation_speed ?? wizardSeed.solar_animation_speed),
           solar_max_power: Number(solar.max_power ?? wizardSeed.solar_max_power),

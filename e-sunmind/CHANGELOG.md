@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.282
+- Energy Setup/Wizard: rimossa inferenza automatica PV da entita mappate (`pv2/pv3/...`).
+- I campi PV lasciati vuoti in UI restano vuoti, senza ripopolamento automatico.
+- Bump versione addon/backend a `0.3.282`.
+
 ## 0.3.281
 - Energy Dashboard K Flow: migliorato layout blocco PV (righe distanziate e riposizionate) per evitare sovrapposizioni.
 - Energy Dashboard K Flow: badge produzione istantanea sopra il sole abbassato e allargato per non risultare schiacciato/tagliato.
