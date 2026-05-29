@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.287
+- Energy Dashboard K Flow: logo alto default servito da asset interno `vendor/k-flow-card/logo.png`.
+- Energy Dashboard K Flow: logo riposizionato più in alto, separato dalla linea del sole.
+- Energy Dashboard K Flow: badge PV alzato meno aggressivamente verso il bordo alto, per evitare sovrapposizione col logo.
+- Bump versione addon/backend a `0.3.287`.
+
 ## 0.3.286
 - Energy Dashboard K Flow: logo alto default impostato su asset addon esistente `/energy-dashboard/logo.png`.
 - Bump versione addon/backend a `0.3.286`.

@@ -749,7 +749,7 @@ class KFlowCard extends HTMLElement {
       battery_shutdown_soc: 10,
       battery_shutdown_soc_entity: '',
       battery_shutdown_soc_manual: '',
-      brand_logo: '/energy-dashboard/logo.png',
+      brand_logo: 'logo.png',
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,
@@ -953,8 +953,8 @@ class KFlowCard extends HTMLElement {
     };
     const homeIconHref = resolveIconHref(this.config.home_icon, 'home-icon.png');
 
-    const pv3txt = showPvExtra ? `<text id="pv3label" x="10" y="404" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="10" y="422" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
-    const pv4txt = showPvExtra ? `<text id="pv4label" x="10" y="430" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="10" y="448" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv3txt = showPvExtra ? `<text id="pv3label" x="16" y="412" font-size="9" fill="#8b949e" letter-spacing="1">PV3</text><text id="pv3FlowVal" x="16" y="430" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
+    const pv4txt = showPvExtra ? `<text id="pv4label" x="16" y="444" font-size="9" fill="#8b949e" letter-spacing="1">PV4</text><text id="pv4FlowVal" x="16" y="462" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>` : '';
 
     // EV placement inline with home and grid
     const evX = 462 - 39.5;   // centre of grid icon
@@ -1084,7 +1084,7 @@ class KFlowCard extends HTMLElement {
         <circle id="moonDot" cx="260" cy="72" r="6" fill="rgba(220,235,255,.92)" stroke="rgba(240,248,255,.9)" stroke-width="1.2"/>
       </g>
       <g id="brandLogoGroup" style="display:none;opacity:.95">
-        <image id="brandLogoImg" href="" x="138" y="6" width="244" height="34" preserveAspectRatio="xMidYMid meet"/>
+        <image id="brandLogoImg" href="" x="146" y="2" width="228" height="28" preserveAspectRatio="xMidYMid meet"/>
       </g>
       <rect id="arcPvLabelRect" x="154" y="34" width="120" height="30" rx="15" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
       <text id="arcPvLabelText" x="214" y="54" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
@@ -1117,15 +1117,15 @@ class KFlowCard extends HTMLElement {
       <text id="invFrequencyFlow" x="260" y="234" text-anchor="middle" font-size="11" font-weight="700" fill="#58a6ff">-- Hz</text>
       <text id="invLoadPctFlow" x="260" y="249" text-anchor="middle" font-size="11" font-weight="700" fill="#3ce878">CARICO --%</text>
 
-      <text id="pv1label" x="10" y="352" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
-      <text id="pv1FlowVal" x="10" y="370" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
-      <text id="pv2label" x="10" y="384" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
-      <text id="pv2FlowVal" x="10" y="402" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv1label" x="16" y="348" font-size="9" fill="#8b949e" letter-spacing="1">PV1</text>
+      <text id="pv1FlowVal" x="16" y="366" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
+      <text id="pv2label" x="16" y="380" font-size="9" fill="#8b949e" letter-spacing="1">PV2</text>
+      <text id="pv2FlowVal" x="16" y="398" font-size="12" font-weight="700" fill="#ffe83c">-- W</text>
       ${pv3txt}
       ${pv4txt}
 
       <g id="homeIconImg" transform="translate(179,316)" style="opacity:1"><image href="${homeIconHref}" x="0" y="0" width="145" height="145" preserveAspectRatio="xMidYMid meet"/></g>
-      <text id="fcLoadVal" x="178" y="403" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
+      <text id="fcLoadVal" x="194" y="392" text-anchor="end" font-size="13" font-weight="700" fill="#F7F6D3">-- W</text>
       ${Array.from({ length: 8 }, (_, idx) => `<text id="auxLoadLine${idx + 1}" x="342" y="${340 + (idx * 14)}" text-anchor="start" font-size="8.5" font-weight="700" fill="#cbd5e1" style="display:none">AUX -- W</text>`).join('')}
       ${evtxt}
       </svg></div>`+
@@ -1362,8 +1362,8 @@ class KFlowCard extends HTMLElement {
     }
     const pvLabelRect = getEl('arcPvLabelRect');
     const pvLabelText = getEl('arcPvLabelText');
-    if (pvLabelRect) { pvLabelRect.setAttribute('x', sun.t < 0.5 ? Math.max(4, sun.bx - 108) : Math.min(sun.bx + 14, 420)); pvLabelRect.setAttribute('y', Math.max(36, sun.by - 28)); }
-    if (pvLabelText) { pvLabelText.setAttribute('x', sun.t < 0.5 ? Math.max(52, sun.bx - 60) : Math.min(sun.bx + 62, 468)); pvLabelText.setAttribute('y', Math.max(55, sun.by - 11)); pvLabelText.textContent = pvTxt; }
+    if (pvLabelRect) { pvLabelRect.setAttribute('x', sun.t < 0.5 ? Math.max(4, sun.bx - 108) : Math.min(sun.bx + 14, 420)); pvLabelRect.setAttribute('y', Math.max(50, sun.by - 28)); }
+    if (pvLabelText) { pvLabelText.setAttribute('x', sun.t < 0.5 ? Math.max(52, sun.bx - 60) : Math.min(sun.bx + 62, 468)); pvLabelText.setAttribute('y', Math.max(69, sun.by - 11)); pvLabelText.textContent = pvTxt; }
     setText('arcRiseLabel', sun.rise);
     setText('arcSetLabel', sun.set);
 
