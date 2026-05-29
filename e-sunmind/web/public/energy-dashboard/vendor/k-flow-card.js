@@ -749,7 +749,7 @@ class KFlowCard extends HTMLElement {
       battery_shutdown_soc: 10,
       battery_shutdown_soc_entity: '',
       battery_shutdown_soc_manual: '',
-      brand_logo: 'logo only translucent.png',
+      brand_logo: '/energy-dashboard/logo.png',
       battery2_full_ah: 0,
       battery2_full_wh: 0,
       inverter_max_power: 6000,

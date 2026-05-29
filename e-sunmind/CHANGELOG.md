@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.286
+- Energy Dashboard K Flow: logo alto default impostato su asset addon esistente `/energy-dashboard/logo.png`.
+- Bump versione addon/backend a `0.3.286`.
+
 ## 0.3.285
 - Energy Dashboard K Flow: righe PV (`PV1..PV4`) escluse dallo scaling globale per evitare testi ammassati/sovrapposti.
 - Energy Dashboard K Flow: logo alto default impostato su `logo only translucent.png` (asset interno addon).
