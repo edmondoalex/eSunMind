@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.291"
+APP_VERSION = "0.3.292"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1225,19 +1225,90 @@ def _energy_site_stat_ids(e_cfg: dict[str, Any], card_entities: dict[str, str]) 
     return sources
 
 
-def _stat_change_values(rows: list[dict[str, Any]], count: int) -> list[float]:
+def _empty_energy_sources() -> dict[str, list[str]]:
+    return {
+        "pv": [],
+        "load": [],
+        "grid_import": [],
+        "grid_export": [],
+        "battery_charge": [],
+        "battery_discharge": [],
+        "gas": [],
+    }
+
+
+def _site_match_tokens(e_cfg: dict[str, Any]) -> list[str]:
+    raw = [
+        e_cfg.get("site_id"),
+        e_cfg.get("id"),
+        e_cfg.get("site_name"),
+        e_cfg.get("name"),
+    ]
+    tokens: list[str] = []
+    for value in raw:
+        text = str(value or "").strip().lower()
+        if len(text) >= 3 and text not in tokens:
+            tokens.append(text)
+        compact = re.sub(r"[^a-z0-9]+", "", text)
+        if len(compact) >= 3 and compact not in tokens:
+            tokens.append(compact)
+    return tokens
+
+
+def _entity_matches_site(entity_id: str, tokens: list[str]) -> bool:
+    ent = str(entity_id or "").strip()
+    if not ent or not tokens:
+        return False
+    info = _fetch_ha_entity_state(ent)
+    friendly = str((info or {}).get("friendly_name") or "").lower()
+    haystack = f"{ent.lower()} {friendly} {re.sub(r'[^a-z0-9]+', '', ent.lower())} {re.sub(r'[^a-z0-9]+', '', friendly)}"
+    return any(token in haystack for token in tokens)
+
+
+def _filter_energy_sources_by_site(sources: dict[str, list[str]], e_cfg: dict[str, Any]) -> dict[str, list[str]]:
+    tokens = _site_match_tokens(e_cfg)
+    if not tokens:
+        return _empty_energy_sources()
+    out = _empty_energy_sources()
+    for key, ids in sources.items():
+        if key not in out:
+            continue
+        for sid in ids:
+            if _entity_matches_site(sid, tokens):
+                out[key].append(sid)
+    return out
+
+
+def _stat_unit_to_kwh_factor(unit: Any) -> float:
+    u = str(unit or "").strip().lower()
+    if u == "wh":
+        return 0.001
+    if u == "mwh":
+        return 1000.0
+    return 1.0
+
+
+def _stat_unit_factors(statistic_ids: list[str]) -> dict[str, float]:
+    factors: dict[str, float] = {}
+    for sid in statistic_ids:
+        info = _fetch_ha_entity_state(sid)
+        factors[sid] = _stat_unit_to_kwh_factor((info or {}).get("unit"))
+    return factors
+
+
+def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 1.0) -> list[float]:
     vals = [0.0] * count
     for idx, row in enumerate(rows[:count]):
         if not isinstance(row, dict):
             continue
-        vals[idx] = abs(float(_to_float_or_none(row.get("change")) or 0.0))
+        vals[idx] = abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor
     return vals
 
 
-def _combine_stat_ids(stats: dict[str, list[dict[str, Any]]], ids: list[str], count: int) -> list[float]:
+def _combine_stat_ids(stats: dict[str, list[dict[str, Any]]], ids: list[str], count: int, factors: dict[str, float]) -> list[float]:
     out = [0.0] * count
     for sid in ids:
-        vals = _stat_change_values(stats.get(sid) or [], count)
+        vals = _stat_change_values(stats.get(sid) or [], count, factors.get(sid, 1.0))
         out = [a + b for a, b in zip(out, vals)]
     return out
 
@@ -1300,7 +1371,15 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
     prefs: dict[str, Any] = {}
     site_requested = bool(str(site_id or "").strip())
     if site_requested:
-        sources = _energy_site_stat_ids(e_cfg, card_entities)
+        try:
+            prefs = await _fetch_ha_energy_prefs()
+        except Exception as exc:
+            errors["energy_prefs"] = str(exc)
+        ha_site_sources = _filter_energy_sources_by_site(_energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities), e_cfg)
+        site_sources = _energy_site_stat_ids(e_cfg, card_entities)
+        sources = _empty_energy_sources()
+        for key in sources:
+            sources[key] = ha_site_sources.get(key) or site_sources.get(key) or []
     else:
         try:
             prefs = await _fetch_ha_energy_prefs()
@@ -1310,20 +1389,22 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
 
     all_stat_ids = sorted({sid for ids in sources.values() for sid in ids})
     stats: dict[str, list[dict[str, Any]]] = {}
+    factors: dict[str, float] = {}
     if all_stat_ids:
+        factors = _stat_unit_factors(all_stat_ids)
         try:
             stats = await _fetch_ha_statistics(all_stat_ids, start, end, stat_period)
         except Exception as exc:
             errors["statistics"] = str(exc)
 
     series = {
-        "pv": _combine_stat_ids(stats, sources["pv"], count),
-        "load": _combine_stat_ids(stats, sources["load"], count),
-        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count),
-        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count),
-        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count),
-        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count),
-        "gas": _combine_stat_ids(stats, sources["gas"], count),
+        "pv": _combine_stat_ids(stats, sources["pv"], count, factors),
+        "load": _combine_stat_ids(stats, sources["load"], count, factors),
+        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count, factors),
+        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count, factors),
+        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors),
+        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors),
+        "gas": _combine_stat_ids(stats, sources["gas"], count, factors),
     }
 
     if not any(v > 0 for v in series["load"]):
@@ -1350,7 +1431,8 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
         "series": series,
         "totals": totals,
         "sources": sources,
-        "source_mode": "site_config_statistics" if site_requested else ("ha_energy_statistics" if prefs else "configured_statistics"),
+        "source_units_factor_to_kwh": factors,
+        "source_mode": "ha_energy_site_filtered" if site_requested and prefs else ("site_config_statistics" if site_requested else ("ha_energy_statistics" if prefs else "configured_statistics")),
         "errors": errors,
     }
 

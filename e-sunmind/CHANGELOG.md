@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.292
+- Energy Time: per `?site=...` filtra le sorgenti HA Energy globali per nome/id del sito, evitando di usare i soli sensori daily quando esistono statistiche HA dedicate.
+- Energy Time: conversione automatica Wh/kWh/MWh verso kWh sui `change` recorder, cosi sensori batteria in MWh non risultano 1000x piu piccoli.
+- Bump versione addon/backend a `0.3.292`.
+
 ## 0.3.291
 - Energy Time: i `change` statistici HA vengono trattati come magnitudine, cosi carica batteria/export con segno negativo non finiscono a `0 kWh`.
 - Bump versione addon/backend a `0.3.291`.
