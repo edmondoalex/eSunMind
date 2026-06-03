@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.294
+- Energy Time: rimossa la nota sotto il grafico barre e aggiunte le etichette giorno/mese sotto ogni barra.
+- Bump versione addon/backend a `0.3.294`.
+
 ## 0.3.293
 - Admin Energy: aggiunti campi `Energy Time - statistic_id storici` per configurare manualmente PV, casa, rete, batteria e gas per ogni sito.
 - Energy Time: i campi manuali hanno priorita sulle deduzioni da HA Energy/site name, cosi i dati storici non dipendono da match automatici.

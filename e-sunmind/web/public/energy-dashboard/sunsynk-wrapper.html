@@ -297,30 +297,37 @@
       display: grid;
       grid-template-columns: repeat(var(--bar-count, 24), minmax(3px, 1fr));
       gap: 2px;
-      align-items: end;
-      height: 88px;
+      align-items: stretch;
+      height: 104px;
       margin-top: 12px;
-      padding: 8px 8px 18px;
+      padding: 8px 8px 6px;
       background: #0b0f14;
       border: 1px solid rgba(148, 163, 184, .14);
       border-radius: 8px;
       box-sizing: border-box;
       position: relative;
     }
+    .kflow-history-bar-item {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 1fr 16px;
+      align-items: end;
+      gap: 3px;
+    }
     .kflow-history-bar {
+      width: 100%;
       min-width: 0;
       border-radius: 4px 4px 0 0;
       background: linear-gradient(to top, #38bdf8, #f59e0b);
       opacity: .86;
     }
-    .kflow-history-meta {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      margin-top: 8px;
-      color: #94a3b8;
-      font-size: .72rem;
-      flex-wrap: wrap;
+    .kflow-history-bar-label {
+      color: #8b949e;
+      font-size: .58rem;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
     }
     @media (max-width: 640px) {
       .kflow-history-graph { height: 250px; }
@@ -1639,12 +1646,8 @@
             ${(barVals.length ? barVals : Array.from({ length: barCount }, () => 0)).map((v, i) => {
               const h = Math.max(2, Math.round(((Number(v) || 0) / maxBar) * 100));
               const label = labels[i] || '';
-              return `<div class="kflow-history-bar" title="${label} ${fmtKwh(v)}" style="height:${h}%"></div>`;
+              return `<div class="kflow-history-bar-item" title="${label} ${fmtKwh(v)}"><div class="kflow-history-bar" style="height:${h}%"></div><div class="kflow-history-bar-label">${label}</div></div>`;
             }).join('')}
-          </div>
-          <div class="kflow-history-meta">
-            <span>${loading ? 'Aggiornamento...' : errText || `${periodLabel} ${dateValue}`}</span>
-            <span>Barre: consumo casa; fallback produzione FV se consumo non disponibile. Totale barre: ${fmtKwh(sumSeries(barVals))}</span>
           </div>
         </div>
       `;
