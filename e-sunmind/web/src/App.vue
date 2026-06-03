@@ -1534,6 +1534,19 @@
                   <label>Label daily sell<input type="text" v-model="energyWizardForm.grid_label_daily_sell" /></label>
                 </div>
               </div>
+              <div class="energy-subblock">
+                <strong>Energy Time - statistic_id storici</strong>
+                <div class="form-grid energy-entity-grid">
+                  <label>Solare statistic_id<input type="text" v-model="energyForm.energy_time_pv_stat_ids" placeholder="sensor.xxx_total_production" /></label>
+                  <label>Casa statistic_id<input type="text" v-model="energyForm.energy_time_load_stat_ids" placeholder="sensor.xxx_total_load" /></label>
+                  <label>Rete import statistic_id<input type="text" v-model="energyForm.energy_time_grid_import_stat_ids" placeholder="sensor.xxx_total_energy_import" /></label>
+                  <label>Rete export statistic_id<input type="text" v-model="energyForm.energy_time_grid_export_stat_ids" placeholder="sensor.xxx_total_energy_export" /></label>
+                  <label>Batteria carica statistic_id<input type="text" v-model="energyForm.energy_time_battery_charge_stat_ids" placeholder="sensor.xxx_total_battery_charge" /></label>
+                  <label>Batteria scarica statistic_id<input type="text" v-model="energyForm.energy_time_battery_discharge_stat_ids" placeholder="sensor.xxx_total_battery_discharge" /></label>
+                  <label>Gas statistic_id<input type="text" v-model="energyForm.energy_time_gas_stat_ids" placeholder="sensor.xxx_gas" /></label>
+                </div>
+                <small>Prioritari per Energy Time. Puoi inserire piu statistic_id separati da virgola o spazio.</small>
+              </div>
             </section>
 
             <section class="energy-group" v-show="energySetupSection === 'signs'">
@@ -1991,6 +2004,13 @@ const energyForm = ref({
   home_energy_today_entity_id: '',
   grid_import_today_entity_id: '',
   grid_export_today_entity_id: '',
+  energy_time_pv_stat_ids: '',
+  energy_time_load_stat_ids: '',
+  energy_time_grid_import_stat_ids: '',
+  energy_time_grid_export_stat_ids: '',
+  energy_time_battery_charge_stat_ids: '',
+  energy_time_battery_discharge_stat_ids: '',
+  energy_time_gas_stat_ids: '',
   sunsynk_card_config_json: '',
   k_flow_card_config_json: '',
   k_flow_invert_battery_power: false,
@@ -2413,6 +2433,13 @@ function makeEnergySiteFromForm(base = {}) {
     home_energy_today_entity_id: String(energyForm.value.home_energy_today_entity_id || ''),
     grid_import_today_entity_id: String(energyForm.value.grid_import_today_entity_id || ''),
     grid_export_today_entity_id: String(energyForm.value.grid_export_today_entity_id || ''),
+    energy_time_pv_stat_ids: String(energyForm.value.energy_time_pv_stat_ids || ''),
+    energy_time_load_stat_ids: String(energyForm.value.energy_time_load_stat_ids || ''),
+    energy_time_grid_import_stat_ids: String(energyForm.value.energy_time_grid_import_stat_ids || ''),
+    energy_time_grid_export_stat_ids: String(energyForm.value.energy_time_grid_export_stat_ids || ''),
+    energy_time_battery_charge_stat_ids: String(energyForm.value.energy_time_battery_charge_stat_ids || ''),
+    energy_time_battery_discharge_stat_ids: String(energyForm.value.energy_time_battery_discharge_stat_ids || ''),
+    energy_time_gas_stat_ids: String(energyForm.value.energy_time_gas_stat_ids || ''),
     sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(energyForm.value.k_flow_card_config_json || ''),
     entity_signs_json: String(energyForm.value.entity_signs_json || ''),
@@ -2447,6 +2474,13 @@ function applyEnergySiteToForm(site = {}) {
     home_energy_today_entity_id: String(site.home_energy_today_entity_id || ''),
     grid_import_today_entity_id: String(site.grid_import_today_entity_id || ''),
     grid_export_today_entity_id: String(site.grid_export_today_entity_id || ''),
+    energy_time_pv_stat_ids: String(site.energy_time_pv_stat_ids || ''),
+    energy_time_load_stat_ids: String(site.energy_time_load_stat_ids || ''),
+    energy_time_grid_import_stat_ids: String(site.energy_time_grid_import_stat_ids || ''),
+    energy_time_grid_export_stat_ids: String(site.energy_time_grid_export_stat_ids || ''),
+    energy_time_battery_charge_stat_ids: String(site.energy_time_battery_charge_stat_ids || ''),
+    energy_time_battery_discharge_stat_ids: String(site.energy_time_battery_discharge_stat_ids || ''),
+    energy_time_gas_stat_ids: String(site.energy_time_gas_stat_ids || ''),
     sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(site.k_flow_card_config_json || ''),
     k_flow_invert_battery_power: false,
@@ -5478,6 +5512,13 @@ async function loadData() {
         home_energy_today_entity_id: String(eo.home_energy_today_entity_id || ''),
         grid_import_today_entity_id: String(eo.grid_import_today_entity_id || ''),
         grid_export_today_entity_id: String(eo.grid_export_today_entity_id || ''),
+        energy_time_pv_stat_ids: String(eo.energy_time_pv_stat_ids || ''),
+        energy_time_load_stat_ids: String(eo.energy_time_load_stat_ids || ''),
+        energy_time_grid_import_stat_ids: String(eo.energy_time_grid_import_stat_ids || ''),
+        energy_time_grid_export_stat_ids: String(eo.energy_time_grid_export_stat_ids || ''),
+        energy_time_battery_charge_stat_ids: String(eo.energy_time_battery_charge_stat_ids || ''),
+        energy_time_battery_discharge_stat_ids: String(eo.energy_time_battery_discharge_stat_ids || ''),
+        energy_time_gas_stat_ids: String(eo.energy_time_gas_stat_ids || ''),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
         k_flow_card_config_json: String(eo.k_flow_card_config_json || ''),
         k_flow_invert_battery_power: false,

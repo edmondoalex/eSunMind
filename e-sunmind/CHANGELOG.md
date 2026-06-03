@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.293
+- Admin Energy: aggiunti campi `Energy Time - statistic_id storici` per configurare manualmente PV, casa, rete, batteria e gas per ogni sito.
+- Energy Time: i campi manuali hanno priorita sulle deduzioni da HA Energy/site name, cosi i dati storici non dipendono da match automatici.
+- Bump versione addon/backend a `0.3.293`.
+
 ## 0.3.292
 - Energy Time: per `?site=...` filtra le sorgenti HA Energy globali per nome/id del sito, evitando di usare i soli sensori daily quando esistono statistiche HA dedicate.
 - Energy Time: conversione automatica Wh/kWh/MWh verso kWh sui `change` recorder, cosi sensori batteria in MWh non risultano 1000x piu piccoli.

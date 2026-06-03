@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.292"
+APP_VERSION = "0.3.293"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -259,6 +259,13 @@ def _load_options() -> dict[str, Any]:
             "home_energy_today_entity_id": "",
             "grid_import_today_entity_id": "",
             "grid_export_today_entity_id": "",
+            "energy_time_pv_stat_ids": "",
+            "energy_time_load_stat_ids": "",
+            "energy_time_grid_import_stat_ids": "",
+            "energy_time_grid_export_stat_ids": "",
+            "energy_time_battery_charge_stat_ids": "",
+            "energy_time_battery_discharge_stat_ids": "",
+            "energy_time_gas_stat_ids": "",
             "sunsynk_card_config_json": "",
             "k_flow_card_config_json": "",
             "entity_signs_json": "",
@@ -401,6 +408,13 @@ ENERGY_SITE_KEYS = (
     "home_energy_today_entity_id",
     "grid_import_today_entity_id",
     "grid_export_today_entity_id",
+    "energy_time_pv_stat_ids",
+    "energy_time_load_stat_ids",
+    "energy_time_grid_import_stat_ids",
+    "energy_time_grid_export_stat_ids",
+    "energy_time_battery_charge_stat_ids",
+    "energy_time_battery_discharge_stat_ids",
+    "energy_time_gas_stat_ids",
     "sunsynk_card_config_json",
     "k_flow_card_config_json",
     "entity_signs_json",
@@ -1225,6 +1239,31 @@ def _energy_site_stat_ids(e_cfg: dict[str, Any], card_entities: dict[str, str]) 
     return sources
 
 
+def _split_stat_ids(value: Any) -> list[str]:
+    text = str(value or "").strip()
+    if not text:
+        return []
+    parts = re.split(r"[\s,;]+", text)
+    out: list[str] = []
+    for part in parts:
+        sid = part.strip()
+        if sid and sid not in out:
+            out.append(sid)
+    return out
+
+
+def _energy_time_manual_stat_ids(e_cfg: dict[str, Any]) -> dict[str, list[str]]:
+    return {
+        "pv": _split_stat_ids(e_cfg.get("energy_time_pv_stat_ids")),
+        "load": _split_stat_ids(e_cfg.get("energy_time_load_stat_ids")),
+        "grid_import": _split_stat_ids(e_cfg.get("energy_time_grid_import_stat_ids")),
+        "grid_export": _split_stat_ids(e_cfg.get("energy_time_grid_export_stat_ids")),
+        "battery_charge": _split_stat_ids(e_cfg.get("energy_time_battery_charge_stat_ids")),
+        "battery_discharge": _split_stat_ids(e_cfg.get("energy_time_battery_discharge_stat_ids")),
+        "gas": _split_stat_ids(e_cfg.get("energy_time_gas_stat_ids")),
+    }
+
+
 def _empty_energy_sources() -> dict[str, list[str]]:
     return {
         "pv": [],
@@ -1370,22 +1409,33 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
 
     prefs: dict[str, Any] = {}
     site_requested = bool(str(site_id or "").strip())
+    manual_sources = _energy_time_manual_stat_ids(e_cfg)
+    has_manual_sources = any(bool(ids) for ids in manual_sources.values())
     if site_requested:
-        try:
-            prefs = await _fetch_ha_energy_prefs()
-        except Exception as exc:
-            errors["energy_prefs"] = str(exc)
-        ha_site_sources = _filter_energy_sources_by_site(_energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities), e_cfg)
-        site_sources = _energy_site_stat_ids(e_cfg, card_entities)
-        sources = _empty_energy_sources()
-        for key in sources:
-            sources[key] = ha_site_sources.get(key) or site_sources.get(key) or []
+        if has_manual_sources:
+            fallback_sources = _energy_site_stat_ids(e_cfg, card_entities)
+            sources = _empty_energy_sources()
+            for key in sources:
+                sources[key] = manual_sources.get(key) or fallback_sources.get(key) or []
+        else:
+            try:
+                prefs = await _fetch_ha_energy_prefs()
+            except Exception as exc:
+                errors["energy_prefs"] = str(exc)
+            ha_site_sources = _filter_energy_sources_by_site(_energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities), e_cfg)
+            site_sources = _energy_site_stat_ids(e_cfg, card_entities)
+            sources = _empty_energy_sources()
+            for key in sources:
+                sources[key] = ha_site_sources.get(key) or site_sources.get(key) or []
     else:
-        try:
-            prefs = await _fetch_ha_energy_prefs()
-        except Exception as exc:
-            errors["energy_prefs"] = str(exc)
-        sources = _energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities)
+        if has_manual_sources:
+            sources = manual_sources
+        else:
+            try:
+                prefs = await _fetch_ha_energy_prefs()
+            except Exception as exc:
+                errors["energy_prefs"] = str(exc)
+            sources = _energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities)
 
     all_stat_ids = sorted({sid for ids in sources.values() for sid in ids})
     stats: dict[str, list[dict[str, Any]]] = {}
@@ -1432,7 +1482,7 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
         "totals": totals,
         "sources": sources,
         "source_units_factor_to_kwh": factors,
-        "source_mode": "ha_energy_site_filtered" if site_requested and prefs else ("site_config_statistics" if site_requested else ("ha_energy_statistics" if prefs else "configured_statistics")),
+        "source_mode": "manual_energy_time_statistics" if has_manual_sources else ("ha_energy_site_filtered" if site_requested and prefs else ("site_config_statistics" if site_requested else ("ha_energy_statistics" if prefs else "configured_statistics"))),
         "errors": errors,
     }
 
