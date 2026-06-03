@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.297
+- Stabilizzato `GET /api/weather/irrigation` per e-Dry con tutti i campi root sempre presenti e valori mancanti restituiti come `null`.
+- `source` per irrigazione ora distingue in modo semplice `local_station` e `fallback_web`; `age_seconds` e `available` restano sempre nel payload.
+- Open-Meteo per irrigazione esteso con probabilita pioggia, ET0, temperatura/umidita suolo e forecast orario/giornaliero piu coerente.
+- README aggiornato con contratto dell'endpoint irrigazione.
+- Bump versione addon/backend a `0.3.297`.
+
 ## 0.3.296
 - Energy Dashboard K Flow: raddoppiata la dimensione responsive del logo EKONEX in testata.
 - Bump versione addon/backend a `0.3.296`.

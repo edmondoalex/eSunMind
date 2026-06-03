@@ -107,6 +107,105 @@ Nota config: `facade_azimuth_deg = -1` significa facciata non configurata; in AP
 
 Contratto stabile per e-Tende: i campi root di `/api/weather/guard` restano retrocompatibili e l'oggetto `station` contiene sempre `enabled`, `ok`, `used`, `error`, `age_seconds`.
 
+### Weather irrigation per e-Dry
+
+Endpoint meteo stabile per irrigazione:
+
+- `GET /api/weather/irrigation`
+
+Contratto:
+
+- tutti i campi root sono sempre presenti;
+- i valori non disponibili vengono restituiti come `null`;
+- `source` vale `local_station` quando il dato arriva dalla stazione meteo locale valida, altrimenti `fallback_web`;
+- `age_seconds` e `available` permettono a e-Dry di capire se il dato e fresco;
+- `hourly_forecast[]` e `daily_forecast[]` sono inclusi quando disponibili dal provider web.
+
+Risposta `200` esempio:
+
+```json
+{
+  "temperature_c": 27.4,
+  "humidity_pct": 48.0,
+  "pressure_hpa": 1014.2,
+  "dew_point_c": 15.6,
+  "wind_speed_ms": 3.8,
+  "wind_gust_ms": 5.1,
+  "wind_bearing_deg": 220.0,
+  "rain_rate_mm_h": 0.0,
+  "rain_today_mm": null,
+  "rain_last_24h_mm": null,
+  "precip_probability_pct": 35.0,
+  "forecast_rain_24h_mm": 4.8,
+  "solar_radiation_w_m2": 640.0,
+  "uv_index": 6.1,
+  "cloud_cover_pct": 28.0,
+  "soil_moisture_pct": 31.0,
+  "soil_temperature_c": 21.8,
+  "et0_mm_day": 4.2,
+  "weather_code": 2,
+  "condition": "cloudy",
+  "last_update": "2026-06-03T14:10:00+02:00",
+  "source": "local_station",
+  "age_seconds": 42.0,
+  "available": true,
+  "is_raining": false,
+  "rain_block": false,
+  "wind_block": false,
+  "freeze_block": false,
+  "hot_day": false,
+  "dry_day": true,
+  "irrigation_weather_score": 100,
+  "irrigation_weather_reason": "dry_day",
+  "hourly_forecast": [],
+  "daily_forecast": [],
+  "schema": "e_sunmind_irrigation_weather.v1"
+}
+```
+
+Risposta `503` quando il runtime non e ancora pronto:
+
+```json
+{
+  "temperature_c": null,
+  "humidity_pct": null,
+  "pressure_hpa": null,
+  "dew_point_c": null,
+  "wind_speed_ms": null,
+  "wind_gust_ms": null,
+  "wind_bearing_deg": null,
+  "rain_rate_mm_h": null,
+  "rain_today_mm": null,
+  "rain_last_24h_mm": null,
+  "precip_probability_pct": null,
+  "forecast_rain_24h_mm": null,
+  "solar_radiation_w_m2": null,
+  "uv_index": null,
+  "cloud_cover_pct": null,
+  "soil_moisture_pct": null,
+  "soil_temperature_c": null,
+  "et0_mm_day": null,
+  "weather_code": null,
+  "condition": null,
+  "last_update": null,
+  "source": null,
+  "age_seconds": null,
+  "available": false,
+  "is_raining": false,
+  "rain_block": false,
+  "wind_block": false,
+  "freeze_block": false,
+  "hot_day": false,
+  "dry_day": false,
+  "irrigation_weather_score": 0,
+  "irrigation_weather_reason": "data_not_ready",
+  "hourly_forecast": [],
+  "daily_forecast": [],
+  "schema": "e_sunmind_irrigation_weather.v1",
+  "error": "data_not_ready"
+}
+```
+
 ### Stazione meteo reale opzionale
 
 Il weather guard funziona anche senza stazione meteo, usando MET/Open-Meteo. Se e disponibile una stazione Ecowitt/GW1101 integrata in e-Control, si possono configurare le entita reali:

@@ -411,3 +411,4 @@
 
 
 
+- 2026-06-03: v0.3.297 aggiunto contratto meteo irrigazione `GET /api/weather/irrigation` per e-Dry, con campi normalizzati, derivati blocco/pioggia/vento/gelo e forecast hourly/daily.

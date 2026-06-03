@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.296"
+APP_VERSION = "0.3.297"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -203,6 +203,8 @@ def _load_options() -> dict[str, Any]:
             "wind_direction_entity_id": "",
             "rain_rate_entity_id": "",
             "rain_1h_entity_id": "",
+            "rain_today_entity_id": "",
+            "rain_24h_entity_id": "",
             "outdoor_temp_entity_id": "",
             "outdoor_humidity_entity_id": "",
             "pressure_entity_id": "",
@@ -211,6 +213,8 @@ def _load_options() -> dict[str, Any]:
             "feels_like_entity_id": "",
             "solar_lux_entity_id": "",
             "solar_radiation_entity_id": "",
+            "soil_moisture_entity_id": "",
+            "soil_temperature_entity_id": "",
             "vpd_entity_id": "",
         },
         "weather_guard": {
@@ -812,12 +816,24 @@ def _fetch_weather_open_meteo(cfg: dict[str, Any], latitude: float, longitude: f
     wc = cfg.get("weather", {}) or {}
     if not wc.get("enabled", True):
         return None
-    vars_hourly = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,weather_code"
-    vars_current = "temperature_2m,relative_humidity_2m,pressure_msl,cloud_cover,precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,weather_code"
+    vars_hourly = (
+        "temperature_2m,relative_humidity_2m,dew_point_2m,pressure_msl,cloud_cover,"
+        "precipitation_probability,precipitation,rain,wind_speed_10m,wind_gusts_10m,"
+        "wind_direction_10m,uv_index,weather_code,et0_fao_evapotranspiration,"
+        "soil_temperature_0cm,soil_moisture_0_to_1cm"
+    )
+    vars_current = (
+        "temperature_2m,relative_humidity_2m,dew_point_2m,pressure_msl,cloud_cover,"
+        "precipitation,wind_speed_10m,wind_gusts_10m,wind_direction_10m,uv_index,weather_code"
+    )
+    vars_daily = (
+        "precipitation_sum,rain_sum,precipitation_probability_max,"
+        "et0_fao_evapotranspiration_sum,temperature_2m_max,temperature_2m_min"
+    )
     url = (
         "https://api.open-meteo.com/v1/forecast"
         f"?latitude={latitude}&longitude={longitude}"
-        f"&current={vars_current}&hourly={vars_hourly}&timezone=auto&forecast_days=2"
+        f"&current={vars_current}&hourly={vars_hourly}&daily={vars_daily}&timezone=auto&forecast_days=3"
     )
     try:
         with urlopen(url, timeout=20) as resp:
@@ -830,6 +846,7 @@ def _fetch_weather_open_meteo(cfg: dict[str, Any], latitude: float, longitude: f
         "time": cur.get("time"),
         "air_temperature_c": cur.get("temperature_2m"),
         "relative_humidity_pct": cur.get("relative_humidity_2m"),
+        "dew_point_c": cur.get("dew_point_2m"),
         "wind_speed_ms": (float(cur.get("wind_speed_10m")) / 3.6) if cur.get("wind_speed_10m") is not None else None,
         "wind_gust_ms": (float(cur.get("wind_gusts_10m")) / 3.6) if cur.get("wind_gusts_10m") is not None else None,
         "wind_from_direction_deg": cur.get("wind_direction_10m"),
@@ -1776,6 +1793,8 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "wind_from_direction_deg": ("wind_direction_entity_id", lambda v, _u: _to_float_or_none(v)),
         "rain_rate_mm_h": ("rain_rate_entity_id", _normalize_rain_rate_to_mm_h),
         "rain_1h_mm": ("rain_1h_entity_id", _normalize_rain_to_mm),
+        "rain_today_mm": ("rain_today_entity_id", _normalize_rain_to_mm),
+        "rain_24h_mm": ("rain_24h_entity_id", _normalize_rain_to_mm),
         "air_temperature_c": ("outdoor_temp_entity_id", lambda v, _u: _to_float_or_none(v)),
         "relative_humidity_pct": ("outdoor_humidity_entity_id", lambda v, _u: _to_float_or_none(v)),
         "air_pressure_hpa": ("pressure_entity_id", _normalize_pressure_to_hpa),
@@ -1784,6 +1803,8 @@ def _build_weather_station_snapshot(cfg: dict[str, Any]) -> dict[str, Any]:
         "feels_like_temperature_c": ("feels_like_entity_id", lambda v, _u: _to_float_or_none(v)),
         "solar_lux_lx": ("solar_lux_entity_id", lambda v, _u: _to_float_or_none(v)),
         "solar_radiation_w_m2": ("solar_radiation_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "soil_moisture_pct": ("soil_moisture_entity_id", lambda v, _u: _to_float_or_none(v)),
+        "soil_temperature_c": ("soil_temperature_entity_id", lambda v, _u: _to_float_or_none(v)),
         "vapour_pressure_deficit_hpa": ("vpd_entity_id", lambda v, _u: _to_float_or_none(v)),
     }
     normalized: dict[str, Any] = {}
@@ -1979,6 +2000,365 @@ def _build_weather_guard(data: dict[str, Any] | None, cfg: dict[str, Any] | None
     return base
 
 
+def _selected_weather_for_irrigation(data: dict[str, Any], guard: dict[str, Any]) -> dict[str, Any]:
+    station = data.get("weather_station") if isinstance(data.get("weather_station"), dict) else None
+    if isinstance(station, dict) and station.get("ok") and ((guard.get("station") or {}).get("used")):
+        return station
+    weather = data.get("weather") if isinstance(data.get("weather"), dict) else None
+    if isinstance(weather, dict) and weather.get("ok"):
+        return weather
+    weather_open = data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None
+    if isinstance(weather_open, dict) and weather_open.get("ok"):
+        return weather_open
+    return station or weather or weather_open or {}
+
+
+def _weather_code_to_condition(code: Any) -> str | None:
+    if code is None:
+        return None
+    text = str(code).strip().lower()
+    if not text:
+        return None
+    if any(k in text for k in ("rain", "piogg", "drizzle", "shower")):
+        return "rainy"
+    if any(k in text for k in ("snow", "sleet")):
+        return "snowy"
+    if any(k in text for k in ("thunder", "storm")):
+        return "stormy"
+    if any(k in text for k in ("fog", "mist")):
+        return "fog"
+    if any(k in text for k in ("cloud", "overcast", "partly")):
+        return "cloudy"
+    if any(k in text for k in ("clear", "fair", "sun")):
+        return "sunny"
+    try:
+        n = int(float(text))
+    except Exception:
+        return text
+    if n in (0, 1):
+        return "sunny"
+    if n in (2, 3):
+        return "cloudy"
+    if 45 <= n <= 48:
+        return "fog"
+    if 51 <= n <= 67 or 80 <= n <= 82:
+        return "rainy"
+    if 71 <= n <= 77 or 85 <= n <= 86:
+        return "snowy"
+    if 95 <= n <= 99:
+        return "stormy"
+    return text
+
+
+def _iso_from_unix_ts(ts: Any, timezone_name: str) -> str | None:
+    value = _to_float_or_none(ts)
+    if value is None:
+        return None
+    try:
+        return datetime.fromtimestamp(value, pytz.timezone(str(timezone_name or "Europe/Rome"))).isoformat()
+    except Exception:
+        return None
+
+
+def _irrigation_source_label(selected: dict[str, Any], guard: dict[str, Any]) -> str | None:
+    if bool(((guard.get("station") or {}).get("used"))):
+        return "local_station"
+    provider = str(selected.get("provider") or guard.get("source") or "").strip().lower()
+    if provider:
+        return "fallback_web"
+    return None
+
+
+def _empty_irrigation_weather_payload(cfg: dict[str, Any] | None = None, *, error: str | None = None) -> dict[str, Any]:
+    timezone_name = str((cfg or {}).get("timezone") or "Europe/Rome")
+    payload = {
+        "temperature_c": None,
+        "humidity_pct": None,
+        "pressure_hpa": None,
+        "dew_point_c": None,
+        "wind_speed_ms": None,
+        "wind_gust_ms": None,
+        "wind_bearing_deg": None,
+        "rain_rate_mm_h": None,
+        "rain_today_mm": None,
+        "rain_last_24h_mm": None,
+        "precip_probability_pct": None,
+        "forecast_rain_24h_mm": None,
+        "solar_radiation_w_m2": None,
+        "uv_index": None,
+        "cloud_cover_pct": None,
+        "soil_moisture_pct": None,
+        "soil_temperature_c": None,
+        "et0_mm_day": None,
+        "weather_code": None,
+        "condition": None,
+        "last_update": None,
+        "source": None,
+        "age_seconds": None,
+        "available": False,
+        "is_raining": False,
+        "rain_block": False,
+        "wind_block": False,
+        "freeze_block": False,
+        "hot_day": False,
+        "dry_day": False,
+        "irrigation_weather_score": 0,
+        "irrigation_weather_reason": error or "weather_unavailable",
+        "hourly_forecast": [],
+        "daily_forecast": [],
+        "generated_at": datetime.now(pytz.timezone(timezone_name)).isoformat(),
+        "schema": "e_sunmind_irrigation_weather.v1",
+    }
+    if error:
+        payload["error"] = error
+    return payload
+
+
+def _forecast_from_open_meteo_payload(payload: dict[str, Any] | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    raw = (payload or {}).get("payload") if isinstance(payload, dict) else None
+    hourly = (raw or {}).get("hourly") if isinstance(raw, dict) else None
+    daily = (raw or {}).get("daily") if isinstance(raw, dict) else None
+    if not isinstance(hourly, dict) and not isinstance(daily, dict):
+        return [], []
+
+    times = hourly.get("time") if isinstance(hourly, dict) and isinstance(hourly.get("time"), list) else []
+    hourly_out: list[dict[str, Any]] = []
+    for idx, ts in enumerate(times[:48]):
+        def at(name: str):
+            values = hourly.get(name)
+            return values[idx] if isinstance(values, list) and idx < len(values) else None
+
+        item = {
+            "time": ts,
+            "temperature_c": at("temperature_2m"),
+            "humidity_pct": at("relative_humidity_2m"),
+            "dew_point_c": at("dew_point_2m"),
+            "pressure_hpa": at("pressure_msl"),
+            "wind_speed_ms": (float(at("wind_speed_10m")) / 3.6) if at("wind_speed_10m") is not None else None,
+            "wind_gust_ms": (float(at("wind_gusts_10m")) / 3.6) if at("wind_gusts_10m") is not None else None,
+            "wind_bearing_deg": at("wind_direction_10m"),
+            "rain_mm": at("precipitation"),
+            "precip_probability_pct": at("precipitation_probability"),
+            "uv_index": at("uv_index"),
+            "cloud_cover_pct": at("cloud_cover"),
+            "soil_moisture_pct": None if at("soil_moisture_0_to_1cm") is None else float(at("soil_moisture_0_to_1cm")) * 100.0,
+            "soil_temperature_c": at("soil_temperature_0cm"),
+            "et0_mm": at("et0_fao_evapotranspiration"),
+            "weather_code": at("weather_code"),
+            "condition": _weather_code_to_condition(at("weather_code")),
+        }
+        hourly_out.append(item)
+
+    daily_out = []
+    if isinstance(daily, dict):
+        daily_times = daily.get("time") if isinstance(daily.get("time"), list) else []
+        for idx, day in enumerate(daily_times[:7]):
+            def daily_at(name: str):
+                values = daily.get(name)
+                return values[idx] if isinstance(values, list) and idx < len(values) else None
+
+            daily_out.append({
+                "date": day,
+                "forecast_rain_24h_mm": daily_at("precipitation_sum"),
+                "rain_sum_mm": daily_at("rain_sum"),
+                "precip_probability_pct": daily_at("precipitation_probability_max"),
+                "et0_mm_day": daily_at("et0_fao_evapotranspiration_sum"),
+                "temperature_max_c": daily_at("temperature_2m_max"),
+                "temperature_min_c": daily_at("temperature_2m_min"),
+            })
+    elif hourly_out:
+        daily_acc: dict[str, dict[str, Any]] = {}
+        for item in hourly_out:
+            day = str(item.get("time") or "")[:10]
+            if not day:
+                continue
+            acc = daily_acc.setdefault(day, {"date": day, "forecast_rain_24h_mm": 0.0, "hour_count": 0})
+            rain = _to_float_or_none(item.get("rain_mm"))
+            if rain is not None:
+                acc["forecast_rain_24h_mm"] += rain
+            acc["hour_count"] += 1
+        for item in daily_acc.values():
+            item["forecast_rain_24h_mm"] = round(float(item["forecast_rain_24h_mm"]), 2)
+            item.setdefault("rain_sum_mm", item["forecast_rain_24h_mm"])
+            item.setdefault("precip_probability_pct", None)
+            item.setdefault("et0_mm_day", None)
+            item.setdefault("temperature_max_c", None)
+            item.setdefault("temperature_min_c", None)
+            daily_out.append(item)
+    return hourly_out, daily_out
+
+
+def _forecast_from_met_payload(payload: dict[str, Any] | None) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    raw = (payload or {}).get("payload") if isinstance(payload, dict) else None
+    ts = (((raw or {}).get("properties") or {}).get("timeseries")) if isinstance(raw, dict) else None
+    if not isinstance(ts, list):
+        return [], []
+    hourly_out: list[dict[str, Any]] = []
+    daily_acc: dict[str, dict[str, Any]] = {}
+    for row in ts[:48]:
+        if not isinstance(row, dict):
+            continue
+        data = row.get("data") if isinstance(row.get("data"), dict) else {}
+        instant = ((data.get("instant") or {}).get("details") or {}) if isinstance(data, dict) else {}
+        next1 = (data.get("next_1_hours") or {}) if isinstance(data, dict) else {}
+        summary = (next1.get("summary") or {}) if isinstance(next1, dict) else {}
+        details = (next1.get("details") or {}) if isinstance(next1, dict) else {}
+        item = {
+            "time": row.get("time"),
+            "temperature_c": instant.get("air_temperature"),
+            "humidity_pct": instant.get("relative_humidity"),
+            "dew_point_c": None,
+            "pressure_hpa": instant.get("air_pressure_at_sea_level"),
+            "wind_speed_ms": instant.get("wind_speed"),
+            "wind_gust_ms": instant.get("wind_speed_of_gust"),
+            "wind_bearing_deg": instant.get("wind_from_direction"),
+            "rain_mm": details.get("precipitation_amount"),
+            "precip_probability_pct": None,
+            "uv_index": instant.get("ultraviolet_index_clear_sky"),
+            "cloud_cover_pct": instant.get("cloud_area_fraction"),
+            "soil_moisture_pct": None,
+            "soil_temperature_c": None,
+            "et0_mm": None,
+            "weather_code": summary.get("symbol_code"),
+            "condition": _weather_code_to_condition(summary.get("symbol_code")),
+        }
+        hourly_out.append(item)
+        day = str(row.get("time") or "")[:10]
+        if day:
+            acc = daily_acc.setdefault(day, {"date": day, "forecast_rain_24h_mm": 0.0, "hour_count": 0})
+            rain = _to_float_or_none(item.get("rain_mm"))
+            if rain is not None:
+                acc["forecast_rain_24h_mm"] += rain
+            acc["hour_count"] += 1
+    daily_out = []
+    for item in daily_acc.values():
+        item["forecast_rain_24h_mm"] = round(float(item["forecast_rain_24h_mm"]), 2)
+        daily_out.append(item)
+    return hourly_out, daily_out
+
+
+def _build_irrigation_weather_payload(data: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    data = _attach_weather_cache_for_guard(data if isinstance(data, dict) else {})
+    data["weather_station"] = _build_weather_station_snapshot(cfg)
+    guard = _build_weather_guard(data, cfg)
+    selected = _selected_weather_for_irrigation(data, guard)
+    norm = selected.get("normalized") if isinstance(selected.get("normalized"), dict) else {}
+    station_norm = ((data.get("weather_station") or {}).get("normalized") or {}) if isinstance(data.get("weather_station"), dict) else {}
+    now_ts = time.time()
+    age = guard.get("age_seconds")
+    available = bool(guard.get("ok")) and not bool(guard.get("stale")) and (age is None or float(age) <= float(((cfg.get("weather_guard") or {}).get("stale_seconds", 180) or 180)))
+
+    weather_code = norm.get("symbol_code")
+    condition = _weather_code_to_condition(weather_code)
+    rain_rate = _to_float_or_none(guard.get("rain_rate_mm_h"))
+    rain_1h = _to_float_or_none(guard.get("rain_1h_mm"))
+    wind_speed = _to_float_or_none(guard.get("wind_speed_ms"))
+    wind_gust = _to_float_or_none(guard.get("wind_gust_ms"))
+    temp = _to_float_or_none(norm.get("air_temperature_c"))
+    humidity = _to_float_or_none(norm.get("relative_humidity_pct"))
+
+    hourly, daily = _forecast_from_open_meteo_payload(data.get("weather_open_meteo") if isinstance(data.get("weather_open_meteo"), dict) else None)
+    if not hourly:
+        hourly, daily = _forecast_from_met_payload(data.get("weather") if isinstance(data.get("weather"), dict) else None)
+    forecast_rain_24h = None
+    if daily:
+        forecast_rain_24h = _to_float_or_none(daily[0].get("forecast_rain_24h_mm"))
+    first_hour = hourly[0] if hourly else {}
+    precip_probability = _to_float_or_none(first_hour.get("precip_probability_pct")) if isinstance(first_hour, dict) else None
+    soil_moisture = _to_float_or_none(station_norm.get("soil_moisture_pct"))
+    if soil_moisture is None and isinstance(first_hour, dict):
+        soil_moisture = _to_float_or_none(first_hour.get("soil_moisture_pct"))
+    soil_temperature = _to_float_or_none(station_norm.get("soil_temperature_c"))
+    if soil_temperature is None and isinstance(first_hour, dict):
+        soil_temperature = _to_float_or_none(first_hour.get("soil_temperature_c"))
+    et0_mm_day = _to_float_or_none(daily[0].get("et0_mm_day")) if daily else None
+    dew_point = _to_float_or_none(norm.get("dew_point_c"))
+    if dew_point is None:
+        dew_point = _to_float_or_none(station_norm.get("dew_point_c"))
+    rain_today = _to_float_or_none(station_norm.get("rain_today_mm"))
+    rain_last_24h = _to_float_or_none(station_norm.get("rain_24h_mm"))
+    source = _irrigation_source_label(selected if isinstance(selected, dict) else {}, guard)
+    last_update = (
+        norm.get("time")
+        or _iso_from_unix_ts(selected.get("_fetched_at_ts") if isinstance(selected, dict) else None, str(cfg.get("timezone") or "Europe/Rome"))
+        or _iso_from_unix_ts((data.get("weather_station") or {}).get("_fetched_at_ts") if isinstance(data.get("weather_station"), dict) else None, str(cfg.get("timezone") or "Europe/Rome"))
+        or guard.get("updated_at")
+        or data.get("timestamp_local")
+    )
+
+    dry_day = bool(available and (rain_rate or 0.0) <= 0.05 and (forecast_rain_24h is None or forecast_rain_24h < 1.0) and (humidity is None or humidity < 60.0))
+    hot_day = bool(available and temp is not None and temp >= 30.0)
+    freeze_block = bool(available and temp is not None and temp <= 2.0)
+    rain_block = bool(available and (guard.get("rain_alarm") or ((rain_1h or 0.0) > 0.0 and (rain_rate or 0.0) >= 1.0)))
+    wind_block = bool(available and guard.get("wind_alarm"))
+    is_raining = bool(available and ((rain_rate or 0.0) > 0.0 or (rain_1h or 0.0) > 0.0))
+
+    score = 100
+    reasons: list[str] = []
+    if not available:
+        score = 0
+        reasons.append(str(guard.get("error") or "weather_unavailable"))
+    if rain_block:
+        score -= 50
+        reasons.append("rain_block")
+    if wind_block:
+        score -= 30
+        reasons.append("wind_block")
+    if freeze_block:
+        score -= 80
+        reasons.append("freeze_block")
+    if hot_day:
+        score += 10
+        reasons.append("hot_day")
+    if dry_day:
+        score += 10
+        reasons.append("dry_day")
+    score = max(0, min(100, int(score)))
+
+    base = _empty_irrigation_weather_payload(cfg)
+    base.update({
+        "temperature_c": temp,
+        "humidity_pct": humidity,
+        "pressure_hpa": _to_float_or_none(norm.get("air_pressure_hpa")),
+        "dew_point_c": dew_point,
+        "wind_speed_ms": wind_speed,
+        "wind_gust_ms": wind_gust,
+        "wind_bearing_deg": _to_float_or_none(guard.get("wind_dir_deg")),
+        "rain_rate_mm_h": rain_rate,
+        "rain_today_mm": rain_today,
+        "rain_last_24h_mm": rain_last_24h,
+        "precip_probability_pct": precip_probability,
+        "forecast_rain_24h_mm": forecast_rain_24h,
+        "solar_radiation_w_m2": _to_float_or_none(station_norm.get("solar_radiation_w_m2")),
+        "uv_index": _to_float_or_none(norm.get("uv_index")),
+        "cloud_cover_pct": _to_float_or_none(norm.get("cloud_area_fraction_pct")),
+        "soil_moisture_pct": soil_moisture,
+        "soil_temperature_c": soil_temperature,
+        "et0_mm_day": et0_mm_day,
+        "weather_code": weather_code,
+        "condition": condition,
+        "last_update": last_update,
+        "source": source,
+        "age_seconds": age,
+        "available": available,
+        "is_raining": is_raining,
+        "rain_block": rain_block,
+        "wind_block": wind_block,
+        "freeze_block": freeze_block,
+        "hot_day": hot_day,
+        "dry_day": dry_day,
+        "irrigation_weather_score": score,
+        "irrigation_weather_reason": ", ".join(reasons) if reasons else "ok",
+        "hourly_forecast": hourly,
+        "daily_forecast": daily,
+        "generated_at": datetime.now(pytz.timezone(str(cfg.get("timezone") or "Europe/Rome"))).isoformat(),
+        "schema": "e_sunmind_irrigation_weather.v1",
+    })
+    if not available:
+        base["error"] = str(guard.get("error") or "weather_unavailable")
+    return base
+
+
 def _fetch_ha_entity_state(entity_id: str) -> dict[str, Any] | None:
     entity = str(entity_id or "").strip()
     if not entity:
@@ -2129,6 +2509,16 @@ def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
         and ("hour" in _txt(i) or "1h" in _txt(i) or "hourly" in _txt(i) or "oraria" in _txt(i))
         and ("rate" not in _txt(i))
     )
+    mapped["rain_today_entity_id"] = _pick(
+        lambda i: ("rain" in _txt(i) or "pioggia" in _txt(i))
+        and ("today" in _txt(i) or "oggi" in _txt(i) or "daily" in _txt(i) or "giornal" in _txt(i))
+        and ("rate" not in _txt(i))
+    )
+    mapped["rain_24h_entity_id"] = _pick(
+        lambda i: ("rain" in _txt(i) or "pioggia" in _txt(i))
+        and ("24h" in _txt(i) or "24 h" in _txt(i) or "last 24" in _txt(i) or "ultime 24" in _txt(i))
+        and ("rate" not in _txt(i))
+    )
 
     # Extra
     mapped["outdoor_temp_entity_id"] = _pick(
@@ -2157,6 +2547,14 @@ def _auto_map_weather_station_entities(device_id: str) -> dict[str, str]:
     )
     mapped["solar_radiation_entity_id"] = _pick(
         lambda i: ("solar radiation" in _txt(i)) or ("irradiance" in _txt(i))
+    )
+    mapped["soil_moisture_entity_id"] = _pick(
+        lambda i: ("soil" in _txt(i) or "suolo" in _txt(i) or "ground" in _txt(i))
+        and ("moisture" in _txt(i) or "humidity" in _txt(i) or "umid" in _txt(i))
+    )
+    mapped["soil_temperature_entity_id"] = _pick(
+        lambda i: (_dclass(i) == "temperature")
+        and ("soil" in _txt(i) or "suolo" in _txt(i) or "ground" in _txt(i))
     )
     mapped["vpd_entity_id"] = _pick(
         lambda i: ("vapour pressure deficit" in _txt(i)) or ("vapor pressure deficit" in _txt(i)) or ("vpd" in _txt(i))
@@ -3406,6 +3804,15 @@ async def weather_guard_get():
     cfg = _load_options()
     payload["weather_station"] = _build_weather_station_snapshot(cfg)
     return JSONResponse(_build_weather_guard(payload, cfg))
+
+
+@app.get("/api/weather/irrigation")
+async def weather_irrigation_get():
+    cfg = _load_options()
+    if not DATA_FILE.exists():
+        return JSONResponse(_empty_irrigation_weather_payload(cfg, error="data_not_ready"), status_code=503)
+    payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
+    return JSONResponse(_build_irrigation_weather_payload(payload, cfg))
 
 
 @app.get("/api/weather_station/autofill")
