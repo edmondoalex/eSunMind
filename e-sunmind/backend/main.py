@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.288"
+APP_VERSION = "0.3.289"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1090,6 +1090,133 @@ def _fetch_ha_history_points(entity_id: str, start: datetime, end: datetime) -> 
     return points, None
 
 
+async def _ha_ws_call(message: dict[str, Any], timeout_seconds: float = 30.0) -> dict[str, Any]:
+    token = _get_supervisor_token()
+    if not token:
+        raise RuntimeError("missing_supervisor_token")
+    try:
+        import websockets  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(f"missing_websockets_dependency: {exc}") from exc
+
+    msg = dict(message)
+    msg["id"] = int(msg.get("id") or 1)
+    async with websockets.connect("ws://supervisor/core/websocket", open_timeout=timeout_seconds) as ws:
+        auth_msg = json.loads(await asyncio.wait_for(ws.recv(), timeout=timeout_seconds))
+        if auth_msg.get("type") != "auth_required":
+            raise RuntimeError(f"unexpected_ws_auth_message:{auth_msg.get('type')}")
+        await ws.send(json.dumps({"type": "auth", "access_token": token}))
+        auth_ok = json.loads(await asyncio.wait_for(ws.recv(), timeout=timeout_seconds))
+        if auth_ok.get("type") != "auth_ok":
+            raise RuntimeError(str(auth_ok.get("message") or auth_ok.get("type") or "websocket_auth_failed"))
+        await ws.send(json.dumps(msg))
+        while True:
+            res = json.loads(await asyncio.wait_for(ws.recv(), timeout=timeout_seconds))
+            if res.get("id") != msg["id"]:
+                continue
+            if not res.get("success", False):
+                err = res.get("error") if isinstance(res.get("error"), dict) else {}
+                raise RuntimeError(str(err.get("message") or err.get("code") or "websocket_call_failed"))
+            return res.get("result") if isinstance(res.get("result"), dict) else {"result": res.get("result")}
+
+
+async def _fetch_ha_energy_prefs() -> dict[str, Any]:
+    return await _ha_ws_call({"id": 1, "type": "energy/get_prefs"})
+
+
+async def _fetch_ha_statistics(
+    statistic_ids: list[str],
+    start: datetime,
+    end: datetime,
+    period: str,
+) -> dict[str, list[dict[str, Any]]]:
+    ids = sorted({str(x or "").strip() for x in statistic_ids if str(x or "").strip()})
+    if not ids:
+        return {}
+    res = await _ha_ws_call(
+        {
+            "id": 2,
+            "type": "recorder/statistics_during_period",
+            "start_time": start.isoformat(),
+            "end_time": end.isoformat(),
+            "statistic_ids": ids,
+            "period": period,
+            "types": ["change"],
+            "units": {"energy": "kWh"},
+        }
+    )
+    return {str(k): v for k, v in res.items() if isinstance(v, list)}
+
+
+def _energy_pref_stat_ids(prefs: dict[str, Any], e_cfg: dict[str, Any], card_entities: dict[str, str]) -> dict[str, list[str]]:
+    sources: dict[str, list[str]] = {
+        "pv": [],
+        "load": [],
+        "grid_import": [],
+        "grid_export": [],
+        "battery_charge": [],
+        "battery_discharge": [],
+        "gas": [],
+    }
+
+    def _add(key: str, value: Any) -> None:
+        ent = str(value or "").strip()
+        if ent and ent not in sources[key]:
+            sources[key].append(ent)
+
+    for src in prefs.get("energy_sources") or []:
+        if not isinstance(src, dict):
+            continue
+        typ = str(src.get("type") or "").strip().lower()
+        if typ == "solar":
+            _add("pv", src.get("stat_energy_from"))
+        elif typ == "grid":
+            _add("grid_import", src.get("stat_energy_from"))
+            _add("grid_export", src.get("stat_energy_to"))
+        elif typ == "battery":
+            _add("battery_discharge", src.get("stat_energy_from"))
+            _add("battery_charge", src.get("stat_energy_to"))
+        elif typ == "gas":
+            _add("gas", src.get("stat_energy_from"))
+
+    for dev in prefs.get("device_consumption") or []:
+        if not isinstance(dev, dict):
+            continue
+        _add("load", dev.get("stat_consumption"))
+
+    # Fallbacks keep custom/non-HA-Energy setups usable, but HA Energy prefs win.
+    if not sources["pv"]:
+        _add("pv", e_cfg.get("pv_energy_today_entity_id") or card_entities.get("day_pv_energy_108"))
+    if not sources["load"]:
+        _add("load", e_cfg.get("home_energy_today_entity_id") or card_entities.get("day_load_energy_84"))
+    if not sources["grid_import"]:
+        _add("grid_import", e_cfg.get("grid_import_today_entity_id") or card_entities.get("day_grid_import_76"))
+    if not sources["grid_export"]:
+        _add("grid_export", e_cfg.get("grid_export_today_entity_id") or card_entities.get("day_grid_export_77"))
+    if not sources["battery_charge"]:
+        _add("battery_charge", card_entities.get("day_battery_charge_70"))
+    if not sources["battery_discharge"]:
+        _add("battery_discharge", card_entities.get("day_battery_discharge_71"))
+    return sources
+
+
+def _stat_change_values(rows: list[dict[str, Any]], count: int) -> list[float]:
+    vals = [0.0] * count
+    for idx, row in enumerate(rows[:count]):
+        if not isinstance(row, dict):
+            continue
+        vals[idx] = max(0.0, float(_to_float_or_none(row.get("change")) or 0.0))
+    return vals
+
+
+def _combine_stat_ids(stats: dict[str, list[dict[str, Any]]], ids: list[str], count: int) -> list[float]:
+    out = [0.0] * count
+    for sid in ids:
+        vals = _stat_change_values(stats.get(sid) or [], count)
+        out = [a + b for a, b in zip(out, vals)]
+    return out
+
+
 def _bucket_energy_day(points: list[dict[str, Any]], start: datetime) -> list[float]:
     out: list[float] = []
     values = [(p["ts"], float(p["value"])) for p in points]
@@ -1121,34 +1248,16 @@ def _bucket_energy_daily_max(points: list[dict[str, Any]], start: datetime, end:
     return days
 
 
-def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | None, period: str, date_text: str) -> dict[str, Any]:
+async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | None, period: str, date_text: str) -> dict[str, Any]:
     e_cfg = _energy_site_config(cfg, site_id)
     tz_name = str(cfg.get("timezone") or e_cfg.get("timezone") or "Europe/Rome")
     start, end, period_norm = _energy_history_range(period, date_text, tz_name)
     card_entities = _parse_energy_card_entities(e_cfg)
-    sources = {
-        "pv": str(e_cfg.get("pv_energy_today_entity_id") or card_entities.get("day_pv_energy_108") or "").strip(),
-        "load": str(e_cfg.get("home_energy_today_entity_id") or card_entities.get("day_load_energy_84") or "").strip(),
-        "grid_import": str(e_cfg.get("grid_import_today_entity_id") or card_entities.get("day_grid_import_76") or "").strip(),
-        "grid_export": str(e_cfg.get("grid_export_today_entity_id") or card_entities.get("day_grid_export_77") or "").strip(),
-        "battery_charge": str(card_entities.get("day_battery_charge_70") or "").strip(),
-        "battery_discharge": str(card_entities.get("day_battery_discharge_71") or "").strip(),
-    }
-    fetched: dict[str, list[dict[str, Any]]] = {}
     errors: dict[str, str] = {}
-    for key, ent in sources.items():
-        if not ent:
-            errors[key] = "empty_entity_id"
-            fetched[key] = []
-            continue
-        points, err = _fetch_ha_history_points(ent, start, end)
-        fetched[key] = points
-        if err:
-            errors[key] = err
-
     if period_norm == "day":
         labels = [f"{h:02d}:00" for h in range(24)]
-        series = {key: _bucket_energy_day(points, start) for key, points in fetched.items()}
+        stat_period = "hour"
+        count = 24
     elif period_norm == "month":
         day_keys = []
         cur = start
@@ -1156,19 +1265,49 @@ def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | None, per
             day_keys.append(cur.date().isoformat())
             cur += timedelta(days=1)
         labels = [k[-2:] for k in day_keys]
-        series = {key: [(_bucket_energy_daily_max(points, start, end)).get(day, 0.0) for day in day_keys] for key, points in fetched.items()}
+        stat_period = "day"
+        count = len(labels)
     else:
         labels = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
-        series = {}
-        for key, points in fetched.items():
-            daily = _bucket_energy_daily_max(points, start, end)
-            month_vals = [0.0] * 12
-            for day, value in daily.items():
-                try:
-                    month_vals[int(day[5:7]) - 1] += float(value or 0.0)
-                except Exception:
-                    pass
-            series[key] = month_vals
+        stat_period = "month"
+        count = 12
+
+    prefs: dict[str, Any] = {}
+    try:
+        prefs = await _fetch_ha_energy_prefs()
+    except Exception as exc:
+        errors["energy_prefs"] = str(exc)
+    sources = _energy_pref_stat_ids(prefs if isinstance(prefs, dict) else {}, e_cfg, card_entities)
+
+    all_stat_ids = sorted({sid for ids in sources.values() for sid in ids})
+    stats: dict[str, list[dict[str, Any]]] = {}
+    if all_stat_ids:
+        try:
+            stats = await _fetch_ha_statistics(all_stat_ids, start, end, stat_period)
+        except Exception as exc:
+            errors["statistics"] = str(exc)
+
+    series = {
+        "pv": _combine_stat_ids(stats, sources["pv"], count),
+        "load": _combine_stat_ids(stats, sources["load"], count),
+        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count),
+        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count),
+        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count),
+        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count),
+        "gas": _combine_stat_ids(stats, sources["gas"], count),
+    }
+
+    if not any(v > 0 for v in series["load"]):
+        series["load"] = [
+            max(0.0, pv + grid_in + batt_out - grid_out - batt_in)
+            for pv, grid_in, batt_out, grid_out, batt_in in zip(
+                series["pv"],
+                series["grid_import"],
+                series["battery_discharge"],
+                series["grid_export"],
+                series["battery_charge"],
+            )
+        ]
 
     totals = {key: round(sum(float(v or 0.0) for v in vals), 3) for key, vals in series.items()}
     return {
@@ -1182,6 +1321,7 @@ def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | None, per
         "series": series,
         "totals": totals,
         "sources": sources,
+        "source_mode": "ha_energy_statistics" if prefs else "configured_statistics",
         "errors": errors,
     }
 
@@ -2957,7 +3097,7 @@ async def energy_debug():
 async def energy_history(site: str | None = None, period: str = "day", date: str = ""):
     cfg = _load_options()
     try:
-        return JSONResponse(_build_energy_history_snapshot(cfg, site, period, date))
+        return JSONResponse(await _build_energy_history_snapshot(cfg, site, period, date))
     except Exception as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 

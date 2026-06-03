@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.289
+- Energy Time: corretta sorgente dati per Giorno/Mese/Anno usando `energy/get_prefs` e `recorder/statistics_during_period` di Home Assistant.
+- Energy Time: i totali ora usano le statistiche HA `change` dei sensori configurati nella dashboard Energy, invece dei soli contatori daily della card.
+- Build: aggiunta dipendenza `websockets` per accedere alla WebSocket API interna di Home Assistant.
+- Bump versione addon/backend a `0.3.289`.
+
 ## 0.3.288
 - Energy Time: aggiunta vista storica kWh stile K Flow con selezione Giorno/Mese/Anno, pulsante `Adesso` e frecce periodo.
 - Energy Time: nuovo endpoint `/api/energy/history` che legge la history di Home Assistant per i sensori energia configurati.
