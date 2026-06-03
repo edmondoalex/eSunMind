@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.298
+- Energy Dashboard K Flow: rimosso definitivamente il vecchio logo lungo il tragitto del sole direttamente dal componente SVG.
+- Bump versione addon/backend a `0.3.298`.
+
 ## 0.3.297
 - Stabilizzato `GET /api/weather/irrigation` per e-Dry con tutti i campi root sempre presenti e valori mancanti restituiti come `null`.
 - `source` per irrigazione ora distingue in modo semplice `local_station` e `fallback_web`; `age_seconds` e `available` restano sempre nel payload.

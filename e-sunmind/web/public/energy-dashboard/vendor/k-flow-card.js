@@ -1083,9 +1083,6 @@ class KFlowCard extends HTMLElement {
         <circle id="moonGlow" cx="260" cy="72" r="12" fill="rgba(180,205,255,.18)"/>
         <circle id="moonDot" cx="260" cy="72" r="6" fill="rgba(220,235,255,.92)" stroke="rgba(240,248,255,.9)" stroke-width="1.2"/>
       </g>
-      <g id="brandLogoGroup" style="display:none;opacity:.95">
-        <image id="brandLogoImg" href="" x="146" y="2" width="228" height="28" preserveAspectRatio="xMidYMid meet"/>
-      </g>
       <rect id="arcPvLabelRect" x="154" y="34" width="120" height="30" rx="15" fill="rgba(255,200,50,.22)" stroke="rgba(255,210,60,.5)" stroke-width="1.2"/>
       <text id="arcPvLabelText" x="214" y="54" text-anchor="middle" fill="rgba(255,235,110,.98)" font-size="13" font-weight="800">0 W ⚡</text>
       <g id="pvFlowGroup"></g>
@@ -1346,8 +1343,6 @@ class KFlowCard extends HTMLElement {
     } else { if (moonGroup) moonGroup.setAttribute('opacity', '0'); }
 
     const pvTxt = (pvTotal >= 1000 ? (pvTotal / 1000).toFixed(2) + ' kW' : pvTotal.toFixed(0) + ' W') + ' ⚡';
-    const logoGroup = getEl('brandLogoGroup');
-    if (logoGroup) logoGroup.style.display = 'none';
     const pvLabelRect = getEl('arcPvLabelRect');
     const pvLabelText = getEl('arcPvLabelText');
     if (pvLabelRect) { pvLabelRect.setAttribute('x', sun.t < 0.5 ? Math.max(4, sun.bx - 108) : Math.min(sun.bx + 14, 420)); pvLabelRect.setAttribute('y', Math.max(50, sun.by - 28)); }
