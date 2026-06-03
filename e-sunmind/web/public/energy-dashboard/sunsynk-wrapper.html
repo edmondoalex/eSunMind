@@ -322,6 +322,28 @@
       box-sizing: border-box;
       position: relative;
     }
+    .kflow-history-legend {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      align-items: center;
+      font-size: .68rem;
+      color: #cbd5e1;
+    }
+    .kflow-history-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .kflow-history-legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .08) inset;
+      flex: 0 0 auto;
+    }
     .kflow-history-bar-item {
       min-width: 0;
       display: grid;
@@ -333,8 +355,21 @@
       width: 100%;
       min-width: 0;
       border-radius: 4px 4px 0 0;
-      background: linear-gradient(to top, #38bdf8, #f59e0b);
-      opacity: .86;
+      background: rgba(15, 23, 42, .82);
+      border: 1px solid rgba(148, 163, 184, .14);
+      box-sizing: border-box;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: end;
+      opacity: .96;
+    }
+    .kflow-history-bar-seg {
+      width: 100%;
+      min-height: 2px;
+    }
+    .kflow-history-bar-seg + .kflow-history-bar-seg {
+      box-shadow: 0 -1px 0 rgba(8, 10, 16, .9) inset;
     }
     .kflow-history-bar-label {
       color: #8b949e;
@@ -1701,6 +1736,91 @@
         </div>
       `;
     }
+
+    renderEnergyHistory = function renderEnergyHistory(payload = null, loading = false) {
+      if (!historySection || MAP_MODE) return;
+      const totals = payload?.totals || {};
+      const series = payload?.series || {};
+      const labels = Array.isArray(payload?.labels) ? payload.labels : [];
+      const seriesDefs = [
+        { key: 'pv', label: 'Solare', color: '#f59e0b' },
+        { key: 'grid_import', label: 'Import', color: '#38bdf8' },
+        { key: 'grid_export', label: 'Export', color: '#94a3b8' },
+        { key: 'battery_charge', label: 'Batt. carica', color: '#ec4899' },
+        { key: 'battery_discharge', label: 'Batt. scarica', color: '#8b5cf6' },
+        { key: 'load', label: 'Casa', color: '#2dd4bf' },
+        { key: 'gas', label: 'Gas', color: '#ef4444' },
+      ];
+      const defaultCount = energyHistoryPeriod === 'day' ? 24 : 12;
+      const barCount = Math.max(
+        1,
+        labels.length,
+        defaultCount,
+        ...seriesDefs.map(({ key }) => Array.isArray(series[key]) ? series[key].length : 0),
+      );
+      const activeDefs = seriesDefs.filter(({ key }) => (Array.isArray(series[key]) ? series[key] : []).some((v) => Number(v) > 0));
+      const visibleDefs = activeDefs.length ? activeDefs : seriesDefs.filter(({ key }) => key === 'load' || key === 'pv');
+      const stackedTotals = Array.from({ length: barCount }, (_, i) => visibleDefs.reduce((sum, def) => sum + Math.max(0, Number((series?.[def.key] || [])[i]) || 0), 0));
+      const maxBar = Math.max(0.1, ...stackedTotals);
+      historySection.hidden = false;
+      historySection.innerHTML = `
+        <div class="kflow-history">
+          <div class="kflow-history-head">
+            <div class="kflow-history-title">Energy Time</div>
+            <div class="kflow-history-controls">
+              <div class="energy-time-picker">
+                <div class="energy-time-date">
+                  <button type="button" title="Cambia periodo" onclick="window.cycleEnergyTimePeriod()">â–£</button>
+                  <span>${energyTimeLabel()}</span>
+                </div>
+                <div class="energy-time-actions">
+                  <button type="button" class="now" onclick="window.setEnergyTimeNow()">Adesso</button>
+                  <button type="button" title="Precedente" onclick="window.shiftEnergyTime(-1)">â€¹</button>
+                  <button type="button" title="Successivo" onclick="window.shiftEnergyTime(1)">â€º</button>
+                  <button type="button" title="Periodo" onclick="window.cycleEnergyTimePeriod()">â‹®</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="energy-time-periods">
+            <button type="button" class="${energyHistoryPeriod === 'day' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('day')">Giorno</button>
+            <button type="button" class="${energyHistoryPeriod === 'month' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('month')">Mese</button>
+            <button type="button" class="${energyHistoryPeriod === 'year' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('year')">Anno</button>
+          </div>
+          <div class="kflow-history-graph">
+            <svg class="kflow-history-lines" viewBox="0 0 760 280" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M380 64 C360 118 250 140 145 145" stroke="#f59e0b"></path>
+              <path d="M380 64 C412 120 520 138 615 145" stroke="#f59e0b"></path>
+              <path d="M145 145 C275 145 438 145 615 145" stroke="#38bdf8"></path>
+              <path d="M380 216 C374 178 438 150 615 145" stroke="#a78bfa"></path>
+              <path d="M380 216 C360 178 248 152 145 145" stroke="#a78bfa"></path>
+            </svg>
+            <div class="kflow-history-node pv"><div class="sub">Solare</div><div class="ico">âš¡</div><div class="val">${fmtKwh(totals.pv)}</div></div>
+            <div class="kflow-history-node grid"><div class="sub">Rete elettrica</div><div class="ico">â–¦</div><div class="val">â†“ ${fmtKwh(totals.grid_import)}</div><div class="sub">â†‘ ${fmtKwh(totals.grid_export)}</div></div>
+            <div class="kflow-history-node home"><div class="sub">Casa</div><div class="ico">âŒ‚</div><div class="val">${fmtKwh(totals.load)}</div></div>
+            <div class="kflow-history-node batt"><div class="sub">Batteria</div><div class="ico">â–£</div><div class="val">â†“ ${fmtKwh(totals.battery_charge)}</div><div class="sub">â†‘ ${fmtKwh(totals.battery_discharge)}</div></div>
+          </div>
+          <div class="kflow-history-legend">
+            ${visibleDefs.map((def) => `<span class="kflow-history-legend-item"><span class="kflow-history-legend-swatch" style="background:${def.color}"></span>${def.label}</span>`).join('')}
+          </div>
+          <div class="kflow-history-bars" style="--bar-count:${barCount}">
+            ${Array.from({ length: barCount }, (_, i) => {
+              const label = labels[i] || '';
+              const total = stackedTotals[i] || 0;
+              const h = total > 0 ? Math.max(2, Math.round((total / maxBar) * 100)) : 2;
+              const parts = visibleDefs.map((def) => {
+                const raw = Math.max(0, Number((series?.[def.key] || [])[i]) || 0);
+                if (raw <= 0 || total <= 0) return '';
+                const segHeight = Math.max(2, (raw / total) * h);
+                return `<div class="kflow-history-bar-seg" style="height:${segHeight}%;background:${def.color}"></div>`;
+              }).filter(Boolean).join('');
+              const title = `${label || energyHistoryPeriod} | ${visibleDefs.map((def) => `${def.label}: ${fmtKwh((series?.[def.key] || [])[i] || 0)}`).join(' | ')}`;
+              return `<div class="kflow-history-bar-item" title="${title}"><div class="kflow-history-bar" style="height:${h}%">${parts}</div><div class="kflow-history-bar-label">${label}</div></div>`;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    };
 
     async function loadEnergyHistory(force = false) {
       if (MAP_MODE || !historySection) return;

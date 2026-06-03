@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.300
+- Energy Time: grafico a barre separato in serie nette con legenda colore per solare, import, export, batteria, casa e gas.
+- Energy Time: barre storiche ora mostrano segmenti distinti per intervallo invece di una sola barra aggregata.
+- Bump versione addon/backend a `0.3.300`.
+
 ## 0.3.299
 - Energy Dashboard Sunsynk: nascosta l'icona meteo residua lungo il tragitto del sole tramite filtro runtime sullo shadow DOM della card.
 - Bump versione addon/backend a `0.3.299`.
