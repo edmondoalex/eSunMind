@@ -134,10 +134,25 @@
     body.map-mode .host { width: 100%; height: 100%; }
     body.map-mode sunsynk-power-flow-card { display: block; }
     body.map-mode .sankey-section { display: none; }
-    body.energy-layout-k-flow .energy-logo-box,
+    body.energy-layout-k-flow .energy-logo-bottom-box,
     body.energy-layout-k-flow .energy-site-name { display: none; }
+    body.energy-layout-k-flow .page {
+      align-content: start;
+    }
     body.energy-layout-k-flow .energy-frame {
       width: min(980px, 98vw);
+      padding-top: clamp(62px, 8vw, 94px);
+    }
+    body.energy-layout-k-flow .energy-logo-top-box {
+      display: flex;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(520px, 86vw);
+      height: clamp(54px, 7vw, 82px);
+    }
+    body.energy-layout-k-flow .energy-logo-top-box .energy-logo {
+      transform: none;
     }
     body.energy-layout-k-flow k-flow-card {
       display: block;
@@ -368,7 +383,7 @@
   <div class="page">
     <div class="energy-frame" id="energyFrame">
       <div class="energy-logo-box energy-logo-top-box">
-        <img class="energy-logo" src="./energymind.png" alt="EnergyMind" />
+        <img class="energy-logo" id="energyTopLogo" src="./energymind.png" alt="EnergyMind" />
       </div>
       <div class="energy-site-name" id="energySiteName"></div>
       <div class="energy-logo-box energy-logo-bottom-box">
@@ -863,7 +878,13 @@
 
     function applyDashboardLayoutClass() {
       document.body.classList.remove('energy-layout-sunsynk', 'energy-layout-k-flow');
-      document.body.classList.add(`energy-layout-${energyDashboardLayout === 'k_flow' ? 'k-flow' : 'sunsynk'}`);
+      const isKFlow = energyDashboardLayout === 'k_flow';
+      document.body.classList.add(`energy-layout-${isKFlow ? 'k-flow' : 'sunsynk'}`);
+      const topLogo = document.getElementById('energyTopLogo');
+      if (topLogo) {
+        topLogo.src = isKFlow ? './ekonex-original.png' : './energymind.png';
+        topLogo.alt = isKFlow ? 'EKONEX' : 'EnergyMind';
+      }
     }
 
     function setDashboardSiteName(site) {

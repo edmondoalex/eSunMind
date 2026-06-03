@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.295
+- Energy Dashboard K Flow: rimosso il logo interno sopra l'arco sole.
+- Energy Dashboard K Flow: logo/titolo mostrato sopra la card come testata esterna.
+- Bump versione addon/backend a `0.3.295`.
+
 ## 0.3.294
 - Energy Time: rimossa la nota sotto il grafico barre e aggiunte le etichette giorno/mese sotto ogni barra.
 - Bump versione addon/backend a `0.3.294`.
