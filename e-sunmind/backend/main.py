@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.290"
+APP_VERSION = "0.3.291"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1230,7 +1230,7 @@ def _stat_change_values(rows: list[dict[str, Any]], count: int) -> list[float]:
     for idx, row in enumerate(rows[:count]):
         if not isinstance(row, dict):
             continue
-        vals[idx] = max(0.0, float(_to_float_or_none(row.get("change")) or 0.0))
+        vals[idx] = abs(float(_to_float_or_none(row.get("change")) or 0.0))
     return vals
 
 

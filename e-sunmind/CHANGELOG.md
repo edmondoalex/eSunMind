@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.291
+- Energy Time: i `change` statistici HA vengono trattati come magnitudine, cosi carica batteria/export con segno negativo non finiscono a `0 kWh`.
+- Bump versione addon/backend a `0.3.291`.
+
 ## 0.3.290
 - Energy Time: separata la vista per sito; con `?site=...` usa solo i sensori energia configurati per quel sito e non la dashboard Energy globale di Home Assistant.
 - Energy Time: la sorgente globale HA resta usata solo quando non viene richiesto un sito specifico.
