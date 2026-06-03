@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.300"
+APP_VERSION = "0.3.301"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -270,6 +270,7 @@ def _load_options() -> dict[str, Any]:
             "energy_time_battery_charge_stat_ids": "",
             "energy_time_battery_discharge_stat_ids": "",
             "energy_time_gas_stat_ids": "",
+            "energy_time_solar_thermal_stat_ids": "",
             "sunsynk_card_config_json": "",
             "k_flow_card_config_json": "",
             "entity_signs_json": "",
@@ -419,6 +420,7 @@ ENERGY_SITE_KEYS = (
     "energy_time_battery_charge_stat_ids",
     "energy_time_battery_discharge_stat_ids",
     "energy_time_gas_stat_ids",
+    "energy_time_solar_thermal_stat_ids",
     "sunsynk_card_config_json",
     "k_flow_card_config_json",
     "entity_signs_json",
@@ -1188,6 +1190,7 @@ def _energy_pref_stat_ids(prefs: dict[str, Any], e_cfg: dict[str, Any], card_ent
         "battery_charge": [],
         "battery_discharge": [],
         "gas": [],
+        "solar_thermal": [],
     }
 
     def _add(key: str, value: Any) -> None:
@@ -1240,6 +1243,7 @@ def _energy_site_stat_ids(e_cfg: dict[str, Any], card_entities: dict[str, str]) 
         "battery_charge": [],
         "battery_discharge": [],
         "gas": [],
+        "solar_thermal": [],
     }
 
     def _add(key: str, value: Any) -> None:
@@ -1278,6 +1282,7 @@ def _energy_time_manual_stat_ids(e_cfg: dict[str, Any]) -> dict[str, list[str]]:
         "battery_charge": _split_stat_ids(e_cfg.get("energy_time_battery_charge_stat_ids")),
         "battery_discharge": _split_stat_ids(e_cfg.get("energy_time_battery_discharge_stat_ids")),
         "gas": _split_stat_ids(e_cfg.get("energy_time_gas_stat_ids")),
+        "solar_thermal": _split_stat_ids(e_cfg.get("energy_time_solar_thermal_stat_ids")),
     }
 
 
@@ -1290,6 +1295,7 @@ def _empty_energy_sources() -> dict[str, list[str]]:
         "battery_charge": [],
         "battery_discharge": [],
         "gas": [],
+        "solar_thermal": [],
     }
 
 
@@ -1472,6 +1478,7 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
         "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors),
         "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors),
         "gas": _combine_stat_ids(stats, sources["gas"], count, factors),
+        "solar_thermal": _combine_stat_ids(stats, sources["solar_thermal"], count, factors),
     }
 
     if not any(v > 0 for v in series["load"]):

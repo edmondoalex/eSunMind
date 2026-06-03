@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.301
+- Energy Time: aggiunta serie opzionale `Solare termico`, visibile nel grafico storico solo se popolata.
+- Admin Energy: aggiunto campo `Solare termico statistic_id` per configurare le statistiche storiche dedicate.
+- Bump versione addon/backend a `0.3.301`.
+
 ## 0.3.300
 - Energy Time: grafico a barre separato in serie nette con legenda colore per solare, import, export, batteria, casa e gas.
 - Energy Time: barre storiche ora mostrano segmenti distinti per intervallo invece di una sola barra aggregata.

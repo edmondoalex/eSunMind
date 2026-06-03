@@ -1544,6 +1544,7 @@
                   <label>Batteria carica statistic_id<input type="text" v-model="energyForm.energy_time_battery_charge_stat_ids" placeholder="sensor.xxx_total_battery_charge" /></label>
                   <label>Batteria scarica statistic_id<input type="text" v-model="energyForm.energy_time_battery_discharge_stat_ids" placeholder="sensor.xxx_total_battery_discharge" /></label>
                   <label>Gas statistic_id<input type="text" v-model="energyForm.energy_time_gas_stat_ids" placeholder="sensor.xxx_gas" /></label>
+                  <label>Solare termico statistic_id<input type="text" v-model="energyForm.energy_time_solar_thermal_stat_ids" placeholder="sensor.xxx_solar_thermal" /></label>
                 </div>
                 <small>Prioritari per Energy Time. Puoi inserire piu statistic_id separati da virgola o spazio.</small>
               </div>
@@ -2011,6 +2012,7 @@ const energyForm = ref({
   energy_time_battery_charge_stat_ids: '',
   energy_time_battery_discharge_stat_ids: '',
   energy_time_gas_stat_ids: '',
+  energy_time_solar_thermal_stat_ids: '',
   sunsynk_card_config_json: '',
   k_flow_card_config_json: '',
   k_flow_invert_battery_power: false,
@@ -2440,6 +2442,7 @@ function makeEnergySiteFromForm(base = {}) {
     energy_time_battery_charge_stat_ids: String(energyForm.value.energy_time_battery_charge_stat_ids || ''),
     energy_time_battery_discharge_stat_ids: String(energyForm.value.energy_time_battery_discharge_stat_ids || ''),
     energy_time_gas_stat_ids: String(energyForm.value.energy_time_gas_stat_ids || ''),
+    energy_time_solar_thermal_stat_ids: String(energyForm.value.energy_time_solar_thermal_stat_ids || ''),
     sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(energyForm.value.k_flow_card_config_json || ''),
     entity_signs_json: String(energyForm.value.entity_signs_json || ''),
