@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.296
+- Energy Dashboard K Flow: raddoppiata la dimensione responsive del logo EKONEX in testata.
+- Bump versione addon/backend a `0.3.296`.
+
 ## 0.3.295
 - Energy Dashboard K Flow: rimosso il logo interno sopra l'arco sole.
 - Energy Dashboard K Flow: logo/titolo mostrato sopra la card come testata esterna.
