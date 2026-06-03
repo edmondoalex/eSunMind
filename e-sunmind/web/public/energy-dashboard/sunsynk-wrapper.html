@@ -1308,6 +1308,30 @@
       document.body.classList.add(`energy-card-${['compact', 'lite', 'minimal'].includes(style) ? style : 'full'}`);
     }
 
+    function hideSunsynkSunPathIcon() {
+      if (!card || energyDashboardLayout === 'k_flow') return;
+      const root = card.shadowRoot;
+      if (!root) return;
+      const hideCandidate = (el) => {
+        if (!(el instanceof SVGGraphicsElement || el instanceof HTMLElement)) return;
+        if (el.dataset?.esunmindSunIconHidden === '1') return;
+        let box = null;
+        try {
+          if (typeof el.getBBox === 'function') box = el.getBBox();
+        } catch (_) {}
+        if (!box || !Number.isFinite(box.x) || !Number.isFinite(box.y)) return;
+        const centerX = box.x + (box.width / 2);
+        const centerY = box.y + (box.height / 2);
+        const isTopMiddle = centerX >= 150 && centerX <= 310 && centerY >= 8 && centerY <= 95;
+        const isSmall = box.width <= 42 && box.height <= 42;
+        if (!isTopMiddle || !isSmall) return;
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('opacity', '0', 'important');
+        if (el.dataset) el.dataset.esunmindSunIconHidden = '1';
+      };
+      root.querySelectorAll('svg image, svg g, ha-icon').forEach(hideCandidate);
+    }
+
     function forceRender() {
       if (!card && !sankeyCard) return;
       // nuovo riferimento per trigger update lit
@@ -1319,6 +1343,10 @@
       if (sankeyCard) {
         sankeyCard.hass = nextHass;
         if (typeof sankeyCard.requestUpdate === 'function') sankeyCard.requestUpdate();
+      }
+      if (energyDashboardLayout !== 'k_flow') {
+        requestAnimationFrame(() => hideSunsynkSunPathIcon());
+        setTimeout(() => hideSunsynkSunPathIcon(), 120);
       }
     }
 

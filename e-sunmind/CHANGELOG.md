@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.299
+- Energy Dashboard Sunsynk: nascosta l'icona meteo residua lungo il tragitto del sole tramite filtro runtime sullo shadow DOM della card.
+- Bump versione addon/backend a `0.3.299`.
+
 ## 0.3.298
 - Energy Dashboard K Flow: rimosso definitivamente il vecchio logo lungo il tragitto del sole direttamente dal componente SVG.
 - Bump versione addon/backend a `0.3.298`.
