@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.290
+- Energy Time: separata la vista per sito; con `?site=...` usa solo i sensori energia configurati per quel sito e non la dashboard Energy globale di Home Assistant.
+- Energy Time: la sorgente globale HA resta usata solo quando non viene richiesto un sito specifico.
+- Bump versione addon/backend a `0.3.290`.
+
 ## 0.3.289
 - Energy Time: corretta sorgente dati per Giorno/Mese/Anno usando `energy/get_prefs` e `recorder/statistics_during_period` di Home Assistant.
 - Energy Time: i totali ora usano le statistiche HA `change` dei sensori configurati nella dashboard Energy, invece dei soli contatori daily della card.
