@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.288
+- Energy Time: aggiunta vista storica kWh stile K Flow con selezione Giorno/Mese/Anno, pulsante `Adesso` e frecce periodo.
+- Energy Time: nuovo endpoint `/api/energy/history` che legge la history di Home Assistant per i sensori energia configurati.
+- Bump versione addon/backend a `0.3.288`.
+
 ## 0.3.287
 - Energy Dashboard K Flow: logo alto default servito da asset interno `vendor/k-flow-card/logo.png`.
 - Energy Dashboard K Flow: logo riposizionato più in alto, separato dalla linea del sole.

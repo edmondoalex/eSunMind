@@ -6,12 +6,12 @@ import re
 import threading
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import cos, pi
 from pathlib import Path
 from typing import Any
 from urllib.error import URLError
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 import paho.mqtt.client as mqtt
@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.287"
+APP_VERSION = "0.3.288"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -969,6 +969,221 @@ def _normalize_energy_to_kwh(value: Any, unit: Any) -> float | None:
     if u in {"mwh"}:
         return v * 1000.0
     return v
+
+
+def _parse_energy_card_entities(e_cfg: dict[str, Any]) -> dict[str, str]:
+    entities: dict[str, str] = {}
+    for raw_key in ("sunsynk_card_config_json", "k_flow_card_config_json"):
+        try:
+            parsed = json.loads(str(e_cfg.get(raw_key) or "").strip() or "{}")
+        except Exception:
+            parsed = {}
+        if not isinstance(parsed, dict):
+            continue
+
+        def _walk(value: Any, prefix: str = "") -> None:
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    _walk(v, str(k or prefix))
+                return
+            if isinstance(value, list):
+                for i, item in enumerate(value):
+                    _walk(item, f"{prefix}_{i}" if prefix else str(i))
+                return
+            ent = str(value or "").strip()
+            if prefix and re.match(r"^[a-z0-9_]+\.[a-z0-9_]+$", ent, re.I):
+                entities.setdefault(prefix, ent)
+
+        _walk(parsed)
+        if isinstance(parsed.get("entities"), dict):
+            for k, v in parsed["entities"].items():
+                ent = str(v or "").strip()
+                if re.match(r"^[a-z0-9_]+\.[a-z0-9_]+$", ent, re.I):
+                    entities.setdefault(str(k), ent)
+    return entities
+
+
+def _energy_site_config(cfg: dict[str, Any], site_id: str | None = None) -> dict[str, Any]:
+    e_cfg = dict(cfg.get("energy") or {})
+    sites = _normalize_energy_sites_inplace(e_cfg)
+    if not sites:
+        return e_cfg
+    wanted = str(site_id or e_cfg.get("selected_site_id") or sites[0].get("site_id") or sites[0].get("id") or "").strip().lower()
+
+    def _norm(value: Any) -> str:
+        return re.sub(r"[^a-z0-9_-]+", "-", str(value or "").strip().lower()).strip("-")
+
+    for site in sites:
+        if _norm(site.get("site_id") or site.get("id")) == _norm(wanted) or _norm(site.get("site_name") or site.get("name")) == _norm(wanted):
+            return dict(site)
+    return dict(sites[0])
+
+
+def _energy_history_range(period: str, date_text: str, tz_name: str) -> tuple[datetime, datetime, str]:
+    tz = pytz.timezone(tz_name or "Europe/Rome")
+    now = datetime.now(tz)
+    period_norm = str(period or "day").strip().lower()
+    if period_norm not in {"day", "month", "year"}:
+        period_norm = "day"
+    try:
+        if period_norm == "year":
+            year = int(date_text[:4]) if date_text else now.year
+            start = tz.localize(datetime(year, 1, 1, 0, 0, 0))
+            end = tz.localize(datetime(year + 1, 1, 1, 0, 0, 0))
+        elif period_norm == "month":
+            if date_text and len(date_text) >= 7:
+                year, month = [int(x) for x in date_text[:7].split("-")]
+            else:
+                year, month = now.year, now.month
+            start = tz.localize(datetime(year, month, 1, 0, 0, 0))
+            end = tz.localize(datetime(year + (month // 12), (month % 12) + 1, 1, 0, 0, 0))
+        else:
+            if date_text:
+                year, month, day = [int(x) for x in date_text[:10].split("-")]
+            else:
+                year, month, day = now.year, now.month, now.day
+            start = tz.localize(datetime(year, month, day, 0, 0, 0))
+            end = start + timedelta(days=1)
+    except Exception:
+        start = tz.localize(datetime(now.year, now.month, now.day, 0, 0, 0))
+        end = start + timedelta(days=1)
+        period_norm = "day"
+    return start, end, period_norm
+
+
+def _fetch_ha_history_points(entity_id: str, start: datetime, end: datetime) -> tuple[list[dict[str, Any]], str | None]:
+    ent = str(entity_id or "").strip()
+    if not ent:
+        return [], None
+    token = _get_supervisor_token()
+    if not token:
+        return [], "missing_supervisor_token"
+    query = urlencode({"filter_entity_id": ent, "end_time": end.isoformat(), "no_attributes": ""})
+    url = f"http://supervisor/core/api/history/period/{quote(start.isoformat(), safe='')}?{query}"
+    req = Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+    )
+    try:
+        with urlopen(req, timeout=20) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except Exception as exc:
+        return [], str(exc)
+    rows = payload[0] if isinstance(payload, list) and payload and isinstance(payload[0], list) else []
+    points: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        value = _to_float_or_none(row.get("state"))
+        ts_raw = row.get("last_updated") or row.get("last_changed")
+        if value is None or not ts_raw:
+            continue
+        try:
+            ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
+        except Exception:
+            continue
+        points.append({"ts": ts, "value": value})
+    points.sort(key=lambda x: x["ts"])
+    return points, None
+
+
+def _bucket_energy_day(points: list[dict[str, Any]], start: datetime) -> list[float]:
+    out: list[float] = []
+    values = [(p["ts"], float(p["value"])) for p in points]
+    for hour in range(24):
+        b0 = start + timedelta(hours=hour)
+        b1 = b0 + timedelta(hours=1)
+        before = [v for ts, v in values if ts <= b0]
+        inside = [v for ts, v in values if b0 < ts <= b1]
+        if not inside:
+            out.append(0.0)
+            continue
+        start_val = before[-1] if before else min(inside)
+        end_val = inside[-1]
+        out.append(max(0.0, end_val - start_val) if end_val >= start_val else max(0.0, end_val))
+    return out
+
+
+def _bucket_energy_daily_max(points: list[dict[str, Any]], start: datetime, end: datetime) -> dict[str, float]:
+    days: dict[str, float] = {}
+    cur = start
+    while cur < end:
+        days[cur.date().isoformat()] = 0.0
+        cur += timedelta(days=1)
+    for p in points:
+        local_ts = p["ts"].astimezone(start.tzinfo)
+        key = local_ts.date().isoformat()
+        if key in days:
+            days[key] = max(days[key], float(p["value"]))
+    return days
+
+
+def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | None, period: str, date_text: str) -> dict[str, Any]:
+    e_cfg = _energy_site_config(cfg, site_id)
+    tz_name = str(cfg.get("timezone") or e_cfg.get("timezone") or "Europe/Rome")
+    start, end, period_norm = _energy_history_range(period, date_text, tz_name)
+    card_entities = _parse_energy_card_entities(e_cfg)
+    sources = {
+        "pv": str(e_cfg.get("pv_energy_today_entity_id") or card_entities.get("day_pv_energy_108") or "").strip(),
+        "load": str(e_cfg.get("home_energy_today_entity_id") or card_entities.get("day_load_energy_84") or "").strip(),
+        "grid_import": str(e_cfg.get("grid_import_today_entity_id") or card_entities.get("day_grid_import_76") or "").strip(),
+        "grid_export": str(e_cfg.get("grid_export_today_entity_id") or card_entities.get("day_grid_export_77") or "").strip(),
+        "battery_charge": str(card_entities.get("day_battery_charge_70") or "").strip(),
+        "battery_discharge": str(card_entities.get("day_battery_discharge_71") or "").strip(),
+    }
+    fetched: dict[str, list[dict[str, Any]]] = {}
+    errors: dict[str, str] = {}
+    for key, ent in sources.items():
+        if not ent:
+            errors[key] = "empty_entity_id"
+            fetched[key] = []
+            continue
+        points, err = _fetch_ha_history_points(ent, start, end)
+        fetched[key] = points
+        if err:
+            errors[key] = err
+
+    if period_norm == "day":
+        labels = [f"{h:02d}:00" for h in range(24)]
+        series = {key: _bucket_energy_day(points, start) for key, points in fetched.items()}
+    elif period_norm == "month":
+        day_keys = []
+        cur = start
+        while cur < end:
+            day_keys.append(cur.date().isoformat())
+            cur += timedelta(days=1)
+        labels = [k[-2:] for k in day_keys]
+        series = {key: [(_bucket_energy_daily_max(points, start, end)).get(day, 0.0) for day in day_keys] for key, points in fetched.items()}
+    else:
+        labels = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
+        series = {}
+        for key, points in fetched.items():
+            daily = _bucket_energy_daily_max(points, start, end)
+            month_vals = [0.0] * 12
+            for day, value in daily.items():
+                try:
+                    month_vals[int(day[5:7]) - 1] += float(value or 0.0)
+                except Exception:
+                    pass
+            series[key] = month_vals
+
+    totals = {key: round(sum(float(v or 0.0) for v in vals), 3) for key, vals in series.items()}
+    return {
+        "ok": True,
+        "site_id": e_cfg.get("site_id") or e_cfg.get("id") or site_id or "default",
+        "site_name": e_cfg.get("site_name") or e_cfg.get("name") or e_cfg.get("site_id") or "Energy",
+        "period": period_norm,
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "labels": labels,
+        "series": series,
+        "totals": totals,
+        "sources": sources,
+        "errors": errors,
+    }
 
 
 def _build_energy_site_snapshot(e_cfg: dict[str, Any]) -> dict[str, Any]:
@@ -2736,6 +2951,15 @@ async def energy_debug():
             "snapshot": snapshot,
         }
     )
+
+
+@app.get("/api/energy/history")
+async def energy_history(site: str | None = None, period: str = "day", date: str = ""):
+    cfg = _load_options()
+    try:
+        return JSONResponse(_build_energy_history_snapshot(cfg, site, period, date))
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 
 
 @app.get("/api/data_demo")

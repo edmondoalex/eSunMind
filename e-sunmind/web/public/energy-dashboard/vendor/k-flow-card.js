@@ -1346,19 +1346,20 @@ class KFlowCard extends HTMLElement {
     } else { if (moonGroup) moonGroup.setAttribute('opacity', '0'); }
 
     const pvTxt = (pvTotal >= 1000 ? (pvTotal / 1000).toFixed(2) + ' kW' : pvTotal.toFixed(0) + ' W') + ' ⚡';
-    const logoRaw = String(this.config.brand_logo || '').trim();
+    const logoRawInput = String(this.config.brand_logo || '').trim();
+    const logoRaw = logoRawInput || 'logo.png';
     const logoGroup = getEl('brandLogoGroup');
     const logoImg = getEl('brandLogoImg');
     if (logoGroup && logoImg) {
-      if (logoRaw) {
-        const src = /^(https?:)?\/\//i.test(logoRaw) || logoRaw.startsWith('/') || logoRaw.startsWith('data:')
-          ? logoRaw
-          : new URL(`./k-flow-card/${logoRaw}`, import.meta.url).toString();
-        logoImg.setAttribute('href', src);
-        logoGroup.style.display = '';
-      } else {
-        logoGroup.style.display = 'none';
-      }
+      const src = /^(https?:)?\/\//i.test(logoRaw) || logoRaw.startsWith('/') || logoRaw.startsWith('data:')
+        ? logoRaw
+        : new URL(`./k-flow-card/${logoRaw}`, import.meta.url).toString();
+      logoImg.setAttribute('href', src);
+      logoImg.onerror = () => {
+        // Hard fallback for HA static path if module-relative URL fails.
+        logoImg.setAttribute('href', '/energy-dashboard/vendor/k-flow-card/logo.png');
+      };
+      logoGroup.style.display = '';
     }
     const pvLabelRect = getEl('arcPvLabelRect');
     const pvLabelText = getEl('arcPvLabelText');

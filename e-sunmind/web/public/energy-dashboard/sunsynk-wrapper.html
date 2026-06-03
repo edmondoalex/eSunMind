@@ -143,6 +143,191 @@
       display: block;
       width: 100%;
     }
+    .history-section {
+      width: min(980px, 98vw);
+      box-sizing: border-box;
+    }
+    .history-section[hidden],
+    body.map-mode .history-section { display: none; }
+    .kflow-history {
+      background: #0d1117;
+      border: 1px solid rgba(148, 163, 184, .22);
+      border-radius: 8px;
+      color: #e6edf3;
+      padding: 14px;
+      box-sizing: border-box;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, .28);
+    }
+    .kflow-history-head {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .kflow-history-title {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .kflow-history-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .energy-time-picker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: min(500px, 100%);
+      min-height: 44px;
+      padding: 0 6px 0 12px;
+      background: #161b22;
+      color: #e6edf3;
+      border: 1px solid rgba(148, 163, 184, .26);
+      border-radius: 7px;
+      box-sizing: border-box;
+    }
+    .energy-time-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 126px;
+      font-weight: 700;
+      text-transform: lowercase;
+    }
+    .energy-time-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .energy-time-actions button,
+    .energy-time-date button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 34px;
+      height: 32px;
+      padding: 0 9px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: #e6edf3;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .energy-time-actions button:hover,
+    .energy-time-date button:hover {
+      background: rgba(148, 163, 184, .12);
+    }
+    .energy-time-actions .now {
+      min-width: 76px;
+      background: #0891b2;
+      color: #ecfeff;
+      font-size: .76rem;
+    }
+    .energy-time-periods {
+      display: flex;
+      gap: 4px;
+      margin: 0 0 10px;
+      flex-wrap: wrap;
+    }
+    .energy-time-periods button {
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, .22);
+      background: #0b0f14;
+      color: #94a3b8;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .energy-time-periods button.active {
+      color: #ccfbf1;
+      border-color: rgba(45, 212, 191, .6);
+      background: rgba(45, 212, 191, .10);
+    }
+    .kflow-history-graph {
+      position: relative;
+      height: 280px;
+      border-radius: 8px;
+      background: radial-gradient(circle at 50% 42%, rgba(45, 212, 191, .08), transparent 44%), #0b0f14;
+      border: 1px solid rgba(148, 163, 184, .14);
+      overflow: hidden;
+    }
+    .kflow-history-node {
+      position: absolute;
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      background: #0d1117;
+      border: 2px solid var(--node-color, #2dd4bf);
+      box-shadow: 0 0 24px color-mix(in srgb, var(--node-color, #2dd4bf) 28%, transparent);
+      text-align: center;
+    }
+    .kflow-history-node .ico { font-size: 1.2rem; line-height: 1; }
+    .kflow-history-node .val { font-size: .82rem; font-weight: 900; line-height: 1.05; }
+    .kflow-history-node .sub { font-size: .62rem; color: #94a3b8; line-height: 1; }
+    .kflow-history-node.pv { --node-color: #f59e0b; left: 50%; top: 16px; transform: translateX(-50%); }
+    .kflow-history-node.grid { --node-color: #38bdf8; left: 9%; top: 98px; }
+    .kflow-history-node.home { --node-color: #2dd4bf; right: 9%; top: 98px; }
+    .kflow-history-node.batt { --node-color: #a78bfa; left: 50%; bottom: 16px; transform: translateX(-50%); }
+    .kflow-history-lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    .kflow-history-lines path {
+      fill: none;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      opacity: .86;
+    }
+    .kflow-history-bars {
+      display: grid;
+      grid-template-columns: repeat(var(--bar-count, 24), minmax(3px, 1fr));
+      gap: 2px;
+      align-items: end;
+      height: 88px;
+      margin-top: 12px;
+      padding: 8px 8px 18px;
+      background: #0b0f14;
+      border: 1px solid rgba(148, 163, 184, .14);
+      border-radius: 8px;
+      box-sizing: border-box;
+      position: relative;
+    }
+    .kflow-history-bar {
+      min-width: 0;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(to top, #38bdf8, #f59e0b);
+      opacity: .86;
+    }
+    .kflow-history-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 8px;
+      color: #94a3b8;
+      font-size: .72rem;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 640px) {
+      .kflow-history-graph { height: 250px; }
+      .kflow-history-node { width: 78px; height: 78px; }
+      .kflow-history-node.grid { left: 3%; }
+      .kflow-history-node.home { right: 3%; }
+    }
     @media (max-width: 760px) {
       .energy-logo-top-box {
         top: 6px;
@@ -187,6 +372,7 @@
     <section class="sankey-section" id="sankeySection" hidden>
       <div class="sankey-host" id="sankeyHost"></div>
     </section>
+    <section class="history-section" id="historySection" hidden></section>
   </div>
 
   <script>
@@ -1076,12 +1262,17 @@
     const host = document.getElementById('host');
     const sankeyHost = document.getElementById('sankeyHost');
     const sankeySection = document.getElementById('sankeySection');
+    const historySection = document.getElementById('historySection');
     const energyFrame = document.getElementById('energyFrame');
     let card = null;
     let sankeyCard = null;
     let sankeyReady = false;
     let lastSyncWarnTs = 0;
     let lastKFlowConfigJson = '';
+    let energyHistoryPeriod = 'day';
+    let energyHistoryDate = new Date().toISOString().slice(0, 10);
+    let energyHistoryLastKey = '';
+    let energyHistoryLastFetchTs = 0;
 
     function syncEnergyCardstyleClass() {
       const style = String(cardConfig?.cardstyle || 'full').toLowerCase();
@@ -1329,6 +1520,181 @@
       updateSankeyChart(siteEnergy);
     }
 
+    function energyHistoryInputType() {
+      if (energyHistoryPeriod === 'month') return 'month';
+      if (energyHistoryPeriod === 'year') return 'number';
+      return 'date';
+    }
+
+    function energyHistoryInputValue() {
+      if (energyHistoryPeriod === 'month') return String(energyHistoryDate || '').slice(0, 7) || new Date().toISOString().slice(0, 7);
+      if (energyHistoryPeriod === 'year') return String(energyHistoryDate || '').slice(0, 4) || new Date().getFullYear();
+      return String(energyHistoryDate || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+    }
+
+    function energyTimeLabel() {
+      const value = energyHistoryInputValue();
+      const monthNames = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
+      if (energyHistoryPeriod === 'year') return value;
+      if (energyHistoryPeriod === 'month') {
+        const m = Number(value.slice(5, 7));
+        return monthNames[m - 1] || value;
+      }
+      try {
+        const d = new Date(`${value}T12:00:00`);
+        return `${d.getDate()} ${monthNames[d.getMonth()] || ''}`.trim();
+      } catch (_) {
+        return value;
+      }
+    }
+
+    function setEnergyTimeNow() {
+      const today = new Date().toISOString().slice(0, 10);
+      if (energyHistoryPeriod === 'month') energyHistoryDate = today.slice(0, 7);
+      else if (energyHistoryPeriod === 'year') energyHistoryDate = today.slice(0, 4);
+      else energyHistoryDate = today;
+      loadEnergyHistory(true);
+    }
+
+    function shiftEnergyTime(dir) {
+      const step = Number(dir) < 0 ? -1 : 1;
+      const value = energyHistoryInputValue();
+      if (energyHistoryPeriod === 'year') {
+        energyHistoryDate = String((Number(value) || new Date().getFullYear()) + step);
+      } else if (energyHistoryPeriod === 'month') {
+        const d = new Date(`${value}-01T12:00:00`);
+        d.setMonth(d.getMonth() + step);
+        energyHistoryDate = d.toISOString().slice(0, 7);
+      } else {
+        const d = new Date(`${value}T12:00:00`);
+        d.setDate(d.getDate() + step);
+        energyHistoryDate = d.toISOString().slice(0, 10);
+      }
+      loadEnergyHistory(true);
+    }
+
+    function fmtKwh(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return '0 kWh';
+      if (Math.abs(n) >= 1000) return `${(n / 1000).toFixed(2)} MWh`;
+      return `${n.toFixed(n >= 10 ? 1 : 2)} kWh`;
+    }
+
+    function sumSeries(values) {
+      return (Array.isArray(values) ? values : []).reduce((sum, v) => sum + (Number.isFinite(Number(v)) ? Number(v) : 0), 0);
+    }
+
+    function renderEnergyHistory(payload = null, loading = false) {
+      if (!historySection || MAP_MODE) return;
+      const totals = payload?.totals || {};
+      const series = payload?.series || {};
+      const labels = Array.isArray(payload?.labels) ? payload.labels : [];
+      const loadVals = Array.isArray(series.load) ? series.load : [];
+      const pvVals = Array.isArray(series.pv) ? series.pv : [];
+      const barVals = loadVals.some((v) => Number(v) > 0) ? loadVals : pvVals;
+      const maxBar = Math.max(0.1, ...barVals.map((v) => Number(v) || 0));
+      const barCount = Math.max(1, barVals.length || (energyHistoryPeriod === 'day' ? 24 : 12));
+      const periodLabel = energyHistoryPeriod === 'day' ? 'Giorno' : energyHistoryPeriod === 'month' ? 'Mese' : 'Anno';
+      const dateValue = energyHistoryInputValue();
+      const errText = payload?.ok === false ? String(payload?.error || 'Dati non disponibili') : '';
+      historySection.hidden = false;
+      historySection.innerHTML = `
+        <div class="kflow-history">
+          <div class="kflow-history-head">
+            <div class="kflow-history-title">Energy Time</div>
+            <div class="kflow-history-controls">
+              <div class="energy-time-picker">
+                <div class="energy-time-date">
+                  <button type="button" title="Cambia periodo" onclick="window.cycleEnergyTimePeriod()">▣</button>
+                  <span>${energyTimeLabel()}</span>
+                </div>
+                <div class="energy-time-actions">
+                  <button type="button" class="now" onclick="window.setEnergyTimeNow()">Adesso</button>
+                  <button type="button" title="Precedente" onclick="window.shiftEnergyTime(-1)">‹</button>
+                  <button type="button" title="Successivo" onclick="window.shiftEnergyTime(1)">›</button>
+                  <button type="button" title="Periodo" onclick="window.cycleEnergyTimePeriod()">⋮</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="energy-time-periods">
+            <button type="button" class="${energyHistoryPeriod === 'day' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('day')">Giorno</button>
+            <button type="button" class="${energyHistoryPeriod === 'month' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('month')">Mese</button>
+            <button type="button" class="${energyHistoryPeriod === 'year' ? 'active' : ''}" onclick="window.setEnergyTimePeriod('year')">Anno</button>
+          </div>
+          <div class="kflow-history-graph">
+            <svg class="kflow-history-lines" viewBox="0 0 760 280" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M380 64 C360 118 250 140 145 145" stroke="#f59e0b"></path>
+              <path d="M380 64 C412 120 520 138 615 145" stroke="#f59e0b"></path>
+              <path d="M145 145 C275 145 438 145 615 145" stroke="#38bdf8"></path>
+              <path d="M380 216 C374 178 438 150 615 145" stroke="#a78bfa"></path>
+              <path d="M380 216 C360 178 248 152 145 145" stroke="#a78bfa"></path>
+            </svg>
+            <div class="kflow-history-node pv"><div class="sub">Solare</div><div class="ico">⚡</div><div class="val">${fmtKwh(totals.pv)}</div></div>
+            <div class="kflow-history-node grid"><div class="sub">Rete elettrica</div><div class="ico">▦</div><div class="val">↓ ${fmtKwh(totals.grid_import)}</div><div class="sub">↑ ${fmtKwh(totals.grid_export)}</div></div>
+            <div class="kflow-history-node home"><div class="sub">Casa</div><div class="ico">⌂</div><div class="val">${fmtKwh(totals.load)}</div></div>
+            <div class="kflow-history-node batt"><div class="sub">Batteria</div><div class="ico">▣</div><div class="val">↓ ${fmtKwh(totals.battery_charge)}</div><div class="sub">↑ ${fmtKwh(totals.battery_discharge)}</div></div>
+          </div>
+          <div class="kflow-history-bars" style="--bar-count:${barCount}">
+            ${(barVals.length ? barVals : Array.from({ length: barCount }, () => 0)).map((v, i) => {
+              const h = Math.max(2, Math.round(((Number(v) || 0) / maxBar) * 100));
+              const label = labels[i] || '';
+              return `<div class="kflow-history-bar" title="${label} ${fmtKwh(v)}" style="height:${h}%"></div>`;
+            }).join('')}
+          </div>
+          <div class="kflow-history-meta">
+            <span>${loading ? 'Aggiornamento...' : errText || `${periodLabel} ${dateValue}`}</span>
+            <span>Barre: consumo casa; fallback produzione FV se consumo non disponibile. Totale barre: ${fmtKwh(sumSeries(barVals))}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    async function loadEnergyHistory(force = false) {
+      if (MAP_MODE || !historySection) return;
+      const now = Date.now();
+      const key = `${SITE_ID}|${energyHistoryPeriod}|${energyHistoryInputValue()}`;
+      if (!force && key === energyHistoryLastKey && now - energyHistoryLastFetchTs < 60000) return;
+      energyHistoryLastKey = key;
+      energyHistoryLastFetchTs = now;
+      renderEnergyHistory(null, true);
+      try {
+        const params = new URLSearchParams({
+          period: energyHistoryPeriod,
+          date: energyHistoryInputValue(),
+        });
+        if (SITE_ID) params.set('site', SITE_ID);
+        const r = await fetch(`../api/energy/history?${params.toString()}`, { cache: 'no-store' });
+        const payload = await r.json();
+        if (!r.ok || payload?.ok === false) throw new Error(payload?.error || `history_http_${r.status}`);
+        renderEnergyHistory(payload, false);
+      } catch (e) {
+        renderEnergyHistory({ ok: false, error: String(e?.message || e) }, false);
+      }
+    }
+
+    window.setEnergyTimePeriod = function setEnergyTimePeriod(period) {
+      energyHistoryPeriod = ['day', 'month', 'year'].includes(String(period)) ? String(period) : 'day';
+      const today = new Date().toISOString().slice(0, 10);
+      if (energyHistoryPeriod === 'month') energyHistoryDate = energyHistoryInputValue().slice(0, 7) || today.slice(0, 7);
+      else if (energyHistoryPeriod === 'year') energyHistoryDate = energyHistoryInputValue().slice(0, 4) || today.slice(0, 4);
+      else energyHistoryDate = today;
+      loadEnergyHistory(true);
+    };
+
+    window.setEnergyTimeDate = function setEnergyTimeDate(value) {
+      energyHistoryDate = String(value || '').trim() || new Date().toISOString().slice(0, 10);
+      loadEnergyHistory(true);
+    };
+
+    window.setEnergyTimeNow = setEnergyTimeNow;
+    window.shiftEnergyTime = shiftEnergyTime;
+    window.cycleEnergyTimePeriod = function cycleEnergyTimePeriod() {
+      const order = ['day', 'month', 'year'];
+      const idx = order.indexOf(energyHistoryPeriod);
+      window.setEnergyTimePeriod(order[(idx + 1) % order.length]);
+    };
+
     function fitMapMode() {
       if (!MAP_MODE) return;
       if (!energyFrame || !card) return;
@@ -1445,6 +1811,7 @@
         const siteEnergy = selectEnergyDataSnapshot(energyRoot);
         setDashboardSiteName(siteEnergy);
         applyDashboardBackgroundColor(siteEnergy?.dashboard_background_color);
+        loadEnergyHistory(false);
         const showSankey = energyDashboardLayout !== 'k_flow' && siteEnergy?.show_sankey !== false && siteEnergy?.sankey_enabled !== false;
         if (!showSankey && sankeySection) sankeySection.hidden = true;
         const n = siteEnergy?.normalized || {};
