@@ -488,7 +488,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.287';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.302';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1771,14 +1771,14 @@
             <div class="kflow-history-controls">
               <div class="energy-time-picker">
                 <div class="energy-time-date">
-                  <button type="button" title="Cambia periodo" onclick="window.cycleEnergyTimePeriod()">â–£</button>
+                  <button type="button" title="Cambia periodo" onclick="window.cycleEnergyTimePeriod()">▣</button>
                   <span>${energyTimeLabel()}</span>
                 </div>
                 <div class="energy-time-actions">
                   <button type="button" class="now" onclick="window.setEnergyTimeNow()">Adesso</button>
-                  <button type="button" title="Precedente" onclick="window.shiftEnergyTime(-1)">â€¹</button>
-                  <button type="button" title="Successivo" onclick="window.shiftEnergyTime(1)">â€º</button>
-                  <button type="button" title="Periodo" onclick="window.cycleEnergyTimePeriod()">â‹®</button>
+                  <button type="button" title="Precedente" onclick="window.shiftEnergyTime(-1)">‹</button>
+                  <button type="button" title="Successivo" onclick="window.shiftEnergyTime(1)">›</button>
+                  <button type="button" title="Periodo" onclick="window.cycleEnergyTimePeriod()">⋮</button>
                 </div>
               </div>
             </div>
@@ -1796,10 +1796,10 @@
               <path d="M380 216 C374 178 438 150 615 145" stroke="#a78bfa"></path>
               <path d="M380 216 C360 178 248 152 145 145" stroke="#a78bfa"></path>
             </svg>
-            <div class="kflow-history-node pv"><div class="sub">Solare</div><div class="ico">âš¡</div><div class="val">${fmtKwh(totals.pv)}</div></div>
-            <div class="kflow-history-node grid"><div class="sub">Rete elettrica</div><div class="ico">â–¦</div><div class="val">â†“ ${fmtKwh(totals.grid_import)}</div><div class="sub">â†‘ ${fmtKwh(totals.grid_export)}</div></div>
-            <div class="kflow-history-node home"><div class="sub">Casa</div><div class="ico">âŒ‚</div><div class="val">${fmtKwh(totals.load)}</div></div>
-            <div class="kflow-history-node batt"><div class="sub">Batteria</div><div class="ico">â–£</div><div class="val">â†“ ${fmtKwh(totals.battery_charge)}</div><div class="sub">â†‘ ${fmtKwh(totals.battery_discharge)}</div></div>
+            <div class="kflow-history-node pv"><div class="sub">Solare</div><div class="ico">⚡</div><div class="val">${fmtKwh(totals.pv)}</div></div>
+            <div class="kflow-history-node grid"><div class="sub">Rete elettrica</div><div class="ico">▦</div><div class="val">↓ ${fmtKwh(totals.grid_import)}</div><div class="sub">↑ ${fmtKwh(totals.grid_export)}</div></div>
+            <div class="kflow-history-node home"><div class="sub">Casa</div><div class="ico">⌂</div><div class="val">${fmtKwh(totals.load)}</div></div>
+            <div class="kflow-history-node batt"><div class="sub">Batteria</div><div class="ico">▣</div><div class="val">↓ ${fmtKwh(totals.battery_charge)}</div><div class="sub">↑ ${fmtKwh(totals.battery_discharge)}</div></div>
           </div>
           <div class="kflow-history-legend">
             ${visibleDefs.map((def) => `<span class="kflow-history-legend-item"><span class="kflow-history-legend-swatch" style="background:${def.color}"></span>${def.label}</span>`).join('')}

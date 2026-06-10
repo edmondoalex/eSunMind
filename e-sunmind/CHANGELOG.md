@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.302
+- Energy Time: corretti i simboli corrotti nella vista storico K Flow (frecce, icone solare/rete/casa/batteria e menu periodo).
+- Energy Wrapper: riallineato il marker/cache-buster `energyMindWrapperVersion` alla versione addon.
+- Bump versione addon/backend a `0.3.302`.
+
 ## 0.3.301
 - Energy Time: aggiunta serie opzionale `Solare termico`, visibile nel grafico storico solo se popolata.
 - Admin Energy: aggiunto campo `Solare termico statistic_id` per configurare le statistiche storiche dedicate.

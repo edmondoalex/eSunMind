@@ -1,5 +1,10 @@
 ﻿# WORKLOG
 
+## 2026-06-10
+- Energy Time: corretti i simboli mojibake nella vista storico K Flow.
+- Energy Wrapper: riallineato `energyMindWrapperVersion` alla release addon.
+- Bump versione addon/backend a `0.3.302` con changelog aggiornato.
+
 ## 2026-05-14
 - Energy Setup: riordinata configurazione in sottoblocchi PV1-PV6, Batteria 1-3, carichi, AUX, Grid e Giornalieri.
 - Energy Dashboard: sfondo configurabile applicato anche a body/frame e variabili HA mock.
