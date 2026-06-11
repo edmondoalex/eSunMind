@@ -1,5 +1,10 @@
 ﻿# WORKLOG
 
+## 2026-06-11
+- Energy Time: grafico barre storico portato a baseline centrale con positivi sopra e negativi sotto.
+- Energy Time: aggiunti tooltip hover con dettaglio valori per fascia.
+- Bump versione addon/backend a `0.3.303` con changelog aggiornato.
+
 ## 2026-06-10
 - Energy Time: corretti i simboli mojibake nella vista storico K Flow.
 - Energy Wrapper: riallineato `energyMindWrapperVersion` alla release addon.

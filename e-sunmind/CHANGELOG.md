@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.303
+- Energy Time: aumentata l'altezza del grafico barre storico e aggiunta linea zero centrale.
+- Energy Time: import/produzione/casa restano positivi, export e batteria sono mostrati come valori negativi.
+- Energy Time: tooltip hover sulle barre con dettaglio dei valori per fascia.
+- Bump versione addon/backend a `0.3.303`.
+
 ## 0.3.302
 - Energy Time: corretti i simboli corrotti nella vista storico K Flow (frecce, icone solare/rete/casa/batteria e menu periodo).
 - Energy Wrapper: riallineato il marker/cache-buster `energyMindWrapperVersion` alla versione addon.
