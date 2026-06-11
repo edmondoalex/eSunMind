@@ -590,7 +590,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.307';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.308';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -2076,10 +2076,6 @@
       if (isBattery && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'battery_voltage';
       if (/inverter/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'inverter_voltage';
       if (/pv|solar|solare/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'pv_voltage';
-      if (isBattery) return 'battery_power';
-      if (/rete|grid/.test(text)) return 'grid_power';
-      if (/casa|load|consum|home/.test(text)) return 'load_power';
-      if (/pv|solar|solare/.test(text)) return 'pv_power';
       return '';
     }
 

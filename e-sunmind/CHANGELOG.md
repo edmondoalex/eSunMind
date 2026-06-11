@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.308
+- Energy Dashboard: corretto il drill-down dei valori W usando solo la posizione del click sul dispositivo, evitando aperture di grafici errati dovute al testo aggregato della card.
+- Energy Dashboard: mantenuto il riconoscimento testuale solo per metriche non-W come SOC `%` e tensioni `V`.
+- Bump versione addon/backend a `0.3.308`.
+
 ## 0.3.307
 - Energy Dashboard: aggiunto drill-down sul click della card istantanea con grafico giornaliero del singolo dispositivo.
 - Energy Dashboard: supportati grafici separati per potenza W di PV, rete, casa/load e batteria, piu SOC batteria `%` e tensioni `V`.
