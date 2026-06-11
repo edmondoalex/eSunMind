@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.305"
+APP_VERSION = "0.3.306"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1191,7 +1191,14 @@ async def _fetch_ha_year_month_statistics(statistic_ids: list[str], start: datet
             month_end = start.replace(month=month + 2)
         month_stats = await _fetch_ha_statistics(statistic_ids, month_start, month_end, "month")
         for sid, rows in month_stats.items():
-            out.setdefault(sid, []).extend(rows)
+            marked_rows = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                marked = dict(row)
+                marked["_bucket_start"] = month_start.isoformat()
+                marked_rows.append(marked)
+            out.setdefault(sid, []).extend(marked_rows)
     return out
 
 
@@ -1373,7 +1380,7 @@ def _stat_unit_factors(statistic_ids: list[str]) -> dict[str, float]:
 
 
 def _stat_row_bucket_index(row: dict[str, Any], start: datetime, period: str, count: int) -> int | None:
-    ts_raw = row.get("start") or row.get("end")
+    ts_raw = row.get("_bucket_start") or row.get("start") or row.get("end")
     if not ts_raw:
         return None
     try:
@@ -1396,6 +1403,8 @@ def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 
         if not isinstance(row, dict):
             continue
         bucket_idx = _stat_row_bucket_index(row, start, period, count) if start is not None else None
+        if start is not None and bucket_idx is None:
+            continue
         target_idx = bucket_idx if bucket_idx is not None else idx
         vals[target_idx] += abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor
     return vals

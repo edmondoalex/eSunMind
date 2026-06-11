@@ -1,6 +1,11 @@
 ﻿# WORKLOG
 
 ## 2026-06-11
+- Energy Time: gestito storico parziale senza riempire artificialmente primi giorni/mesi quando manca il timestamp del bucket.
+- Energy Time: marcate le finestre mensili HA col bucket richiesto per mantenere i valori nel mese corretto.
+- Bump versione addon/backend a `0.3.306` con changelog aggiornato.
+
+## 2026-06-11
 - Energy Time: vista Anno mantenuta su aggregati mensili HA interrogati per finestra mensile, senza calcolo giornaliero.
 - Energy Time: mantenuto allineamento bucket tramite timestamp reale delle statistiche.
 - Bump versione addon/backend a `0.3.305` con changelog aggiornato.

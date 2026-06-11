@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.306
+- Energy Time: gestito lo storico parziale evitando che righe senza timestamp riempiano artificialmente i primi giorni o mesi.
+- Energy Time: le finestre mensili HA marcano esplicitamente il bucket richiesto per mantenere Apr/Mag/Giu nei mesi corretti.
+- Bump versione addon/backend a `0.3.306`.
+
 ## 0.3.305
 - Energy Time: per la vista Anno usa aggregati mensili HA interrogati per singola finestra mensile, evitando calcoli giornalieri.
 - Energy Time: mantenuto l'allineamento dei bucket tramite timestamp reale delle statistiche.
