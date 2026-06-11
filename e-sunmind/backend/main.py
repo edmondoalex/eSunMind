@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.303"
+APP_VERSION = "0.3.304"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1358,19 +1358,39 @@ def _stat_unit_factors(statistic_ids: list[str]) -> dict[str, float]:
     return factors
 
 
-def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 1.0) -> list[float]:
+def _stat_row_bucket_index(row: dict[str, Any], start: datetime, period: str, count: int) -> int | None:
+    ts_raw = row.get("start") or row.get("end")
+    if not ts_raw:
+        return None
+    try:
+        ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00")).astimezone(start.tzinfo)
+    except Exception:
+        return None
+    if period == "month":
+        idx = (ts.year - start.year) * 12 + (ts.month - start.month)
+    elif period == "day":
+        idx = (ts.date() - start.date()).days
+    else:
+        delta = ts - start
+        idx = int(delta.total_seconds() // 3600)
+    return idx if 0 <= idx < count else None
+
+
+def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 1.0, start: datetime | None = None, period: str = "") -> list[float]:
     vals = [0.0] * count
     for idx, row in enumerate(rows[:count]):
         if not isinstance(row, dict):
             continue
-        vals[idx] = abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor
+        bucket_idx = _stat_row_bucket_index(row, start, period, count) if start is not None else None
+        target_idx = bucket_idx if bucket_idx is not None else idx
+        vals[target_idx] += abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor
     return vals
 
 
-def _combine_stat_ids(stats: dict[str, list[dict[str, Any]]], ids: list[str], count: int, factors: dict[str, float]) -> list[float]:
+def _combine_stat_ids(stats: dict[str, list[dict[str, Any]]], ids: list[str], count: int, factors: dict[str, float], start: datetime, period: str) -> list[float]:
     out = [0.0] * count
     for sid in ids:
-        vals = _stat_change_values(stats.get(sid) or [], count, factors.get(sid, 1.0))
+        vals = _stat_change_values(stats.get(sid) or [], count, factors.get(sid, 1.0), start, period)
         out = [a + b for a, b in zip(out, vals)]
     return out
 
@@ -1471,14 +1491,14 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
             errors["statistics"] = str(exc)
 
     series = {
-        "pv": _combine_stat_ids(stats, sources["pv"], count, factors),
-        "load": _combine_stat_ids(stats, sources["load"], count, factors),
-        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count, factors),
-        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count, factors),
-        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors),
-        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors),
-        "gas": _combine_stat_ids(stats, sources["gas"], count, factors),
-        "solar_thermal": _combine_stat_ids(stats, sources["solar_thermal"], count, factors),
+        "pv": _combine_stat_ids(stats, sources["pv"], count, factors, start, stat_period),
+        "load": _combine_stat_ids(stats, sources["load"], count, factors, start, stat_period),
+        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count, factors, start, stat_period),
+        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count, factors, start, stat_period),
+        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors, start, stat_period),
+        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors, start, stat_period),
+        "gas": _combine_stat_ids(stats, sources["gas"], count, factors, start, stat_period),
+        "solar_thermal": _combine_stat_ids(stats, sources["solar_thermal"], count, factors, start, stat_period),
     }
 
     if not any(v > 0 for v in series["load"]):

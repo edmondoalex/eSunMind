@@ -1,6 +1,11 @@
 ﻿# WORKLOG
 
 ## 2026-06-11
+- Energy Time: corretto l'allineamento dei bucket annuali usando il timestamp reale delle statistiche HA.
+- Energy Time: aggiunto controllo locale per mesi non contigui nelle statistiche storiche.
+- Bump versione addon/backend a `0.3.304` con changelog aggiornato.
+
+## 2026-06-11
 - Energy Time: grafico barre storico portato a baseline centrale con positivi sopra e negativi sotto.
 - Energy Time: aggiunti tooltip hover con dettaglio valori per fascia.
 - Bump versione addon/backend a `0.3.303` con changelog aggiornato.

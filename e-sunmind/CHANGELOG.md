@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.304
+- Energy Time: corretto l'allineamento dei bucket annuali usando il timestamp reale delle statistiche HA.
+- Energy Time: aggiunto controllo locale per verificare mesi non contigui nelle statistiche storiche.
+- Bump versione addon/backend a `0.3.304`.
+
 ## 0.3.303
 - Energy Time: aumentata l'altezza del grafico barre storico e aggiunta linea zero centrale.
 - Energy Time: import/produzione/casa restano positivi, export e batteria sono mostrati come valori negativi.
