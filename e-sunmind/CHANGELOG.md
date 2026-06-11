@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.307
+- Energy Dashboard: aggiunto drill-down sul click della card istantanea con grafico giornaliero del singolo dispositivo.
+- Energy Dashboard: supportati grafici separati per potenza W di PV, rete, casa/load e batteria, piu SOC batteria `%` e tensioni `V`.
+- Backend: aggiunto endpoint `/api/energy/metric-history` basato sullo storico Home Assistant del singolo sensore.
+- Bump versione addon/backend a `0.3.307`.
+
 ## 0.3.306
 - Energy Time: gestito lo storico parziale evitando che righe senza timestamp riempiano artificialmente i primi giorni o mesi.
 - Energy Time: le finestre mensili HA marcano esplicitamente il bucket richiesto per mantenere Apr/Mag/Giu nei mesi corretti.

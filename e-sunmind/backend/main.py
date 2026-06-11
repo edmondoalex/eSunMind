@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.306"
+APP_VERSION = "0.3.307"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1091,7 +1091,7 @@ def _fetch_ha_history_points(entity_id: str, start: datetime, end: datetime) -> 
     token = _get_supervisor_token()
     if not token:
         return [], "missing_supervisor_token"
-    query = urlencode({"filter_entity_id": ent, "end_time": end.isoformat(), "no_attributes": ""})
+    query = urlencode({"filter_entity_id": ent, "end_time": end.isoformat()})
     url = f"http://supervisor/core/api/history/period/{quote(start.isoformat(), safe='')}?{query}"
     req = Request(
         url,
@@ -1118,9 +1118,161 @@ def _fetch_ha_history_points(entity_id: str, start: datetime, end: datetime) -> 
             ts = datetime.fromisoformat(str(ts_raw).replace("Z", "+00:00"))
         except Exception:
             continue
-        points.append({"ts": ts, "value": value})
+        attrs = row.get("attributes") if isinstance(row.get("attributes"), dict) else {}
+        points.append({"ts": ts, "value": value, "unit": attrs.get("unit_of_measurement")})
     points.sort(key=lambda x: x["ts"])
     return points, None
+
+
+def _energy_metric_entity(e_cfg: dict[str, Any], metric: str) -> tuple[str, dict[str, Any] | None]:
+    card_entities = _parse_energy_card_entities(e_cfg)
+
+    def _clean(value: Any) -> str:
+        ent = str(value or "").strip()
+        return ent if re.match(r"^[a-z0-9_]+\.[a-z0-9_]+$", ent, re.I) else ""
+
+    def _first(*values: Any) -> str:
+        for value in values:
+            ent = _clean(value)
+            if ent:
+                return ent
+        return ""
+
+    defs: dict[str, dict[str, Any]] = {
+        "load_power": {
+            "label": "Casa / Load",
+            "unit": "W",
+            "kind": "power",
+            "entity": _first(e_cfg.get("home_power_entity_id"), card_entities.get("essential_power"), card_entities.get("inverter_power_175")),
+        },
+        "grid_power": {
+            "label": "Rete",
+            "unit": "W",
+            "kind": "power",
+            "entity": _first(e_cfg.get("grid_power_entity_id"), card_entities.get("grid_power_169"), card_entities.get("grid_ct_power_172")),
+        },
+        "pv_power": {
+            "label": "PV / Solare",
+            "unit": "W",
+            "kind": "power",
+            "entity": _first(
+                e_cfg.get("pv_power_entity_id"),
+                card_entities.get("pv_total"),
+                card_entities.get("pv1_power_186"),
+                card_entities.get("pv2_power_187"),
+                card_entities.get("pv3_power_188"),
+                card_entities.get("pv4_power_189"),
+                card_entities.get("pv5_power"),
+                card_entities.get("pv6_power"),
+            ),
+        },
+        "battery_power": {
+            "label": "Batteria potenza",
+            "unit": "W",
+            "kind": "power",
+            "entity": _first(e_cfg.get("battery_power_entity_id"), card_entities.get("battery_power_190")),
+        },
+        "battery_soc": {
+            "label": "Batteria SOC",
+            "unit": "%",
+            "kind": "percent",
+            "entity": _first(e_cfg.get("battery_soc_entity_id"), card_entities.get("battery_soc_184")),
+        },
+        "battery_voltage": {
+            "label": "Batteria tensione",
+            "unit": "V",
+            "kind": "voltage",
+            "entity": _first(card_entities.get("battery_voltage_183")),
+        },
+        "inverter_voltage": {
+            "label": "Inverter tensione",
+            "unit": "V",
+            "kind": "voltage",
+            "entity": _first(e_cfg.get("inverter_voltage_entity_id"), card_entities.get("inverter_voltage_154")),
+        },
+        "pv_voltage": {
+            "label": "PV tensione",
+            "unit": "V",
+            "kind": "voltage",
+            "entity": _first(
+                card_entities.get("pv_total_voltage"),
+                card_entities.get("pv1_voltage_109"),
+                card_entities.get("pv2_voltage_111"),
+                card_entities.get("pv3_voltage_113"),
+                card_entities.get("pv4_voltage_115"),
+                card_entities.get("pv5_voltage"),
+                card_entities.get("pv6_voltage"),
+            ),
+        },
+    }
+    metric_norm = str(metric or "").strip().lower()
+    meta = defs.get(metric_norm)
+    return metric_norm, meta
+
+
+def _build_energy_metric_history_snapshot(cfg: dict[str, Any], site: str | None, metric: str, date: str) -> dict[str, Any]:
+    e_cfg = _energy_site_config(cfg, site)
+    tz_name = str(e_cfg.get("timezone") or cfg.get("timezone") or "Europe/Rome")
+    start, end, _ = _energy_history_range("day", date, tz_name)
+    tz = pytz.timezone(tz_name or "Europe/Rome")
+    metric_norm, meta = _energy_metric_entity(e_cfg, metric)
+    if not meta:
+        return {"ok": False, "error": "unknown_metric", "metric": metric_norm}
+    entity = str(meta.get("entity") or "").strip()
+    if not entity:
+        return {"ok": False, "error": "missing_entity", "metric": metric_norm, "label": meta.get("label"), "unit": meta.get("unit")}
+
+    raw_points, error = _fetch_ha_history_points(entity, start, end)
+    if error:
+        return {"ok": False, "error": error, "metric": metric_norm, "entity_id": entity}
+
+    step_seconds = 300
+    bucket_count = int((end - start).total_seconds() // step_seconds)
+    buckets: list[float | None] = [None] * max(1, bucket_count)
+    kind = str(meta.get("kind") or "")
+    for point in raw_points:
+        try:
+            ts_local = point["ts"].astimezone(tz)
+        except Exception:
+            continue
+        idx = int((ts_local - start).total_seconds() // step_seconds)
+        if idx < 0 or idx >= len(buckets):
+            continue
+        raw_value = point.get("value")
+        value = _normalize_power_to_w(raw_value, point.get("unit") or meta.get("unit")) if kind == "power" else _to_float_or_none(raw_value)
+        if value is None:
+            continue
+        buckets[idx] = float(value)
+
+    points: list[dict[str, Any]] = []
+    for idx, value in enumerate(buckets):
+        if value is None:
+            continue
+        ts = start + timedelta(seconds=idx * step_seconds)
+        decimals = 0 if kind == "power" else 1
+        points.append(
+            {
+                "i": idx,
+                "ts": ts.isoformat(),
+                "label": ts.strftime("%H:%M"),
+                "value": round(value, decimals),
+            }
+        )
+
+    return {
+        "ok": True,
+        "metric": metric_norm,
+        "label": meta.get("label"),
+        "unit": meta.get("unit"),
+        "kind": kind,
+        "entity_id": entity,
+        "date": start.strftime("%Y-%m-%d"),
+        "timezone": tz_name,
+        "bucket_seconds": step_seconds,
+        "bucket_count": len(buckets),
+        "points": points,
+        "raw_count": len(raw_points),
+    }
 
 
 async def _ha_ws_call(message: dict[str, Any], timeout_seconds: float = 30.0) -> dict[str, Any]:
@@ -3715,6 +3867,17 @@ async def energy_history(site: str | None = None, period: str = "day", date: str
     cfg = _load_options()
     try:
         return JSONResponse(await _build_energy_history_snapshot(cfg, site, period, date))
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
+@app.get("/api/energy/metric-history")
+async def energy_metric_history(site: str | None = None, metric: str = "load_power", date: str = ""):
+    cfg = _load_options()
+    try:
+        payload = _build_energy_metric_history_snapshot(cfg, site, metric, date)
+        status = 200 if payload.get("ok") is not False else 400
+        return JSONResponse(payload, status_code=status)
     except Exception as exc:
         return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
 

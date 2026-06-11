@@ -404,6 +404,71 @@
       white-space: nowrap;
       overflow: hidden;
     }
+    .metric-history-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(2, 6, 23, .66);
+      box-sizing: border-box;
+    }
+    .metric-history-modal[hidden] { display: none; }
+    .metric-history-panel {
+      width: min(860px, 96vw);
+      max-height: min(84vh, 640px);
+      overflow: auto;
+      background: #0d1117;
+      border: 1px solid rgba(148, 163, 184, .28);
+      border-radius: 8px;
+      box-shadow: 0 26px 70px rgba(0, 0, 0, .46);
+      color: #e6edf3;
+    }
+    .metric-history-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 8px;
+    }
+    .metric-history-title {
+      font-size: 16px;
+      font-weight: 800;
+    }
+    .metric-history-subtitle {
+      margin-top: 3px;
+      font-size: 12px;
+      color: #94a3b8;
+      word-break: break-word;
+    }
+    .metric-history-close {
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(148, 163, 184, .28);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, .72);
+      color: #e6edf3;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .metric-history-body {
+      padding: 6px 16px 16px;
+    }
+    .metric-history-chart {
+      width: 100%;
+      height: 300px;
+      border: 1px solid rgba(148, 163, 184, .16);
+      border-radius: 8px;
+      background: #111;
+    }
+    .metric-history-empty {
+      padding: 34px 12px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+    }
     @media (max-width: 640px) {
       .kflow-history-graph { height: 250px; }
       .kflow-history-node { width: 78px; height: 78px; }
@@ -455,6 +520,18 @@
       <div class="sankey-host" id="sankeyHost"></div>
     </section>
     <section class="history-section" id="historySection" hidden></section>
+  </div>
+  <div class="metric-history-modal" id="metricHistoryModal" hidden>
+    <div class="metric-history-panel" role="dialog" aria-modal="true" aria-labelledby="metricHistoryTitle">
+      <div class="metric-history-head">
+        <div>
+          <div class="metric-history-title" id="metricHistoryTitle">Storico</div>
+          <div class="metric-history-subtitle" id="metricHistorySubtitle"></div>
+        </div>
+        <button class="metric-history-close" type="button" id="metricHistoryClose" title="Chiudi">x</button>
+      </div>
+      <div class="metric-history-body" id="metricHistoryBody"></div>
+    </div>
   </div>
 
   <script>
@@ -513,7 +590,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.306';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.307';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1352,6 +1429,11 @@
     const sankeySection = document.getElementById('sankeySection');
     const historySection = document.getElementById('historySection');
     const energyFrame = document.getElementById('energyFrame');
+    const metricHistoryModal = document.getElementById('metricHistoryModal');
+    const metricHistoryTitle = document.getElementById('metricHistoryTitle');
+    const metricHistorySubtitle = document.getElementById('metricHistorySubtitle');
+    const metricHistoryBody = document.getElementById('metricHistoryBody');
+    const metricHistoryClose = document.getElementById('metricHistoryClose');
     let card = null;
     let sankeyCard = null;
     let sankeyReady = false;
@@ -1888,6 +1970,153 @@
         renderEnergyHistory({ ok: false, error: String(e?.message || e) }, false);
       }
     }
+
+    function closeMetricHistory() {
+      if (metricHistoryModal) metricHistoryModal.hidden = true;
+    }
+
+    function metricHistoryDateValue() {
+      if (energyHistoryPeriod === 'day') return energyHistoryInputValue();
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function formatMetricValue(value, unit, kind) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return `-- ${unit || ''}`.trim();
+      if (kind === 'power') return `${n.toFixed(0)} ${unit || 'W'}`;
+      return `${n.toFixed(1)} ${unit || ''}`.trim();
+    }
+
+    function metricHistorySvg(payload) {
+      const points = Array.isArray(payload?.points) ? payload.points.filter((p) => Number.isFinite(Number(p.value))) : [];
+      if (!points.length) {
+        return '<div class="metric-history-empty">Nessun dato storico disponibile per questo sensore nel giorno selezionato.</div>';
+      }
+      const width = 760;
+      const height = 300;
+      const pad = { left: 48, right: 18, top: 22, bottom: 34 };
+      const plotW = width - pad.left - pad.right;
+      const plotH = height - pad.top - pad.bottom;
+      const values = points.map((p) => Number(p.value));
+      const kind = String(payload.kind || '');
+      let min = Math.min(...values);
+      let max = Math.max(...values);
+      if (kind === 'power') {
+        min = Math.min(0, min);
+        max = Math.max(0, max);
+      } else if (kind === 'percent') {
+        min = 0;
+        max = 100;
+      }
+      if (max === min) {
+        max += 1;
+        min -= 1;
+      }
+      const bucketCount = Math.max(2, Number(payload.bucket_count) || 288);
+      const xFor = (p) => pad.left + (Math.max(0, Math.min(bucketCount - 1, Number(p.i) || 0)) / (bucketCount - 1)) * plotW;
+      const yFor = (value) => pad.top + ((max - value) / (max - min)) * plotH;
+      const d = points.map((p, idx) => `${idx ? 'L' : 'M'}${xFor(p).toFixed(1)},${yFor(Number(p.value)).toFixed(1)}`).join(' ');
+      const zeroY = kind === 'power' && min < 0 && max > 0 ? yFor(0) : null;
+      const stroke = kind === 'percent' ? '#2dd4bf' : kind === 'voltage' ? '#a78bfa' : '#38bdf8';
+      const circles = points
+        .filter((_, idx) => idx % Math.max(1, Math.ceil(points.length / 70)) === 0)
+        .map((p) => `<circle cx="${xFor(p).toFixed(1)}" cy="${yFor(Number(p.value)).toFixed(1)}" r="2.6" fill="${stroke}"><title>${p.label}: ${formatMetricValue(p.value, payload.unit, payload.kind)}</title></circle>`)
+        .join('');
+      const yTicks = [max, (max + min) / 2, min].map((v) => {
+        const y = yFor(v);
+        return `<g><line x1="${pad.left}" y1="${y.toFixed(1)}" x2="${width - pad.right}" y2="${y.toFixed(1)}" stroke="rgba(148,163,184,.16)"/><text x="${pad.left - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#94a3b8" font-size="11">${formatMetricValue(v, payload.unit, payload.kind)}</text></g>`;
+      }).join('');
+      const xTicks = ['00:00', '06:00', '12:00', '18:00', '24:00'].map((label, idx) => {
+        const x = pad.left + (idx / 4) * plotW;
+        return `<g><line x1="${x.toFixed(1)}" y1="${pad.top}" x2="${x.toFixed(1)}" y2="${height - pad.bottom}" stroke="rgba(148,163,184,.11)"/><text x="${x.toFixed(1)}" y="${height - 10}" text-anchor="middle" fill="#94a3b8" font-size="11">${label}</text></g>`;
+      }).join('');
+      return `<svg class="metric-history-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="${payload.label || 'Storico'}">
+        ${xTicks}
+        ${yTicks}
+        ${zeroY == null ? '' : `<line x1="${pad.left}" y1="${zeroY.toFixed(1)}" x2="${width - pad.right}" y2="${zeroY.toFixed(1)}" stroke="rgba(226,232,240,.45)" stroke-width="1.2"/>`}
+        <path d="${d}" fill="none" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>
+        ${circles}
+      </svg>`;
+    }
+
+    async function openMetricHistory(metric) {
+      const metricKey = String(metric || '').trim();
+      if (!metricKey || !metricHistoryModal) return;
+      metricHistoryModal.hidden = false;
+      metricHistoryTitle.textContent = 'Caricamento storico';
+      metricHistorySubtitle.textContent = metricKey;
+      metricHistoryBody.innerHTML = '<div class="metric-history-empty">Caricamento dati...</div>';
+      try {
+        const params = new URLSearchParams({ metric: metricKey, date: metricHistoryDateValue() });
+        if (SITE_ID) params.set('site', SITE_ID);
+        const r = await fetch(`../api/energy/metric-history?${params.toString()}`, { cache: 'no-store' });
+        const payload = await r.json();
+        if (!r.ok || payload?.ok === false) throw new Error(payload?.error || `metric_history_http_${r.status}`);
+        metricHistoryTitle.textContent = payload.label || 'Storico';
+        metricHistorySubtitle.textContent = `${payload.date || metricHistoryDateValue()} - ${payload.entity_id || ''}`;
+        metricHistoryBody.innerHTML = metricHistorySvg(payload);
+      } catch (e) {
+        metricHistoryTitle.textContent = 'Storico non disponibile';
+        metricHistorySubtitle.textContent = metricKey;
+        metricHistoryBody.innerHTML = `<div class="metric-history-empty">${String(e?.message || e)}</div>`;
+      }
+    }
+
+    function textMetricFromClickPath(path) {
+      const chunks = [];
+      for (const node of path || []) {
+        if (!node || node === host || node === document || node === window) break;
+        const raw = String(node.innerText || node.textContent || node.getAttribute?.('aria-label') || node.getAttribute?.('title') || '').trim();
+        if (raw && raw.length <= 180) chunks.push(raw.toLowerCase());
+      }
+      const text = chunks.join(' ');
+      if (!text) return '';
+      const isBattery = /batter|bat\.|soc/.test(text);
+      if (isBattery && /%|soc/.test(text)) return 'battery_soc';
+      if (isBattery && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'battery_voltage';
+      if (/inverter/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'inverter_voltage';
+      if (/pv|solar|solare/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'pv_voltage';
+      if (isBattery) return 'battery_power';
+      if (/rete|grid/.test(text)) return 'grid_power';
+      if (/casa|load|consum|home/.test(text)) return 'load_power';
+      if (/pv|solar|solare/.test(text)) return 'pv_power';
+      return '';
+    }
+
+    function positionMetricFromEvent(event) {
+      if (!host) return '';
+      const rect = host.getBoundingClientRect();
+      if (!rect.width || !rect.height) return '';
+      const x = (event.clientX - rect.left) / rect.width;
+      const y = (event.clientY - rect.top) / rect.height;
+      if (y < 0.34 && x > 0.34 && x < 0.66) return 'pv_power';
+      if (x < 0.28 && y > 0.26 && y < 0.72) return 'grid_power';
+      if (x > 0.70 && y > 0.25 && y < 0.72) return 'load_power';
+      if (y > 0.55 && x > 0.34 && x < 0.66) return 'battery_power';
+      return '';
+    }
+
+    function installMetricHistoryClicks() {
+      document.addEventListener('click', (event) => {
+        const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
+        if (!path.includes(host)) return;
+        const metric = textMetricFromClickPath(path) || positionMetricFromEvent(event);
+        if (!metric) return;
+        event.preventDefault();
+        event.stopPropagation();
+        openMetricHistory(metric);
+      }, true);
+      metricHistoryClose?.addEventListener('click', closeMetricHistory);
+      metricHistoryModal?.addEventListener('click', (event) => {
+        if (event.target === metricHistoryModal) closeMetricHistory();
+      });
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeMetricHistory();
+      });
+    }
+
+    window.openEnergyMetricHistory = openMetricHistory;
+    installMetricHistoryClicks();
 
     window.setEnergyTimePeriod = function setEnergyTimePeriod(period) {
       energyHistoryPeriod = ['day', 'month', 'year'].includes(String(period)) ? String(period) : 'day';
