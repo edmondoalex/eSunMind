@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.305
+- Energy Time: per la vista Anno usa aggregati mensili HA interrogati per singola finestra mensile, evitando calcoli giornalieri.
+- Energy Time: mantenuto l'allineamento dei bucket tramite timestamp reale delle statistiche.
+- Bump versione addon/backend a `0.3.305`.
+
 ## 0.3.304
 - Energy Time: corretto l'allineamento dei bucket annuali usando il timestamp reale delle statistiche HA.
 - Energy Time: aggiunto controllo locale per verificare mesi non contigui nelle statistiche storiche.

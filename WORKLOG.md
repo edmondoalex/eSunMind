@@ -1,6 +1,11 @@
 ﻿# WORKLOG
 
 ## 2026-06-11
+- Energy Time: vista Anno mantenuta su aggregati mensili HA interrogati per finestra mensile, senza calcolo giornaliero.
+- Energy Time: mantenuto allineamento bucket tramite timestamp reale delle statistiche.
+- Bump versione addon/backend a `0.3.305` con changelog aggiornato.
+
+## 2026-06-11
 - Energy Time: corretto l'allineamento dei bucket annuali usando il timestamp reale delle statistiche HA.
 - Energy Time: aggiunto controllo locale per mesi non contigui nelle statistiche storiche.
 - Bump versione addon/backend a `0.3.304` con changelog aggiornato.

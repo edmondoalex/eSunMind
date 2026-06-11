@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.304"
+APP_VERSION = "0.3.305"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1181,6 +1181,20 @@ async def _fetch_ha_statistics(
     return {str(k): v for k, v in res.items() if isinstance(v, list)}
 
 
+async def _fetch_ha_year_month_statistics(statistic_ids: list[str], start: datetime) -> dict[str, list[dict[str, Any]]]:
+    out: dict[str, list[dict[str, Any]]] = {}
+    for month in range(12):
+        month_start = start.replace(month=month + 1)
+        if month == 11:
+            month_end = start.replace(year=start.year + 1, month=1)
+        else:
+            month_end = start.replace(month=month + 2)
+        month_stats = await _fetch_ha_statistics(statistic_ids, month_start, month_end, "month")
+        for sid, rows in month_stats.items():
+            out.setdefault(sid, []).extend(rows)
+    return out
+
+
 def _energy_pref_stat_ids(prefs: dict[str, Any], e_cfg: dict[str, Any], card_entities: dict[str, str]) -> dict[str, list[str]]:
     sources: dict[str, list[str]] = {
         "pv": [],
@@ -1435,6 +1449,7 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
     if period_norm == "day":
         labels = [f"{h:02d}:00" for h in range(24)]
         stat_period = "hour"
+        bucket_period = "hour"
         count = 24
     elif period_norm == "month":
         day_keys = []
@@ -1444,10 +1459,12 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
             cur += timedelta(days=1)
         labels = [k[-2:] for k in day_keys]
         stat_period = "day"
+        bucket_period = "day"
         count = len(labels)
     else:
         labels = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
         stat_period = "month"
+        bucket_period = "month"
         count = 12
 
     prefs: dict[str, Any] = {}
@@ -1486,19 +1503,22 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
     if all_stat_ids:
         factors = _stat_unit_factors(all_stat_ids)
         try:
-            stats = await _fetch_ha_statistics(all_stat_ids, start, end, stat_period)
+            if period_norm == "year":
+                stats = await _fetch_ha_year_month_statistics(all_stat_ids, start)
+            else:
+                stats = await _fetch_ha_statistics(all_stat_ids, start, end, stat_period)
         except Exception as exc:
             errors["statistics"] = str(exc)
 
     series = {
-        "pv": _combine_stat_ids(stats, sources["pv"], count, factors, start, stat_period),
-        "load": _combine_stat_ids(stats, sources["load"], count, factors, start, stat_period),
-        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count, factors, start, stat_period),
-        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count, factors, start, stat_period),
-        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors, start, stat_period),
-        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors, start, stat_period),
-        "gas": _combine_stat_ids(stats, sources["gas"], count, factors, start, stat_period),
-        "solar_thermal": _combine_stat_ids(stats, sources["solar_thermal"], count, factors, start, stat_period),
+        "pv": _combine_stat_ids(stats, sources["pv"], count, factors, start, bucket_period),
+        "load": _combine_stat_ids(stats, sources["load"], count, factors, start, bucket_period),
+        "grid_import": _combine_stat_ids(stats, sources["grid_import"], count, factors, start, bucket_period),
+        "grid_export": _combine_stat_ids(stats, sources["grid_export"], count, factors, start, bucket_period),
+        "battery_charge": _combine_stat_ids(stats, sources["battery_charge"], count, factors, start, bucket_period),
+        "battery_discharge": _combine_stat_ids(stats, sources["battery_discharge"], count, factors, start, bucket_period),
+        "gas": _combine_stat_ids(stats, sources["gas"], count, factors, start, bucket_period),
+        "solar_thermal": _combine_stat_ids(stats, sources["solar_thermal"], count, factors, start, bucket_period),
     }
 
     if not any(v > 0 for v in series["load"]):
@@ -1526,6 +1546,8 @@ async def _build_energy_history_snapshot(cfg: dict[str, Any], site_id: str | Non
         "totals": totals,
         "sources": sources,
         "source_units_factor_to_kwh": factors,
+        "stat_period": stat_period,
+        "bucket_period": bucket_period,
         "source_mode": "manual_energy_time_statistics" if has_manual_sources else ("ha_energy_site_filtered" if site_requested and prefs else ("site_config_statistics" if site_requested else ("ha_energy_statistics" if prefs else "configured_statistics"))),
         "errors": errors,
     }

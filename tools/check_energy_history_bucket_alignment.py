@@ -30,6 +30,7 @@ def main():
     expected = [0.0, 20.0, 0.0, 40.0, 0.0, 60.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     if values != expected:
         raise SystemExit(f"bucket alignment failed: {values!r}")
+
     print("energy history bucket alignment ok")
 
 
