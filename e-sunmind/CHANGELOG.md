@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.309
+- Energy Time: ripristinato il popolamento di Giorno e Mese quando Home Assistant restituisce statistiche senza timestamp di bucket; la vista Anno resta vincolata ai timestamp per evitare mesi fittizi.
+- Energy Dashboard: corretto il drill-down dei click su valori `W`, evitando che `PV1 500 W` venga interpretato come tensione PV.
+- Bump versione addon/backend a `0.3.309`.
+
 ## 0.3.308
 - Energy Dashboard: corretto il drill-down dei valori W usando solo la posizione del click sul dispositivo, evitando aperture di grafici errati dovute al testo aggregato della card.
 - Energy Dashboard: mantenuto il riconoscimento testuale solo per metriche non-W come SOC `%` e tensioni `V`.

@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.308"
+APP_VERSION = "0.3.309"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1556,6 +1556,10 @@ def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 
             continue
         bucket_idx = _stat_row_bucket_index(row, start, period, count) if start is not None else None
         if start is not None and bucket_idx is None:
+            if period == "month":
+                continue
+            bucket_idx = idx if idx < count else None
+        if bucket_idx is None:
             continue
         target_idx = bucket_idx if bucket_idx is not None else idx
         vals[target_idx] += abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor

@@ -590,7 +590,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.308';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.309';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -2071,11 +2071,10 @@
       }
       const text = chunks.join(' ');
       if (!text) return '';
+      if (/\d+(?:[.,]\d+)?\s*w\b/i.test(text)) return '';
       const isBattery = /batter|bat\.|soc/.test(text);
-      if (isBattery && /%|soc/.test(text)) return 'battery_soc';
-      if (isBattery && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'battery_voltage';
-      if (/inverter/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'inverter_voltage';
-      if (/pv|solar|solare/.test(text) && /(^|[^a-z])v($|[^a-z])|volt|tensione/.test(text)) return 'pv_voltage';
+      const hasPercentValue = /\d+(?:[.,]\d+)?\s*%/.test(text);
+      if (isBattery && (hasPercentValue || /\bsoc\b/.test(text))) return 'battery_soc';
       return '';
     }
 
