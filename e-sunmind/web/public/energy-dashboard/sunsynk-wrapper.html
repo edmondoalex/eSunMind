@@ -17,7 +17,7 @@
     html, body { margin: 0; background: var(--addon-bg); color: var(--primary-text-color); font-family: Inter, Segoe UI, sans-serif; }
     .page { min-height: 100vh; display: grid; justify-items: center; align-content: center; gap: 14px; padding: 12px; box-sizing: border-box; }
     .energy-frame { position: relative; width: min(1200px, 98vw); }
-    .host { width: 100%; }
+    .host { width: 100%; position: relative; }
     .sankey-section {
       width: min(1200px, 98vw);
       box-sizing: border-box;
@@ -590,7 +590,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.310';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.311';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -2062,32 +2062,24 @@
       }
     }
 
-    function textMetricFromClickPath(path) {
-      const chunks = [];
-      for (const node of path || []) {
-        if (!node || node === host || node === document || node === window) break;
-        const raw = String(node.innerText || node.textContent || node.getAttribute?.('aria-label') || node.getAttribute?.('title') || '').trim();
-        if (raw && raw.length <= 180) chunks.push(raw.toLowerCase());
-      }
-      const text = chunks.join(' ');
-      if (!text) return '';
-      if (/\d+(?:[.,]\d+)?\s*w\b/i.test(text)) return '';
-      const isBattery = /batter|bat\.|soc/.test(text);
-      const hasPercentValue = /\d+(?:[.,]\d+)?\s*%/.test(text);
-      if (isBattery && (hasPercentValue || /\bsoc\b/.test(text))) return 'battery_soc';
-      return '';
-    }
-
     function positionMetricFromEvent(event) {
+      if (energyDashboardLayout !== 'k_flow') return '';
       if (!host) return '';
       const rect = host.getBoundingClientRect();
       if (!rect.width || !rect.height) return '';
       const x = (event.clientX - rect.left) / rect.width;
       const y = (event.clientY - rect.top) / rect.height;
-      if (y < 0.34 && x > 0.34 && x < 0.66) return 'pv_power';
-      if (x < 0.28 && y > 0.26 && y < 0.72) return 'grid_power';
-      if (x > 0.70 && y > 0.25 && y < 0.72) return 'load_power';
-      if (y > 0.55 && x > 0.34 && x < 0.66) return 'battery_power';
+      const zones = [
+        { metric: 'pv_power', x1: 0.235, x2: 0.345, y1: 0.135, y2: 0.245 },
+        { metric: 'battery_power', x1: 0.285, x2: 0.405, y1: 0.325, y2: 0.435 },
+        { metric: 'battery_soc', x1: 0.225, x2: 0.305, y1: 0.395, y2: 0.500 },
+        { metric: 'battery_voltage', x1: 0.230, x2: 0.330, y1: 0.505, y2: 0.605 },
+        { metric: 'grid_power', x1: 0.645, x2: 0.770, y1: 0.545, y2: 0.650 },
+        { metric: 'load_power', x1: 0.235, x2: 0.390, y1: 0.705, y2: 0.910 },
+        { metric: 'load_power', x1: 0.395, x2: 0.550, y1: 0.745, y2: 0.875 },
+      ];
+      const hit = zones.find((zone) => x >= zone.x1 && x <= zone.x2 && y >= zone.y1 && y <= zone.y2);
+      if (hit) return hit.metric;
       return '';
     }
 
@@ -2095,7 +2087,7 @@
       document.addEventListener('click', (event) => {
         const path = typeof event.composedPath === 'function' ? event.composedPath() : [];
         if (!path.includes(host)) return;
-        const metric = textMetricFromClickPath(path) || positionMetricFromEvent(event);
+        const metric = positionMetricFromEvent(event);
         if (!metric) return;
         event.preventDefault();
         event.stopPropagation();

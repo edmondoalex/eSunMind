@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.311
+- Energy Dashboard: il drill-down dei valori istantanei K Flow non usa piu testo interno della web component.
+- Energy Dashboard: mappati click diretti su zone strette dei valori istantanei per PV W, batteria W/%/V, rete W e carico/casa W, senza bottoni/overlay.
+- Bump versione addon/backend a `0.3.311`.
+
 ## 0.3.310
 - Energy Time: la lettura statistiche HA richiede anche `sum` e `state`, non solo `change`.
 - Energy Time: aggiunto fallback a delta progressivo da `sum/state` per evitare grafici Giorno/Mese tutti a zero quando HA non restituisce `change`.
