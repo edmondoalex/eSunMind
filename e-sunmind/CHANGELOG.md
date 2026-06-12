@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.312
+- Energy Dashboard: rimosso il drill-down fragile sul click dei valori dentro la card K Flow.
+- Energy Dashboard: aggiunto bottone `Grafici` che apre una vista unica con i grafici singoli richiesti in elenco.
+- Energy Dashboard: la vista grafici include PV W, casa/load W, rete W, batteria W, batteria %, batteria V, PV V e inverter V.
+- Bump versione addon/backend a `0.3.312`.
+
 ## 0.3.311
 - Energy Dashboard: il drill-down dei valori istantanei K Flow non usa piu testo interno della web component.
 - Energy Dashboard: mappati click diretti su zone strette dei valori istantanei per PV W, batteria W/%/V, rete W e carico/casa W, senza bottoni/overlay.
