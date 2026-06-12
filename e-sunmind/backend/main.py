@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.309"
+APP_VERSION = "0.3.310"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1326,7 +1326,7 @@ async def _fetch_ha_statistics(
             "end_time": end.isoformat(),
             "statistic_ids": ids,
             "period": period,
-            "types": ["change"],
+            "types": ["change", "sum", "state"],
             "units": {"energy": "kWh"},
         }
     )
@@ -1551,7 +1551,8 @@ def _stat_row_bucket_index(row: dict[str, Any], start: datetime, period: str, co
 
 def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 1.0, start: datetime | None = None, period: str = "") -> list[float]:
     vals = [0.0] * count
-    for idx, row in enumerate(rows[:count]):
+    prev_absolute: float | None = None
+    for idx, row in enumerate(rows):
         if not isinstance(row, dict):
             continue
         bucket_idx = _stat_row_bucket_index(row, start, period, count) if start is not None else None
@@ -1562,7 +1563,20 @@ def _stat_change_values(rows: list[dict[str, Any]], count: int, factor: float = 
         if bucket_idx is None:
             continue
         target_idx = bucket_idx if bucket_idx is not None else idx
-        vals[target_idx] += abs(float(_to_float_or_none(row.get("change")) or 0.0)) * factor
+        change = _to_float_or_none(row.get("change"))
+        if change is None:
+            absolute = _to_float_or_none(row.get("sum"))
+            if absolute is None:
+                absolute = _to_float_or_none(row.get("state"))
+            if absolute is None:
+                continue
+            if prev_absolute is None:
+                prev_absolute = absolute
+                continue
+            delta = absolute - prev_absolute
+            change = delta if delta >= 0 else max(0.0, absolute)
+            prev_absolute = absolute
+        vals[target_idx] += abs(float(change or 0.0)) * factor
     return vals
 
 

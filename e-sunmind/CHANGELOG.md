@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.310
+- Energy Time: la lettura statistiche HA richiede anche `sum` e `state`, non solo `change`.
+- Energy Time: aggiunto fallback a delta progressivo da `sum/state` per evitare grafici Giorno/Mese tutti a zero quando HA non restituisce `change`.
+- Bump versione addon/backend a `0.3.310`.
+
 ## 0.3.309
 - Energy Time: ripristinato il popolamento di Giorno e Mese quando Home Assistant restituisce statistiche senza timestamp di bucket; la vista Anno resta vincolata ai timestamp per evitare mesi fittizi.
 - Energy Dashboard: corretto il drill-down dei click su valori `W`, evitando che `PV1 500 W` venga interpretato come tensione PV.
