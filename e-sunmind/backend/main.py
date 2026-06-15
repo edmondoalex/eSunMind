@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.312"
+APP_VERSION = "0.3.313"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -1138,6 +1138,17 @@ def _energy_metric_entity(e_cfg: dict[str, Any], metric: str) -> tuple[str, dict
                 return ent
         return ""
 
+    def _entity_list(items: list[tuple[str, Any]]) -> list[dict[str, str]]:
+        out: list[dict[str, str]] = []
+        seen: set[str] = set()
+        for label, value in items:
+            ent = _clean(value)
+            if not ent or ent in seen:
+                continue
+            seen.add(ent)
+            out.append({"label": label, "entity": ent})
+        return out
+
     defs: dict[str, dict[str, Any]] = {
         "load_power": {
             "label": "Casa / Load",
@@ -1164,6 +1175,18 @@ def _energy_metric_entity(e_cfg: dict[str, Any], metric: str) -> tuple[str, dict
                 card_entities.get("pv4_power_189"),
                 card_entities.get("pv5_power"),
                 card_entities.get("pv6_power"),
+            ),
+            "entities": _entity_list(
+                [
+                    ("PV totale", e_cfg.get("pv_power_entity_id")),
+                    ("PV totale", card_entities.get("pv_total")),
+                    ("PV1 potenza", card_entities.get("pv1_power_186")),
+                    ("PV2 potenza", card_entities.get("pv2_power_187")),
+                    ("PV3 potenza", card_entities.get("pv3_power_188")),
+                    ("PV4 potenza", card_entities.get("pv4_power_189")),
+                    ("PV5 potenza", card_entities.get("pv5_power")),
+                    ("PV6 potenza", card_entities.get("pv6_power")),
+                ]
             ),
         },
         "battery_power": {
@@ -1203,6 +1226,17 @@ def _energy_metric_entity(e_cfg: dict[str, Any], metric: str) -> tuple[str, dict
                 card_entities.get("pv5_voltage"),
                 card_entities.get("pv6_voltage"),
             ),
+            "entities": _entity_list(
+                [
+                    ("PV tensione totale", card_entities.get("pv_total_voltage")),
+                    ("PV1 tensione", card_entities.get("pv1_voltage_109")),
+                    ("PV2 tensione", card_entities.get("pv2_voltage_111")),
+                    ("PV3 tensione", card_entities.get("pv3_voltage_113")),
+                    ("PV4 tensione", card_entities.get("pv4_voltage_115")),
+                    ("PV5 tensione", card_entities.get("pv5_voltage")),
+                    ("PV6 tensione", card_entities.get("pv6_voltage")),
+                ]
+            ),
         },
     }
     metric_norm = str(metric or "").strip().lower()
@@ -1218,61 +1252,86 @@ def _build_energy_metric_history_snapshot(cfg: dict[str, Any], site: str | None,
     metric_norm, meta = _energy_metric_entity(e_cfg, metric)
     if not meta:
         return {"ok": False, "error": "unknown_metric", "metric": metric_norm}
+
+    step_seconds = 300
+    kind = str(meta.get("kind") or "")
+
+    def _single_payload(entity: str, label: str) -> dict[str, Any]:
+        raw_points, error = _fetch_ha_history_points(entity, start, end)
+        if error:
+            return {"ok": False, "error": error, "metric": metric_norm, "label": label, "unit": meta.get("unit"), "entity_id": entity}
+
+        bucket_count = int((end - start).total_seconds() // step_seconds)
+        buckets: list[float | None] = [None] * max(1, bucket_count)
+        for point in raw_points:
+            try:
+                ts_local = point["ts"].astimezone(tz)
+            except Exception:
+                continue
+            idx = int((ts_local - start).total_seconds() // step_seconds)
+            if idx < 0 or idx >= len(buckets):
+                continue
+            raw_value = point.get("value")
+            value = _normalize_power_to_w(raw_value, point.get("unit") or meta.get("unit")) if kind == "power" else _to_float_or_none(raw_value)
+            if value is None:
+                continue
+            buckets[idx] = float(value)
+
+        points: list[dict[str, Any]] = []
+        for idx, value in enumerate(buckets):
+            if value is None:
+                continue
+            ts = start + timedelta(seconds=idx * step_seconds)
+            decimals = 0 if kind == "power" else 1
+            points.append(
+                {
+                    "i": idx,
+                    "ts": ts.isoformat(),
+                    "label": ts.strftime("%H:%M"),
+                    "value": round(value, decimals),
+                }
+            )
+
+        return {
+            "ok": True,
+            "metric": metric_norm,
+            "label": label,
+            "unit": meta.get("unit"),
+            "kind": kind,
+            "entity_id": entity,
+            "date": start.strftime("%Y-%m-%d"),
+            "timezone": tz_name,
+            "bucket_seconds": step_seconds,
+            "bucket_count": len(buckets),
+            "points": points,
+            "raw_count": len(raw_points),
+        }
+
+    entities = meta.get("entities") if isinstance(meta.get("entities"), list) else []
+    if len(entities) > 1:
+        children = [
+            _single_payload(str(item.get("entity") or ""), str(item.get("label") or meta.get("label") or metric_norm))
+            for item in entities
+            if isinstance(item, dict) and str(item.get("entity") or "").strip()
+        ]
+        available = [child for child in children if child.get("ok") is not False]
+        return {
+            "ok": True if available else False,
+            "error": None if available else "missing_entity",
+            "metric": metric_norm,
+            "label": meta.get("label"),
+            "unit": meta.get("unit"),
+            "kind": kind,
+            "date": start.strftime("%Y-%m-%d"),
+            "timezone": tz_name,
+            "children": children,
+        }
+
     entity = str(meta.get("entity") or "").strip()
     if not entity:
         return {"ok": False, "error": "missing_entity", "metric": metric_norm, "label": meta.get("label"), "unit": meta.get("unit")}
 
-    raw_points, error = _fetch_ha_history_points(entity, start, end)
-    if error:
-        return {"ok": False, "error": error, "metric": metric_norm, "entity_id": entity}
-
-    step_seconds = 300
-    bucket_count = int((end - start).total_seconds() // step_seconds)
-    buckets: list[float | None] = [None] * max(1, bucket_count)
-    kind = str(meta.get("kind") or "")
-    for point in raw_points:
-        try:
-            ts_local = point["ts"].astimezone(tz)
-        except Exception:
-            continue
-        idx = int((ts_local - start).total_seconds() // step_seconds)
-        if idx < 0 or idx >= len(buckets):
-            continue
-        raw_value = point.get("value")
-        value = _normalize_power_to_w(raw_value, point.get("unit") or meta.get("unit")) if kind == "power" else _to_float_or_none(raw_value)
-        if value is None:
-            continue
-        buckets[idx] = float(value)
-
-    points: list[dict[str, Any]] = []
-    for idx, value in enumerate(buckets):
-        if value is None:
-            continue
-        ts = start + timedelta(seconds=idx * step_seconds)
-        decimals = 0 if kind == "power" else 1
-        points.append(
-            {
-                "i": idx,
-                "ts": ts.isoformat(),
-                "label": ts.strftime("%H:%M"),
-                "value": round(value, decimals),
-            }
-        )
-
-    return {
-        "ok": True,
-        "metric": metric_norm,
-        "label": meta.get("label"),
-        "unit": meta.get("unit"),
-        "kind": kind,
-        "entity_id": entity,
-        "date": start.strftime("%Y-%m-%d"),
-        "timezone": tz_name,
-        "bucket_seconds": step_seconds,
-        "bucket_count": len(buckets),
-        "points": points,
-        "raw_count": len(raw_points),
-    }
+    return _single_payload(entity, str(meta.get("label") or metric_norm))
 
 
 async def _ha_ws_call(message: dict[str, Any], timeout_seconds: float = 30.0) -> dict[str, Any]:

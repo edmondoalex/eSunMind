@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.313
+- Energy Dashboard: i grafici PV del bottone `Grafici` ora si espandono per ogni PV configurato, invece di mostrare solo il primo sensore.
+- Energy Dashboard: supportata la stessa espansione anche per le tensioni PV multiple.
+- Bump versione addon/backend a `0.3.313`.
+
 ## 0.3.312
 - Energy Dashboard: rimosso il drill-down fragile sul click dei valori dentro la card K Flow.
 - Energy Dashboard: aggiunto bottone `Grafici` che apre una vista unica con i grafici singoli richiesti in elenco.

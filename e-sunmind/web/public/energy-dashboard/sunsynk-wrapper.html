@@ -630,7 +630,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.312';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.313';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -2137,6 +2137,15 @@
       </section>`;
     }
 
+    function metricHistoryPayloadsHtml(payload, def) {
+      if (Array.isArray(payload?.children)) {
+        return payload.children
+          .map((child) => metricHistoryItemHtml(child, { title: child?.label || def.title }))
+          .join('');
+      }
+      return metricHistoryItemHtml(payload, def);
+    }
+
     async function openAllMetricHistories() {
       if (!metricHistoryModal) return;
       metricHistoryModal.hidden = false;
@@ -2144,7 +2153,7 @@
       metricHistorySubtitle.textContent = metricHistoryDateValue();
       metricHistoryBody.innerHTML = '<div class="metric-history-empty">Caricamento grafici...</div>';
       const payloads = await Promise.all(metricHistoryItems.map((item) => fetchMetricHistoryPayload(item.key)));
-      metricHistoryBody.innerHTML = `<div class="metric-history-list">${payloads.map((payload, idx) => metricHistoryItemHtml(payload, metricHistoryItems[idx])).join('')}</div>`;
+      metricHistoryBody.innerHTML = `<div class="metric-history-list">${payloads.map((payload, idx) => metricHistoryPayloadsHtml(payload, metricHistoryItems[idx])).join('')}</div>`;
     }
 
     function installMetricHistoryControls() {
