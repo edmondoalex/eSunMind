@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.319
+- Livoltek: ripristinato come tab interno della UI principale, coerente con `Energy`, `Energy Setup`, `Setting` e `Tecnica`.
+- Bump versione addon/backend a `0.3.319`.
+
 ## 0.3.318
 - Livoltek: aggiunta pagina statica `energy-dashboard/livoltek.html`, accessibile da remoto come gli altri wrapper Energy Dashboard.
 - UI: il link Livoltek punta alla pagina statica pubblica per evitare riscritture Ingress sulla SPA.
