@@ -6302,6 +6302,7 @@ onMounted(() => {
     if (view === 'user' || view === 'ui-user' || view === 'user_public') tab.value = 'user_public'
     if (view === 'energy' || view === 'ui-energy') tab.value = 'energy'
     if (view === 'energy_public') tab.value = 'energy_public'
+    if (view === 'livoltek') tab.value = 'livoltek'
     if (view === 'energy_setup' || view === 'energy-setup' || view === 'ui-energy-setup') {
       tab.value = 'energy_setup'
     }

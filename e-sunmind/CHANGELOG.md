@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.315
+- UI: servito `index.html` senza cache per evitare vecchi menu in Home Assistant Ingress dopo aggiornamento add-on.
+- Livoltek: aggiunto supporto diretto a `?view=livoltek`.
+- Bump versione addon/backend a `0.3.315`.
+
 ## 0.3.314
 - Livoltek: aggiunta sezione separata in UI con switch di abilitazione, configurazione, stato runtime e JSON grezzo redatto.
 - Livoltek: aggiunti client/polling separati e endpoint debug per refresh, probe API e reinvio MQTT Discovery.

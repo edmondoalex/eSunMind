@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.314"
+APP_VERSION = "0.3.315"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -4229,7 +4229,14 @@ async def _startup():
 
 @app.get("/")
 async def index():
-    return FileResponse("/app/static/index.html")
+    return FileResponse(
+        "/app/static/index.html",
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.get("/logo.png")
