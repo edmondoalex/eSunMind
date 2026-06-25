@@ -20,7 +20,7 @@ from astral import Observer
 from astral.moon import azimuth as moon_azimuth_deg
 from astral.moon import elevation as moon_altitude_deg
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from geopy.geocoders import Nominatim
 from suncalc import get_position, get_times
@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.315"
+APP_VERSION = "0.3.316"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -4229,8 +4229,153 @@ async def _startup():
 
 @app.get("/")
 async def index():
-    return FileResponse(
-        "/app/static/index.html",
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
+    try:
+        html = Path("/app/static/index.html").read_text(encoding="utf-8")
+        marker = "e-sunmind-livoltek-runtime-nav"
+        if marker not in html:
+            inject = f"""
+<script id="{marker}">
+(function(){{
+  function addLivoltekLink(){{
+    var actions=document.querySelector('.topbar .actions')||document.querySelector('header .actions');
+    if(!actions||document.getElementById('livoltek-runtime-link')) return;
+    var link=document.createElement('a');
+    link.id='livoltek-runtime-link';
+    link.className='btn ghost';
+    link.href='livoltek';
+    link.textContent='Livoltek';
+    var items=Array.prototype.slice.call(actions.children);
+    var before=items.find(function(el){{return (el.textContent||'').trim()==='Tende/Cover';}});
+    actions.insertBefore(link,before||null);
+  }}
+  document.addEventListener('DOMContentLoaded',addLivoltekLink);
+  setInterval(addLivoltekLink,700);
+}})();
+</script>
+"""
+            html = html.replace("</body>", inject + "</body>")
+        return HTMLResponse(html, headers=headers)
+    except Exception:
+        return FileResponse("/app/static/index.html", headers=headers)
+
+
+@app.get("/livoltek")
+async def livoltek_page():
+    html = f"""<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>e-SunMind Livoltek</title>
+  <style>
+    :root{{--bg:#070a0f;--panel:#101722;--muted:#9fb0c7;--text:#e8f1ff;--accent:#57e3d6;--border:rgba(255,255,255,.1)}}
+    *{{box-sizing:border-box}} body{{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}}
+    .topbar{{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:#090f16}}
+    .brand{{font-weight:700}} .brand small{{color:var(--muted)}} .nav{{display:flex;gap:8px;flex-wrap:wrap}}
+    .btn{{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:999px;background:#121a26;color:var(--text);padding:8px 12px;text-decoration:none;cursor:pointer;font-weight:700}}
+    .btn.primary{{background:var(--accent);color:#05211e}} .btn:disabled{{opacity:.45;cursor:not-allowed}}
+    main{{padding:16px;display:grid;gap:12px}} .card{{border:1px solid var(--border);border-radius:10px;background:var(--panel);padding:14px}}
+    .head{{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}} h1,h2{{margin:0 0 8px}} p{{color:var(--muted)}}
+    .grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}} label{{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px}}
+    input{{padding:9px;border-radius:8px;border:1px solid var(--border);background:#0b111a;color:var(--text)}} .row{{display:flex;gap:8px;flex-wrap:wrap;align-items:center}}
+    .kpi{{border:1px solid var(--border);border-radius:8px;padding:10px;background:#0b111a}} .kpi span{{display:block;color:var(--muted);font-size:12px}} .kpi strong{{font-size:18px}}
+    pre{{white-space:pre-wrap;word-break:break-word;max-height:520px;overflow:auto;background:#070b11;border:1px solid var(--border);border-radius:8px;padding:12px}}
+    .note{{color:var(--muted);font-size:12px}} .switch{{flex-direction:row;align-items:center;gap:8px;white-space:nowrap}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">e-SunMind <small>v{APP_VERSION}</small></div>
+    <nav class="nav"><a class="btn" href="./">UI Admin</a><a class="btn primary" href="livoltek">Livoltek</a></nav>
+  </header>
+  <main>
+    <section class="card">
+      <div class="head">
+        <div><h1>Livoltek</h1><p>Integrazione separata per probe, polling, MQTT Discovery e JSON grezzo.</p></div>
+        <label class="switch"><input id="enabled" type="checkbox" /> <span id="enabledText">Disabilitato</span></label>
+      </div>
+      <div class="row">
+        <button class="btn" onclick="refreshLivoltek()">Refresh</button>
+        <button class="btn" onclick="probeLivoltek()">Probe API</button>
+        <button class="btn" onclick="mqttDiscovery()">Rispedisci MQTT Discovery</button>
+        <button class="btn primary" onclick="saveConfig()">Salva Livoltek</button>
+        <span id="msg" class="note"></span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Configurazione</h2>
+      <div class="grid">
+        <label>Base URL<input id="base_url" /></label>
+        <label>Username<input id="username" autocomplete="off" /></label>
+        <label>Password<input id="password" type="password" autocomplete="new-password" placeholder="lascia *** per non cambiare" /></label>
+        <label>Token opzionale<input id="token" type="password" autocomplete="off" /></label>
+        <label>Station ID<input id="station_id" /></label>
+        <label>Device ID<input id="device_id" /></label>
+        <label>Inverter SN<input id="inverter_sn" /></label>
+        <label>Device serial<input id="device_serial" /></label>
+        <label>Polling secondi<input id="poll_interval_seconds" type="number" min="30" max="86400" /></label>
+        <label>Timeout secondi<input id="timeout_seconds" type="number" min="5" max="120" /></label>
+        <label class="switch">MQTT Discovery Livoltek<input id="mqtt_discovery_enabled" type="checkbox" /></label>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Stato runtime</h2>
+      <div id="stateGrid" class="grid"></div>
+    </section>
+    <section class="card">
+      <h2>JSON grezzo</h2>
+      <pre id="raw">Nessun JSON disponibile.</pre>
+    </section>
+  </main>
+  <script>
+    const fields=['base_url','username','password','token','station_id','device_id','inverter_sn','device_serial','poll_interval_seconds','timeout_seconds','mqtt_discovery_enabled'];
+    let status=null;
+    function v(id){{return document.getElementById(id)}}
+    function setMsg(t){{v('msg').textContent=t||''}}
+    function ts(x){{return x?new Date(Number(x)*1000).toLocaleString():'-'}}
+    function fill(s){{
+      status=s; const c=s.config||{{}};
+      v('enabled').checked=!!c.enabled; v('enabledText').textContent=c.enabled?'Abilitato':'Disabilitato';
+      fields.forEach(function(k){{if(!v(k))return; if(v(k).type==='checkbox')v(k).checked=!!c[k]; else v(k).value=c[k]??'';}});
+      const n=s.normalized||{{}};
+      const rows=[
+        ['Connessione',s.connected?'online':(c.enabled?'offline':'disabilitato')],
+        ['Ultimo update',ts(s.last_update_ts)],['Ultimo probe',ts(s.last_probe_ts)],
+        ['Ultimo errore',s.last_error||'-'],['Errore MQTT',s.mqtt_last_error||'-'],
+        ['PV live',(n.pv_power_w??'-')+' W'],['PV oggi',(n.pv_energy_today_kwh??'-')+' kWh'],
+        ['PV totale',(n.pv_energy_total_kwh??'-')+' kWh'],['Batteria',(n.battery_soc_pct??'-')+' %'],
+        ['Battery power',(n.battery_power_w??'-')+' W'],['Rete',(n.grid_power_w??'-')+' W'],
+        ['Carichi',(n.load_power_w??'-')+' W'],['Inverter',n.inverter_status??'-']
+      ];
+      v('stateGrid').innerHTML=rows.map(function(r){{return '<div class="kpi"><span>'+r[0]+'</span><strong>'+r[1]+'</strong></div>';}}).join('');
+      v('raw').textContent=s.raw?JSON.stringify(s.raw,null,2):'Nessun JSON disponibile. Usa Probe API o Refresh.';
+    }}
+    async function loadStatus(){{const r=await fetch('api/livoltek/status',{{cache:'no-store'}}); const j=await r.json(); fill(j);}}
+    async function saveConfig(){{
+      setMsg('Salvataggio...');
+      const p={{enabled:v('enabled').checked}};
+      fields.forEach(function(k){{if(!v(k))return; p[k]=v(k).type==='checkbox'?v(k).checked:v(k).value;}});
+      const r=await fetch('api/livoltek/config',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify(p)}}); const j=await r.json();
+      if(!r.ok||!j.ok){{setMsg('Errore: '+(j.error||r.status)); return;}}
+      setMsg(p.enabled?'Salvato. Polling attivo al prossimo ciclo.':'Disabilitato: niente login, polling o MQTT.');
+      await loadStatus();
+    }}
+    async function action(url,label){{setMsg(label+'...'); const r=await fetch(url,{{method:'POST',cache:'no-store'}}); const j=await r.json(); if(!r.ok||!j.ok){{setMsg(label+': '+(j.error||r.status)); if(j.status) fill(j.status); return;}} fill(j); setMsg(label+' completato.');}}
+    function refreshLivoltek(){{action('api/livoltek/refresh','Refresh Livoltek')}}
+    function probeLivoltek(){{action('api/livoltek/probe','Probe Livoltek')}}
+    function mqttDiscovery(){{action('api/livoltek/mqtt_discovery','MQTT Discovery Livoltek')}}
+    v('enabled').addEventListener('change',function(){{v('enabledText').textContent=v('enabled').checked?'Abilitato':'Disabilitato';}});
+    loadStatus().catch(function(e){{setMsg('Stato Livoltek: '+e.message);}});
+  </script>
+</body>
+</html>"""
+    return HTMLResponse(
+        html,
         headers={
             "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
             "Pragma": "no-cache",

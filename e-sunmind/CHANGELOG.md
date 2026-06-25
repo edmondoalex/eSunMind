@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.316
+- Livoltek: aggiunta pagina backend autonoma `/livoltek`, indipendente dal bundle Vue, per debug/config anche se Home Assistant serve asset UI vecchi.
+- UI: aggiunta iniezione runtime del link `Livoltek` nella topbar dell'index servito dall'add-on.
+- Bump versione addon/backend a `0.3.316`.
+
 ## 0.3.315
 - UI: servito `index.html` senza cache per evitare vecchi menu in Home Assistant Ingress dopo aggiornamento add-on.
 - Livoltek: aggiunto supporto diretto a `?view=livoltek`.
