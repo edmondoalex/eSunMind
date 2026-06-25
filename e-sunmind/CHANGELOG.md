@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.320
+- UI: rimosso il link Livoltek iniettato a runtime dal backend; ora resta solo il tab Livoltek nativo della UI.
+- Bump versione addon/backend a `0.3.320`.
+
 ## 0.3.319
 - Livoltek: ripristinato come tab interno della UI principale, coerente con `Energy`, `Energy Setup`, `Setting` e `Tecnica`.
 - Bump versione addon/backend a `0.3.319`.

@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.319"
+APP_VERSION = "0.3.320"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -4234,34 +4234,7 @@ async def index():
         "Pragma": "no-cache",
         "Expires": "0",
     }
-    try:
-        html = Path("/app/static/index.html").read_text(encoding="utf-8")
-        marker = "e-sunmind-livoltek-runtime-nav"
-        if marker not in html:
-            inject = f"""
-<script id="{marker}">
-(function(){{
-  function addLivoltekLink(){{
-    var actions=document.querySelector('.topbar .actions')||document.querySelector('header .actions');
-    if(!actions||document.getElementById('livoltek-runtime-link')) return;
-    var link=document.createElement('a');
-    link.id='livoltek-runtime-link';
-    link.className='btn ghost';
-    link.href='livoltek';
-    link.textContent='Livoltek';
-    var items=Array.prototype.slice.call(actions.children);
-    var before=items.find(function(el){{return (el.textContent||'').trim()==='Tende/Cover';}});
-    actions.insertBefore(link,before||null);
-  }}
-  document.addEventListener('DOMContentLoaded',addLivoltekLink);
-  setInterval(addLivoltekLink,700);
-}})();
-</script>
-"""
-            html = html.replace("</body>", inject + "</body>")
-        return HTMLResponse(html, headers=headers)
-    except Exception:
-        return FileResponse("/app/static/index.html", headers=headers)
+    return FileResponse("/app/static/index.html", headers=headers)
 
 
 @app.get("/livoltek")
