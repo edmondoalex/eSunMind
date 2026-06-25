@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from math import cos, pi
 from pathlib import Path
 from typing import Any
-from urllib.error import URLError
+from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.313"
+APP_VERSION = "0.3.314"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -51,9 +51,12 @@ WEATHER_OPEN_METEO_FILE = Path("/data/weather_open_meteo.json")
 AIR_QUALITY_FILE = Path("/data/air_quality_openmeteo.json")
 TENDE_MAP_FILE = Path("/data/tende_map.json")
 STATE_FILE = Path("/data/state.json")
+LIVOLTEK_SECRETS_FILE = Path("/data/livoltek_secrets.json")
+LOCAL_LIVOLTEK_SECRETS_FILE = Path(__file__).resolve().parents[1] / "livoltek_secrets.json"
 FORECAST_MIN_INTERVAL_SECONDS = 3600
 WEATHER_MIN_INTERVAL_SECONDS = 900
 AIR_QUALITY_MIN_INTERVAL_SECONDS = 1800
+LIVOLTEK_MIN_POLL_SECONDS = 30
 WORKER_STATE: dict[str, Any] = {
     "last_loop_ts": 0.0,
     "last_ok_ts": 0.0,
@@ -67,6 +70,21 @@ WORKER_STATE: dict[str, Any] = {
     "tende_map_last_error": None,
     "tende_map_last_msg_ts": 0.0,
     "tende_map_availability": "unknown",
+    "livoltek_enabled": False,
+    "livoltek_connected": False,
+    "livoltek_last_update_ts": 0.0,
+    "livoltek_last_error": None,
+    "livoltek_mqtt_last_error": None,
+}
+
+LIVOLTEK_RUNTIME: dict[str, Any] = {
+    "lock": threading.Lock(),
+    "last_probe_ts": 0.0,
+    "last_update_ts": 0.0,
+    "last_error": None,
+    "connected": False,
+    "raw": None,
+    "normalized": {},
 }
 
 TENDE_MAP_RUNTIME: dict[str, Any] = {
@@ -389,6 +407,270 @@ def _save_local_options_raw(payload: dict[str, Any]) -> None:
 
 def _save_options_raw(payload: dict[str, Any]) -> None:
     OPTIONS_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _livoltek_defaults() -> dict[str, Any]:
+    return {
+        "enabled": False,
+        "base_url": "https://evs.livoltek-portal.com",
+        "username": "",
+        "password": "",
+        "token": "",
+        "station_id": "13299",
+        "device_id": "11237",
+        "inverter_sn": "HP10603HSB280050",
+        "device_serial": "P20A230300586",
+        "poll_interval_seconds": 300,
+        "timeout_seconds": 20,
+        "mqtt_discovery_enabled": False,
+    }
+
+
+def _load_livoltek_secrets_raw() -> dict[str, Any]:
+    for path in (LIVOLTEK_SECRETS_FILE, LOCAL_LIVOLTEK_SECRETS_FILE):
+        if not path.exists():
+            continue
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            return raw if isinstance(raw, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _load_livoltek_config() -> dict[str, Any]:
+    cfg = _livoltek_defaults()
+    cfg.update(_load_livoltek_secrets_raw())
+    cfg["enabled"] = bool(cfg.get("enabled", False))
+    cfg["base_url"] = str(cfg.get("base_url") or "https://evs.livoltek-portal.com").strip().rstrip("/")
+    if not cfg["base_url"].startswith(("http://", "https://")):
+        cfg["base_url"] = "https://" + cfg["base_url"]
+    cfg["username"] = str(cfg.get("username") or "").strip()
+    cfg["password"] = str(cfg.get("password") or "")
+    cfg["token"] = str(cfg.get("token") or "").strip()
+    cfg["station_id"] = str(cfg.get("station_id") or cfg.get("plant_id") or "13299").strip()
+    cfg["device_id"] = str(cfg.get("device_id") or "11237").strip()
+    cfg["inverter_sn"] = str(cfg.get("inverter_sn") or cfg.get("plant_serial") or "").strip()
+    cfg["device_serial"] = str(cfg.get("device_serial") or "").strip()
+    cfg["poll_interval_seconds"] = max(
+        LIVOLTEK_MIN_POLL_SECONDS,
+        min(86400, int(cfg.get("poll_interval_seconds") or 300)),
+    )
+    cfg["timeout_seconds"] = max(5, min(120, int(cfg.get("timeout_seconds") or 20)))
+    cfg["mqtt_discovery_enabled"] = bool(cfg.get("mqtt_discovery_enabled", False))
+    return cfg
+
+
+def _redact_livoltek_config(cfg: dict[str, Any]) -> dict[str, Any]:
+    out = dict(cfg)
+    for key in ("password", "token"):
+        if out.get(key):
+            out[key] = "***"
+    return out
+
+
+def _redact_livoltek_payload(value: Any) -> Any:
+    if isinstance(value, dict):
+        redacted: dict[str, Any] = {}
+        for key, item in value.items():
+            if str(key).lower() in {"password", "token", "access_token", "accesstoken", "id_token", "jwt", "authorization"}:
+                redacted[key] = "***"
+            else:
+                redacted[key] = _redact_livoltek_payload(item)
+        return redacted
+    if isinstance(value, list):
+        return [_redact_livoltek_payload(item) for item in value]
+    return value
+
+
+def _save_livoltek_config(payload: dict[str, Any]) -> dict[str, Any]:
+    current = _load_livoltek_config()
+    allowed = set(_livoltek_defaults().keys()) | {"plant_id", "plant_serial"}
+    for key in allowed:
+        if key in payload:
+            current[key] = payload[key]
+    if str(payload.get("password") or "") == "***":
+        current["password"] = _load_livoltek_config().get("password", "")
+    if str(payload.get("token") or "") == "***":
+        current["token"] = _load_livoltek_config().get("token", "")
+    LIVOLTEK_SECRETS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LIVOLTEK_SECRETS_FILE.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+    return _load_livoltek_config()
+
+
+def _livoltek_url(cfg: dict[str, Any], path: str) -> str:
+    return f"{str(cfg.get('base_url')).rstrip('/')}/{path.lstrip('/')}"
+
+
+def _livoltek_request(
+    cfg: dict[str, Any],
+    method: str,
+    path: str,
+    *,
+    token: str = "",
+    body: dict[str, Any] | None = None,
+    redact: bool = True,
+) -> dict[str, Any]:
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "User-Agent": "e-sunmind-livoltek/1.0",
+        "language": "en",
+    }
+    data = None
+    if body is not None:
+        data = json.dumps(body, separators=(",", ":")).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    url = _livoltek_url(cfg, path)
+    req = Request(url, data=data, headers=headers, method=method.upper())
+    try:
+        with urlopen(req, timeout=int(cfg.get("timeout_seconds") or 20)) as resp:
+            raw = resp.read()
+            status = int(resp.status)
+    except HTTPError as exc:
+        raw = exc.read()
+        status = int(exc.code)
+    text = raw.decode("utf-8", errors="replace")
+    try:
+        parsed = json.loads(text)
+    except Exception:
+        parsed = None
+    clean_json = _redact_livoltek_payload(parsed) if redact else parsed
+    clean_text = text
+    for sensitive in (token, str(cfg.get("token") or ""), str(cfg.get("password") or "")):
+        if sensitive:
+            clean_text = clean_text.replace(sensitive, "***")
+    return {
+        "ok": 200 <= status < 300,
+        "status": status,
+        "method": method.upper(),
+        "url": url,
+        "json": clean_json,
+        "text": clean_text[:2000],
+    }
+
+
+def _find_livoltek_token(payload: Any) -> str:
+    if isinstance(payload, dict):
+        for key in ("access_token", "token", "accessToken", "id_token", "jwt"):
+            value = payload.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.removeprefix("Bearer ").strip()
+        for value in payload.values():
+            found = _find_livoltek_token(value)
+            if found:
+                return found
+    if isinstance(payload, list):
+        for value in payload:
+            found = _find_livoltek_token(value)
+            if found:
+                return found
+    return ""
+
+
+def _livoltek_login(cfg: dict[str, Any]) -> str:
+    if str(cfg.get("token") or "").strip():
+        return str(cfg.get("token")).strip()
+    username = str(cfg.get("username") or "").strip()
+    password = str(cfg.get("password") or "")
+    if not username or not password:
+        raise RuntimeError("missing_livoltek_credentials")
+    payload = {
+        "login_account": username,
+        "password": hashlib.md5(password.encode("utf-8")).hexdigest(),
+        "account_type": "account",
+        "language": "en",
+        "device_type": 0,
+    }
+    result = _livoltek_request(cfg, "POST", "/nbp/login/customer", body=payload, redact=False)
+    token = _find_livoltek_token(result.get("json"))
+    if not token:
+        raise RuntimeError("livoltek_login_no_token")
+    return token
+
+
+def _livoltek_unit_factor(unit: Any, target: str) -> float:
+    raw = str(unit or "").strip().lower()
+    if target == "W":
+        return 1000.0 if raw == "kw" else 1.0
+    if target == "kWh":
+        return 1000.0 if raw == "mwh" else 1.0
+    return 1.0
+
+
+def _livoltek_num(value: Any) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(str(value).strip().replace(",", "."))
+    except Exception:
+        return None
+
+
+def _normalize_livoltek_payload(raw: dict[str, Any]) -> dict[str, Any]:
+    flow = (((raw.get("power_flow") or {}).get("json") or {}).get("data") or {})
+    solar = (((raw.get("solar_info") or {}).get("json") or {}).get("data") or {})
+    battery_infos = (((raw.get("battery_info") or {}).get("json") or {}).get("data") or [])
+    pv_kw = _livoltek_num(flow.get("pvPower"))
+    battery_kw = _livoltek_num(flow.get("batteryPower"))
+    grid_kw = _livoltek_num(flow.get("gridActivePower"))
+    load_kw = _livoltek_num(flow.get("loadPower"))
+    ac_kw = _livoltek_num(flow.get("acOutPower"))
+    daily = _livoltek_num(solar.get("dailySolar"))
+    total = _livoltek_num(solar.get("totalSolar"))
+    return {
+        "pv_power_w": pv_kw * _livoltek_unit_factor(flow.get("pvPowerUnit"), "W") if pv_kw is not None else None,
+        "pv_energy_today_kwh": daily * _livoltek_unit_factor(solar.get("dailySolarUnit"), "kWh") if daily is not None else None,
+        "pv_energy_total_kwh": total * _livoltek_unit_factor(solar.get("totalSolarUnit"), "kWh") if total is not None else None,
+        "battery_soc_pct": _livoltek_num(flow.get("batterySOC")),
+        "battery_power_w": battery_kw * _livoltek_unit_factor(flow.get("batteryPowerUnit"), "W") if battery_kw is not None else None,
+        "battery_status": flow.get("batteryStatus"),
+        "grid_power_w": grid_kw * _livoltek_unit_factor(flow.get("gridActivePowerUnit"), "W") if grid_kw is not None else None,
+        "load_power_w": load_kw * _livoltek_unit_factor(flow.get("loadPowerUnit"), "W") if load_kw is not None else None,
+        "ac_out_power_w": ac_kw * _livoltek_unit_factor(flow.get("acOutPowerUnit"), "W") if ac_kw is not None else None,
+        "inverter_status": flow.get("generatorState"),
+        "update_time": flow.get("updateTime") or flow.get("currentTimeZone"),
+        "battery_capacity_kwh": _livoltek_num((battery_infos[0] or {}).get("batteryCapacity")) if battery_infos else None,
+        "battery_count": (battery_infos[0] or {}).get("batteryCount") if battery_infos else None,
+    }
+
+
+def _livoltek_fetch_snapshot(cfg: dict[str, Any], *, force_probe: bool = False) -> dict[str, Any]:
+    token = _livoltek_login(cfg)
+    station_id = str(cfg.get("station_id") or "").strip()
+    if not station_id:
+        raise RuntimeError("missing_livoltek_station_id")
+    raw = {
+        "fetched_at": datetime.utcnow().isoformat() + "Z",
+        "station_id": station_id,
+        "session": _livoltek_request(cfg, "GET", "/nbp/session", token=token),
+        "power_flow": _livoltek_request(cfg, "POST", f"/ctrller-manager/powerstation/queryPowerFlow/{station_id}", token=token, body={}),
+        "solar_info": _livoltek_request(cfg, "POST", f"/ctrller-manager/powerstation/solarInfo/{station_id}", token=token, body={}),
+        "battery_info": _livoltek_request(cfg, "POST", f"/ctrller-manager/powerstation/listDeviceBatteryInfosByPsId/{station_id}", token=token, body={}),
+    }
+    if force_probe:
+        raw["stations"] = _livoltek_request(cfg, "POST", "/ctrller-manager/powerstation/getAllStationInfoToC", token=token, body={})
+        raw["station_list"] = _livoltek_request(cfg, "POST", "/ctrller-manager/powerstation/findAllNewToC", token=token, body={})
+    raw["normalized"] = _normalize_livoltek_payload(raw)
+    return raw
+
+
+def _livoltek_runtime_snapshot() -> dict[str, Any]:
+    cfg = _load_livoltek_config()
+    with LIVOLTEK_RUNTIME["lock"]:
+        return {
+            "ok": True,
+            "enabled": bool(cfg.get("enabled")),
+            "connected": bool(LIVOLTEK_RUNTIME.get("connected")),
+            "last_update_ts": LIVOLTEK_RUNTIME.get("last_update_ts"),
+            "last_probe_ts": LIVOLTEK_RUNTIME.get("last_probe_ts"),
+            "last_error": LIVOLTEK_RUNTIME.get("last_error"),
+            "mqtt_last_error": WORKER_STATE.get("livoltek_mqtt_last_error"),
+            "config": _redact_livoltek_config(cfg),
+            "normalized": dict(LIVOLTEK_RUNTIME.get("normalized") or {}),
+            "raw": LIVOLTEK_RUNTIME.get("raw"),
+        }
 
 
 ENERGY_SITE_KEYS = (
@@ -3650,6 +3932,107 @@ def _mqtt_publish_state(client: mqtt.Client, cfg: dict[str, Any], data: dict[str
     )
 
 
+LIVOLTEK_MQTT_SENSORS: tuple[tuple[str, str, str, str | None, str | None, str | None], ...] = (
+    ("pv_power_w", "pv_power", "Livoltek PV Power", "W", "power", "measurement"),
+    ("pv_energy_today_kwh", "pv_energy_today", "Livoltek PV Energy Today", "kWh", "energy", "total_increasing"),
+    ("pv_energy_total_kwh", "pv_energy_total", "Livoltek PV Energy Total", "kWh", "energy", "total_increasing"),
+    ("battery_soc_pct", "battery_soc", "Livoltek Battery SOC", "%", "battery", "measurement"),
+    ("battery_power_w", "battery_power", "Livoltek Battery Power", "W", "power", "measurement"),
+    ("battery_status", "battery_status", "Livoltek Battery Status", None, None, None),
+    ("grid_power_w", "grid_power", "Livoltek Grid Power", "W", "power", "measurement"),
+    ("load_power_w", "load_power", "Livoltek Load Power", "W", "power", "measurement"),
+    ("inverter_status", "inverter_status", "Livoltek Inverter Status", None, None, None),
+)
+
+
+def _mqtt_connect_once(cfg: dict[str, Any], client_id: str) -> mqtt.Client:
+    mqtt_cfg = cfg.get("mqtt", {}) or {}
+    if not mqtt_cfg.get("enabled"):
+        raise RuntimeError("mqtt_disabled")
+    client = mqtt.Client(client_id=client_id)
+    username = str(mqtt_cfg.get("username") or "").strip()
+    password = str(mqtt_cfg.get("password") or "")
+    if username:
+        client.username_pw_set(username, password)
+    client.connect(str(mqtt_cfg.get("host") or "core-mosquitto"), int(mqtt_cfg.get("port") or 1883), 60)
+    client.loop_start()
+    return client
+
+
+def _mqtt_publish_retained(client: mqtt.Client, topic: str, payload: str) -> None:
+    info = client.publish(topic, payload, retain=True)
+    try:
+        info.wait_for_publish(timeout=2.0)
+    except Exception:
+        pass
+
+
+def _livoltek_publish_mqtt_discovery(client: mqtt.Client, cfg: dict[str, Any]) -> None:
+    mqtt_cfg = cfg.get("mqtt", {}) or {}
+    prefix = str(mqtt_cfg.get("discovery_prefix") or "homeassistant").strip() or "homeassistant"
+    base = "e-sunmind/livoltek"
+    device = {
+        "identifiers": ["e-sunmind-livoltek"],
+        "name": "e-SunMind Livoltek",
+        "manufacturer": "EA SAS",
+        "model": "Livoltek integration",
+        "sw_version": APP_VERSION,
+    }
+    for norm_key, topic_key, name, unit, dclass, state_class in LIVOLTEK_MQTT_SENSORS:
+        payload = {
+            "name": name,
+            "object_id": f"e_sunmind_livoltek_{topic_key}",
+            "unique_id": f"e_sunmind_livoltek_{topic_key}",
+            "state_topic": f"{base}/{topic_key}/state",
+            "availability_topic": f"{base}/availability",
+            "device": device,
+        }
+        if unit:
+            payload["unit_of_measurement"] = unit
+        if dclass:
+            payload["device_class"] = dclass
+        if state_class:
+            payload["state_class"] = state_class
+        if norm_key in {"battery_status", "inverter_status"}:
+            payload["entity_category"] = "diagnostic"
+        _mqtt_publish_retained(client, f"{prefix}/sensor/e_sunmind_livoltek_{topic_key}/config", json.dumps(payload))
+
+
+def _livoltek_publish_mqtt_state(client: mqtt.Client, normalized: dict[str, Any], raw: dict[str, Any] | None = None) -> None:
+    base = "e-sunmind/livoltek"
+    _mqtt_publish_retained(client, f"{base}/availability", "online")
+    _mqtt_publish_retained(client, f"{base}/state", json.dumps(normalized, ensure_ascii=False, default=str))
+    for norm_key, topic_key, _name, _unit, _dclass, _state_class in LIVOLTEK_MQTT_SENSORS:
+        value = normalized.get(norm_key)
+        _mqtt_publish_retained(client, f"{base}/{topic_key}/state", "unknown" if value is None else str(value))
+
+
+def _livoltek_publish_mqtt(snapshot: dict[str, Any] | None = None, *, discovery: bool = False) -> None:
+    liv_cfg = _load_livoltek_config()
+    if not liv_cfg.get("enabled"):
+        raise RuntimeError("livoltek_disabled")
+    if not liv_cfg.get("mqtt_discovery_enabled"):
+        raise RuntimeError("livoltek_mqtt_disabled")
+    cfg = _load_options()
+    client = _mqtt_connect_once(cfg, f"e-sunmind-livoltek-{uuid.uuid4().hex[:8]}")
+    try:
+        if discovery:
+            _livoltek_publish_mqtt_discovery(client, cfg)
+        normalized = (snapshot or {}).get("normalized")
+        if not isinstance(normalized, dict):
+            with LIVOLTEK_RUNTIME["lock"]:
+                normalized = dict(LIVOLTEK_RUNTIME.get("normalized") or {})
+        if normalized:
+            _livoltek_publish_mqtt_state(client, normalized, snapshot)
+        WORKER_STATE["livoltek_mqtt_last_error"] = None
+    finally:
+        try:
+            client.loop_stop()
+            client.disconnect()
+        except Exception:
+            pass
+
+
 def _slim_runtime_payload(data: dict[str, Any]) -> dict[str, Any]:
     """Keep MQTT diagnostic attributes small enough for HA recorder."""
     slim = json.loads(json.dumps(data, ensure_ascii=False, default=str))
@@ -3799,10 +4182,49 @@ async def _worker() -> None:
         await asyncio.sleep(max(60, interval * 60))
 
 
+async def _livoltek_worker() -> None:
+    while True:
+        cfg = _load_livoltek_config()
+        WORKER_STATE["livoltek_enabled"] = bool(cfg.get("enabled"))
+        if not cfg.get("enabled"):
+            WORKER_STATE["livoltek_connected"] = False
+            WORKER_STATE["livoltek_mqtt_last_error"] = None
+            with LIVOLTEK_RUNTIME["lock"]:
+                LIVOLTEK_RUNTIME["connected"] = False
+                LIVOLTEK_RUNTIME["last_error"] = None
+            await asyncio.sleep(60)
+            continue
+        try:
+            snapshot = _livoltek_fetch_snapshot(cfg)
+            now_ts = time.time()
+            with LIVOLTEK_RUNTIME["lock"]:
+                LIVOLTEK_RUNTIME["raw"] = snapshot
+                LIVOLTEK_RUNTIME["normalized"] = snapshot.get("normalized") or {}
+                LIVOLTEK_RUNTIME["last_update_ts"] = now_ts
+                LIVOLTEK_RUNTIME["connected"] = True
+                LIVOLTEK_RUNTIME["last_error"] = None
+            WORKER_STATE["livoltek_connected"] = True
+            WORKER_STATE["livoltek_last_update_ts"] = now_ts
+            WORKER_STATE["livoltek_last_error"] = None
+            if cfg.get("mqtt_discovery_enabled"):
+                try:
+                    _livoltek_publish_mqtt(snapshot, discovery=True)
+                except Exception as mqtt_exc:
+                    WORKER_STATE["livoltek_mqtt_last_error"] = str(mqtt_exc)
+        except Exception as exc:
+            with LIVOLTEK_RUNTIME["lock"]:
+                LIVOLTEK_RUNTIME["connected"] = False
+                LIVOLTEK_RUNTIME["last_error"] = str(exc)
+            WORKER_STATE["livoltek_connected"] = False
+            WORKER_STATE["livoltek_last_error"] = str(exc)
+        await asyncio.sleep(max(LIVOLTEK_MIN_POLL_SECONDS, int(cfg.get("poll_interval_seconds") or 300)))
+
+
 @app.on_event("startup")
 async def _startup():
     _load_state()
     asyncio.create_task(_worker())
+    asyncio.create_task(_livoltek_worker())
 
 
 @app.get("/")
@@ -3937,6 +4359,108 @@ async def energy_debug():
             "snapshot": snapshot,
         }
     )
+
+
+@app.get("/api/livoltek/status")
+async def livoltek_status():
+    return JSONResponse(_livoltek_runtime_snapshot())
+
+
+@app.post("/api/livoltek/config")
+async def livoltek_config_set(payload: dict):
+    if not isinstance(payload, dict):
+        return JSONResponse({"ok": False, "error": "invalid_payload"}, status_code=400)
+    try:
+        cfg = _save_livoltek_config(payload)
+        if not cfg.get("enabled"):
+            with LIVOLTEK_RUNTIME["lock"]:
+                LIVOLTEK_RUNTIME["connected"] = False
+                LIVOLTEK_RUNTIME["last_error"] = None
+            WORKER_STATE["livoltek_connected"] = False
+            WORKER_STATE["livoltek_last_error"] = None
+        return JSONResponse({"ok": True, "config": _redact_livoltek_config(cfg), "saved_to": str(LIVOLTEK_SECRETS_FILE)})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)}, status_code=500)
+
+
+@app.post("/api/livoltek/refresh")
+async def livoltek_refresh():
+    cfg = _load_livoltek_config()
+    if not cfg.get("enabled"):
+        return JSONResponse({"ok": False, "disabled": True, "error": "livoltek_disabled"})
+    try:
+        snapshot = _livoltek_fetch_snapshot(cfg)
+        now_ts = time.time()
+        with LIVOLTEK_RUNTIME["lock"]:
+            LIVOLTEK_RUNTIME["raw"] = snapshot
+            LIVOLTEK_RUNTIME["normalized"] = snapshot.get("normalized") or {}
+            LIVOLTEK_RUNTIME["last_update_ts"] = now_ts
+            LIVOLTEK_RUNTIME["connected"] = True
+            LIVOLTEK_RUNTIME["last_error"] = None
+        WORKER_STATE["livoltek_connected"] = True
+        WORKER_STATE["livoltek_last_update_ts"] = now_ts
+        WORKER_STATE["livoltek_last_error"] = None
+        if cfg.get("mqtt_discovery_enabled"):
+            try:
+                _livoltek_publish_mqtt(snapshot, discovery=True)
+            except Exception as mqtt_exc:
+                WORKER_STATE["livoltek_mqtt_last_error"] = str(mqtt_exc)
+        return JSONResponse(_livoltek_runtime_snapshot())
+    except Exception as exc:
+        with LIVOLTEK_RUNTIME["lock"]:
+            LIVOLTEK_RUNTIME["connected"] = False
+            LIVOLTEK_RUNTIME["last_error"] = str(exc)
+        WORKER_STATE["livoltek_connected"] = False
+        WORKER_STATE["livoltek_last_error"] = str(exc)
+        return JSONResponse({"ok": False, "error": str(exc), "status": _livoltek_runtime_snapshot()}, status_code=500)
+
+
+@app.post("/api/livoltek/probe")
+async def livoltek_probe():
+    cfg = _load_livoltek_config()
+    if not cfg.get("enabled"):
+        return JSONResponse({"ok": False, "disabled": True, "error": "livoltek_disabled"})
+    try:
+        snapshot = _livoltek_fetch_snapshot(cfg, force_probe=True)
+        now_ts = time.time()
+        with LIVOLTEK_RUNTIME["lock"]:
+            LIVOLTEK_RUNTIME["raw"] = snapshot
+            LIVOLTEK_RUNTIME["normalized"] = snapshot.get("normalized") or {}
+            LIVOLTEK_RUNTIME["last_update_ts"] = now_ts
+            LIVOLTEK_RUNTIME["last_probe_ts"] = now_ts
+            LIVOLTEK_RUNTIME["connected"] = True
+            LIVOLTEK_RUNTIME["last_error"] = None
+        WORKER_STATE["livoltek_connected"] = True
+        WORKER_STATE["livoltek_last_update_ts"] = now_ts
+        WORKER_STATE["livoltek_last_error"] = None
+        if cfg.get("mqtt_discovery_enabled"):
+            try:
+                _livoltek_publish_mqtt(snapshot, discovery=True)
+            except Exception as mqtt_exc:
+                WORKER_STATE["livoltek_mqtt_last_error"] = str(mqtt_exc)
+        return JSONResponse(_livoltek_runtime_snapshot())
+    except Exception as exc:
+        with LIVOLTEK_RUNTIME["lock"]:
+            LIVOLTEK_RUNTIME["connected"] = False
+            LIVOLTEK_RUNTIME["last_error"] = str(exc)
+        WORKER_STATE["livoltek_connected"] = False
+        WORKER_STATE["livoltek_last_error"] = str(exc)
+        return JSONResponse({"ok": False, "error": str(exc), "status": _livoltek_runtime_snapshot()}, status_code=500)
+
+
+@app.post("/api/livoltek/mqtt_discovery")
+async def livoltek_mqtt_discovery():
+    cfg = _load_livoltek_config()
+    if not cfg.get("enabled"):
+        return JSONResponse({"ok": False, "disabled": True, "error": "livoltek_disabled"})
+    if not cfg.get("mqtt_discovery_enabled"):
+        return JSONResponse({"ok": False, "disabled": True, "error": "livoltek_mqtt_disabled"})
+    try:
+        _livoltek_publish_mqtt(discovery=True)
+        return JSONResponse(_livoltek_runtime_snapshot())
+    except Exception as exc:
+        WORKER_STATE["livoltek_mqtt_last_error"] = str(exc)
+        return JSONResponse({"ok": False, "error": str(exc), "status": _livoltek_runtime_snapshot()}, status_code=500)
 
 
 @app.get("/api/energy/history")

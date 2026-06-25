@@ -16,6 +16,7 @@
         <a class="btn ghost" href="?view=user">UI User</a>
         <button class="btn ghost" :class="{active: tab==='energy'}" @click="tab='energy'">Energy</button>
         <button class="btn ghost" :class="{active: tab==='energy_setup'}" @click="tab='energy_setup'">Energy Setup</button>
+        <button class="btn ghost" :class="{active: tab==='livoltek'}" @click="tab='livoltek'">Livoltek</button>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
@@ -157,6 +158,97 @@
           <span>PV {{ fmtKw(site.pv) }} kW · Casa {{ fmtKw(site.home) }} kW</span>
         </a>
       </div>
+    </div>
+
+
+    <div v-show="tab==='livoltek'">
+      <main class="tech-main">
+        <section class="card livoltek-head-card">
+          <div class="livoltek-title-row">
+            <div>
+              <h2>Livoltek</h2>
+              <p>Integrazione separata per probe, polling e dati grezzi inverter.</p>
+            </div>
+            <label class="switch-line">
+              <input type="checkbox" v-model="livoltekForm.enabled" @change="saveLivoltekConfig" />
+              <span>{{ livoltekForm.enabled ? 'Abilitato' : 'Disabilitato' }}</span>
+            </label>
+          </div>
+          <div class="actions-inline">
+            <button class="btn ghost" @click="refreshLivoltek" :disabled="!livoltekForm.enabled">Refresh</button>
+            <button class="btn ghost" @click="probeLivoltek" :disabled="!livoltekForm.enabled">Probe API</button>
+            <button class="btn ghost" @click="resendLivoltekDiscovery" :disabled="!livoltekForm.enabled || !livoltekForm.mqtt_discovery_enabled">Rispedisci MQTT Discovery</button>
+            <button class="btn" @click="saveLivoltekConfig">Salva Livoltek</button>
+            <span class="note">{{ livoltekSaveStatus }}</span>
+          </div>
+          <p v-if="!livoltekForm.enabled" class="note">Livoltek e spento: nessun login, polling, API o MQTT viene eseguito.</p>
+        </section>
+
+        <section class="card">
+          <h3>Configurazione</h3>
+          <div class="form-grid">
+            <label>Base URL
+              <input type="text" v-model="livoltekForm.base_url" />
+            </label>
+            <label>Username
+              <input type="text" v-model="livoltekForm.username" autocomplete="off" />
+            </label>
+            <label>Password
+              <input type="password" v-model="livoltekForm.password" autocomplete="new-password" placeholder="lascia *** per non cambiare" />
+            </label>
+            <label>Token opzionale
+              <input type="password" v-model="livoltekForm.token" autocomplete="off" placeholder="vuoto = login username/password" />
+            </label>
+            <label>Station ID
+              <input type="text" v-model="livoltekForm.station_id" />
+            </label>
+            <label>Device ID
+              <input type="text" v-model="livoltekForm.device_id" />
+            </label>
+            <label>Inverter SN
+              <input type="text" v-model="livoltekForm.inverter_sn" />
+            </label>
+            <label>Device serial
+              <input type="text" v-model="livoltekForm.device_serial" />
+            </label>
+            <label>Polling secondi
+              <input type="number" min="30" max="86400" v-model.number="livoltekForm.poll_interval_seconds" />
+            </label>
+            <label>Timeout secondi
+              <input type="number" min="5" max="120" v-model.number="livoltekForm.timeout_seconds" />
+            </label>
+            <label>MQTT Discovery Livoltek
+              <input type="checkbox" v-model="livoltekForm.mqtt_discovery_enabled" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Stato runtime</h3>
+          <div class="form-grid">
+            <div class="kpi"><strong>Connessione:</strong> {{ livoltekStatus?.connected ? 'online' : (livoltekForm.enabled ? 'offline' : 'disabilitato') }}</div>
+            <div class="kpi"><strong>Ultimo update:</strong> {{ fmtTs(livoltekStatus?.last_update_ts) }}</div>
+            <div class="kpi"><strong>Ultimo probe:</strong> {{ fmtTs(livoltekStatus?.last_probe_ts) }}</div>
+            <div class="kpi"><strong>Ultimo errore:</strong> {{ livoltekStatus?.last_error || '-' }}</div>
+            <div class="kpi"><strong>Errore MQTT:</strong> {{ livoltekStatus?.mqtt_last_error || '-' }}</div>
+          </div>
+          <div class="energy-kpi-grid">
+            <div class="energy-kpi"><span>PV live</span><strong>{{ fmt0(livoltekNorm.pv_power_w) }} W</strong></div>
+            <div class="energy-kpi"><span>PV oggi</span><strong>{{ fmt2(livoltekNorm.pv_energy_today_kwh) }} kWh</strong></div>
+            <div class="energy-kpi"><span>PV totale</span><strong>{{ fmt2(livoltekNorm.pv_energy_total_kwh) }} kWh</strong></div>
+            <div class="energy-kpi"><span>Batteria</span><strong>{{ fmt0(livoltekNorm.battery_soc_pct) }} %</strong></div>
+            <div class="energy-kpi"><span>Battery power</span><strong>{{ fmt0(livoltekNorm.battery_power_w) }} W</strong></div>
+            <div class="energy-kpi"><span>Rete</span><strong>{{ fmt0(livoltekNorm.grid_power_w) }} W</strong></div>
+            <div class="energy-kpi"><span>Carichi</span><strong>{{ fmt0(livoltekNorm.load_power_w) }} W</strong></div>
+            <div class="energy-kpi"><span>Inverter</span><strong>{{ livoltekNorm.inverter_status ?? '-' }}</strong></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>JSON grezzo</h3>
+          <pre class="mono raw-json">{{ livoltekRawText }}</pre>
+        </section>
+      </main>
     </div>
 
 
@@ -1982,6 +2074,22 @@ const tendeMapForm = ref({
   topic_availability: 'e-tendeintelligenti/availability',
   stale_seconds: 180,
 })
+const livoltekForm = ref({
+  enabled: false,
+  base_url: 'https://evs.livoltek-portal.com',
+  username: '',
+  password: '',
+  token: '',
+  station_id: '13299',
+  device_id: '11237',
+  inverter_sn: 'HP10603HSB280050',
+  device_serial: 'P20A230300586',
+  poll_interval_seconds: 300,
+  timeout_seconds: 20,
+  mqtt_discovery_enabled: false,
+})
+const livoltekStatus = ref(null)
+const livoltekSaveStatus = ref('')
 const energyForm = ref({
   enabled: true,
   theme: 'classic_flow',
@@ -3258,6 +3366,16 @@ const pvLiveRatio = computed(() => {
   return Math.max(0, Math.min(1.25, m / f))
 })
 const energyNorm = computed(() => data.value?.energy?.normalized || null)
+const livoltekNorm = computed(() => livoltekStatus.value?.normalized || {})
+const livoltekRawText = computed(() => {
+  const raw = livoltekStatus.value?.raw
+  if (!raw) return 'Nessun JSON disponibile. Abilita Livoltek e usa Probe API o Refresh.'
+  try {
+    return JSON.stringify(raw, null, 2)
+  } catch {
+    return String(raw)
+  }
+})
 const energySiteCards = computed(() => {
   const rows = Array.isArray(data.value?.energy?.sites) ? data.value.energy.sites : []
   return rows.map((s, idx) => ({
@@ -3578,6 +3696,11 @@ function fmt1(v) {
 function fmtKw(w) {
   if (w === null || w === undefined || Number.isNaN(Number(w))) return '-'
   return (Number(w) / 1000).toFixed(2)
+}
+function fmtTs(ts) {
+  const n = Number(ts)
+  if (!Number.isFinite(n) || n <= 0) return '-'
+  return new Date(n * 1000).toLocaleString('it-IT')
 }
 function xFromMinute(minute) {
   return 40 + (Number(minute) / 1440) * 640
@@ -5804,6 +5927,104 @@ async function loadStatusVersion() {
   }
 }
 
+function applyLivoltekStatus(payload) {
+  if (!payload || typeof payload !== 'object') return
+  livoltekStatus.value = payload
+  const c = payload.config
+  if (c && typeof c === 'object') {
+    livoltekForm.value = {
+      ...livoltekForm.value,
+      enabled: Boolean(c.enabled),
+      base_url: String(c.base_url || 'https://evs.livoltek-portal.com'),
+      username: String(c.username || ''),
+      password: String(c.password || ''),
+      token: String(c.token || ''),
+      station_id: String(c.station_id || ''),
+      device_id: String(c.device_id || ''),
+      inverter_sn: String(c.inverter_sn || ''),
+      device_serial: String(c.device_serial || ''),
+      poll_interval_seconds: Number(c.poll_interval_seconds ?? 300),
+      timeout_seconds: Number(c.timeout_seconds ?? 20),
+      mqtt_discovery_enabled: Boolean(c.mqtt_discovery_enabled),
+    }
+  }
+}
+
+async function loadLivoltekStatus() {
+  try {
+    const r = await fetch('api/livoltek/status', { cache: 'no-store' })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'livoltek_status_failed')
+    applyLivoltekStatus(j)
+  } catch (e) {
+    livoltekSaveStatus.value = `Livoltek stato: ${e.message}`
+  }
+}
+
+async function saveLivoltekConfig() {
+  livoltekSaveStatus.value = 'Salvataggio Livoltek...'
+  try {
+    const payload = {
+      enabled: Boolean(livoltekForm.value.enabled),
+      base_url: String(livoltekForm.value.base_url || '').trim(),
+      username: String(livoltekForm.value.username || '').trim(),
+      password: String(livoltekForm.value.password || ''),
+      token: String(livoltekForm.value.token || '').trim(),
+      station_id: String(livoltekForm.value.station_id || '').trim(),
+      device_id: String(livoltekForm.value.device_id || '').trim(),
+      inverter_sn: String(livoltekForm.value.inverter_sn || '').trim(),
+      device_serial: String(livoltekForm.value.device_serial || '').trim(),
+      poll_interval_seconds: Number(livoltekForm.value.poll_interval_seconds ?? 300),
+      timeout_seconds: Number(livoltekForm.value.timeout_seconds ?? 20),
+      mqtt_discovery_enabled: Boolean(livoltekForm.value.mqtt_discovery_enabled),
+    }
+    const r = await fetch('api/livoltek/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || 'livoltek_save_failed')
+    applyLivoltekStatus({ ...(livoltekStatus.value || {}), ok: true, config: j.config })
+    livoltekSaveStatus.value = payload.enabled
+      ? 'Livoltek salvato. Il polling parte al prossimo ciclo.'
+      : 'Livoltek disabilitato: niente login, polling o MQTT.'
+    await loadLivoltekStatus()
+  } catch (e) {
+    livoltekSaveStatus.value = `Errore Livoltek: ${e.message}`
+  }
+}
+
+async function runLivoltekAction(endpoint, label) {
+  livoltekSaveStatus.value = `${label}...`
+  try {
+    const r = await fetch(endpoint, { method: 'POST', cache: 'no-store' })
+    const j = await r.json()
+    if (!r.ok || !j.ok) throw new Error(j.error || `${label}_failed`)
+    applyLivoltekStatus(j)
+    livoltekSaveStatus.value = `${label} completato.`
+  } catch (e) {
+    livoltekSaveStatus.value = `${label}: ${e.message}`
+    try {
+      await loadLivoltekStatus()
+    } catch (_) {
+      // keep visible error
+    }
+  }
+}
+
+async function refreshLivoltek() {
+  await runLivoltekAction('api/livoltek/refresh', 'Refresh Livoltek')
+}
+
+async function probeLivoltek() {
+  await runLivoltekAction('api/livoltek/probe', 'Probe Livoltek')
+}
+
+async function resendLivoltekDiscovery() {
+  await runLivoltekAction('api/livoltek/mqtt_discovery', 'MQTT Discovery Livoltek')
+}
+
 async function autofillWeatherStationFromDevice() {
   const did = String(weatherStationForm.value.device_id || '').trim()
   if (!did) return
@@ -6101,6 +6322,7 @@ onMounted(() => {
     if (idx >= 0) timeIndex.value = idx
     loadData()
     loadStatusVersion()
+    loadLivoltekStatus()
     window.addEventListener('resize', resizeWeatherCanvas)
     startWeatherAnimation()
     initBlockToggles()
@@ -6151,6 +6373,8 @@ watch(tab, async (val) => {
     if (map) {
       try { map.invalidateSize() } catch (_) {}
     }
+  } else if (val === 'livoltek') {
+    await loadLivoltekStatus()
   } else {
     clearMainMapRetry()
     stopWeatherAnimation()
@@ -6617,6 +6841,9 @@ input[type='range']{width:100%}
 label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--muted)}
 input{padding:8px;border-radius:8px;border:1px solid var(--border);background:#0f1621;color:var(--text)}
 .mono{font-family:Consolas,Monaco,monospace}
+.livoltek-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.switch-line{display:flex;flex-direction:row;align-items:center;gap:8px;white-space:nowrap;color:var(--text)}
+.raw-json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:8px;padding:10px;max-height:520px;overflow:auto}
 .small{font-size:12px}
 .note{font-size:12px;color:var(--muted)}
 .json{white-space:pre-wrap;word-break:break-word;background:#0c141b;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:420px;overflow:auto}

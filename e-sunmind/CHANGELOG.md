@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.314
+- Livoltek: aggiunta sezione separata in UI con switch di abilitazione, configurazione, stato runtime e JSON grezzo redatto.
+- Livoltek: aggiunti client/polling separati e endpoint debug per refresh, probe API e reinvio MQTT Discovery.
+- Livoltek: aggiunti sensori Home Assistant via MQTT Discovery retained su topic dedicati `e-sunmind/livoltek`.
+- Bump versione addon/backend a `0.3.314`.
+
 ## 0.3.313
 - Energy Dashboard: i grafici PV del bottone `Grafici` ora si espandono per ogni PV configurato, invece di mostrare solo il primo sensore.
 - Energy Dashboard: supportata la stessa espansione anche per le tensioni PV multiple.
