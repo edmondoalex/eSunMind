@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.317
+- Livoltek: aggiunto alias HTML `/api/livoltek/page` per accesso remoto via Ingress quando i path custom vengono riscritti alla UI principale.
+- Bump versione addon/backend a `0.3.317`.
+
 ## 0.3.316
 - Livoltek: aggiunta pagina backend autonoma `/livoltek`, indipendente dal bundle Vue, per debug/config anche se Home Assistant serve asset UI vecchi.
 - UI: aggiunta iniezione runtime del link `Livoltek` nella topbar dell'index servito dall'add-on.

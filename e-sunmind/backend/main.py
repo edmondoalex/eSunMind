@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.316"
+APP_VERSION = "0.3.317"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -4382,6 +4382,11 @@ async def livoltek_page():
             "Expires": "0",
         },
     )
+
+
+@app.get("/api/livoltek/page")
+async def livoltek_page_api():
+    return await livoltek_page()
 
 
 @app.get("/logo.png")
