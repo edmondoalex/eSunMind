@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.318
+- Livoltek: aggiunta pagina statica `energy-dashboard/livoltek.html`, accessibile da remoto come gli altri wrapper Energy Dashboard.
+- UI: il link Livoltek punta alla pagina statica pubblica per evitare riscritture Ingress sulla SPA.
+- Bump versione addon/backend a `0.3.318`.
+
 ## 0.3.317
 - Livoltek: aggiunto alias HTML `/api/livoltek/page` per accesso remoto via Ingress quando i path custom vengono riscritti alla UI principale.
 - Bump versione addon/backend a `0.3.317`.

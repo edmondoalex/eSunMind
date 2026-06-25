@@ -16,7 +16,7 @@
         <a class="btn ghost" href="?view=user">UI User</a>
         <button class="btn ghost" :class="{active: tab==='energy'}" @click="tab='energy'">Energy</button>
         <button class="btn ghost" :class="{active: tab==='energy_setup'}" @click="tab='energy_setup'">Energy Setup</button>
-        <button class="btn ghost" :class="{active: tab==='livoltek'}" @click="tab='livoltek'">Livoltek</button>
+        <a class="btn ghost" href="energy-dashboard/livoltek.html">Livoltek</a>
         <button class="btn ghost" :class="{active: tab==='tende'}" @click="tab='tende'">Tende/Cover</button>
         <button class="btn ghost" :class="{active: tab==='setting'}" @click="tab='setting'">Setting</button>
         <button class="btn ghost" :class="{active: tab==='tech'}" @click="tab='tech'">Tecnica</button>
