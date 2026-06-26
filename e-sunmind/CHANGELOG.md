@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.321
+- Energy Time: ridisegnato il flow storico K Flow in stile Home Assistant Energy, con icone SVG nei nodi e valori import/export e carica/scarica dentro i cerchi.
+- KFlow/Livoltek: aggiunti promemoria diagnostici su Remaining batteria, integrali `unknown`, doppio conteggio consumi e utility meter giornalieri.
+- Bump versione addon/backend a `0.3.321`.
+
 ## 0.3.320
 - UI: rimosso il link Livoltek iniettato a runtime dal backend; ora resta solo il tab Livoltek nativo della UI.
 - Bump versione addon/backend a `0.3.320`.
