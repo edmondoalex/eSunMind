@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.323
+- Energy Time: ripristinate le linee originali del flow storico K Flow, mantenendo le nuove icone dentro i cerchi.
+- Bump versione addon/backend a `0.3.323`.
+
 ## 0.3.322
 - Energy Time: rifinite le linee del flow storico K Flow, rimuovendo i nodi intermedi e usando curve piu pulite tra i cerchi principali.
 - Bump versione addon/backend a `0.3.322`.

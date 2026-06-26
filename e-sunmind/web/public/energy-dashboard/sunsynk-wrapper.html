@@ -269,7 +269,7 @@
       position: relative;
       height: 280px;
       border-radius: 8px;
-      background: radial-gradient(circle at 50% 45%, rgba(45, 212, 191, .07), transparent 46%), #0b0f14;
+      background: radial-gradient(circle at 50% 42%, rgba(45, 212, 191, .08), transparent 44%), #0b0f14;
       border: 1px solid rgba(148, 163, 184, .14);
       overflow: hidden;
     }
@@ -285,10 +285,10 @@
       gap: 2px;
       background: #0d1117;
       border: 2px solid var(--node-color, #2dd4bf);
-      box-shadow: 0 0 24px color-mix(in srgb, var(--node-color, #2dd4bf) 26%, transparent);
+      box-shadow: 0 0 24px color-mix(in srgb, var(--node-color, #2dd4bf) 28%, transparent);
       text-align: center;
-      z-index: 2;
     }
+    .kflow-history-node .ico { font-size: 1.2rem; line-height: 1; }
     .kflow-history-node .node-icon {
       width: 20px;
       height: 20px;
@@ -315,10 +315,10 @@
     .kflow-history-node .flow-val.charge { color: #ec4899; }
     .kflow-history-node .flow-val.discharge { color: #8b5cf6; }
     .kflow-history-node .sub { font-size: .62rem; color: #94a3b8; line-height: 1; }
-    .kflow-history-node.pv { --node-color: #f59e0b; left: 50%; top: 14px; transform: translateX(-50%); }
-    .kflow-history-node.grid { --node-color: #38bdf8; left: 9%; top: 94px; }
-    .kflow-history-node.home { --node-color: #2dd4bf; right: 9%; top: 94px; border-width: 4px; }
-    .kflow-history-node.batt { --node-color: #2dd4bf; left: 50%; bottom: 14px; transform: translateX(-50%); }
+    .kflow-history-node.pv { --node-color: #f59e0b; left: 50%; top: 16px; transform: translateX(-50%); }
+    .kflow-history-node.grid { --node-color: #38bdf8; left: 9%; top: 98px; }
+    .kflow-history-node.home { --node-color: #2dd4bf; right: 9%; top: 98px; }
+    .kflow-history-node.batt { --node-color: #a78bfa; left: 50%; bottom: 16px; transform: translateX(-50%); }
     .kflow-history-lines {
       position: absolute;
       inset: 0;
@@ -328,15 +328,9 @@
     }
     .kflow-history-lines path {
       fill: none;
-      stroke-width: 2;
+      stroke-width: 2.4;
       stroke-linecap: round;
-      stroke-linejoin: round;
-      opacity: .92;
-    }
-    .kflow-history-lines .flow-dot {
-      fill: currentColor;
-      stroke: #0b0f14;
-      stroke-width: 1.4;
+      opacity: .86;
     }
     .kflow-history-bars {
       display: grid;
@@ -660,7 +654,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.322';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.323';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1981,13 +1975,11 @@
           </div>
           <div class="kflow-history-graph">
             <svg class="kflow-history-lines" viewBox="0 0 760 280" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M380 108 C380 122 380 130 380 138" stroke="#f59e0b"></path>
-              <path d="M380 138 C442 138 520 136 598 138" stroke="#f59e0b"></path>
-              <path d="M162 134 C238 136 306 138 372 138" stroke="#94a3b8"></path>
-              <path d="M162 150 C282 151 438 150 598 146" stroke="#38bdf8"></path>
-              <path d="M380 143 C380 154 380 163 380 174" stroke="#ec4899"></path>
-              <path d="M396 174 C436 158 502 148 598 146" stroke="#8b5cf6"></path>
-              <path d="M364 174 C320 158 250 151 162 150" stroke="#8b5cf6"></path>
+              <path d="M380 64 C360 118 250 140 145 145" stroke="#f59e0b"></path>
+              <path d="M380 64 C412 120 520 138 615 145" stroke="#f59e0b"></path>
+              <path d="M145 145 C275 145 438 145 615 145" stroke="#38bdf8"></path>
+              <path d="M380 216 C374 178 438 150 615 145" stroke="#a78bfa"></path>
+              <path d="M380 216 C360 178 248 152 145 145" stroke="#a78bfa"></path>
             </svg>
             <div class="kflow-history-node pv">
               <div class="sub">Solare</div>
