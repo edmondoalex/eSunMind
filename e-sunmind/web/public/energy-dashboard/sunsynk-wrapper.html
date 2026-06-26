@@ -660,7 +660,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.321';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.322';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1981,18 +1981,13 @@
           </div>
           <div class="kflow-history-graph">
             <svg class="kflow-history-lines" viewBox="0 0 760 280" preserveAspectRatio="none" aria-hidden="true">
-              <path d="M380 68 C380 104 380 118 380 135" stroke="#f59e0b"></path>
-              <path d="M380 135 C445 132 536 132 625 135" stroke="#f59e0b"></path>
-              <path d="M380 135 C310 137 220 137 135 135" stroke="#94a3b8"></path>
-              <path d="M135 155 C224 155 306 155 370 155" stroke="#38bdf8"></path>
-              <path d="M370 155 C450 155 536 154 625 151" stroke="#38bdf8"></path>
-              <path d="M380 135 C378 164 378 184 378 210" stroke="#ec4899"></path>
-              <path d="M390 210 C417 178 492 154 625 151" stroke="#8b5cf6"></path>
-              <path d="M370 210 C320 174 236 157 135 155" stroke="#8b5cf6"></path>
-              <circle class="flow-dot" style="color:#f59e0b" cx="380" cy="135" r="4"></circle>
-              <circle class="flow-dot" style="color:#38bdf8" cx="370" cy="155" r="4"></circle>
-              <circle class="flow-dot" style="color:#ec4899" cx="378" cy="210" r="4"></circle>
-              <circle class="flow-dot" style="color:#8b5cf6" cx="390" cy="210" r="4"></circle>
+              <path d="M380 108 C380 122 380 130 380 138" stroke="#f59e0b"></path>
+              <path d="M380 138 C442 138 520 136 598 138" stroke="#f59e0b"></path>
+              <path d="M162 134 C238 136 306 138 372 138" stroke="#94a3b8"></path>
+              <path d="M162 150 C282 151 438 150 598 146" stroke="#38bdf8"></path>
+              <path d="M380 143 C380 154 380 163 380 174" stroke="#ec4899"></path>
+              <path d="M396 174 C436 158 502 148 598 146" stroke="#8b5cf6"></path>
+              <path d="M364 174 C320 158 250 151 162 150" stroke="#8b5cf6"></path>
             </svg>
             <div class="kflow-history-node pv">
               <div class="sub">Solare</div>
