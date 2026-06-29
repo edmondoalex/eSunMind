@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.324"
+version: "0.3.325"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -96,6 +96,8 @@ options:
     battery_power_entity_id: ""
     battery_power_sign: "positive"
     battery_soc_entity_id: ""
+    inverter_voltage_entity_id: ""
+    load_frequency_entity_id: ""
     pv_installed_kwp: 6.6
     pv_energy_today_entity_id: ""
     home_energy_today_entity_id: ""
@@ -108,6 +110,7 @@ options:
     energy_time_battery_charge_stat_ids: ""
     energy_time_battery_discharge_stat_ids: ""
     energy_time_gas_stat_ids: ""
+    energy_time_solar_thermal_stat_ids: ""
     sunsynk_card_config_json: ""
     k_flow_card_config_json: ""
     entity_signs_json: ""
@@ -193,6 +196,8 @@ schema:
     battery_power_entity_id: str?
     battery_power_sign: list(positive|negative)
     battery_soc_entity_id: str?
+    inverter_voltage_entity_id: str?
+    load_frequency_entity_id: str?
     pv_installed_kwp: float(0,1000)
     pv_energy_today_entity_id: str?
     home_energy_today_entity_id: str?
@@ -205,6 +210,7 @@ schema:
     energy_time_battery_charge_stat_ids: str?
     energy_time_battery_discharge_stat_ids: str?
     energy_time_gas_stat_ids: str?
+    energy_time_solar_thermal_stat_ids: str?
     sunsynk_card_config_json: str?
     k_flow_card_config_json: str?
     entity_signs_json: str?
@@ -213,3 +219,42 @@ schema:
         entity_id: str?
         color: str?
     selected_site_id: str?
+    sites:
+      - id: str?
+        name: str?
+        enabled: bool?
+        theme: list(classic_flow|technical_dark|minimal_light)?
+        dashboard_background_color: str?
+        show_sankey: bool?
+        energy_dashboard_layout: list(sunsynk|k_flow)?
+        pv_power_entity_id: str?
+        pv_power_sign: list(positive|negative)?
+        home_power_entity_id: str?
+        home_power_sign: list(positive|negative)?
+        grid_power_entity_id: str?
+        grid_power_sign: list(positive|negative)?
+        battery_power_entity_id: str?
+        battery_power_sign: list(positive|negative)?
+        battery_soc_entity_id: str?
+        inverter_voltage_entity_id: str?
+        load_frequency_entity_id: str?
+        pv_installed_kwp: float(0,1000)?
+        pv_energy_today_entity_id: str?
+        home_energy_today_entity_id: str?
+        grid_import_today_entity_id: str?
+        grid_export_today_entity_id: str?
+        energy_time_pv_stat_ids: str?
+        energy_time_load_stat_ids: str?
+        energy_time_grid_import_stat_ids: str?
+        energy_time_grid_export_stat_ids: str?
+        energy_time_battery_charge_stat_ids: str?
+        energy_time_battery_discharge_stat_ids: str?
+        energy_time_gas_stat_ids: str?
+        energy_time_solar_thermal_stat_ids: str?
+        sunsynk_card_config_json: str?
+        k_flow_card_config_json: str?
+        entity_signs_json: str?
+        sankey_extra_loads:
+          - name: str?
+            entity_id: str?
+            color: str?
