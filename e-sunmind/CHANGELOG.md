@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.324
+- Energy Time: nella vista Giorno i valori dei cerchi usano prima i sensori giornalieri `*_today`, lasciando le statistiche storiche a grafico, mese e anno.
+- Bump versione addon/backend a `0.3.324`.
+
 ## 0.3.323
 - Energy Time: ripristinate le linee originali del flow storico K Flow, mantenendo le nuove icone dentro i cerchi.
 - Bump versione addon/backend a `0.3.323`.

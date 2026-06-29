@@ -654,7 +654,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.323';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.324';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -1847,6 +1847,43 @@
       return (Array.isArray(values) ? values : []).reduce((sum, v) => sum + (Number.isFinite(Number(v)) ? Number(v) : 0), 0);
     }
 
+    function todayEnergyStateKwh(cardKey) {
+      const ids = [
+        sourceEntityId(cardKey),
+        entityId(cardKey),
+        internalEntityId(cardKey),
+      ].filter((id, idx, arr) => isConfiguredEntity(id) && arr.indexOf(id) === idx);
+      for (const id of ids) {
+        const state = window.hass.states[id];
+        if (!state) continue;
+        const raw = Number(state.state);
+        if (!Number.isFinite(raw)) continue;
+        const unit = String(state.attributes?.unit_of_measurement || 'kWh').trim().toLowerCase();
+        if (unit === 'mwh') return raw * 1000;
+        if (unit === 'wh') return raw / 1000;
+        return raw;
+      }
+      return null;
+    }
+
+    function energyHistoryDisplayTotals(totals = {}) {
+      const currentDay = new Date().toISOString().slice(0, 10);
+      if (energyHistoryPeriod !== 'day' || energyHistoryInputValue() !== currentDay) return totals || {};
+      const daily = {
+        pv: todayEnergyStateKwh('day_pv_energy_108'),
+        load: todayEnergyStateKwh('day_load_energy_84'),
+        grid_import: todayEnergyStateKwh('day_grid_import_76'),
+        grid_export: todayEnergyStateKwh('day_grid_export_77'),
+        battery_charge: todayEnergyStateKwh('day_battery_charge_70'),
+        battery_discharge: todayEnergyStateKwh('day_battery_discharge_71'),
+      };
+      const out = { ...(totals || {}) };
+      for (const [key, value] of Object.entries(daily)) {
+        if (value != null) out[key] = value;
+      }
+      return out;
+    }
+
     function renderEnergyHistory(payload = null, loading = false) {
       if (!historySection || MAP_MODE) return;
       const totals = payload?.totals || {};
@@ -1912,6 +1949,7 @@
     renderEnergyHistory = function renderEnergyHistory(payload = null, loading = false) {
       if (!historySection || MAP_MODE) return;
       const totals = payload?.totals || {};
+      const displayTotals = energyHistoryDisplayTotals(totals);
       const series = payload?.series || {};
       const labels = Array.isArray(payload?.labels) ? payload.labels : [];
       const seriesDefs = [
@@ -1984,24 +2022,24 @@
             <div class="kflow-history-node pv">
               <div class="sub">Solare</div>
               <div class="node-icon">${nodeIcons.pv}</div>
-              <div class="val">${fmtKwh(totals.pv)}</div>
+              <div class="val">${fmtKwh(displayTotals.pv)}</div>
             </div>
             <div class="kflow-history-node grid">
               <div class="sub">Rete elettrica</div>
               <div class="node-icon">${nodeIcons.grid}</div>
-              <span class="flow-val import">← ${fmtKwh(totals.grid_import)}</span>
-              <span class="flow-val export">→ ${fmtKwh(totals.grid_export)}</span>
+              <span class="flow-val import">← ${fmtKwh(displayTotals.grid_import)}</span>
+              <span class="flow-val export">→ ${fmtKwh(displayTotals.grid_export)}</span>
             </div>
             <div class="kflow-history-node home">
               <div class="sub">Casa</div>
               <div class="node-icon">${nodeIcons.home}</div>
-              <div class="val">${fmtKwh(totals.load)}</div>
+              <div class="val">${fmtKwh(displayTotals.load)}</div>
             </div>
             <div class="kflow-history-node batt">
               <div class="sub">Batteria</div>
               <div class="node-icon">${nodeIcons.battery}</div>
-              <span class="flow-val charge">↓ ${fmtKwh(totals.battery_charge)}</span>
-              <span class="flow-val discharge">↑ ${fmtKwh(totals.battery_discharge)}</span>
+              <span class="flow-val charge">↓ ${fmtKwh(displayTotals.battery_charge)}</span>
+              <span class="flow-val discharge">↑ ${fmtKwh(displayTotals.battery_discharge)}</span>
             </div>
           </div>
           <div class="kflow-history-legend">
