@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.327
+- Add-on: resa piu robusta la build Docker installando le dipendenze Python in un layer cacheabile, con retry e indice PyPI esplicito.
+- Add-on: rimossi `build.yaml` e arch deprecati dal manifest per evitare warning Supervisor dopo gli aggiornamenti Home Assistant.
+- Bump versione addon/backend a `0.3.327`.
+
 ## 0.3.326
 - Energy Setup K Flow: aggiunti campi UI diretti per scala/capacita (`PV max power`, `Load max power`, `Grid max power`, capacita batteria, potenza batteria e min SOC), senza dover modificare JSON.
 - Energy Wrapper K Flow: i valori UI dedicati ora sovrascrivono il JSON avanzato per i parametri di scala principali.
