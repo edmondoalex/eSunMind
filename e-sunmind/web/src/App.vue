@@ -1706,6 +1706,18 @@
                   <label>Riquadro basso destra entity<input type="text" v-model="energyForm.k_flow_batt_dis_entity" @change="syncKFlowJsonFromUi" placeholder="sensor..." /></label>
                 </div>
               </div>
+              <div class="energy-subblock">
+                <strong>Scala / capacità</strong>
+                <div class="form-grid">
+                  <label>PV max power (W)<input type="number" min="0" step="100" v-model.number="energyForm.kflow_solar_max_power_w" @change="syncKFlowScaleToWizard" /></label>
+                  <label>Load max power (W)<input type="number" min="0" step="100" v-model.number="energyForm.kflow_load_max_power_w" @change="syncKFlowScaleToWizard" /></label>
+                  <label>Grid max power (W)<input type="number" min="0" step="100" v-model.number="energyForm.kflow_grid_max_power_w" @change="syncKFlowScaleToWizard" /></label>
+                  <label>Battery capacity (Wh)<input type="number" min="0" step="100" v-model.number="energyForm.kflow_battery_capacity_wh" @change="syncKFlowScaleToWizard" /></label>
+                  <label>Battery max power (W)<input type="number" min="0" step="100" v-model.number="energyForm.kflow_battery_max_power_w" @change="syncKFlowScaleToWizard" /></label>
+                  <label>Battery min SOC (%)<input type="number" min="0" max="100" step="1" v-model.number="energyForm.kflow_battery_shutdown_soc" @change="syncKFlowScaleToWizard" /></label>
+                </div>
+                <small>Questi valori sono usati direttamente dalla dashboard K Flow. Il JSON avanzato resta solo per override speciali.</small>
+              </div>
             </section>
 
             <section class="energy-group" v-show="energySetupSection === 'json'">
@@ -2121,6 +2133,12 @@ const energyForm = ref({
   energy_time_battery_discharge_stat_ids: '',
   energy_time_gas_stat_ids: '',
   energy_time_solar_thermal_stat_ids: '',
+  kflow_solar_max_power_w: 7000,
+  kflow_load_max_power_w: 9000,
+  kflow_grid_max_power_w: 8000,
+  kflow_battery_capacity_wh: 15360,
+  kflow_battery_max_power_w: 5000,
+  kflow_battery_shutdown_soc: 10,
   sunsynk_card_config_json: '',
   k_flow_card_config_json: '',
   k_flow_invert_battery_power: false,
@@ -2551,6 +2569,12 @@ function makeEnergySiteFromForm(base = {}) {
     energy_time_battery_discharge_stat_ids: String(energyForm.value.energy_time_battery_discharge_stat_ids || ''),
     energy_time_gas_stat_ids: String(energyForm.value.energy_time_gas_stat_ids || ''),
     energy_time_solar_thermal_stat_ids: String(energyForm.value.energy_time_solar_thermal_stat_ids || ''),
+    kflow_solar_max_power_w: Number(energyForm.value.kflow_solar_max_power_w ?? 7000),
+    kflow_load_max_power_w: Number(energyForm.value.kflow_load_max_power_w ?? 9000),
+    kflow_grid_max_power_w: Number(energyForm.value.kflow_grid_max_power_w ?? 8000),
+    kflow_battery_capacity_wh: Number(energyForm.value.kflow_battery_capacity_wh ?? 15360),
+    kflow_battery_max_power_w: Number(energyForm.value.kflow_battery_max_power_w ?? 5000),
+    kflow_battery_shutdown_soc: Number(energyForm.value.kflow_battery_shutdown_soc ?? 10),
     sunsynk_card_config_json: String(energyForm.value.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(energyForm.value.k_flow_card_config_json || ''),
     entity_signs_json: String(energyForm.value.entity_signs_json || ''),
@@ -2592,6 +2616,13 @@ function applyEnergySiteToForm(site = {}) {
     energy_time_battery_charge_stat_ids: String(site.energy_time_battery_charge_stat_ids || ''),
     energy_time_battery_discharge_stat_ids: String(site.energy_time_battery_discharge_stat_ids || ''),
     energy_time_gas_stat_ids: String(site.energy_time_gas_stat_ids || ''),
+    energy_time_solar_thermal_stat_ids: String(site.energy_time_solar_thermal_stat_ids || ''),
+    kflow_solar_max_power_w: Number(site.kflow_solar_max_power_w ?? 7000),
+    kflow_load_max_power_w: Number(site.kflow_load_max_power_w ?? 9000),
+    kflow_grid_max_power_w: Number(site.kflow_grid_max_power_w ?? 8000),
+    kflow_battery_capacity_wh: Number(site.kflow_battery_capacity_wh ?? 15360),
+    kflow_battery_max_power_w: Number(site.kflow_battery_max_power_w ?? 5000),
+    kflow_battery_shutdown_soc: Number(site.kflow_battery_shutdown_soc ?? 10),
     sunsynk_card_config_json: String(site.sunsynk_card_config_json || ''),
     k_flow_card_config_json: String(site.k_flow_card_config_json || ''),
     k_flow_invert_battery_power: false,
@@ -2633,6 +2664,7 @@ function applyEnergySiteToForm(site = {}) {
   syncEnergySignsUiFromJson()
   syncKFlowUiFromJson()
   hydrateEnergyWizardFromOptions(site)
+  syncKFlowScaleToWizard()
 }
 
 function persistCurrentEnergySiteFromEditor() {
@@ -2945,6 +2977,15 @@ function syncKFlowJsonFromUi() {
   if (obj.label_entity_max_cell && !obj.label_max_cell) obj.label_max_cell = 'Dato 2'
   if (obj.label_entity_batt_dis && !obj.label_batt_dis) obj.label_batt_dis = 'Scarica oggi'
   energyForm.value.k_flow_card_config_json = JSON.stringify(obj, null, 2)
+}
+
+function syncKFlowScaleToWizard() {
+  energyWizardForm.value.solar_max_power = Number(energyForm.value.kflow_solar_max_power_w ?? energyWizardForm.value.solar_max_power ?? 7000)
+  energyWizardForm.value.load_max_power = Number(energyForm.value.kflow_load_max_power_w ?? energyWizardForm.value.load_max_power ?? 9000)
+  energyWizardForm.value.grid_max_power = Number(energyForm.value.kflow_grid_max_power_w ?? energyWizardForm.value.grid_max_power ?? 8000)
+  energyWizardForm.value.battery_energy_wh = Number(energyForm.value.kflow_battery_capacity_wh ?? energyWizardForm.value.battery_energy_wh ?? 15360)
+  energyWizardForm.value.battery_max_power = Number(energyForm.value.kflow_battery_max_power_w ?? energyWizardForm.value.battery_max_power ?? 5000)
+  energyWizardForm.value.battery_shutdown_soc = Number(energyForm.value.kflow_battery_shutdown_soc ?? energyWizardForm.value.battery_shutdown_soc ?? 10)
 }
 
 function inferSolarMpptsFromEntities(entities = {}, fallback = 1) {
@@ -5282,6 +5323,12 @@ function applyEnergyWizard(silent = false) {
   energyForm.value.home_energy_today_entity_id = String(energyWizardForm.value.day_load_energy_84 || '')
   energyForm.value.grid_import_today_entity_id = String(energyWizardForm.value.day_grid_import_76 || '')
   energyForm.value.grid_export_today_entity_id = String(energyWizardForm.value.day_grid_export_77 || '')
+  energyForm.value.kflow_solar_max_power_w = Number(energyWizardForm.value.solar_max_power ?? energyForm.value.kflow_solar_max_power_w ?? 7000)
+  energyForm.value.kflow_load_max_power_w = Number(energyWizardForm.value.load_max_power ?? energyForm.value.kflow_load_max_power_w ?? 9000)
+  energyForm.value.kflow_grid_max_power_w = Number(energyWizardForm.value.grid_max_power ?? energyForm.value.kflow_grid_max_power_w ?? 8000)
+  energyForm.value.kflow_battery_capacity_wh = Number(energyWizardForm.value.battery_energy_wh ?? energyForm.value.kflow_battery_capacity_wh ?? 15360)
+  energyForm.value.kflow_battery_max_power_w = Number(energyWizardForm.value.battery_max_power ?? energyForm.value.kflow_battery_max_power_w ?? 5000)
+  energyForm.value.kflow_battery_shutdown_soc = Number(energyWizardForm.value.battery_shutdown_soc ?? energyForm.value.kflow_battery_shutdown_soc ?? 10)
   if (!silent) baseSaveStatus.value = 'Wizard Energy applicato: JSON card generato.'
 }
 
@@ -5298,6 +5345,7 @@ function syncWizardFromEnergyForm() {
   energyWizardForm.value.day_load_energy_84 = String(energyForm.value.home_energy_today_entity_id || '')
   energyWizardForm.value.day_grid_import_76 = String(energyForm.value.grid_import_today_entity_id || '')
   energyWizardForm.value.day_grid_export_77 = String(energyForm.value.grid_export_today_entity_id || '')
+  syncKFlowScaleToWizard()
 }
 
 function onEnergyCardstyleChange() {
@@ -5645,6 +5693,13 @@ async function loadData() {
         energy_time_battery_charge_stat_ids: String(eo.energy_time_battery_charge_stat_ids || ''),
         energy_time_battery_discharge_stat_ids: String(eo.energy_time_battery_discharge_stat_ids || ''),
         energy_time_gas_stat_ids: String(eo.energy_time_gas_stat_ids || ''),
+        energy_time_solar_thermal_stat_ids: String(eo.energy_time_solar_thermal_stat_ids || ''),
+        kflow_solar_max_power_w: Number(eo.kflow_solar_max_power_w ?? 7000),
+        kflow_load_max_power_w: Number(eo.kflow_load_max_power_w ?? 9000),
+        kflow_grid_max_power_w: Number(eo.kflow_grid_max_power_w ?? 8000),
+        kflow_battery_capacity_wh: Number(eo.kflow_battery_capacity_wh ?? 15360),
+        kflow_battery_max_power_w: Number(eo.kflow_battery_max_power_w ?? 5000),
+        kflow_battery_shutdown_soc: Number(eo.kflow_battery_shutdown_soc ?? 10),
         sunsynk_card_config_json: String(eo.sunsynk_card_config_json || ''),
         k_flow_card_config_json: String(eo.k_flow_card_config_json || ''),
         k_flow_invert_battery_power: false,

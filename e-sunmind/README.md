@@ -251,6 +251,7 @@ Da .3.245 ogni impianto puo scegliere il layout dashboard tra Sunsynk Power Flow
 In Setting > Energy e disponibile il campo JSON sunsynk_card_config_json per impostare tutta la cardConfig del wrapper (solar, attery, load, grid, entities, ecc.) senza modificare file statici.
 Il wrapper sunsynk-wrapper.html legge questa configurazione da /api/options all'avvio e la applica automaticamente.
 Per `k-flow-card` il wrapper genera automaticamente la configurazione dai campi Energy/Sunsynk; il campo `k_flow_card_config_json` permette override avanzati.
+Da `0.3.326` Energy Setup espone anche i principali parametri K Flow in UI (`PV max power`, `Load max power`, `Grid max power`, capacita batteria, potenza batteria e min SOC), cosi non serve modificare il JSON per regolare scala e percentuale carico.
 
 ### Wizard Energy (Sunsynk)
 

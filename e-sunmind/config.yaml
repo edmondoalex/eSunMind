@@ -1,7 +1,7 @@
 name: e-SunMind
 slug: e_sunmind
 description: "Dati sole/luna con ricerca localita, UI web e publish entita in e-Control"
-version: "0.3.325"
+version: "0.3.326"
 arch: [amd64, aarch64, armhf, armv7, i386]
 init: false
 startup: services
@@ -111,6 +111,12 @@ options:
     energy_time_battery_discharge_stat_ids: ""
     energy_time_gas_stat_ids: ""
     energy_time_solar_thermal_stat_ids: ""
+    kflow_solar_max_power_w: 7000
+    kflow_load_max_power_w: 9000
+    kflow_grid_max_power_w: 8000
+    kflow_battery_capacity_wh: 15360
+    kflow_battery_max_power_w: 5000
+    kflow_battery_shutdown_soc: 10
     sunsynk_card_config_json: ""
     k_flow_card_config_json: ""
     entity_signs_json: ""
@@ -211,6 +217,12 @@ schema:
     energy_time_battery_discharge_stat_ids: str?
     energy_time_gas_stat_ids: str?
     energy_time_solar_thermal_stat_ids: str?
+    kflow_solar_max_power_w: int(0,30000)
+    kflow_load_max_power_w: int(0,30000)
+    kflow_grid_max_power_w: int(0,30000)
+    kflow_battery_capacity_wh: int(0,300000)
+    kflow_battery_max_power_w: int(0,30000)
+    kflow_battery_shutdown_soc: int(0,100)
     sunsynk_card_config_json: str?
     k_flow_card_config_json: str?
     entity_signs_json: str?
@@ -251,6 +263,12 @@ schema:
         energy_time_battery_discharge_stat_ids: str?
         energy_time_gas_stat_ids: str?
         energy_time_solar_thermal_stat_ids: str?
+        kflow_solar_max_power_w: int(0,30000)?
+        kflow_load_max_power_w: int(0,30000)?
+        kflow_grid_max_power_w: int(0,30000)?
+        kflow_battery_capacity_wh: int(0,300000)?
+        kflow_battery_max_power_w: int(0,30000)?
+        kflow_battery_shutdown_soc: int(0,100)?
         sunsynk_card_config_json: str?
         k_flow_card_config_json: str?
         entity_signs_json: str?

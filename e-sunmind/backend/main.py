@@ -35,7 +35,7 @@ try:
 except Exception:
     _get_moon_times = None
 
-APP_VERSION = "0.3.325"
+APP_VERSION = "0.3.326"
 app = FastAPI(title="e-SunMind", version=APP_VERSION)
 app.mount("/assets", StaticFiles(directory="/app/static/assets"), name="assets")
 app.mount("/energy-dashboard", StaticFiles(directory="/app/static/energy-dashboard", html=True), name="energy_dashboard")
@@ -289,6 +289,12 @@ def _load_options() -> dict[str, Any]:
             "energy_time_battery_discharge_stat_ids": "",
             "energy_time_gas_stat_ids": "",
             "energy_time_solar_thermal_stat_ids": "",
+            "kflow_solar_max_power_w": 7000,
+            "kflow_load_max_power_w": 9000,
+            "kflow_grid_max_power_w": 8000,
+            "kflow_battery_capacity_wh": 15360,
+            "kflow_battery_max_power_w": 5000,
+            "kflow_battery_shutdown_soc": 10,
             "sunsynk_card_config_json": "",
             "k_flow_card_config_json": "",
             "entity_signs_json": "",
@@ -703,6 +709,12 @@ ENERGY_SITE_KEYS = (
     "energy_time_battery_discharge_stat_ids",
     "energy_time_gas_stat_ids",
     "energy_time_solar_thermal_stat_ids",
+    "kflow_solar_max_power_w",
+    "kflow_load_max_power_w",
+    "kflow_grid_max_power_w",
+    "kflow_battery_capacity_wh",
+    "kflow_battery_max_power_w",
+    "kflow_battery_shutdown_soc",
     "sunsynk_card_config_json",
     "k_flow_card_config_json",
     "entity_signs_json",

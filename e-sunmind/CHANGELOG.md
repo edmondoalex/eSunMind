@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.326
+- Energy Setup K Flow: aggiunti campi UI diretti per scala/capacita (`PV max power`, `Load max power`, `Grid max power`, capacita batteria, potenza batteria e min SOC), senza dover modificare JSON.
+- Energy Wrapper K Flow: i valori UI dedicati ora sovrascrivono il JSON avanzato per i parametri di scala principali.
+- Bump versione addon/backend a `0.3.326`.
+
 ## 0.3.325
 - Add-on: dichiarati nello schema Supervisor i campi multi-impianto `energy.sites` e i campi Energy Time mancanti, evitando warning `Unknown option 'sites'` dopo aggiornamenti Home Assistant.
 - Bump versione addon/backend a `0.3.325`.

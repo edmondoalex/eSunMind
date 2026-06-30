@@ -654,7 +654,7 @@
   </script>
   <script>
     const QUERY = new URLSearchParams(window.location.search);
-    const ENERGYMIND_WRAPPER_VERSION = '0.3.324';
+    const ENERGYMIND_WRAPPER_VERSION = '0.3.326';
     window.energyMindWrapperVersion = ENERGYMIND_WRAPPER_VERSION;
     const MAP_MODE = QUERY.get('map') === '1';
     const SITE_ID = String(QUERY.get('site') || '').trim();
@@ -856,6 +856,10 @@
     }
 
     function createBaseKFlowConfig(siteEnergy = {}) {
+      const numOr = (value, fallback = 0) => {
+        const n = Number(value);
+        return Number.isFinite(n) ? n : fallback;
+      };
       const kEntity = (cardKey) => sourceEntityId(cardKey) || sourceOrInternalEntityId(cardKey);
       const pv1 = kEntity('pv1_power_186') || kEntity('pv_total');
       const pv2 = kEntity('pv2_power_187');
@@ -876,7 +880,7 @@
         pv4_power: kEntity('pv4_power_189'),
         _show_pv_extra: Boolean(kEntity('pv3_power_188') || kEntity('pv4_power_189')),
         pv_total_power: pvTotal,
-        pv_max_power: Number(cardConfig?.solar?.max_power || siteEnergy?.pv_installed_kwp * 1000 || 7000),
+        pv_max_power: numOr(siteEnergy?.kflow_solar_max_power_w, Number(cardConfig?.solar?.max_power || siteEnergy?.pv_installed_kwp * 1000 || 7000)),
         today_pv: kEntity('day_pv_energy_108'),
         total_pv_gen_entity: '',
         inv_temp: '',
@@ -912,8 +916,8 @@
         battery_max_cell: kEntity('battery_max_cell'),
         batt_dis: kEntity('day_battery_discharge_71'),
         battery_cap_unit: 'kwh',
-        battery_full_wh: (Number(cardConfig?.battery?.energy || 0) / 1000) || '',
-        battery_shutdown_soc: Math.max(0, Math.min(100, Number(cardConfig?.battery?.shutdown_soc ?? 10))),
+        battery_full_wh: (numOr(siteEnergy?.kflow_battery_capacity_wh, Number(cardConfig?.battery?.energy || 0)) / 1000) || '',
+        battery_shutdown_soc: Math.max(0, Math.min(100, numOr(siteEnergy?.kflow_battery_shutdown_soc, Number(cardConfig?.battery?.shutdown_soc ?? 10)))),
         goodwe_battery_soc: kEntity('battery_soc_184'),
         goodwe_battery_curr: kEntity('battery_current_191'),
         invert_battery_power: Boolean(cardConfig?.battery?.invert_flow),
@@ -925,7 +929,7 @@
         battery2_full_wh: (Number(cardConfig?.battery2?.energy || cardConfig?.battery?.energy || 0) / 1000) || '',
         _show_ev: false,
         _show_limits: false,
-        inverter_max_power: Number(cardConfig?.inverter?.max_power || cardConfig?.load?.max_power || 0) || '',
+        inverter_max_power: numOr(siteEnergy?.kflow_load_max_power_w, Number(cardConfig?.inverter?.max_power || cardConfig?.load?.max_power || 0)) || '',
         label_pwr_bar: 'BATT',
         _labels_custom_entities: true,
         label_batt_dis: 'SCARICA OGGI',
@@ -947,7 +951,20 @@
           console.warn('e-SunMind K Flow config JSON non valido', e);
         }
       }
+      cfg = applyKFlowUiOverrides(cfg, siteEnergy);
       return JSON.parse(JSON.stringify(cfg));
+    }
+
+    function applyKFlowUiOverrides(cfg, siteEnergy = {}) {
+      const setNumber = (key, value, transform = (n) => n) => {
+        const n = Number(value);
+        if (Number.isFinite(n)) cfg[key] = transform(n);
+      };
+      setNumber('pv_max_power', siteEnergy?.kflow_solar_max_power_w);
+      setNumber('inverter_max_power', siteEnergy?.kflow_load_max_power_w);
+      setNumber('battery_full_wh', siteEnergy?.kflow_battery_capacity_wh, (n) => n / 1000);
+      setNumber('battery_shutdown_soc', siteEnergy?.kflow_battery_shutdown_soc, (n) => Math.max(0, Math.min(100, n)));
+      return cfg;
     }
 
     function deepMerge(target, src) {
